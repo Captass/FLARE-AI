@@ -19,3 +19,5 @@ frontend/out/
 tmp/
 _archive/
 backups/
+# Secrets locaux (jamais poussés — push protection GitHub)
+infra/credentials/
