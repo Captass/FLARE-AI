@@ -25,10 +25,11 @@ services:
       - key: FLIGHT_MODE
         value: "True"
 
-  - type: static_site
+  - type: web
+    env: static
     name: flare-frontend
     rootDir: frontend
-    buildCommand: "npm install && npm run build"
+    buildCommand: "npm ci && npm run build"
     publishPath: out
     envVars:
       - key: NEXT_PUBLIC_API_URL
