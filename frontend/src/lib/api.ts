@@ -3,7 +3,13 @@
  * Toutes les requêtes vers le backend FLARE AI
  */
 
-const PRODUCTION_BACKEND_URL = "https://flare-backend-236458687422.europe-west1.run.app";
+/**
+ * Fallback si `NEXT_PUBLIC_API_URL` est absent au build ou en runtime.
+ * Doit rester aligné avec le backend Render actuel (voir `render.yaml` / DEVELOPER_GUIDE).
+ * L’ancienne URL Cloud Run ne doit plus être utilisée en prod.
+ */
+const PRODUCTION_BACKEND_URL = "https://flare-backend-ab5h.onrender.com";
+
 const PROD_FRONTEND_HOSTS = new Set([
   "flareai.ramsflare.com",
   "www.flareai.ramsflare.com",
@@ -15,6 +21,10 @@ const PROD_FRONTEND_HOSTS = new Set([
   "rams-flare-ai.firebaseapp.com",
 ]);
 
+function isRenderStaticHost(hostname: string): boolean {
+  return hostname.endsWith(".onrender.com");
+}
+
 export function getApiBaseUrl(): string {
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (configuredUrl) {
@@ -24,7 +34,7 @@ export function getApiBaseUrl(): string {
   if (typeof window !== "undefined") {
     const { hostname, protocol } = window.location;
 
-    if (PROD_FRONTEND_HOSTS.has(hostname)) {
+    if (PROD_FRONTEND_HOSTS.has(hostname) || isRenderStaticHost(hostname)) {
       return PRODUCTION_BACKEND_URL;
     }
 

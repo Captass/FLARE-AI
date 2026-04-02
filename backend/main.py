@@ -219,7 +219,12 @@ _allowed_origins = [
     "https://ramsflare.firebaseapp.com",
     "https://flareai.ramsflare.com",              # Domaine custom production
     "https://www.flareai.ramsflare.com",
+    "https://flare-frontend-t8i4.onrender.com",   # Static site Render (avant / sans DNS custom)
 ]
+
+for _extra in (o.strip() for o in (settings.EXTRA_CORS_ORIGINS or "").split(",") if o.strip()):
+    if _extra not in _allowed_origins:
+        _allowed_origins.append(_extra)
 
 app.add_middleware(
     CORSMiddleware,

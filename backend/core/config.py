@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:3000"
     BACKEND_URL: str = "http://localhost:8000"
+    # Origines CORS supplémentaires (séparées par des virgules), ex. preview Render static
+    EXTRA_CORS_ORIGINS: str = ""
     
     # Comptes de développement (pas de limites pour ces emails)
     DEV_EMAILS: str = "kevin.costa.pro@gmail.com,kevin@ramsflare.com,cptskevin@gmail.com"

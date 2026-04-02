@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Send, Type, Loader2, Copy, Check, FileText } from "lucide-react";
 import { motion } from "framer-motion";
+import { getApiBaseUrl } from "@/lib/api";
 
 export default function TextEditorPanel() {
   const [prompt, setPrompt] = useState("");
@@ -16,7 +17,7 @@ export default function TextEditorPanel() {
     setResult("");
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/content-studio/generate/text`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/content-studio/generate/text`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
