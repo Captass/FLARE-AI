@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    GEMINI_API_KEY_CHATBOT: Optional[str] = None
+    GEMINI_API_KEY_ASSISTANT_REASONING: Optional[str] = None
+    GEMINI_API_KEY_ASSISTANT_FAST: Optional[str] = None
     GEMINI_MODEL: str = "gemini-2.5-flash"
     GEMINI_PRO_MODEL: str = "gemini-2.5-pro"
     GEMINI_IMAGE_MODEL: str = "imagen-4"

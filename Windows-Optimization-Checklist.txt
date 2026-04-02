@@ -1,0 +1,54 @@
+Checklist manuelle Windows propre et stable
+
+1. Avant tout changement important
+- Ouvrir PowerShell en administrateur.
+- Lancer un point de restauration si la protection systeme est active.
+- Fermer les jeux, navigateurs, IDE et launchers.
+
+2. Demarrage
+- Parametres > Applications > Demarrage
+- Desactiver au demarrage si non indispensable: Steam, Epic Games Launcher, EA app, Discord, Spotify, Proton Drive, LM Studio, Cloudflare WARP, Avast UI.
+- Garder: securite Windows ou antivirus choisi, pilotes audio/GPU, services reseau utiles, outils de travail vraiment necessaires.
+
+3. Applications en arriere-plan
+- Parametres > Systeme > Alimentation et batterie
+- Utiliser le mode performance elevee si le bruit et la consommation restent acceptables.
+- Parametres > Applications > Applications installees
+- Desinstaller seulement apres validation: bloat ou utilitaires non utilises comme LagoFast, NoPing, launchers redondants, composants OEM parasites.
+
+4. Jeux et overlays
+- Desactiver Discord Overlay.
+- Desactiver Steam Overlay pour les jeux sensibles au CPU si besoin.
+- Parametres Windows > Jeux > Xbox Game Bar: desactiver si non utilisee.
+- Parametres Windows > Jeux > Captures: desactiver l'enregistrement en arriere-plan.
+- NVIDIA App / GeForce Experience: desactiver overlay si active.
+
+5. Recherche et indexation
+- Parametres > Confidentialite et securite > Recherche Windows
+- Choisir le mode classique si le PC gratte beaucoup.
+- Exclure si necessaire: dossiers de jeux, caches npm/pnpm, node_modules geants, sorties build, VM, WSL cache.
+
+6. Secure Boot et BIOS
+- Entrer dans le BIOS MSI.
+- Verifier mode UEFI actif.
+- Activer Secure Boot seulement si Windows demarre deja en mode UEFI propre et que rien de legacy n'est requis.
+- Mettre a jour le BIOS uniquement depuis la source MSI officielle et uniquement si le changelog corrige un probleme utile.
+
+7. Pilotes
+- Conserver le pilote NVIDIA actuel si stable.
+- Verifier surtout le pilote chipset Intel, reseau Realtek/MediaTek et audio.
+- Nettoyer les pilotes/peripheriques fantomes uniquement apres verification manuelle dans le Gestionnaire de peripheriques.
+
+8. Stockage
+- Garder idealement au moins 20 a 25 pourcent d'espace libre sur C:.
+- Deplacer jeux lourds et caches IA sur D: si possible.
+- Ne jamais defragmenter le SSD manuellement. Laisser Windows optimiser.
+
+9. WSL / virtualisation
+- Garder WSL/Hyper-V seulement si necessaire pour developpement.
+- Si inutile, envisager une desactivation manuelle apres sauvegarde et verification des usages Docker/WSL.
+
+10. Antivirus
+- Eviter le cumul de protections lourdes.
+- Choisir soit Defender natif, soit Avast, pas une accumulation confuse.
+- Si Avast est conserve, verifier que ses modules web/firewall n'interferent pas avec les outils dev et launchers.

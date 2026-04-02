@@ -7,13 +7,7 @@ import type { NavLevel } from "@/components/NavBreadcrumb";
 import PageSelector from "@/components/PageSelector";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 
-import { useState, useEffect, useCallback } from "react";
-import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
-import { MessageSquare, Bot } from "lucide-react";
-
 interface ChatbotHomePageProps {
-  token?: string | null;
-  getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   onPush: (level: NavLevel) => void;
   /** Nombre de conversations nécessitant une intervention humaine */
   pendingHumanCount?: number;
@@ -57,35 +51,8 @@ const ENTRIES = [
   },
 ];
 
-export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingHumanCount = 0, pages = [], selectedPageId = null, onSelectPage }: ChatbotHomePageProps) {
+export default function ChatbotHomePage({ onPush, pendingHumanCount = 0, pages = [], selectedPageId = null, onSelectPage }: ChatbotHomePageProps) {
   const hasPageSelected = Boolean(selectedPageId);
-  const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
-  const [loadingKPIs, setLoadingKPIs] = useState(false);
-
-  const loadKPIs = useCallback(async () => {
-    let t = token;
-    if (getFreshToken) t = await getFreshToken() || token;
-    if (!t || !selectedPageId) {
-      setDashData(null);
-      return;
-    }
-    setLoadingKPIs(true);
-    try {
-      const dash = await loadMessengerDashboardData(t, selectedPageId);
-      setDashData(dash);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingKPIs(false);
-    }
-  }, [token, getFreshToken, selectedPageId]);
-
-  useEffect(() => {
-    void loadKPIs();
-  }, [loadKPIs]);
-
-  const messagesCeMois = dashData?.periodStats?.[0]?.messages ?? 0;
-  const contactsCaptes = dashData?.totals?.contacts ?? 0;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -122,65 +89,6 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
            <div className="text-center p-4 text-orange-400/80 bg-orange-500/10 rounded-xl border border-orange-500/20">
              Veuillez sélectionner une page ci-dessus pour configurer son Chatbot.
            </div>
-        )}
-
-        {/* ── Aperçu KPIs (Si page sélectionnée) ── */}
-        {hasPageSelected && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-4"
-          >
-            {/* Statut Rapide */}
-            <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Statut Bot</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                  </span>
-                  <p className="text-lg font-bold text-fg/90">En ligne</p>
-                </div>
-              </div>
-              <div className="bg-emerald-500/10 text-emerald-400 p-2.5 rounded-xl">
-                <Bot size={20} />
-              </div>
-            </div>
-
-            {/* Messages Récents */}
-            <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Messages ce mois</p>
-                <div className="mt-1 h-7 flex items-center">
-                  {loadingKPIs ? (
-                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse"></div>
-                  ) : (
-                    <p className="text-lg font-bold text-fg/90">{messagesCeMois}</p>
-                  )}
-                </div>
-              </div>
-              <div className="bg-blue-500/10 text-blue-400 p-2.5 rounded-xl">
-                <MessageSquare size={20} />
-              </div>
-            </div>
-
-            {/* Contacts Captés */}
-            <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
-              <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Contacts captés</p>
-                <div className="mt-1 h-7 flex items-center">
-                  {loadingKPIs ? (
-                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse xl:w-20"></div>
-                  ) : (
-                    <p className="text-lg font-bold text-fg/90">{contactsCaptes}</p>
-                  )}
-                </div>
-              </div>
-              <div className="bg-orange-500/10 text-orange-400 p-2.5 rounded-xl">
-                <Users size={20} />
-              </div>
-            </div>
-          </motion.div>
         )}
 
         {/* ── Entry cards ── */}

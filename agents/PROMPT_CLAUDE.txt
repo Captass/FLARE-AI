@@ -1,0 +1,15 @@
+Voici le projet FLARE AI OS situé dans : d:\Travail\RAM'S FLARE\Flare Group\Flare AI\Antigravity\FLARE AI OS\V2.
+
+Je souhaite que tu reprennes le développement pour finaliser la synchronisation du Dashboard Admin.
+
+ÉTAT ACTUEL :
+- Version v3.5.4-STABLE déployée sur Firebase Hosting.
+- Le Dashboard Admin affiche désormais les emails en priorité (UID en dessous).
+- Le backend (admin.py) possède une logique de "Lazy Lookup" pour récupérer les emails via Firebase Admin SDK.
+
+TON OBJECTIF :
+1. Analyser frontend/src/components/AdminPanel.tsx et backend/routers/admin.py pour valider la robustesse de la synchronisation.
+2. Résoudre le problème de cache navigateur (PWA) qui bloque certains utilisateurs sur la v3.4.6.
+3. Vérifier que la capture des tokens dans backend/agents/supervisor.py est 100% fonctionnelle en production.
+
+RÉFÉRENCES : Lis attentivement 'claude/Instructions dev/DEVELOPER_GUIDE.md' et 'claude/VERSIONS.md' avant de commencer.

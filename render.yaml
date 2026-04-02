@@ -15,7 +15,7 @@ services:
         value: "3.12.0"
       - key: PORT
         value: "8000"
-      # Les clés suivantes devront être remplies manuellement dans le dashboard Render si besoin
+      # Les clés suivantes devront être remplies manuellement dans le dashboard Render
       - key: SUPABASE_URL
         value: "a_remplir"
       - key: SUPABASE_SERVICE_ROLE_KEY
@@ -24,6 +24,19 @@ services:
         value: "rams-flare-ai"
       - key: FLIGHT_MODE
         value: "True"
+      - key: APP_ENV
+        value: "production"
+      - key: FRONTEND_URL
+        value: "https://flareai.ramsflare.com"
+      # --- Multi-Keys Gemini ---
+      - key: GEMINI_API_KEY
+        value: "a_remplir"
+      - key: GEMINI_API_KEY_CHATBOT
+        value: "a_remplir"
+      - key: GEMINI_API_KEY_ASSISTANT_REASONING
+        value: "a_remplir"
+      - key: GEMINI_API_KEY_ASSISTANT_FAST
+        value: "a_remplir"
 
   - type: web
     env: static

@@ -132,7 +132,7 @@ class FacebookCMAgent:
     """
 
     def __init__(self):
-        self.llm = get_llm(temperature=0.8)
+        self.llm = get_llm(temperature=0.8, purpose="chatbot")
 
     async def handle_message(
         self,

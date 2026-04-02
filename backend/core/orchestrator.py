@@ -701,7 +701,7 @@ def use_skill(skill_name: str, variables_json: str = "{}") -> str:
 
     # ── Exécuter le prompt avec le LLM pour générer le contenu final ──────────
     try:
-        llm = get_llm(temperature=0.8, model_override="gemini-2.5-flash-lite")
+        llm = get_llm(temperature=0.8, model_override="gemini-2.5-flash-lite", purpose="assistant_fast")
         response = llm.invoke([HumanMessage(content=prompt)])
         content = response.content if hasattr(response, "content") else str(response)
         if isinstance(content, list):
@@ -1547,7 +1547,7 @@ class OrchestratorAgent:
 
     def __init__(self):
         self.tools = ORCHESTRATOR_TOOLS
-        self.llm = get_llm(temperature=0.7).bind_tools(self.tools)
+        self.llm = get_llm(temperature=0.7, purpose="assistant_reasoning").bind_tools(self.tools)
         self.tool_node = ToolNode(self.tools)
         self.graph = self._build_graph()
         logger.info(f"[OrchestratorAgent] Initialisé avec {len(self.tools)} outils")
@@ -1593,12 +1593,12 @@ class OrchestratorAgent:
             if attempt == 2:
                 # 3ème essai → modèle stable gemini-2.5-flash
                 logger.info("[_call_model] Attempt 3: fallback vers gemini-2.5-flash")
-                current_llm = get_llm(temperature=0.7, model_override="gemini-2.5-flash").bind_tools(self.tools)
+                current_llm = get_llm(temperature=0.7, model_override="gemini-2.5-flash", purpose="assistant_reasoning").bind_tools(self.tools)
 
             if attempt == 3:
                 # 4ème essai → modèle ultra-stable + contexte réduit
                 logger.info("[_call_model] Attempt 4: fallback gemini-2.5-flash-lite + contexte réduit")
-                current_llm = get_llm(temperature=0.7, model_override="gemini-2.5-flash-lite").bind_tools(self.tools)
+                current_llm = get_llm(temperature=0.7, model_override="gemini-2.5-flash-lite", purpose="assistant_fast").bind_tools(self.tools)
                 # Garder uniquement : system prompt (2 premiers msgs) + derniers 10 messages
                 if len(messages) > 12:
                     current_messages = messages[:2] + messages[-10:]
@@ -1735,7 +1735,7 @@ class OrchestratorAgent:
     def _get_llm_for_user(self, model_override: Optional[str] = None):
         """Retourne un LLM bindé aux outils, avec modèle override si spécifié."""
         if model_override:
-            return get_llm(temperature=0.7, model_override=model_override).bind_tools(self.tools)
+            return get_llm(temperature=0.7, model_override=model_override, purpose="assistant_reasoning").bind_tools(self.tools)
         return self.llm
 
     async def chat_stream(
@@ -2270,7 +2270,7 @@ class OrchestratorAgent:
         try:
             all_messages = memory.load_messages()
             # Utiliser flash-lite pour les tâches de fond (5x moins cher)
-            bg_llm = get_llm(temperature=0.3, model_override="gemini-2.5-flash-lite")
+            bg_llm = get_llm(temperature=0.3, model_override="gemini-2.5-flash-lite", purpose="assistant_fast")
             # 1. Extraction de faits (1 appel Gemini)
             await _core_memory.auto_extract_facts(all_messages, bg_llm)
             # 2. Résumé si nécessaire (1 appel Gemini, seulement si > 40 messages)

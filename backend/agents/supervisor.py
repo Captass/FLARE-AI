@@ -1,4 +1,4 @@
-﻿"""
+"""
 Supervisor Agent — FLARE AI.
 Architecture Supervisor-Worker : route les requêtes vers le worker spécialisé,
 puis synthétise la réponse finale pour l'utilisateur.
@@ -412,7 +412,7 @@ class SupervisorAgent:
 
     def __init__(self):
         # Le Supervisor utilise le modèle "cerveau" pour la conversation directe
-        self.llm = get_llm(temperature=0.7)
+        self.llm = get_llm(temperature=0.7, purpose="assistant_reasoning")
 
         # Workers (lazy init pour ne pas charger tous les outils au démarrage)
         self._researcher = None
@@ -919,7 +919,7 @@ class SupervisorAgent:
 
             try:
                 # Utilisation de astream pour un retour immédiat des tokens
-                llm = get_llm(temperature=0.7, model_override=effective_model, streaming=True) if effective_model else get_llm(temperature=0.7, streaming=True)
+                llm = get_llm(temperature=0.7, model_override=effective_model, streaming=True, purpose="assistant_reasoning") if effective_model else get_llm(temperature=0.7, streaming=True, purpose="assistant_reasoning")
                 
                 full_content = ""
                 # Buffer pour intercepter les [SUGGESTION: ...] pendant le streaming
@@ -1284,7 +1284,7 @@ class SupervisorAgent:
             from core.memory import CoreMemory
             local_core = CoreMemory(user_id)
             all_messages = memory.load_messages()
-            bg_llm = get_llm(temperature=0.3, model_override=settings.GEMINI_ROUTING_MODEL)
+            bg_llm = get_llm(temperature=0.3, model_override=settings.GEMINI_ROUTING_MODEL, purpose="assistant_fast")
             await local_core.auto_extract_facts(all_messages, bg_llm)
             await memory.summarize_if_needed(bg_llm)
             logger.info(f"[background_memory] Extraction mémoire terminée pour {user_id}")

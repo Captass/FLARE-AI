@@ -15,7 +15,7 @@ from .config import settings
 logger = logging.getLogger(__name__)
 
 
-def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: Optional[str] = None) -> BaseChatModel:
+def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: Optional[str] = None, purpose: str = "default") -> BaseChatModel:
     """
     Retourne une instance LLM configurée selon LLM_PROVIDER.
 
@@ -27,6 +27,7 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
 
     Args:
         model_override: Modèle à utiliser (override le modèle global si fourni)
+        purpose: Le contexte d'utilisation du LLM (ex: 'chatbot', 'assistant_reasoning', 'assistant_fast')
     """
     provider = settings.LLM_PROVIDER.lower()
 
@@ -49,13 +50,22 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
         from langchain_google_genai import ChatGoogleGenerativeAI
         effective_model = model_override or settings.GEMINI_MODEL
 
+        # Logique de fallback multi-clés Gemini
+        api_key = settings.GEMINI_API_KEY
+        if purpose == "chatbot" and settings.GEMINI_API_KEY_CHATBOT:
+            api_key = settings.GEMINI_API_KEY_CHATBOT
+        elif purpose == "assistant_reasoning" and settings.GEMINI_API_KEY_ASSISTANT_REASONING:
+            api_key = settings.GEMINI_API_KEY_ASSISTANT_REASONING
+        elif purpose == "assistant_fast" and settings.GEMINI_API_KEY_ASSISTANT_FAST:
+            api_key = settings.GEMINI_API_KEY_ASSISTANT_FAST
+
         # Configuration de base
         # IMPORTANT: convert_system_message_to_human=True est NÉCESSAIRE pour que
         # gemini-2.5-flash (et les thinking models) gèrent correctement le tool calling
         # avec beaucoup d'outils. Sans ce flag, le modèle renvoie des réponses vides.
         kwargs = dict(
             model=effective_model,
-            google_api_key=settings.GEMINI_API_KEY,
+            google_api_key=api_key,
             temperature=temperature,
             streaming=streaming,
             convert_system_message_to_human=True,

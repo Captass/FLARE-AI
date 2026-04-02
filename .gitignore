@@ -16,5 +16,3 @@ frontend/out/
 tmp/
 _archive/
 backups/
-
-infra/credentials/
