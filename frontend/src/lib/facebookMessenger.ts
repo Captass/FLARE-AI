@@ -187,6 +187,57 @@ export async function getFacebookMessengerAuthorizationUrl(
   return String(payload?.authorization_url || "");
 }
 
+/**
+ * Ouvre la fenêtre OAuth Meta et attend le message posté par la page de callback.
+ * Côté Meta, l’écran peut ressembler à une « reconnexion » ou « continuer comme… » : c’est l’étape d’autorisation, pas le choix des pages FLARE.
+ * Les pages importées apparaissent dans la liste de l’app après fermeture de la fenêtre.
+ */
+export async function runFacebookMessengerOAuthPopup(token: string): Promise<void> {
+  if (typeof window === "undefined") return;
+  const authUrl = await getFacebookMessengerAuthorizationUrl(token, window.location.origin);
+  if (!authUrl.trim()) {
+    throw new Error("URL d'autorisation Meta manquante.");
+  }
+  const popup = window.open(authUrl, "flare-facebook-oauth", "width=680,height=760");
+  if (!popup) {
+    throw new Error("Popup bloquée. Autorisez les popups pour ce site puis réessayez.");
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    let done = false;
+    let receivedResult = false;
+    const cleanup = () => {
+      if (done) return;
+      done = true;
+      window.removeEventListener("message", handleMessage);
+      window.clearInterval(closeWatcher);
+    };
+    const handleMessage = (event: MessageEvent) => {
+      const allowedOrigins = new Set([window.location.origin, new URL(getApiBaseUrl()).origin]);
+      if (!allowedOrigins.has(event.origin)) return;
+      const payload = event.data as { type?: string; status?: string; detail?: string } | null;
+      if (!payload || payload.type !== "flare-facebook-oauth") return;
+      receivedResult = true;
+      cleanup();
+      if (payload.status === "success") {
+        resolve();
+      } else {
+        reject(new Error((payload.detail || "").trim() || "Connexion Meta annulée ou refusée."));
+      }
+    };
+    const closeWatcher = window.setInterval(() => {
+      if (!popup.closed) return;
+      cleanup();
+      if (receivedResult) {
+        resolve();
+      } else {
+        reject(new Error("Fenêtre Meta fermée avant la fin de la connexion."));
+      }
+    }, 400);
+    window.addEventListener("message", handleMessage);
+  });
+}
+
 /** Met à jour la liste des pages depuis Meta (sans OAuth) si un token utilisateur est déjà stocké. */
 export async function resyncFacebookMessengerPages(
   token: string | null | undefined

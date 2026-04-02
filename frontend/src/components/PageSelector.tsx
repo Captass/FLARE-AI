@@ -10,14 +10,17 @@ interface PageSelectorProps {
   selectedPageId: string | null;
   /** Page choisie pour piloter le catalogue, les KPIs, etc. */
   onSelect: (pageId: string) => void;
-  onAddPage: () => void;
+  /** Ouvre la fenêtre Meta (OAuth) pour autoriser de nouvelles pages ou rafraîchir le lien compte. */
+  onConnectMetaPages: () => void;
+  /** Sans OAuth : relit /me/accounts avec le token déjà stocké. */
+  onSyncPagesList?: () => void;
   loading?: boolean;
+  connectMetaBusy?: boolean;
+  syncListBusy?: boolean;
   /** Définir cette page comme canal Messenger actif pour l’organisation */
   onActivatePage?: (pageId: string) => void;
   canManagePages?: boolean;
   busyPageId?: string | null;
-  /** Liste des pages en cours d’actualisation depuis Meta (sans OAuth) */
-  isRefreshingPages?: boolean;
 }
 
 const staggerContainer = {
@@ -39,12 +42,14 @@ export default function PageSelector({
   pages,
   selectedPageId,
   onSelect,
-  onAddPage,
+  onConnectMetaPages,
+  onSyncPagesList,
   loading = false,
+  connectMetaBusy = false,
+  syncListBusy = false,
   onActivatePage,
   canManagePages = false,
   busyPageId = null,
-  isRefreshingPages = false,
 }: PageSelectorProps) {
   if (loading) {
     return (
@@ -54,6 +59,9 @@ export default function PageSelector({
       </div>
     );
   }
+
+  const metaDisabled = !canManagePages || connectMetaBusy || syncListBusy;
+  const syncDisabled = !canManagePages || !onSyncPagesList || syncListBusy || connectMetaBusy;
 
   if (pages.length === 0) {
     return (
@@ -70,17 +78,23 @@ export default function PageSelector({
           </div>
           <div>
             <h3 className="text-lg font-semibold text-fg/90 mb-1">Aucune page Facebook enregistrée</h3>
-            <p className="text-sm text-fg/50 max-w-md mx-auto leading-relaxed">
-              Connectez votre compte Meta : toutes les pages autorisées apparaîtront ici. Vous pourrez en choisir une pour
-              Messenger et cliquer sur une carte pour la piloter dans FLARE.
+            <p className="text-sm text-fg/50 max-w-lg mx-auto leading-relaxed text-left sm:text-center">
+              <strong className="text-fg/70">Étape 1 — Fenêtre Meta :</strong> un écran Facebook s’ouvre (parfois intitulé « continuer » ou « reconnecter »). C’est
+              l’autorisation du compte, pas encore le choix dans FLARE.
+              <br />
+              <strong className="text-fg/70">Étape 2 — Liste FLARE :</strong> après succès, vos pages autorisées apparaissent ici ; cliquez sur une carte pour la
+              sélectionner, puis utilisez <strong className="text-fg/70">Activer sur Messenger</strong> pour brancher le webhook.
             </p>
           </div>
           <button
-            onClick={onAddPage}
-            className="mt-4 px-6 py-2.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-500 font-medium hover:bg-orange-500/25 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(249,115,22,0.1)] hover:shadow-[0_0_25px_rgba(249,115,22,0.2)]"
+            type="button"
+            onClick={() => onConnectMetaPages()}
+            disabled={metaDisabled}
+            title={!canManagePages ? "Réservé aux membres autorisés à gérer les intégrations." : undefined}
+            className="mt-2 px-6 py-2.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-500 font-medium hover:bg-orange-500/25 transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(249,115,22,0.1)] hover:shadow-[0_0_25px_rgba(249,115,22,0.2)] disabled:opacity-45 disabled:pointer-events-none"
           >
-            <Plus className="w-4 h-4" />
-            Connecter Facebook
+            {connectMetaBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            Ouvrir Meta et importer mes pages
           </button>
         </div>
       </motion.div>
@@ -91,26 +105,39 @@ export default function PageSelector({
 
   return (
     <div className="w-full">
-      <div className="flex flex-col gap-1 mb-4 px-1">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+      <div className="flex flex-col gap-2 mb-4 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <h3 className="text-base font-semibold text-fg/90">Vos pages Facebook</h3>
-          <button
-            type="button"
-            onClick={onAddPage}
-            disabled={isRefreshingPages}
-            className="text-sm flex items-center gap-1.5 text-orange-500 hover:text-orange-400 transition-colors font-medium disabled:opacity-50"
-          >
-            {isRefreshingPages ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <Plus className="w-4 h-4" />
-            )}
-            Actualiser la liste ou reconnecter
-          </button>
+          <div className="flex flex-row flex-wrap gap-2 shrink-0">
+            {onSyncPagesList ? (
+              <button
+                type="button"
+                onClick={() => onSyncPagesList()}
+                disabled={syncDisabled}
+                title="Met à jour la liste avec le compte Meta déjà lié, sans rouvrir la fenêtre de login."
+                className="text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-fg/[0.1] bg-fg/[0.03] text-fg/75 hover:bg-fg/[0.06] transition-colors font-medium disabled:opacity-45 disabled:pointer-events-none"
+              >
+                {syncListBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                Actualiser la liste
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => onConnectMetaPages()}
+              disabled={metaDisabled}
+              title="Ouvre Facebook pour autoriser d’autres pages ou renouveler la session."
+              className="text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/12 border border-orange-500/25 text-orange-400 hover:bg-orange-500/20 transition-colors font-medium disabled:opacity-45 disabled:pointer-events-none"
+            >
+              {connectMetaBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Facebook className="w-4 h-4" />}
+              Ajouter des pages (Meta)
+            </button>
+          </div>
         </div>
-        <p className="text-sm text-fg/50 max-w-3xl">
-          Cliquez sur une page pour la piloter dans FLARE (tableau de bord, catalogue). Une seule page à la fois peut
-          recevoir les conversations Messenger : utilisez « Activer sur Messenger » pour celle que vous choisissez.
+        <p className="text-sm text-fg/50 max-w-3xl leading-relaxed">
+          <strong className="text-fg/65">Choisir dans FLARE :</strong> cliquez sur une ligne pour la piloter (personnalisation, stats).{" "}
+          <strong className="text-fg/65">Messenger :</strong> une seule page à la fois reçoit les messages — bouton{" "}
+          <span className="text-emerald-400/90 font-medium">Activer sur Messenger</span>. La fenêtre Meta sert uniquement à lier le compte ou de nouvelles pages à
+          FLARE, pas à choisir la page active ici.
         </p>
       </div>
 
@@ -186,9 +213,9 @@ export default function PageSelector({
                   <span className="text-sm text-fg/45 font-mono truncate">ID · {page.page_id}</span>
                   <span className="text-sm mt-0.5">
                     {isMessengerActive ? (
-                      <span className="text-emerald-400/90 font-medium">Page active sur Messenger</span>
+                      <span className="text-emerald-400/90 font-medium">Bot actif sur Messenger (webhook)</span>
                     ) : (
-                      <span className="text-amber-400/90 font-medium">En attente d&apos;activation Messenger</span>
+                      <span className="text-amber-400/90 font-medium">Pas encore activé sur Messenger</span>
                     )}
                   </span>
                 </div>

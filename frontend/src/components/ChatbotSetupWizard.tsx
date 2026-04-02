@@ -10,15 +10,14 @@ import {
   type ChatbotTone,
   DEFAULT_CHATBOT_PREFERENCES,
   createCatalogueItem,
-  getApiBaseUrl,
   getChatbotPreferences,
   updateChatbotPreferences,
 } from "@/lib/api";
 import {
   activateFacebookMessengerPage,
   type FacebookMessengerStatus,
-  getFacebookMessengerAuthorizationUrl,
   loadFacebookMessengerStatus,
+  runFacebookMessengerOAuthPopup,
 } from "@/lib/facebookMessenger";
 import { formatRelativeTime } from "@/components/chatbot/chatbotWorkspaceUtils";
 import { LANGUAGE_OPTIONS, PRIMARY_ROLE_OPTIONS, TONE_OPTIONS } from "@/components/chatbot/chatbotWorkspaceUtils";
@@ -226,53 +225,7 @@ export default function ChatbotSetupWizard({
         throw new Error(SESSION_RECOVERY_MESSAGE);
       }
 
-      const authUrl = await getFacebookMessengerAuthorizationUrl(accessToken, window.location.origin);
-      if (!authUrl) {
-        throw new Error("URL d'autorisation Facebook manquante.");
-      }
-
-      const popup = window.open(authUrl, "flare-facebook-oauth", "width=680,height=760");
-      if (!popup) {
-        throw new Error("La popup Facebook a ete bloquee par le navigateur.");
-      }
-
-      await new Promise<void>((resolve, reject) => {
-        let done = false;
-        let receivedResult = false;
-
-        const cleanup = () => {
-          if (done) return;
-          done = true;
-          window.removeEventListener("message", handleMessage);
-          window.clearInterval(closeWatcher);
-        };
-
-        const handleMessage = (event: MessageEvent) => {
-          const allowedOrigins = new Set([window.location.origin, new URL(getApiBaseUrl()).origin]);
-          if (!allowedOrigins.has(event.origin)) return;
-          const payload = event.data as { type?: string; status?: string; detail?: string } | null;
-          if (!payload || payload.type !== "flare-facebook-oauth") return;
-          receivedResult = true;
-          cleanup();
-          if (payload.status === "success") {
-            resolve();
-            return;
-          }
-          reject(new Error(payload.detail || "Connexion Facebook echouee."));
-        };
-
-        const closeWatcher = window.setInterval(() => {
-          if (!popup.closed) return;
-          cleanup();
-          if (receivedResult) {
-            resolve();
-            return;
-          }
-          reject(new Error("Connexion Facebook interrompue avant validation."));
-        }, 400);
-
-        window.addEventListener("message", handleMessage);
-      });
+      await runFacebookMessengerOAuthPopup(accessToken);
 
       await refreshFacebookState();
       const next = await refreshSetup();
@@ -293,9 +246,7 @@ export default function ChatbotSetupWizard({
 
   const handleActivatePage = async (pageId: string) => {
     if (!canManagePages) {
-      if (!canManagePages) {
-        setFacebookError("Vous n'avez pas les droits requis pour activer une page Facebook sur cette organisation.");
-      }
+      setFacebookError("Vous n'avez pas les droits requis pour activer une page Facebook sur cette organisation.");
       return;
     }
     setFacebookBusyPageId(pageId);
@@ -312,6 +263,7 @@ export default function ChatbotSetupWizard({
       if (next?.step === "configure") {
         setLocalStatus(next);
       }
+      setFacebookError(null);
     } catch (error) {
       setFacebookError(
         normalizeSessionError(
@@ -494,7 +446,8 @@ export default function ChatbotSetupWizard({
           <Panel>
             <h2 className="text-[26px] font-semibold text-white">Etape 1 - Connexion page Facebook</h2>
             <p className="mt-2 text-[14px] leading-7 text-white/42">
-              Lancez OAuth, choisissez la page puis activez-la pour ouvrir la configuration.
+              Le bouton ouvre une fenêtre Meta : l’écran peut dire « continuer » ou « reconnecter » — c’est normal, c’est l’autorisation du compte.
+              Ensuite vos pages apparaissent ci-dessous : choisissez-en une et activez-la pour Messenger, puis passez à la configuration.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <button

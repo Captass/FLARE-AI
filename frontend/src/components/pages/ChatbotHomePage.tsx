@@ -1,7 +1,8 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
-import { Brush, SlidersHorizontal, BarChart3, Users } from "lucide-react";
+import { Brush, SlidersHorizontal, BarChart3, Users, Loader2, MessageSquare, Bot } from "lucide-react";
 import PlatformCard, { NotifBadge } from "@/components/PlatformCard";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import PageSelector from "@/components/PageSelector";
@@ -9,6 +10,7 @@ import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
   resyncFacebookMessengerPages,
+  runFacebookMessengerOAuthPopup,
   type FacebookMessengerPage,
 } from "@/lib/facebookMessenger";
 
@@ -16,7 +18,16 @@ import { useState, useEffect, useCallback } from "react";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
 import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
-import { MessageSquare, Bot } from "lucide-react";
+import type { ChatbotSetupStatus } from "@/lib/chatbotSetup";
+
+const ChatbotSetupWizard = dynamic(() => import("@/components/ChatbotSetupWizard"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center py-16">
+      <Loader2 className="h-8 w-8 animate-spin text-orange-400/80" aria-hidden />
+    </div>
+  ),
+});
 
 interface ChatbotHomePageProps {
   token?: string | null;
@@ -29,6 +40,10 @@ interface ChatbotHomePageProps {
   onSelectPage?: (pageId: string) => void;
   /** Remonte la liste des pages (après OAuth ou activation) vers page.tsx */
   onPagesChanged?: (pages: FacebookMessengerPage[]) => void;
+  /** Statut du parcours d’installation (connexion → préférences) */
+  setupStatus?: ChatbotSetupStatus | null;
+  onRefreshSetupStatus?: () => Promise<ChatbotSetupStatus | null>;
+  onRequestOrganizationSelection?: () => void;
 }
 
 const ENTRIES = [
@@ -75,7 +90,21 @@ export default function ChatbotHomePage({
   selectedPageId = null,
   onSelectPage,
   onPagesChanged,
+  setupStatus = null,
+  onRefreshSetupStatus,
+  onRequestOrganizationSelection,
 }: ChatbotHomePageProps) {
+  const [skipSetupWizard, setSkipSetupWizard] = useState(false);
+
+  useEffect(() => {
+    if (setupStatus?.step === "complete") {
+      setSkipSetupWizard(false);
+    }
+  }, [setupStatus?.step]);
+
+  const showSetupWizard =
+    Boolean(setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
+
   const hasPageSelected = Boolean(selectedPageId);
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
@@ -84,6 +113,8 @@ export default function ChatbotHomePage({
   const [canManageFb, setCanManageFb] = useState(false);
   const [fbBusyPageId, setFbBusyPageId] = useState<string | null>(null);
   const [pagesRefreshBusy, setPagesRefreshBusy] = useState(false);
+  const [fbOauthBusy, setFbOauthBusy] = useState(false);
+  const [activationNotice, setActivationNotice] = useState<string | null>(null);
 
   const resolveToken = useCallback(async () => {
     if (getFreshToken) return (await getFreshToken()) || token || null;
@@ -116,6 +147,13 @@ export default function ChatbotHomePage({
         const st = await loadFacebookMessengerStatus(t);
         onPagesChanged?.(st.pages);
         onSelectPage?.(pageId);
+        const name = st.pages.find((p) => p.page_id === pageId)?.page_name?.trim();
+        setActivationNotice(
+          name
+            ? `« ${name} » est activée sur Messenger : le webhook est branché. Envoyez un message test à la Page.`
+            : "Page activée sur Messenger : le webhook est branché. Envoyez un message test à la Page."
+        );
+        window.setTimeout(() => setActivationNotice(null), 12000);
       } catch (e) {
         console.error(e);
         const msg =
@@ -130,16 +168,34 @@ export default function ChatbotHomePage({
     [resolveToken, canManageFb, onPagesChanged, onSelectPage]
   );
 
-  const handleAddOrResyncPages = useCallback(async () => {
+  const handleConnectMetaPages = useCallback(async () => {
     const t = await resolveToken();
-    if (!t || !canManageFb) {
+    if (!t) {
+      alert("Session expirée. Reconnectez-vous à FLARE.");
+      return;
+    }
+    if (!canManageFb) {
+      alert("Vous n’avez pas les droits pour lier Facebook. Demandez à un administrateur de l’espace, ou ouvrez Paramètres.");
       onPush("chatbot-parametres");
       return;
     }
-    if (pages.length === 0) {
-      onPush("chatbot-parametres");
-      return;
+    setFbOauthBusy(true);
+    try {
+      await runFacebookMessengerOAuthPopup(t);
+      const st = await loadFacebookMessengerStatus(t);
+      setCanManageFb(st.can_manage_pages);
+      if (st.pages?.length) onPagesChanged?.(st.pages);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Connexion Meta interrompue.";
+      alert(msg);
+    } finally {
+      setFbOauthBusy(false);
     }
+  }, [resolveToken, canManageFb, onPagesChanged, onPush]);
+
+  const handleSyncPagesList = useCallback(async () => {
+    const t = await resolveToken();
+    if (!t || !canManageFb) return;
     setPagesRefreshBusy(true);
     try {
       await resyncFacebookMessengerPages(t);
@@ -148,14 +204,16 @@ export default function ChatbotHomePage({
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser la liste/i.test(msg)) {
-        onPush("chatbot-parametres");
+        alert(
+          `${msg}\n\nUtilisez le bouton « Ajouter des pages (Meta) » pour rouvrir Facebook et renouveler l’autorisation.`
+        );
       } else {
-        alert(msg || "Impossible d’actualiser la liste des pages. Ouvrez Paramètres pour reconnecter Facebook.");
+        alert(msg || "Impossible d’actualiser la liste des pages.");
       }
     } finally {
       setPagesRefreshBusy(false);
     }
-  }, [resolveToken, canManageFb, pages.length, onPagesChanged, onPush]);
+  }, [resolveToken, canManageFb, onPagesChanged]);
 
   const loadKPIs = useCallback(
     async (silent = false) => {
@@ -204,6 +262,43 @@ export default function ChatbotHomePage({
     overview?.step === "complete" &&
     Boolean(overview?.active_page?.webhook_subscribed && overview?.active_page?.direct_service_synced);
 
+  if (showSetupWizard && setupStatus) {
+    return (
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-8 md:py-10 flex flex-col gap-6">
+          <div className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] px-4 py-4 md:px-6 md:py-5">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-400/90">Mise en route</p>
+            <h2 className="mt-2 text-xl font-semibold text-fg/90">Configurez votre chatbot</h2>
+            <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
+              Connexion Facebook, page Messenger, identité et entreprise — tout au même endroit. Vous pourrez modifier
+              chaque détail ensuite dans les autres sections.
+            </p>
+          </div>
+          <ChatbotSetupWizard
+            setupStatus={setupStatus}
+            token={token}
+            getFreshToken={getFreshToken}
+            onComplete={async () => {
+              await onRefreshSetupStatus?.(); 
+            }}
+            onSkip={() => setSkipSetupWizard(true)}
+            onRequestOrganizationSelection={onRequestOrganizationSelection}
+            onRefreshSetupStatus={onRefreshSetupStatus}
+          />
+          <div className="flex justify-center pb-8">
+            <button
+              type="button"
+              onClick={() => setSkipSetupWizard(true)}
+              className="text-sm text-fg/45 hover:text-fg/70 underline underline-offset-4 transition-colors"
+            >
+              Accéder à l’accueil du chatbot sans terminer
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[860px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
@@ -226,18 +321,25 @@ export default function ChatbotHomePage({
               Sélectionnez la page Facebook que vous souhaitez configurer.
             </p>
             
+            {activationNotice ? (
+              <div
+                role="status"
+                className="mb-4 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100/90"
+              >
+                {activationNotice}
+              </div>
+            ) : null}
             <PageSelector
               pages={pages}
               selectedPageId={selectedPageId}
               onSelect={(pid) => onSelectPage?.(pid)}
-              onAddPage={() => {
-                if (pages.length === 0) onPush("chatbot-parametres");
-                else void handleAddOrResyncPages();
-              }}
+              onConnectMetaPages={() => void handleConnectMetaPages()}
+              onSyncPagesList={pages.length > 0 && canManageFb ? () => void handleSyncPagesList() : undefined}
+              connectMetaBusy={fbOauthBusy}
+              syncListBusy={pagesRefreshBusy}
               onActivatePage={handleActivateMessengerPage}
               canManagePages={canManageFb}
               busyPageId={fbBusyPageId}
-              isRefreshingPages={pagesRefreshBusy}
             />
           </div>
         </motion.div>

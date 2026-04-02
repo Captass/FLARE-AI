@@ -12,7 +12,6 @@ import { FeatureLockedPanel } from "@/components/chatbot/ChatbotUi";
 import PageSelector from "@/components/PageSelector";
 
 import {
-  getApiBaseUrl,
   getChatbotOverview,
   getBillingFeatures,
   getCatalogue,
@@ -30,10 +29,10 @@ import {
 } from "@/lib/api";
 import {
   loadFacebookMessengerStatus,
-  getFacebookMessengerAuthorizationUrl,
   activateFacebookMessengerPage,
   disconnectFacebookMessengerPage,
   resyncFacebookMessengerPages,
+  runFacebookMessengerOAuthPopup,
   type FacebookMessengerStatus,
 } from "@/lib/facebookMessenger";
 import { CATALOGUE_STARTER_TEMPLATES, EMPTY_CATALOGUE_INPUT, EMPTY_PORTFOLIO_INPUT } from "@/components/chatbot/chatbotWorkspaceUtils";
@@ -71,6 +70,7 @@ export default function ChatbotParametresPage({
 
   // States interactifs
   const [facebookAuthLoading, setFacebookAuthLoading] = useState(false);
+  const [facebookSyncLoading, setFacebookSyncLoading] = useState(false);
   const [facebookBusyPageId, setFacebookBusyPageId] = useState<string | null>(null);
   const [facebookError, setFacebookError] = useState<string | null>(null);
 
@@ -160,38 +160,7 @@ export default function ChatbotParametresPage({
     setFacebookAuthLoading(true);
     setFacebookError(null);
     try {
-      const authUrl = await getFacebookMessengerAuthorizationUrl(accessToken, window.location.origin);
-      if (!authUrl) throw new Error("URL manquante");
-      const popup = window.open(authUrl, "flare-facebook-oauth", "width=680,height=760");
-      if (!popup) throw new Error("Popup bloquée");
-      
-      await new Promise<void>((resolve, reject) => {
-        let done = false;
-        let receivedResult = false;
-        const cleanup = () => {
-          if (done) return;
-          done = true;
-          window.removeEventListener("message", handleMessage);
-          window.clearInterval(closeWatcher);
-        };
-        const handleMessage = (event: MessageEvent) => {
-          const allowedOrigins = new Set([window.location.origin, new URL(getApiBaseUrl()).origin]);
-          if (!allowedOrigins.has(event.origin)) return;
-          const payload = event.data as { type?: string; status?: string; detail?: string } | null;
-          if (!payload || payload.type !== "flare-facebook-oauth") return;
-          receivedResult = true;
-          cleanup();
-          if (payload.status === "success") resolve();
-          else reject(new Error(payload.detail || "Échec"));
-        };
-        const closeWatcher = window.setInterval(() => {
-          if (!popup.closed) return;
-          cleanup();
-          if (receivedResult) resolve();
-          else reject(new Error("Interrompu"));
-        }, 400);
-        window.addEventListener("message", handleMessage);
-      });
+      await runFacebookMessengerOAuthPopup(accessToken);
       await loadData(true);
     } catch (err) {
       setFacebookError(err instanceof Error ? err.message : "Impossible de connecter");
@@ -230,16 +199,11 @@ export default function ChatbotParametresPage({
     }
   };
 
-  const handleResyncOrConnectFacebook = async () => {
+  const handleSyncPagesListOnly = async () => {
     if (!canManagePages) return;
     const accessToken = await resolveAccessToken(true);
     if (!accessToken) return;
-    const count = facebookStatus?.pages?.length ?? 0;
-    if (count === 0) {
-      await handleConnectFacebook();
-      return;
-    }
-    setFacebookAuthLoading(true);
+    setFacebookSyncLoading(true);
     setFacebookError(null);
     try {
       await resyncFacebookMessengerPages(accessToken);
@@ -247,12 +211,14 @@ export default function ChatbotParametresPage({
     } catch (err) {
       const msg = err instanceof Error ? err.message : "";
       if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser/i.test(msg)) {
-        await handleConnectFacebook();
+        setFacebookError(
+          `${msg} Utilisez le bouton « Ajouter des pages (Meta) » pour rouvrir Facebook et renouveler l’autorisation.`
+        );
       } else {
         setFacebookError(msg || "Impossible d'actualiser la liste des pages.");
       }
     } finally {
-      setFacebookAuthLoading(false);
+      setFacebookSyncLoading(false);
     }
   };
 
@@ -307,12 +273,18 @@ export default function ChatbotParametresPage({
              pages={facebookStatus?.pages || []}
              selectedPageId={selectedPageId || null}
              onSelect={(pageId) => onSelectPage?.(pageId)}
-             onAddPage={handleResyncOrConnectFacebook}
+             onConnectMetaPages={() => void handleConnectFacebook()}
+             onSyncPagesList={
+               (facebookStatus?.pages?.length ?? 0) > 0 && canManagePages
+                 ? () => void handleSyncPagesListOnly()
+                 : undefined
+             }
+             connectMetaBusy={facebookAuthLoading}
+             syncListBusy={facebookSyncLoading}
              loading={loading}
              onActivatePage={handleActivatePage}
              canManagePages={canManagePages}
              busyPageId={facebookBusyPageId}
-             isRefreshingPages={facebookAuthLoading && (facebookStatus?.pages?.length ?? 0) > 0}
            />
 
            {/* SECTION 1: Connexion Facebook */}

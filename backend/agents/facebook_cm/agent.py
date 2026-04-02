@@ -112,13 +112,26 @@ def _load_page_context(page_id: Optional[str]) -> dict:
         if not connection:
             return {}
 
+        org_slug = connection.organization_slug
         preferences = (
             db.query(ChatbotPreferences)
-            .filter(ChatbotPreferences.organization_slug == connection.organization_slug)
+            .filter(
+                ChatbotPreferences.organization_slug == org_slug,
+                ChatbotPreferences.page_id == resolved_page_id,
+            )
             .first()
         )
+        if not preferences:
+            preferences = (
+                db.query(ChatbotPreferences)
+                .filter(
+                    ChatbotPreferences.organization_slug == org_slug,
+                    ChatbotPreferences.page_id.is_(None),
+                )
+                .first()
+            )
         return {
-            "organization_slug": str(connection.organization_slug or "").strip().lower(),
+            "organization_slug": str(org_slug or "").strip().lower(),
             "preferences": preferences,
         }
     finally:

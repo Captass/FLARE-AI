@@ -1212,9 +1212,30 @@ export default function Home() {
         ) : activeView === "google" ? (
           <motion.div key="google" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GooglePage onPush={onPush} /></motion.div>
         ) : activeView === "chatbot" || activeView === "chatbot-hub" ? (
-          <motion.div key="chatbot-hub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage onPush={onPush} token={token} getFreshToken={getFreshToken} pages={facebookPages} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} onPagesChanged={handlePagesChanged} /></motion.div>
+          <motion.div key="chatbot-hub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage
+              onPush={onPush}
+              token={token}
+              getFreshToken={getFreshToken}
+              pages={facebookPages}
+              selectedPageId={selectedFacebookPageId}
+              onSelectPage={setSelectedFacebookPageId}
+              onPagesChanged={handlePagesChanged}
+              setupStatus={setupStatus}
+              onRefreshSetupStatus={loadSetupStatus}
+              onRequestOrganizationSelection={openOrganizationAccess}
+            /></motion.div>
         ) : activeView === "chatbot-personnalisation" ? (
-          <motion.div key="chatbot-personnalisation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotPersonnalisationPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} /></motion.div>
+          <motion.div key="chatbot-personnalisation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotPersonnalisationPage
+            token={token}
+            getFreshToken={getFreshToken}
+            onPush={onPush}
+            selectedPageId={selectedFacebookPageId}
+            selectedPageName={
+              selectedFacebookPageId
+                ? facebookPages.find((p) => p.page_id === selectedFacebookPageId)?.page_name ?? null
+                : null
+            }
+          /></motion.div>
         ) : activeView === "chatbot-parametres" ? (
           <motion.div key="chatbot-parametres" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotParametresPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} onPagesChanged={handlePagesChanged} /></motion.div>
         ) : activeView === "chatbot-dashboard" ? (

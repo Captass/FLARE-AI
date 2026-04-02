@@ -32,12 +32,15 @@ interface ChatbotPersonnalisationPageProps {
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   onPush: (level: NavLevel) => void;
   selectedPageId?: string | null;
+  /** Nom affiché de la page (hub Chatbot) — les préférences sont enregistrées par page quand un id est sélectionné. */
+  selectedPageName?: string | null;
 }
 
 export default function ChatbotPersonnalisationPage({
   token,
   getFreshToken,
   selectedPageId,
+  selectedPageName = null,
 }: ChatbotPersonnalisationPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -168,11 +171,32 @@ export default function ChatbotPersonnalisationPage({
         >
           <h1 className="text-3xl font-bold tracking-tight text-white/90">
             Personnalisation
+            {selectedPageName ? (
+              <span className="block mt-1 text-xl font-semibold text-orange-400/95">— {selectedPageName}</span>
+            ) : null}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">
-            Identité, ton, langue, entreprise et offres de votre bot
+            Identité, ton, langue, entreprise et offres du bot Messenger
           </p>
         </motion.header>
+
+        {!selectedPageId ? (
+          <div
+            role="status"
+            className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90 leading-relaxed"
+          >
+            Aucune page n’est sélectionnée dans l’accueil Chatbot : les champs affichés viennent des{" "}
+            <strong className="text-amber-50">réglages par défaut de l’espace</strong>. Pour configurer un canal précis,
+            retournez au hub, cliquez sur une page dans la liste, puis rouvrez Personnalisation — les enregistrements
+            seront alors liés à cette page.
+          </div>
+        ) : (
+          <div className="rounded-xl border border-fg/[0.08] bg-fg/[0.03] px-4 py-3 text-sm text-fg/70 leading-relaxed">
+            Ces réglages sont enregistrés pour{" "}
+            <strong className="text-fg/90">{selectedPageName || `la page ${selectedPageId}`}</strong>. Pour une autre
+            page, changez la sélection sur l’accueil Chatbot puis revenez ici.
+          </div>
+        )}
 
         {/* ── Tabs superposées linéairement ── */}
         <motion.div
