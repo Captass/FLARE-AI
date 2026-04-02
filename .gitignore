@@ -12,6 +12,9 @@ __pycache__/
 *.db
 !test_e2e.db
 frontend/.next/
+# Anciens backups / caches Next (ne jamais versionner — dépasse la limite GitHub 100 Mo)
+frontend/.next_prev/
+frontend/.next_build_backup*/
 frontend/out/
 tmp/
 _archive/
