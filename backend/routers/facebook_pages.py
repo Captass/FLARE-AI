@@ -537,7 +537,8 @@ async def get_facebook_pages_status(
     authorization: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    # Lecture pour tout membre de l'org : la connexion / activation reste réservée aux editors.
+    context = _organization_context_from_authorization(authorization, require_edit=False)
     rows = (
         db.query(FacebookPageConnection)
         .filter(FacebookPageConnection.organization_slug == context["organization_slug"])
@@ -565,7 +566,7 @@ async def start_facebook_auth(
     frontend_origin: str | None = Query(default=None),
     authorization: str | None = Header(None),
 ):
-    context = _organization_context_from_authorization(authorization, require_edit=False)
+    context = _organization_context_from_authorization(authorization, require_edit=True)
     _require_meta_oauth_configured()
     callback_url = _facebook_callback_url(request)
 
@@ -686,30 +687,55 @@ async def facebook_auth_callback(
         connection.updated_at = now
 
     db.commit()
+
+    first_page_id = ""
+    if pages and isinstance(pages[0], dict):
+        first_page_id = str(pages[0].get("id") or "").strip()
+
+    success_detail: str
+    if first_page_id:
+        try:
+            result = await _activate_facebook_page_core(db, organization_slug, first_page_id)
+            activated_name = str(result.get("page", {}).get("page_name") or first_page_id)
+            if len(pages) > 1:
+                success_detail = (
+                    f"{len(pages)} pages liees a FLARE. «{activated_name}» est activee sur Messenger "
+                    "(changez de page active dans Parametres si besoin)."
+                )
+            else:
+                success_detail = (
+                    f"Votre page «{activated_name}» est connectee et activee pour le bot Messenger."
+                )
+        except HTTPException as exc:
+            success_detail = (
+                f"{len(pages)} page(s) enregistree(s). "
+                f"L'activation automatique a echoue : {exc.detail}. "
+                "Ouvrez Parametres du chatbot pour activer une page manuellement."
+            )
+    else:
+        success_detail = f"{len(pages)} page(s) enregistree(s). Ouvrez Parametres pour activer une page."
+
     return _callback_page(
         frontend_origin,
         "success",
-        f"{len(pages)} page(s) chargee(s) dans FLARE AI. Choisissez maintenant celles a activer.",
+        success_detail,
         page_count=len(pages),
     )
 
 
-@router.post("/pages/{page_id}/activate")
-async def activate_facebook_page(
-    page_id: str,
-    payload: FacebookPageActivationPayload,
-    authorization: str | None = Header(None),
-    db: Session = Depends(get_db),
-):
-    context = _organization_context_from_authorization(authorization, require_edit=True)
-    target_page_id = str(payload.page_id or page_id or "").strip()
-    if target_page_id != str(page_id or "").strip():
-        raise HTTPException(status_code=400, detail="Page Facebook incoherente.")
-
+async def _activate_facebook_page_core(
+    db: Session,
+    organization_slug: str,
+    target_page_id: str,
+) -> dict[str, Any]:
+    """
+    Abonnement Meta subscribed_apps, synchro Messenger direct, desactivation des autres pages actives de l'org.
+    Utilise par POST /pages/{id}/activate et par le callback OAuth (auto-activation de la 1re page).
+    """
     connection = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == context["organization_slug"],
+            FacebookPageConnection.organization_slug == organization_slug,
             FacebookPageConnection.page_id == target_page_id,
         )
         .first()
@@ -721,7 +747,7 @@ async def activate_facebook_page(
         db.query(FacebookPageConnection)
         .filter(
             FacebookPageConnection.page_id == target_page_id,
-            FacebookPageConnection.organization_slug != context["organization_slug"],
+            FacebookPageConnection.organization_slug != organization_slug,
             FacebookPageConnection.is_active == "true",
             FacebookPageConnection.status == "active",
         )
@@ -736,7 +762,7 @@ async def activate_facebook_page(
     other_active_connections = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == context["organization_slug"],
+            FacebookPageConnection.organization_slug == organization_slug,
             FacebookPageConnection.page_id != target_page_id,
             FacebookPageConnection.is_active == "true",
         )
@@ -759,7 +785,7 @@ async def activate_facebook_page(
     try:
         chatbot_preferences = _serialize_chatbot_preferences_for_direct_service(
             db.query(ChatbotPreferences)
-            .filter(ChatbotPreferences.organization_slug == context["organization_slug"])
+            .filter(ChatbotPreferences.organization_slug == organization_slug)
             .first()
         )
         await _subscribe_page_to_app(target_page_id, page_access_token)
@@ -813,6 +839,21 @@ async def activate_facebook_page(
 
     db.refresh(connection)
     return {"status": "ok", "page": _serialize_connection(connection)}
+
+
+@router.post("/pages/{page_id}/activate")
+async def activate_facebook_page(
+    page_id: str,
+    payload: FacebookPageActivationPayload,
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db),
+):
+    context = _organization_context_from_authorization(authorization, require_edit=True)
+    target_page_id = str(payload.page_id or page_id or "").strip()
+    if target_page_id != str(page_id or "").strip():
+        raise HTTPException(status_code=400, detail="Page Facebook incoherente.")
+
+    return await _activate_facebook_page_core(db, context["organization_slug"], target_page_id)
 
 
 @router.delete("/pages/{page_id}")

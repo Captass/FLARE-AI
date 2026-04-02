@@ -111,6 +111,12 @@ export default function ChatbotParametresPage({
       if (fbResult.status === "fulfilled") {
         setFacebookStatus(fbResult.value);
         onPagesChanged?.(fbResult.value.pages);
+      } else if (fbResult.status === "rejected") {
+        const msg =
+          fbResult.reason instanceof Error
+            ? fbResult.reason.message
+            : "État Facebook Messenger indisponible.";
+        setFacebookError((prev) => prev ?? msg);
       }
 
       if (nextBilling?.features.has_portfolio) {
@@ -137,8 +143,8 @@ export default function ChatbotParametresPage({
   }, [selectedPageId, overview, onSelectPage]);
 
 
-  const canEdit = facebookStatus?.can_edit ?? true;
-  const canManagePages = facebookStatus?.can_manage_pages ?? canEdit;
+  const canEdit = facebookStatus?.can_edit ?? false;
+  const canManagePages = facebookStatus?.can_manage_pages ?? false;
   const planFeatures = billing?.features || null;
 
   // --- Facebook Actions ---

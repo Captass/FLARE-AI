@@ -392,7 +392,6 @@ def get_chatbot_setup_status(
     has_connected_page = active_page is not None
     has_identity = _has_identity_preferences(prefs)
     has_business_profile = _has_business_profile(prefs)
-    has_business_profile = _has_business_profile(prefs)
     configure_stage = _configure_stage(prefs)
     step = _setup_step(active_page, prefs)
 

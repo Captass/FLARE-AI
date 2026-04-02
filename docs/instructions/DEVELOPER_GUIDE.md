@@ -217,9 +217,10 @@ Chaque utilisateur suit ce flow :
 
 1. **Connexion Facebook** — OAuth popup `GET /api/facebook/auth` → popup navigateur → `GET /api/facebook/callback`
 2. **Token stocké** — `page_access_token` chiffré (Fernet) dans `facebook_page_connections`
-3. **Activation** — `POST /api/facebook/pages/{page_id}/activate` : subscribe webhook Meta + sync direct service
-4. **Bot actif** — webhook Messenger → `POST /webhook/facebook` → `facebook_cm/agent.py` → Gemini Chatbot
-5. **Déconnexion stricte** — `DELETE /api/facebook/pages/{page_id}` : désabonne l'app Meta, **supprime le record en base** (déconnexion définitive)
+3. **Activation automatique (callback)** — après enregistrement des pages, la **première page** de la réponse Meta est activée comme `POST /api/facebook/pages/{page_id}/activate` (subscribe `subscribed_apps` + sync service Messenger). Si Meta renvoie plusieurs pages, les autres restent disponibles dans Paramètres. En cas d’échec (conflit org, sync), le message de succès OAuth l’indique et l’activation manuelle reste possible.
+4. **Activation manuelle** — `POST /api/facebook/pages/{page_id}/activate` pour changer de page active ou après échec auto
+5. **Bot actif** — webhook Messenger → `POST /webhook/facebook` (service direct ou backend selon configuration Meta) → traitement IA
+6. **Déconnexion stricte** — `DELETE /api/facebook/pages/{page_id}` : désabonne l'app Meta, **supprime le record en base** (déconnexion définitive)
 
 Le `selectedPageId` est propagé à chaque composant chatbot. Chaque appel API inclut ce paramètre pour isoler les données par page.
 
@@ -278,6 +279,7 @@ Ce qu'il faut avoir configuré dans [developers.facebook.com](https://developers
 
 | Date | Composant | Plateforme | Changements |
 |------|-----------|------------|-------------|
+| 2 avril 2026 | Backend | — | **OAuth Facebook** : activation auto de la 1re page après callback (`_activate_facebook_page_core`), refactor partagé avec `POST .../activate` |
 | 2 avril 2026 (session 2) | Backend | Render | **Déconnexion stricte Facebook** : `DELETE /api/facebook/pages/{id}` supprime le record en DB |
 | 2 avril 2026 (session 2) | Backend | Render | **Routage multi-clés Gemini** : `get_llm(purpose=...)` avec fallback sur `GEMINI_API_KEY_GLOBAL` |
 | 2 avril 2026 (session 2) | Backend | Render | Nommage `GEMINI_API_KEY` → `GEMINI_API_KEY_GLOBAL` dans `config.py` + `llm_factory.py` |
