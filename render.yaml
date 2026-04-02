@@ -39,6 +39,18 @@ services:
           envVarKey: RENDER_EXTERNAL_URL
       - key: NODE_ENV
         value: "production"
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        value: "AIzaSyDZld3Ndw9maCtJsi3Ol9F6gV9Zbf4tZRg"
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: "rams-flare-ai.firebaseapp.com"
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        value: "rams-flare-ai"
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        value: "rams-flare-ai.firebasestorage.app"
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        value: "461942823604"
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        value: "1:461942823604:web:46b2d179d027b7849195e1"
 
 databases:
   - name: flare-db
