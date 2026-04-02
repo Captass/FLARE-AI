@@ -34,7 +34,7 @@ services:
         value: "https://flareai.ramsflare.com"
 <<<<<<< HEAD
       # --- Multi-Keys Gemini ---
-      - key: GEMINI_API_KEY
+      - key: GEMINI_API_KEY_GLOBAL
         value: "a_remplir"
       - key: GEMINI_API_KEY_CHATBOT
         value: "a_remplir"

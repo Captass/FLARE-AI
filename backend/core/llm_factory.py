@@ -51,7 +51,7 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
         effective_model = model_override or settings.GEMINI_MODEL
 
         # Logique de fallback multi-clés Gemini
-        api_key = settings.GEMINI_API_KEY
+        api_key = settings.GEMINI_API_KEY_GLOBAL
         if purpose == "chatbot" and settings.GEMINI_API_KEY_CHATBOT:
             api_key = settings.GEMINI_API_KEY_CHATBOT
         elif purpose == "assistant_reasoning" and settings.GEMINI_API_KEY_ASSISTANT_REASONING:
