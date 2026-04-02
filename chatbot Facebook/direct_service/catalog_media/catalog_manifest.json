@@ -1,0 +1,405 @@
+{
+  "global_assets": {
+    "service_choice_catalog": [
+      {
+        "id": "offer_1_flash_video_express",
+        "label": "Offre 1 - Flash Video Express",
+        "description": "Offre de publicite video rapide en 24h avec tournage court, montage dynamique et format Facebook ou WhatsApp. Point d'entree a 200 000 Ar.",
+        "attachment_type": "image",
+        "file": "service_choice/catalog_images/offer-1-flash-video-express.jpg",
+        "trigger_keywords": [
+          "offre 1",
+          "flash",
+          "flash video express",
+          "video express",
+          "offre flash"
+        ]
+      },
+      {
+        "id": "offer_2_pack_boost_business",
+        "label": "Offre 2 - Pack Boost Business",
+        "description": "Pack de 3 publicites video avec presentation, produit ou service, temoignage client et conseils de diffusion. Offre pack a 800 000 Ar.",
+        "attachment_type": "image",
+        "file": "service_choice/catalog_images/offer-2-pack-boost-business.jpg",
+        "trigger_keywords": [
+          "offre 2",
+          "pack boost business",
+          "boost business",
+          "pack boost"
+        ]
+      },
+      {
+        "id": "offer_3_story_pro_impact",
+        "label": "Offre 3 - Story Pro Impact",
+        "description": "Offre publicitaire premium avec storytelling, interview, images travaillees et montage pro. Base a partir de 1 500 000 Ar.",
+        "attachment_type": "image",
+        "file": "service_choice/catalog_images/offer-3-story-pro-impact.jpg",
+        "trigger_keywords": [
+          "offre 3",
+          "story pro impact",
+          "story",
+          "story pro"
+        ]
+      },
+      {
+        "id": "offer_4_sur_mesure_pro",
+        "label": "Offre 4 - Sur Mesure Pro",
+        "description": "Offre publicitaire sur mesure avec concept, ecriture de scenario et strategie de communication. Tarif sur devis.",
+        "attachment_type": "image",
+        "file": "service_choice/catalog_images/offer-4-sur-mesure-pro.jpg",
+        "trigger_keywords": [
+          "offre 4",
+          "sur mesure pro",
+          "ultra premium"
+        ]
+      },
+      {
+        "id": "offer_5_gold_sur_mesure_pro",
+        "label": "Offre 5 - Gold Sur Mesure Pro",
+        "description": "Offre premium sur mesure pour campagne video publicitaire avec concept strategique, scenario adapte et diffusion integree. Tarif sur devis.",
+        "attachment_type": "image",
+        "file": "service_choice/catalog_images/offer-5-gold-sur-mesure-pro.jpg",
+        "trigger_keywords": [
+          "offre 5",
+          "gold sur mesure pro",
+          "gold",
+          "gold premium"
+        ]
+      }
+    ],
+    "service_choice_overview": [
+      {
+        "id": "services_catalog_main",
+        "label": "Catalogue choix des offres",
+        "description": "Visuel global des offres RAM'S FLARE pour montrer l'ensemble des choix disponibles avant l'envoi detaille des offres.",
+        "attachment_type": "image",
+        "file": "service_choice/catalog_images/catalogue-services.jpg",
+        "trigger_keywords": [
+          "services",
+          "service",
+          "prestations",
+          "prestation",
+          "catalogue",
+          "catalog",
+          "offres",
+          "offre",
+          "que faites-vous",
+          "que proposez-vous",
+          "what do you do",
+          "what services",
+          "inona avy",
+          "tolotra"
+        ]
+      }
+    ]
+  },
+  "services": {
+    "spot_publicitaire": {
+      "service_label": "Spot publicitaire",
+      "service_description": "Production de spots publicitaires et videos promotionnelles pour marques, entreprises, campagnes et lancements de produits.",
+      "catalog_images": [
+        {
+          "id": "spot_catalog_main",
+          "label": "Catalogue prix spot publicitaire",
+          "description": "Image catalogue principale a envoyer pour une demande de prix, tarif ou devis liee a un spot publicitaire ou une video promotionnelle.",
+          "attachment_type": "image",
+          "drive_file_id": "1qEveo6-QKRbX14vcQCt0Hf5FH0SwO9Uj",
+          "drive_url": "https://drive.google.com/file/d/1qEveo6-QKRbX14vcQCt0Hf5FH0SwO9Uj/view?usp=drive_web",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "spot",
+            "publicitaire",
+            "video promotionnelle",
+            "advertising"
+          ]
+        }
+      ],
+      "portfolio_videos": [
+        {
+          "id": "spot_portfolio_01",
+          "label": "Portfolio video spot publicitaire",
+          "description": "Video exemple a envoyer quand le prospect veut voir une realisation de spot publicitaire.",
+          "attachment_type": "video",
+          "drive_file_id": "1RqEGvEk_jd78JPwDwNJ9s_7wFVHqyzFv",
+          "drive_url": "https://drive.google.com/file/d/1RqEGvEk_jd78JPwDwNJ9s_7wFVHqyzFv/view?usp=sharing",
+          "trigger_keywords": [
+            "portfolio",
+            "realisations",
+            "exemple",
+            "spot",
+            "publicitaire"
+          ]
+        }
+      ],
+      "portfolio_images": [
+        {
+          "id": "spot_portfolio_img_01",
+          "label": "Portfolio photo spot publicitaire",
+          "description": "Image de reference pour un spot publicitaire si aucune video portfolio n'est disponible.",
+          "attachment_type": "image",
+          "file": "spot_publicitaire/portfolio_images/portfolio-01.jpg",
+          "trigger_keywords": [
+            "portfolio",
+            "spot",
+            "publicitaire"
+          ]
+        }
+      ]
+    },
+    "video_documentaire": {
+      "service_label": "Film documentaire",
+      "service_description": "Production de videos documentaires, films institutionnels et recits de projet pour entreprises, ONG, institutions et campagnes d'impact.",
+      "catalog_images": [
+        {
+          "id": "doc_catalog_main",
+          "label": "Catalogue prix video documentaire",
+          "description": "Image catalogue principale a envoyer quand le prospect demande le prix ou un devis pour une video documentaire ou un film institutionnel.",
+          "attachment_type": "image",
+          "file": "video_documentaire/catalog_images/catalogue-prix.jpg",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "video documentaire",
+            "documentaire",
+            "film institutionnel"
+          ]
+        }
+      ],
+      "portfolio_videos": [
+        {
+          "id": "doc_portfolio_01",
+          "label": "Portfolio video documentaire",
+          "description": "Video exemple a envoyer quand le prospect veut voir une realisation documentaire.",
+          "attachment_type": "video",
+          "drive_file_id": "1p-gvQgj21BHVcxihL1p9FTOf8nLxOpEi",
+          "drive_url": "https://drive.google.com/file/d/1p-gvQgj21BHVcxihL1p9FTOf8nLxOpEi/view?usp=sharing",
+          "trigger_keywords": [
+            "portfolio",
+            "realisations",
+            "documentaire",
+            "video documentaire"
+          ]
+        }
+      ],
+      "portfolio_images": [
+        {
+          "id": "doc_portfolio_img_01",
+          "label": "Portfolio photo documentaire",
+          "description": "Image de reference documentaire si aucune video portfolio n'est disponible.",
+          "attachment_type": "image",
+          "file": "video_documentaire/portfolio_images/portfolio-01.jpg",
+          "trigger_keywords": [
+            "portfolio",
+            "documentaire"
+          ]
+        }
+      ]
+    },
+    "captation_evenementielle": {
+      "service_label": "Captation evenementielle",
+      "service_description": "Captation video d'evenements, conferences, ceremonies, concerts, lancements et reportages terrain.",
+      "catalog_images": [
+        {
+          "id": "captation_catalog_main",
+          "label": "Catalogue prix captation evenementielle",
+          "description": "Image catalogue a envoyer pour une demande de prix ou devis en captation evenementielle.",
+          "attachment_type": "image",
+          "file": "captation_evenementielle/catalog_images/catalogue-prix.jpg",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "captation",
+            "evenement",
+            "conference",
+            "concert"
+          ]
+        }
+      ],
+      "portfolio_videos": [
+        {
+          "id": "captation_portfolio_01",
+          "label": "Portfolio video captation evenementielle",
+          "description": "Video exemple a envoyer quand le prospect veut voir une captation d'evenement.",
+          "attachment_type": "video",
+          "file": "captation_evenementielle/portfolio_videos/portfolio-01.mp4",
+          "trigger_keywords": [
+            "portfolio",
+            "realisations",
+            "captation",
+            "evenement"
+          ]
+        }
+      ],
+      "portfolio_images": [
+        {
+          "id": "captation_portfolio_img_01",
+          "label": "Portfolio photo captation evenementielle",
+          "description": "Image de reference pour la captation evenementielle.",
+          "attachment_type": "image",
+          "file": "captation_evenementielle/portfolio_images/portfolio-01.jpg",
+          "trigger_keywords": [
+            "portfolio",
+            "captation",
+            "evenement"
+          ]
+        }
+      ]
+    },
+    "regie_multicamera": {
+      "service_label": "Regie multicamera",
+      "service_description": "Regie multicamera pour conferences, plateaux, shows, ceremonies et productions multi-angles.",
+      "catalog_images": [
+        {
+          "id": "regie_catalog_main",
+          "label": "Catalogue prix regie multicamera",
+          "description": "Image catalogue a envoyer pour une demande de prix ou devis en regie multicamera.",
+          "attachment_type": "image",
+          "file": "regie_multicamera/catalog_images/catalogue-prix.jpg",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "regie",
+            "multicam",
+            "multicamera"
+          ]
+        }
+      ],
+      "portfolio_videos": [
+        {
+          "id": "regie_portfolio_01",
+          "label": "Portfolio video regie multicamera",
+          "description": "Video exemple a envoyer pour montrer une prestation de regie multicamera.",
+          "attachment_type": "video",
+          "file": "regie_multicamera/portfolio_videos/portfolio-01.mp4",
+          "trigger_keywords": [
+            "portfolio",
+            "realisations",
+            "regie",
+            "multicam",
+            "multicamera"
+          ]
+        }
+      ],
+      "portfolio_images": [
+        {
+          "id": "regie_portfolio_img_01",
+          "label": "Portfolio photo regie multicamera",
+          "description": "Image de reference pour la regie multicamera si aucune video n'est disponible.",
+          "attachment_type": "image",
+          "file": "regie_multicamera/portfolio_images/portfolio-01.jpg",
+          "trigger_keywords": [
+            "portfolio",
+            "regie",
+            "multicamera"
+          ]
+        }
+      ]
+    },
+    "livestreaming": {
+      "service_label": "Livestream multicamera",
+      "service_description": "Livestream multicamera pour evenements, conferences, ceremonies et prises de parole en direct. RAM'S FLARE en a deja realise plusieurs, mais aucune preuve video n'est encore prete ici.",
+      "catalog_images": [
+        {
+          "id": "live_catalog_main",
+          "label": "Catalogue prix livestream multicamera",
+          "description": "Image catalogue a envoyer pour une demande de prix, tarif ou devis en livestream multicamera.",
+          "attachment_type": "image",
+          "file": "livestreaming/catalog_images/catalogue-prix.jpg",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "livestream",
+            "multicam",
+            "multicamera",
+            "streaming",
+            "live",
+            "direct"
+          ]
+        }
+      ],
+      "portfolio_videos": [],
+      "portfolio_images": []
+    },
+    "shooting_photo": {
+      "service_label": "Shooting photo",
+      "service_description": "Shooting photo pour produits, evenements, corporate, portraits et contenus de communication visuelle.",
+      "catalog_images": [
+        {
+          "id": "photo_catalog_main",
+          "label": "Catalogue prix shooting photo",
+          "description": "Image catalogue a envoyer pour une demande de prix ou devis en shooting photo.",
+          "attachment_type": "image",
+          "file": "shooting_photo/catalog_images/catalogue-prix.jpg",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "shooting",
+            "photo",
+            "photographie"
+          ]
+        }
+      ],
+      "portfolio_videos": [],
+      "portfolio_images": [
+        {
+          "id": "photo_portfolio_01",
+          "label": "Portfolio photo shooting photo",
+          "description": "Image portfolio a envoyer quand le prospect veut voir des exemples de shooting photo.",
+          "attachment_type": "image",
+          "file": "shooting_photo/portfolio_images/portfolio-01.jpg",
+          "trigger_keywords": [
+            "portfolio",
+            "realisations",
+            "shooting",
+            "photo"
+          ]
+        }
+      ]
+    },
+    "location_studio": {
+      "service_label": "Location studio",
+      "service_description": "Location de studio pour tournage, shooting photo, enregistrement ou creation de contenus en environnement controle.",
+      "catalog_images": [
+        {
+          "id": "studio_catalog_main",
+          "label": "Catalogue prix location studio",
+          "description": "Image catalogue a envoyer pour une demande de prix ou disponibilite de studio.",
+          "attachment_type": "image",
+          "file": "location_studio/catalog_images/catalogue-prix.jpg",
+          "trigger_keywords": [
+            "prix",
+            "tarif",
+            "devis",
+            "studio",
+            "location studio",
+            "dispo",
+            "availability"
+          ]
+        }
+      ],
+      "portfolio_videos": [],
+      "portfolio_images": [
+        {
+          "id": "studio_portfolio_01",
+          "label": "Portfolio photo studio",
+          "description": "Image du studio a envoyer quand le prospect veut voir l'espace ou les installations.",
+          "attachment_type": "image",
+          "file": "location_studio/portfolio_images/portfolio-01.jpg",
+          "trigger_keywords": [
+            "portfolio",
+            "studio",
+            "realisations",
+            "visuel"
+          ]
+        }
+      ]
+    }
+  }
+}

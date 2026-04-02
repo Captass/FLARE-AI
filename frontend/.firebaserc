@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "rams-flare-ai"
+  },
+  "targets": {
+    "rams-flare-ai": {
+      "hosting": {
+        "flareai": [
+          "rams-flare-ai"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

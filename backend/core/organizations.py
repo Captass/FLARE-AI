@@ -1,0 +1,262 @@
+import json
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+from core.config import settings
+
+ACTIVE_ORGANIZATION_KEY = "active_organization"
+EDITABLE_ORGANIZATION_ROLES = {"owner", "admin"}
+DEFAULT_ROLE = "member"
+
+ROLE_LABELS = {
+    "owner": "Proprietaire",
+    "admin": "Admin",
+    "member": "Membre",
+    "viewer": "Lecture",
+}
+
+DEFAULT_ORGANIZATIONS: List[Dict[str, Any]] = [
+    {
+        "slug": "rams-flare",
+        "name": "RAM'S FLARE",
+        "members": [
+            {
+                "email": "cptskevin@gmail.com",
+                "display_name": "Kevin",
+                "role": "owner",
+            },
+            {
+                "email": "rijarandriamamonjisoa@gmail.com",
+                "display_name": "Rijarandriamamonjisoa",
+                "role": "admin",
+            },
+        ],
+        "plan_id": "business",
+        "offer_name": "Business partage",
+        "security_label": "Compte + connexion a l'organisation",
+        "description": "Agents, automatisations et offre partages pour RAM'S FLARE.",
+        "enabled_modules": ["chatbot", "assistant", "automations"],
+    }
+]
+
+
+def _normalize_email(value: Optional[str]) -> str:
+    return str(value or "").strip().lower()
+
+
+def _normalize_slug(value: Optional[str]) -> str:
+    return str(value or "").strip().lower()
+
+
+def _normalize_role(value: Optional[str]) -> str:
+    role = str(value or "").strip().lower()
+    return role if role in ROLE_LABELS else DEFAULT_ROLE
+
+
+def _fallback_display_name(email: str) -> str:
+    local_part = email.split("@")[0].replace(".", " ").replace("_", " ").replace("-", " ")
+    cleaned = " ".join(part for part in local_part.split() if part)
+    return cleaned.title() if cleaned else email
+
+
+def _normalize_members(item: Dict[str, Any]) -> List[Dict[str, str]]:
+    raw_members = item.get("members")
+    members: List[Dict[str, str]] = []
+
+    if isinstance(raw_members, list):
+        for raw_member in raw_members:
+            if isinstance(raw_member, str):
+                email = _normalize_email(raw_member)
+                if not email:
+                    continue
+                members.append(
+                    {
+                        "email": email,
+                        "display_name": _fallback_display_name(email),
+                        "role": DEFAULT_ROLE,
+                    }
+                )
+                continue
+
+            if not isinstance(raw_member, dict):
+                continue
+
+            email = _normalize_email(raw_member.get("email"))
+            if not email:
+                continue
+
+            members.append(
+                {
+                    "email": email,
+                    "display_name": str(raw_member.get("display_name") or "").strip() or _fallback_display_name(email),
+                    "role": _normalize_role(raw_member.get("role")),
+                }
+            )
+
+    if members:
+        return members
+
+    for email in item.get("member_emails", []):
+        normalized_email = _normalize_email(email)
+        if not normalized_email:
+            continue
+        members.append(
+            {
+                "email": normalized_email,
+                "display_name": _fallback_display_name(normalized_email),
+                "role": DEFAULT_ROLE,
+            }
+        )
+    return members
+
+
+def _load_registry() -> Dict[str, Dict[str, Any]]:
+    raw_registry = settings.ORGANIZATION_REGISTRY_JSON.strip() if settings.ORGANIZATION_REGISTRY_JSON else ""
+    source: List[Dict[str, Any]]
+
+    if raw_registry:
+        try:
+            parsed = json.loads(raw_registry)
+            source = parsed if isinstance(parsed, list) else []
+        except Exception:
+            source = DEFAULT_ORGANIZATIONS
+    else:
+        source = DEFAULT_ORGANIZATIONS
+
+    registry: Dict[str, Dict[str, Any]] = {}
+    for item in source:
+        slug = _normalize_slug(item.get("slug"))
+        if not slug:
+            continue
+
+        members = _normalize_members(item)
+        member_emails = [member["email"] for member in members]
+
+        registry[slug] = {
+            "slug": slug,
+            "name": item.get("name") or slug.upper(),
+            "members": members,
+            "member_emails": member_emails,
+            "plan_id": item.get("plan_id") or "business",
+            "offer_name": item.get("offer_name") or "Business partage",
+            "security_label": item.get("security_label") or "Compte + connexion a l'organisation",
+            "description": item.get("description") or "Espace partage entre membres verifies.",
+            "enabled_modules": item.get("enabled_modules") or ["chatbot", "assistant", "automations"],
+        }
+
+    return registry
+
+
+def get_organization(slug: Optional[str]) -> Optional[Dict[str, Any]]:
+    registry = _load_registry()
+    return registry.get(_normalize_slug(slug))
+
+
+def list_user_organizations(email: Optional[str]) -> List[Dict[str, Any]]:
+    normalized_email = _normalize_email(email)
+    if not normalized_email:
+        return []
+
+    memberships: List[Dict[str, Any]] = []
+    for organization in _load_registry().values():
+        if normalized_email in organization["member_emails"]:
+            memberships.append(serialize_organization(organization, normalized_email))
+    return memberships
+
+
+def user_can_access_organization(email: Optional[str], slug: Optional[str]) -> bool:
+    organization = get_organization(slug)
+    if not organization:
+        return False
+    return _normalize_email(email) in organization["member_emails"]
+
+
+def organization_scope_id(slug: str) -> str:
+    return f"org:{_normalize_slug(slug)}"
+
+
+def get_user_role_in_organization(email: Optional[str], slug: Optional[str] = None, organization: Optional[Dict[str, Any]] = None) -> Optional[str]:
+    candidate = organization or get_organization(slug)
+    normalized_email = _normalize_email(email)
+    if not candidate or not normalized_email:
+        return None
+
+    for member in candidate.get("members", []):
+        if member["email"] == normalized_email:
+            return member["role"]
+    return None
+
+
+def get_user_role_label(role: Optional[str]) -> str:
+    normalized_role = _normalize_role(role)
+    return ROLE_LABELS.get(normalized_role, ROLE_LABELS[DEFAULT_ROLE])
+
+
+def user_can_edit_organization(email: Optional[str], slug: Optional[str] = None, organization: Optional[Dict[str, Any]] = None) -> bool:
+    return bool(get_user_role_in_organization(email, slug, organization) in EDITABLE_ORGANIZATION_ROLES)
+
+
+def serialize_member(member: Dict[str, Any]) -> Dict[str, str]:
+    role = _normalize_role(member.get("role"))
+    return {
+        "email": _normalize_email(member.get("email")),
+        "display_name": str(member.get("display_name") or "").strip() or _fallback_display_name(_normalize_email(member.get("email"))),
+        "role": role,
+        "role_label": get_user_role_label(role),
+    }
+
+
+def serialize_organization(organization: Dict[str, Any], current_user_email: Optional[str] = None) -> Dict[str, Any]:
+    current_user_role = get_user_role_in_organization(current_user_email, organization=organization)
+    return {
+        "slug": organization["slug"],
+        "name": organization["name"],
+        "offer_name": organization["offer_name"],
+        "plan_id": organization["plan_id"],
+        "security_label": organization["security_label"],
+        "description": organization["description"],
+        "enabled_modules": organization["enabled_modules"],
+        "member_count": len(organization["member_emails"]),
+        "members": [serialize_member(member) for member in organization.get("members", [])],
+        "current_user_role": current_user_role,
+        "current_user_role_label": get_user_role_label(current_user_role),
+        "can_edit_branding": current_user_role in EDITABLE_ORGANIZATION_ROLES,
+    }
+
+
+def encode_active_organization(slug: str, connected_at: Optional[datetime] = None) -> str:
+    payload = {
+        "slug": _normalize_slug(slug),
+        "connected_at": (connected_at or datetime.utcnow()).isoformat(),
+    }
+    return json.dumps(payload)
+
+
+def decode_active_organization(value: Optional[str]) -> tuple[Optional[str], Optional[datetime]]:
+    raw = str(value or "").strip()
+    if not raw:
+        return None, None
+
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        return _normalize_slug(raw), None
+
+    slug = _normalize_slug(payload.get("slug"))
+    connected_at_raw = str(payload.get("connected_at") or "").strip()
+    if not connected_at_raw:
+        return slug or None, None
+
+    try:
+        connected_at = datetime.fromisoformat(connected_at_raw)
+    except ValueError:
+        connected_at = None
+
+    return slug or None, connected_at
+
+
+def is_active_organization_session_valid(connected_at: Optional[datetime]) -> bool:
+    if not connected_at:
+        return False
+    ttl = max(1, int(settings.ORGANIZATION_SESSION_HOURS))
+    return connected_at >= datetime.utcnow() - timedelta(hours=ttl)

@@ -1,0 +1,38 @@
+Correction et amélioration à travailler une par une:
+
+
+1. Paramètre: restructuration, et allègement.
+Mieux organisé
+
+2. Il faut aussi qu'on pense à la structure complète de connexion facebook et page après la carte chatbot facebook.
+Et choix des pages, et un moyen pour qu'on puisse selectionner la page qu'on veut.
+Donc possibilité 1 page = un chatbot et toutes les fonctionnalités. Pour chaque page.
+Préférence par page.
+Réflechir totalement à l'architecture et le flow sans surcharger.
+Car synchro avec le chatbot et la page impossible.
+
+3. Cliens & Conversation: Nom clients non à jour et synchonisés.
+
+4. Bouton bot actif ou inactif non fonctionnel.
+
+5. Tableau de bord: Statut chatbot: inactif .
+Doit être actif, et réellement actif avec FLARE AI.
+
+6. Les paramètres et préférences chatbot doivent tous réellements prendre effets. Tout ce qu'il y a en frontend, doit avoir un backend sans exception.
+
+7. Dans tableau de bord, plus de KPI et mettre un graph et là on peut suivre tous les KPI en temps et en heure, par KPI en direct avec petit retard. (professionnel)
+
+8. Dans paramètre, tout ce qui est visible (frontend) doivent réellement fonctionnés: Nom, changer mot de passe, sauvegarde, Dark mode, Light mode, Langues: Français et anglais, Rajouter d'autres fonctionnalités comme l'ajout de photot de profil,...
+
+9. Attention, chaque comptes ont leur propre espaces, chatbot, assistant,... 
+
+10. Renforcer la sécurité et confidentialité.
+
+11. Dans assistant, il doit avoir les anciennes fonctionnalités: mémoire, 
+connaissances, dossiers, conversations récentes,... toutes les anciennes fonctionnalités,... (séléction, suppr, modif nom, déplacer dans dossier, personnalisation assistant,...)
+
+12. Il doit avoir les 4 différents offres dans les abonnements:D:\Travail\RAM'S FLARE\Flare Group\Flare AI\FLARE AI\docs\Abonnements .
+
+13. Améliorer le design pour que ca sente pas que c'est fait avec de l'IA. Il faut améliorer les effets de glass transparents, luxe et changer le fond pour que ca donne l'effet de glass tech moderne et très dynamique. 
+
+14.Refaire toute l'app pour qu'elle soit très interactif, avec beaucoups d'animations

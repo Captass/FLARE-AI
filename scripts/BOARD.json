@@ -1,0 +1,826 @@
+[
+  {
+    "id": "TKT-001",
+    "title": "Mettre à jour le README",
+    "description": "Documentation de l'architecture",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T08:29:58.357Z"
+  },
+  {
+    "id": "TKT-002",
+    "title": "Restructuration Admin Panel (Onglets Utilisateurs Connectés et Nouveaux Comptes)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-21T09:46:12.554Z"
+  },
+  {
+    "id": "TKT-003",
+    "title": "Restructuration Agents Panel (Affichage statuts des agents)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-21T09:46:14.806Z"
+  },
+  {
+    "id": "TKT-004",
+    "title": "Mode guidé System Prompt (Formulaire structuré + Persistance Backend)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T09:46:16.963Z"
+  },
+  {
+    "id": "TKT-005",
+    "title": "Confirmation reset mot de passe (Feedback UI)",
+    "description": "",
+    "status": "DONE",
+    "assignee": null,
+    "created": "2026-03-21T09:56:10.118Z"
+  },
+  {
+    "id": "TKT-006",
+    "title": "Intégration Paiement (Stripe / Vanilla Pay)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T09:58:21.668Z"
+  },
+  {
+    "id": "TKT-007",
+    "title": "OAuth Google per-user (Agents gated par sub)",
+    "description": "",
+    "status": "DONE",
+    "assignee": null,
+    "created": "2026-03-21T10:08:16.678Z"
+  },
+  {
+    "id": "TKT-008",
+    "title": "Fiabilisation des options de l'Admin Panel (Données & Robustesse)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T11:11:46.362Z"
+  },
+  {
+    "id": "TKT-009",
+    "title": "Fiabilisation des Paiements (Customer Portal, Annulation)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T11:13:00.509Z"
+  },
+  {
+    "id": "TKT-010",
+    "title": "Refonte UI Mobile (Responsive, Sidebar collapsible)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-21T11:17:00.362Z"
+  },
+  {
+    "id": "TKT-011",
+    "title": "[CRITIQUE] Génération d'image KO (Le Superviseur ne route pas vers Media Worker)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "GAMMA",
+    "created": "2026-03-21T11:21:09.134Z"
+  },
+  {
+    "id": "TKT-012",
+    "title": "[URGENCE] Le Chat refuse de générer des images (Erreur de routage Supervisor)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T11:21:19.518Z"
+  },
+  {
+    "id": "TKT-013",
+    "title": "Refonte boutons Image/Vidéo et gestion réelle de la qualité (HD/2K/4K)",
+    "description": "",
+    "status": "IN_PROGRESS",
+    "assignee": "DELTA",
+    "created": "2026-03-21T11:28:36.220Z"
+  },
+  {
+    "id": "TKT-014",
+    "title": "[CRITIQUE] Génération d'images : API Google GenAI retourne indisponible",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T11:50:01.365Z"
+  },
+  {
+    "id": "TKT-015",
+    "title": "Affichage des fichiers/images dans le panneau latéral de session",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T12:33:42.045Z"
+  },
+  {
+    "id": "TKT-016",
+    "title": "Refonte UI Globale PC (Phrase d'accroche, Contraste Boutons, Esthétique)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-21T13:13:07.708Z"
+  },
+  {
+    "id": "TKT-017",
+    "title": "Refonte Guide Interactif (Focus visuel, Ordre, Contenu détaillé)",
+    "description": "",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-21T13:13:09.979Z"
+  },
+  {
+    "id": "TKT-018",
+    "title": "Fix UI Admin: Boutons blancs, Email Utilisateurs, Erreur Cost Intelligence",
+    "description": "",
+    "status": "DONE",
+    "assignee": null,
+    "created": "2026-03-21T13:45:07.311Z"
+  },
+  {
+    "id": "TKT-019",
+    "title": "Fix UI Globale: Boutons du Guide Interactif, Clarté Préférences Agent",
+    "description": "",
+    "status": "DONE",
+    "assignee": null,
+    "created": "2026-03-21T13:45:09.597Z"
+  },
+  {
+    "id": "TKT-020",
+    "title": "Fix Admin Connected Users: Email mapping and Auto-refresh Button",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T14:03:57.489Z"
+  },
+  {
+    "id": "TKT-021",
+    "title": "Système de Présence Temps Réel (Heartbeat / Ping) pour l'Admin Panel",
+    "description": "",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T14:27:18.851Z"
+  },
+  {
+    "id": "TKT-022",
+    "title": "Agent Tableur (Excel) - Architecture et Worker Backend",
+    "description": "Créer spreadsheet_worker.py basé sur openpyxl/pandas. Agent LangGraph avec outils de génération de fichiers .xlsx, support de formules simples, styles et graphiques basiques. Gestion du CRUD (update d'un fichier existant) et sauvegarde Cloud Storage. Intégration dans supervisor.py avec routage /sheet. BETA",
+    "status": "IN_REVIEW",
+    "assignee": "BETA",
+    "created": "2026-03-21T22:00:51.701Z"
+  },
+  {
+    "id": "TKT-023",
+    "title": "Agent Tableur (Excel) - UI Frontend & Visualisation",
+    "description": "Créer l'interface de prévisualisation ou téléchargement dans ChatWindow.tsx pour les fichiers Excel (.xlsx). Mettre à jour MessageInput.tsx pour déclencher le worker avec un prompt formaté. DELTA",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-21T22:01:02.776Z"
+  },
+  {
+    "id": "TKT-024",
+    "title": "Agent Tableur (Excel) - Audit des Mots-Clés et Robustesse",
+    "description": "Audit de la logique de routage dans supervisor.py (_WORKSPACE_KEYWORDS / _SHEET_KEYWORDS) pour s'assurer qu'il n'y a pas de conflit entre les outils. Valider que les erreurs de l'API LLM et de la création du fichier .xlsx sont bien interceptées. GAMMA",
+    "status": "TODO",
+    "assignee": "GAMMA",
+    "created": "2026-03-21T22:01:14.464Z"
+  },
+  {
+    "id": "TKT-025",
+    "title": "Agent Tableur (Excel) - Validation de la persistance Firebase",
+    "description": "Test E2E : S'assurer que le fichier .xlsx généré est bien uploadé dans Firebase Storage, que l'URL ne retourne pas d'erreur 403 CORS, et que le fichier est présent dans la table SQL via SessionMemory. EPSILON",
+    "status": "IN_PROGRESS",
+    "assignee": "EPSILON",
+    "created": "2026-03-21T22:01:21.991Z"
+  },
+  {
+    "id": "TKT-026",
+    "title": "Agent Word (CRUD) - Outil de lecture (Read)",
+    "description": "Ajouter la fonction read_word_document dans document_worker.py pour lire un docx existant via python-docx, et permettre au LLM de modifier (Update) le document en se basant sur le contenu actuel. BETA",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T22:03:18.950Z"
+  },
+  {
+    "id": "TKT-027",
+    "title": "TKT-023",
+    "description": "CRUD documents Word (Read)",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-21T22:03:23.003Z"
+  },
+  {
+    "id": "TKT-028",
+    "title": "Bug: Agent Word dysfonctionnel (Investigation et Fix)",
+    "description": "L'outil Word ne s'exécute pas correctement. Vérifier le routage, le worker et les logs d'erreur.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T22:19:15.184Z"
+  },
+  {
+    "id": "TKT-029",
+    "title": "Bug: Agent Excel dysfonctionnel (Investigation et Fix)",
+    "description": "L'outil Excel ne s'exécute pas correctement. Vérifier le routage, le worker et les logs d'erreur.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T22:19:20.845Z"
+  },
+  {
+    "id": "TKT-030",
+    "title": "Deep Fix: Outils Word et Excel CRUD dysfonctionnels",
+    "description": "L'humain signale que les outils Word et Excel (et leurs opérations CRUD) ne fonctionnent toujours pas depuis le Superviseur. Investigation approfondie requise sur le routage, l'exposition des tools, et l'exécution.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-21T22:26:36.974Z"
+  },
+  {
+    "id": "TKT-031",
+    "title": "Implémentation du Side-Panel 'Artifacts' (Split-screen)",
+    "description": "Créer une UI scindée (chat à gauche, preview à droite) pour visualiser les documents générés (Word, Excel, Images, Vidéos) en temps réel.",
+    "status": "IN_REVIEW",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:19:16.341Z"
+  },
+  {
+    "id": "TKT-032",
+    "title": "UI Actions 'Ouvrir avec Word/Google Docs' & Viewer interactif",
+    "description": "Ajouter les boutons d'action stylisés (comme Claude/Google) sur les messages contenant des fichiers, pour ouvrir dans le side-panel.",
+    "status": "IN_REVIEW",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:19:26.949Z"
+  },
+  {
+    "id": "TKT-033",
+    "title": "Amélioration massive (Cheat Code) des Workers Word & Excel",
+    "description": "Faire passer la qualité des DOCX et XLSX générés au niveau pro : ajout de graphiques, templates poussés, macros, multi-feuilles avancées.",
+    "status": "TODO",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:19:33.911Z"
+  },
+  {
+    "id": "TKT-034",
+    "title": "CRUD Images & Vidéos avec Inpainting/Masquage (Édition ciblée)",
+    "description": "Mettre à jour le worker media pour supporter les opérations CRUD : inpainting (modification locale par masque), outpainting, et filtres vidéo.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:19:42.245Z"
+  },
+  {
+    "id": "TKT-035",
+    "title": "Outil de sélection/masque sur les images pour édition IA",
+    "description": "Intégrer dans le side-panel une fonction pour dessiner un masque sur une image afin de demander à l'IA de modifier juste cette partie.",
+    "status": "TODO",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:19:49.355Z"
+  },
+  {
+    "id": "TKT-036",
+    "title": "Adapter l'UI Side-by-Side et les Outils pour Mobile",
+    "description": "Les modifications d'UI de type 'Artifact' (Split-screen, outils interactifs) doivent se comporter de manière fluide sur mobile (ex: panel passant au premier plan ou design adapté).",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:26:42.647Z"
+  },
+  {
+    "id": "TKT-037",
+    "title": "Adaptation Mobile Artifacts (Overlay au lieu de Split-screen)",
+    "description": "DELTA",
+    "status": "IN_REVIEW",
+    "assignee": null,
+    "created": "2026-03-22T00:31:05.720Z"
+  },
+  {
+    "id": "TKT-038",
+    "title": "Frontend: Mode Sélection/Masque pour Images (Inpainting)",
+    "description": "Ajouter un outil Canvas (Pinceau/Gomme) dans l'ArtifactViewer quand on visionne une image, pour permettre à l'utilisateur de peindre un masque et d'envoyer une requête d'Inpainting.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:37:41.953Z"
+  },
+  {
+    "id": "TKT-039",
+    "title": "Génération et CRUD de Vidéos (Veo/Luma)",
+    "description": "Étendre l'ArtifactViewer pour supporter la lecture vidéo. Lier l'UI au worker_media pour la génération et les outils de modification vidéo (trim, effects).",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:37:48.955Z"
+  },
+  {
+    "id": "TKT-040",
+    "title": "Word/Excel: Édition Manuelle Temps Réel",
+    "description": "Permettre à l'utilisateur de cliquer sur 'Éditer' dans le panel pour modifier manuellement le document. Enregistrer les changements sur Firebase et synchroniser le contexte LLM.",
+    "status": "IN_REVIEW",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:37:55.965Z"
+  },
+  {
+    "id": "TKT-041",
+    "title": "Word/Excel: Commentaires contextuels IA",
+    "description": "Dans le Viewer, permettre à l'utilisateur de surligner du texte ou une cellule et d'ajouter un commentaire. Le chat répond spécifiquement sur cette partie du document.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:38:03.000Z"
+  },
+  {
+    "id": "TKT-042",
+    "title": "Déploiement Backend V2.1 (Cloud Run)",
+    "description": "Compiler et déployer les workers (media.py, document_worker.py, spreadsheet_worker.py) modifiés avec l'Usine Laboratoire Phase 2 sur Google Cloud Run.",
+    "status": "TODO",
+    "assignee": "ALPHA",
+    "created": "2026-03-22T00:53:11.629Z"
+  },
+  {
+    "id": "TKT-043",
+    "title": "Word/Excel : Système de Modèles/Templates Intelligents",
+    "description": "L'agent doit proposer 3 templates visuels (ex: Corporate, Créatif, Minimaliste) avant de générer un doc ou permettre d'appliquer un thème sur un document existant.",
+    "status": "IN_REVIEW",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:59:25.445Z"
+  },
+  {
+    "id": "TKT-044",
+    "title": "Word : Table des matières et Graphiques Automatiques",
+    "description": "Ajouter le support des tables des matières (TOC) cliquables dans Word et l'insertion de graphiques matplotlib convertis en images directement dans le docx.",
+    "status": "IN_REVIEW",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:59:33.090Z"
+  },
+  {
+    "id": "TKT-045",
+    "title": "Excel : Outil d'Analyse de Données Automatisée (Insights)",
+    "description": "Ajouter un bouton 'Générer Insights' qui scanne l'Excel en cours et ajoute une nouvelle feuille 'Dashboard' avec des TCD (Tableaux Croisés Dynamiques) ou graphiques résumant les données.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T00:59:40.219Z"
+  },
+  {
+    "id": "TKT-046",
+    "title": "Frontend : Mode Présentation pour Document",
+    "description": "Dans l'ArtifactViewer, ajouter un mode 'Plein Écran / Diaporama' qui transforme un Word structuré en une présentation propre façon Reveal.js ou Google Slides.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:59:47.449Z"
+  },
+  {
+    "id": "TKT-047",
+    "title": "Multimédia : Outpainting (Expansion d'image) UI et Backend",
+    "description": "Ajouter un mode 'Étendre l'image' dans l'UI. Le backend utilise 'EDIT_MODE_OUTPAINT' de Google GenAI pour agrandir l'image au-delà de ses bordures d'origine.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T00:59:54.305Z"
+  },
+  {
+    "id": "TKT-048",
+    "title": "Mode Diaporama pour les documents (ArtifactViewer)",
+    "description": "DELTA",
+    "status": "IN_REVIEW",
+    "assignee": null,
+    "created": "2026-03-22T01:01:27.953Z"
+  },
+  {
+    "id": "TKT-049",
+    "title": "Word/Excel: Export en PDF Natif",
+    "description": "Implémenter la conversion des documents Word (.docx) et Excel (.xlsx) générés en PDF, avec un bouton de téléchargement rapide dans l'UI.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T01:11:00.669Z"
+  },
+  {
+    "id": "TKT-050",
+    "title": "Outil 'Historique des Versions' (Diff View)",
+    "description": "Permettre de voir l'historique d'un fichier (ex: Word v1, Word v2) avec la possibilité de restaurer une ancienne version depuis l'ArtifactViewer.",
+    "status": "IN_REVIEW",
+    "assignee": "DELTA",
+    "created": "2026-03-22T01:11:08.223Z"
+  },
+  {
+    "id": "TKT-051",
+    "title": "Word : Mode 'Révision Collaborative'",
+    "description": "L'IA ajoute des commentaires invisibles dans le JSON que le système convertit en commentaires Word natifs pour suggérer des réécritures.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T01:11:17.683Z"
+  },
+  {
+    "id": "TKT-052",
+    "title": "Code Artifacts : Syntax Highlighting interactif",
+    "description": "Pour les artefacts de type code (js, html), ajouter un éditeur CodeMirror ou Monaco au lieu d'un iframe simple, permettant le formatage, copie et édition manuelle.",
+    "status": "IN_REVIEW",
+    "assignee": "DELTA",
+    "created": "2026-03-22T01:11:25.991Z"
+  },
+  {
+    "id": "TKT-053",
+    "title": "Dropdown Historique des versions (ArtifactViewer)",
+    "description": "DELTA",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T01:14:30.251Z"
+  },
+  {
+    "id": "TKT-054",
+    "title": "Editeur de code dans ArtifactViewer (Syntax Highlighter)",
+    "description": "DELTA",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T01:14:36.246Z"
+  },
+  {
+    "id": "TKT-055",
+    "title": "Bug Critique: UI Artifacts non visible en prod",
+    "description": "L'utilisateur signale que rien n'a changé visuellement. Les images attachées (pièces jointes 'sheet' ou 'document') affichent un lien cassé d'image au lieu du bouton d'Artifact. Le layout side-by-side ne s'ouvre pas.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T01:57:38.632Z"
+  },
+  {
+    "id": "TKT-056",
+    "title": "Audit Global et Tests E2E post-Usine",
+    "description": "L'humain demande une rigueur absolue. L'équipe complète (Gamma pour la revue d'architecture, Epsilon pour les tests E2E) doit auditer les dernières features déployées pour garantir le 'Zéro Défaut'.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-22T02:03:02.771Z"
+  },
+  {
+    "id": "TKT-057",
+    "title": "Bug: Iframe Viewer page blanche pour Excel/Word",
+    "description": "L'utilisateur signale que le panel ArtifactViewer s'ouvre, mais que l'iframe Google/Microsoft affiche une page blanche au lieu du document. De plus, la barre de chat flottante ne semble pas ancrée correctement.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T15:02:26.585Z"
+  },
+  {
+    "id": "TKT-058",
+    "title": "Refonte UI: Sélection Textuelle native et Design Header",
+    "description": "L'utilisateur demande un design très propre (logos Word/Excel vs Google en tabs). Il veut aussi pouvoir SELECTIONNER le texte à la souris dans le viewer, et que cette sélection s'injecte automatiquement dans l'input bar.",
+    "status": "TODO",
+    "assignee": "DELTA",
+    "created": "2026-03-22T15:10:30.711Z"
+  },
+  {
+    "id": "TKT-059",
+    "title": "PDF Overlay & Interaction",
+    "description": "Gérer l'affichage PDF et simuler une interaction de type 'sélection par masque' comme sur les images (Bounding box) pour permettre la modification visuelle par l'IA.",
+    "status": "TODO",
+    "assignee": "DELTA",
+    "created": "2026-03-22T15:17:09.017Z"
+  },
+  {
+    "id": "TKT-060",
+    "title": "Nettoyage UI Chat: Masquer les URLs de documents",
+    "description": "Le texte de l'IA contient l'URL brute du document Google Storage, ce qui pollue visuellement le chat. Il faut modifier le composant ChatWindow.tsx pour parser le texte et remplacer ces longues URLs par un bouton/lien discret ou les supprimer purement et simplement vu qu'il y a déjà la 'Card' de la pièce jointe.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T15:21:40.392Z"
+  },
+  {
+    "id": "TKT-061",
+    "title": "Audit Fonctionnel: Test Multi-Sheets et Logos ArtifactViewer",
+    "description": "L'humain demande un audit manuel. 1. Vérifier si l'URL des logos Microsoft/Google ne sont pas cassés. 2. Vérifier que la génération Excel/Word gère bien les multiples pages/feuilles. 3. S'assurer que la correction via la barre de sélection est stable.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-22T15:27:09.022Z"
+  },
+  {
+    "id": "TKT-062",
+    "title": "Remplacement des logos Wikipedia par icônes Lucide dans ArtifactViewer (Erreur 403)",
+    "description": "DELTA",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T15:35:47.664Z"
+  },
+  {
+    "id": "TKT-063",
+    "title": "Bug: Liens Firebase toujours visibles dans le chat",
+    "description": "L'utilisateur signale que l'URL Google Storage apparaît toujours dans le texte de l'IA (le regex précédent n'a pas tout nettoyé). Il faut supprimer proprement tout le lien.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T15:50:13.554Z"
+  },
+  {
+    "id": "TKT-064",
+    "title": "Bug: Iframe Viewer Excel 'Impossible de prévisualiser'",
+    "description": "L'utilisateur indique que l'iframe Office/Google affiche une erreur de connectivité/impossible de prévisualiser pour les fichiers .xlsx. L'UX d'édition en live est donc bloquée. Il faut implémenter un fallback local (ex: via une librairie de rendu Excel JS comme SheetJS/Handsontable) ou forcer le téléchargement.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T15:50:26.018Z"
+  },
+  {
+    "id": "TKT-065",
+    "title": "Bug: Erreur 500 génération Excel (SpreadsheetWorker)",
+    "description": "L'utilisateur signale une erreur lors de la tentative de génération de fichier Excel depuis le chat (Une erreur inattendue s'est produite). Il faut enquêter sur les logs backend (Cloud Run) ou revoir spreadsheet_worker.py pour un crash Python.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T16:04:41.979Z"
+  },
+  {
+    "id": "TKT-066",
+    "title": "Bug: Crash Python (f-string) dans document_worker",
+    "description": "Correction de la syntaxe f-string invalide qui faisait crasher document_worker (backslash dans els['review_notes']). Déploiement effectué.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T16:33:30.565Z"
+  },
+  {
+    "id": "TKT-067",
+    "title": "Bug: Crash Python (user_id/gemini-model) dans les workers",
+    "description": "Correction du requirements matplotlib, fix des f-string, update des anciens modèles gemini-2.5-flash vers gemini-3-flash, et correctif sur le user_id (anonymous) lors de la sauvegarde SQL des fichiers générés.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T16:41:20.882Z"
+  },
+  {
+    "id": "TKT-068",
+    "title": "Bug: Envoi JSON structuré depuis ArtifactViewer (Pont manquant)",
+    "description": "L'utilisateur signale que la vraie sélection visuelle n'est pas connectée. Le frontend envoie un texte libre au lieu du JSON attendu par le backend pour la sélection {prompt, selection}.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T16:47:51.999Z"
+  },
+  {
+    "id": "TKT-069",
+    "title": "Endpoint & Parsing structure doc (Tâche C)",
+    "description": "Backend: Créer une route /api/files/structure qui télécharge un docx/xlsx, le parse et retourne un JSON avec la liste des sections (Titre 1, Tableau 2) ou des feuilles. Nécessaire pour l'UI de sélection.",
+    "status": "IN_REVIEW",
+    "assignee": "BETA",
+    "created": "2026-03-22T17:07:14.449Z"
+  },
+  {
+    "id": "TKT-070",
+    "title": "Frontend: Dropdowns de sélection (Tâches A et B)",
+    "description": "UI: Ajouter dans l'Ajustement Contextuel (ArtifactViewer) un bouton 'Sélectionner une zone'. Celui-ci fetch /api/files/structure et affiche un dropdown pour Word (Sections) ou 2 dropdowns pour Excel (Feuille + plage texte libre). Injecte ça proprement dans l'onEdit JSON.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T17:07:25.764Z"
+  },
+  {
+    "id": "TKT-071",
+    "title": "Nettoyage définitif code PDF simulé",
+    "description": "Retirer complètement le code 'generate_pdf', les signatures et les mentions système prompt dans les workers et dans l'orchestrateur. Ne laisser aucune trace de la simulation PDF.",
+    "status": "IN_REVIEW",
+    "assignee": "BETA",
+    "created": "2026-03-22T17:08:02.607Z"
+  },
+  {
+    "id": "TKT-072",
+    "title": "Dropdown Zone/Structure pour l'édition de documents (ArtifactViewer)",
+    "description": "DELTA",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T17:10:08.309Z"
+  },
+  {
+    "id": "TKT-073",
+    "title": "Bug Critique: Erreur Supervisor sur commandes /sheet et /doc",
+    "description": "L'utilisateur signale une erreur récurrente 'Une erreur est survenue pendant le traitement.' lors de l'appel aux agents Tableur (/sheet) et Document (/doc). Les logs indiquent que le LLM délègue bien au worker, mais la tâche échoue en interne.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T17:35:25.834Z"
+  },
+  {
+    "id": "TKT-074",
+    "title": "Bug Critique: Crash SILENCIEUX des Workers Document/Sheet",
+    "description": "Malgré la correction des erreurs de syntaxe, les commandes /doc et /sheet retournent toujours 'Une erreur est survenue'. Le bug doit être plus profond dans l'exécution LangGraph ou dans les dépendances (ex: incompatibilité matplotlib ou python-docx).",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T17:59:48.852Z"
+  },
+  {
+    "id": "TKT-075",
+    "title": "Bug: Image cassée dans ArtifactViewer (CORS / src url)",
+    "description": "Le composant ImageMaskEditor affiche un alt cassé (ex: image-generee.jpg) au lieu de rendre l'image via la balise img. Cela peut venir de la prop 'url' ou d'une erreur de domaine.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T18:09:18.524Z"
+  },
+  {
+    "id": "TKT-076",
+    "title": "Bug Tenace: Iframe Microsoft / Google refuse Firebase URL",
+    "description": "Le visualiseur externe affiche systématiquement 'Impossible de prévisualiser'. L'URL Firebase Storage a un problème d'accès public ou ne renvoie pas les bons headers pour les iframe Google/Microsoft. Il faut contourner ce blocage en créant un visualiseur HTML natif ou en utilisant un proxy.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-22T18:26:38.868Z"
+  },
+  {
+    "id": "TKT-077",
+    "title": "Visualiseur NATIF côté client (SheetJS / Mammoth) pour pallier aux iframe CORS",
+    "description": "DELTA",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T18:28:43.984Z"
+  },
+  {
+    "id": "TKT-078",
+    "title": "Bug: Erreur Timeout / Crash de DocumentWorker sur longue tâche",
+    "description": "L'utilisateur signale une erreur lors de la génération d'un document complexe (3 pages sur les agents IA). Le LLM répond textuellement mais ne retourne pas le document en pièce jointe, puis crashe à la deuxième tentative.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T18:37:02.803Z"
+  },
+  {
+    "id": "TKT-079",
+    "title": "Vérification E2E Globale : Génération, Visionnage, Sélection intelligente",
+    "description": "L'humain exige une vérification complète du flux : Générer Word/Excel -> Visionner en natif -> Modifier sans mentionner la ligne (via la sélection Dropdown magique de TKT-070). EPSILON et GAMMA doivent valider.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-22T18:49:37.688Z"
+  },
+  {
+    "id": "TKT-080",
+    "title": "Génération Excel: Fixer le rendu UI des graphiques natifs",
+    "description": "L'utilisateur demande de rester focus sur la génération. Le backend ajoute des graphiques OpenPyXL, mais le frontend SheetJS actuel ne peut pas rendre les graphiques nativement dans l'interface, on doit trouver une parade (ex: un résumé texte dans la table ou générer le graph en image base64 et l'afficher dans l'ArtifactViewer).",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T18:59:51.840Z"
+  },
+  {
+    "id": "TKT-081",
+    "title": "Génération Excel: Fixer le rendu UI des graphiques natifs",
+    "description": "L'utilisateur demande de rester focus sur la génération. Le backend ajoute des graphiques OpenPyXL, mais le frontend SheetJS actuel ne peut pas rendre les graphiques nativement dans l'interface, on doit trouver une parade (ex: un résumé texte dans la table ou générer le graph en image base64 et l'afficher dans l'ArtifactViewer).",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-22T19:00:02.304Z"
+  },
+  {
+    "id": "TKT-082",
+    "title": "Génération Excel: Améliorer le rendu visuel et Graphiques",
+    "description": "Rester focus sur la génération. Le backend ajoute des graphiques via OpenPyXL, mais SheetJS sur le frontend ne les affiche pas (il ne rend que les données brutes). Il faut que l'UI ArtifactViewer soit capable de rendre les tableaux de bord et graphiques de manière visuelle et pro (ex: en utilisant Recharts ou Chart.js basés sur les données SheetJS).",
+    "status": "TODO",
+    "assignee": "DELTA",
+    "created": "2026-03-22T19:00:09.261Z"
+  },
+  {
+    "id": "TKT-083",
+    "title": "Génération Word: Rendu HTML natif parfait (Mammoth/Styles)",
+    "description": "S'assurer que la conversion Mammoth dans l'ArtifactViewer conserve bien les styles générés par le backend (gras, italique, titres de différents niveaux, couleurs si possible) pour que le mode Cheat Code (édition contextuelle) soit visuellement fidèle.",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-22T19:00:13.019Z"
+  },
+  {
+    "id": "TKT-084",
+    "title": "Backend: MAJ System Prompts Edition Partielle",
+    "description": "Mettre a jour les system prompts dans backend/agents/workers/document_worker.py et spreadsheet_worker.py pour integrer la consigne d'edition partielle [SELECTION]. BETA",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-22T19:07:34.976Z"
+  },
+  {
+    "id": "TKT-085",
+    "title": "Tests E2E : Édition partielle Document/Spreadsheet",
+    "description": "Vérifier le flux complet d'édition partielle de document et tableur depuis le chat jusqu'à la mise à jour via les workers (suite au TKT-084).",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T03:06:54.315Z"
+  },
+  {
+    "id": "TKT-086",
+    "title": "Agent Création de Contenu (Content Creator)",
+    "description": "Implémenter l'Agent Création de Contenu dans l'onglet Agents. Doit inclure : posts sociaux, articles de blog, scripts, et visuels IA. Exclure la génération vidéo pour l'instant. L'agent doit être fonctionnel depuis l'interface.",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-23T03:09:30.358Z"
+  },
+  {
+    "id": "TKT-087",
+    "title": "Backend Content Creator",
+    "description": "Implémenter le backend pour l'Agent Création de Contenu (Content Studio) : copywriter_agent.py, graphic_designer_agent.py, supervisor et routeurs. Exclure la vidéo.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T03:10:51.473Z"
+  },
+  {
+    "id": "TKT-088",
+    "title": "Frontend Content Creator",
+    "description": "Implémenter l'UI du Content Studio (ContentStudioPage.tsx) avec les onglets Textes et Visuels. L'intégrer dans AgentsPanel.tsx (Agent Création de Contenu) pour une ouverture plein écran.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-23T03:11:08.568Z"
+  },
+  {
+    "id": "TKT-089",
+    "title": "Backend Video Editor",
+    "description": "Implémenter le video_editor_agent.py (Phase 4) dans le Content Studio. L'agent doit générer un fichier EDL et utiliser FFmpeg pour traiter des vidéos uploadées par l'utilisateur (pas de génération). Ajouter l'endpoint /video/edit.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-23T03:14:00.279Z"
+  },
+  {
+    "id": "TKT-090",
+    "title": "Frontend Video Editor",
+    "description": "Ajouter l'onglet 'Vidéo' (VideoEditorPanel.tsx) et sa Timeline (VideoTimeline.tsx) dans ContentStudioPage.tsx. Permettre l'upload de vidéos externes et l'envoi d'instructions de montage.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-23T03:14:08.909Z"
+  },
+  {
+    "id": "TKT-091",
+    "title": "Tests E2E : Content Studio (Backend)",
+    "description": "Valider l'ensemble des endpoints et workers du Content Studio : Copywriter (génération structurée), Graphic Designer (briefs libres + Pillow) et la création de projets.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T03:30:07.087Z"
+  },
+  {
+    "id": "TKT-092",
+    "title": "Tests E2E : Rendu UI Graphiques Excel Natifs",
+    "description": "Valider le rendu des graphiques natifs Excel créés dans le TKT-081 en injectant des données tests dans l'endpoint /render-sheet et en validant l'affichage sur ArtifactViewer (Recharts).",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T03:30:27.951Z"
+  },
+  {
+    "id": "TKT-093",
+    "title": "Tests E2E : Video Editor (Backend & Frontend)",
+    "description": "Valider l'ensemble du flux du monteur vidéo : de l'upload d'une vidéo via ContentStudioPage.tsx (TKT-090) jusqu'au traitement FFmpeg/EDL via le video_editor_agent.py (TKT-089).",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T03:32:38.120Z"
+  },
+  {
+    "id": "TKT-094",
+    "title": "Tests E2E : Content Studio (Frontend)",
+    "description": "Valider l'expérience utilisateur globale sur le Content Studio (TKT-088) : navigation, onglets, création de projets, et ergonomie 'illimitée' du Graphic Designer.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T03:32:49.581Z"
+  },
+  {
+    "id": "TKT-095",
+    "title": "Améliorations Progressives Agent Création Contenu",
+    "description": "Pendant la vérification humaine, apporter des optimisations discrètes à l'Agent Création de Contenu (Backend et Frontend). S'assurer à 100% que l'accès se fait depuis l'onglet 'Agents' dans le menu principal et s'ouvre en plein écran. Améliorer la fluidité, les temps de réponse et la gestion des erreurs (notamment pour l'upload de médias).",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-23T03:44:45.313Z"
+  },
+  {
+    "id": "TKT-096",
+    "title": "Agent Video Editor Pro",
+    "description": "Refonte totale du Monteur Vidéo. Le backend doit intégrer FFmpeg avancé ou MoviePy pour permettre : découpage intelligent, transitions pro, ajout de sous-titres animés et superposition d'images/textes. Le Frontend doit proposer une timeline avancée type CapCut.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-23T05:58:37.735Z"
+  },
+  {
+    "id": "TKT-097",
+    "title": "Frontend Video Editor Pro",
+    "description": "Refonte totale de VideoEditorPanel.tsx. Créer une interface type Premiere Pro / CapCut Web. Timeline de montage, upload de multiples rushs vidéos, options pour sous-titres générés par IA, transitions, et input de brief créatif pour l'IA.",
+    "status": "DONE",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T05:58:55.929Z"
+  },
+  {
+    "id": "TKT-098",
+    "title": "Tests Chaos Video Editor Pro",
+    "description": "Perfection Absolue : Lancer des tests de Chaos complets sur l'interaction entre le front-end React (TKT-097) et le Backend MoviePy (TKT-096). Tenter de le faire crasher avec des URLs de vidéos invalides, des instructions absurdes et des requêtes simultanées massives.",
+    "status": "IN_PROGRESS",
+    "assignee": "EPSILON",
+    "created": "2026-03-23T06:09:43.164Z"
+  },
+  {
+    "id": "TKT-099",
+    "title": "Backend Video Asynchrone & Sécurité",
+    "description": "Corriger les failles critiques remontées par EPSILON : 1. Ajouter les dépendances MoviePy/imageio manquantes. 2. Valider strictement le poids des fichiers côté serveur (max 100MB). 3. Transformer la route /video/edit en Job Asynchrone (retourner un job_id, puis route de Polling) pour éviter le Timeout 504.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-23T06:23:47.078Z"
+  },
+  {
+    "id": "TKT-100",
+    "title": "Frontend Video Polling & Memory Leak",
+    "description": "Corriger les failles remontées par EPSILON : 1. Fixer la fuite mémoire React identifiée sur la Timeline. 2. Appliquer une limite de taille stricte au Drag&Drop vidéo. 3. Adapter l'appel API pour gérer un Job Asynchrone (Polling avec un spinner/progress bar plutôt qu'un fetch synchrone qui timeout).",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-23T06:26:59.399Z"
+  },
+  {
+    "id": "TKT-101",
+    "title": "Refonte Robustesse Graphic Designer",
+    "description": "Le Graphic Designer (Affiches) crashe encore en silence (probablement sur l'upload Firebase ou la manipulation de bytes PNG transparents par Pillow). Reprendre le fichier graphic_designer_agent.py. L'erreur DOIT être traitée, le fallback de l'image de base doit toujours fonctionner si le texte plante, et la communication avec le bucket Firebase doit être vérifiée.",
+    "status": "DONE",
+    "assignee": "BETA",
+    "created": "2026-03-23T06:40:21.111Z"
+  },
+  {
+    "id": "TKT-102",
+    "title": "Polissage Final & Résolution",
+    "description": "Tester l'ensemble du pipeline Graphic Designer et Video Editor en arrière-plan. S'il reste le moindre bug (ex: timeout, erreur Firebase, UI fuyante), réparer silencieusement sur le fichier source. Respecter la non-ingérence avec les autres déploiements.",
+    "status": "DONE",
+    "assignee": "DELTA",
+    "created": "2026-03-23T06:52:01.735Z"
+  },
+  {
+    "id": "TKT-103",
+    "title": "Reorganisation_Projet",
+    "description": "Organiser tout le dossier du projet sans rien casser.",
+    "status": "TODO",
+    "assignee": null,
+    "created": "2026-03-24T07:03:22.767Z"
+  }
+]

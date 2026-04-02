@@ -1,0 +1,6 @@
+.env
+messenger_runtime.db
+server.out.log
+server.err.log
+__pycache__/
+

@@ -1,0 +1,15 @@
+{
+  "meta_verify_token": "ramsflare_webhook_2026",
+  "meta_page_access_token": "EAAXFZAXwjGVUBRFhMHyHmFIZAu5ZBEBikvozLDQMzejZBQ9D1HwdWjhj890iwxXrBld9TYo3Sy9Gk3B6BtUTmiV92PI97pkabn4wzVqCsF5EtRpZAhBiNMno3NrCXliqxz8jsVtV4f3e6z4OZC3gPVSgxz1y6f977f37AgfHQcFyc5tTZBtgKqnE7IB3fZCG9SzX2FZAMCHyWDAZDZD",
+  "meta_app_secret": "c97524a889bccdd1ebf9cec734dbee64",
+  "meta_graph_version": "v25.0",
+  "telegram_bot_token": "8561694911:AAFn01Qy5hCe4KwVMcSdJKqL9C2Qm7KpqWA",
+  "telegram_chat_id": "7371371016",
+  "google_api_key": "AIzaSyC6nyqYOtYvB1mkh358-ceEzFnm5tP6e7Y",
+  "google_genai_model": "gemini-2.5-flash-lite",
+  "archive_bucket_name": "ramsflare-messenger-archive-236458687422",
+  "flare_chat_url": "https://flare-backend-ynhuvwocwq-ew.a.run.app/chat",
+  "flare_chat_mode": "rapide",
+  "google_sheet_id": "1BbgEKcnEo1WJlGoe3mWQNtIHoWCL4XJzGyzElwMWhqA",
+  "service_public_url": "https://messenger-direct-236458687422.europe-west9.run.app"
+}

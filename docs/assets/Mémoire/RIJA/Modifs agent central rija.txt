@@ -1,0 +1,11 @@
+Modifs agent central:
+
+- Ajouter un une fonctionnalité de modification à un message.
+- Ajouter un résumé à la fin de chaque message de l'agent, des points à essentiel
+- Modifer la police pour qu'elle soit plus lisible et facile à lire sans fatiguer les yeux, donner envie de lire
+- Assistant rija et non prendre rija comme un client. Rija est le pdg, lui assistant. Il est là pour l'aider, apprendre, rappeler les connaissances de rija ainsi que les      stratégies et approches. + combinaison avec la deep research.
+- Vérifier qu'il mémorise chaque conversation
+- Il doit être un expert en communication , marketing, vente, et à toutes les techniques de les productions des supports audiovisuels et cinématographique.
+- Il doit être doté d'intelligence avancée et s'adapter à son utilisateur pour toutes les conversations, il s'adapte de plus en plus et mémorise directement les points.
+- Comme chat GPT, rajouter des dossiers pour y mettre les projets pour y organiser les conversations.
+- Il ne doit pas se baser sur le digital seulement, mais avoir une connaissance de la stratégie de communication en général, surtout en communication de masse pour le changement de comportement et aussi la technique de la persuasion.
