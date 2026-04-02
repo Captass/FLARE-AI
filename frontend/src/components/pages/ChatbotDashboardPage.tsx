@@ -2,10 +2,31 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bot, MessageSquare, Users, AlertTriangle, CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
-import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
+import { Bot, MessageSquare, Users, AlertTriangle, ArrowRight } from "lucide-react";
+import { getChatbotOverview, type ChatbotOverview, type ChatbotPageSummary } from "@/lib/api";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
 import { SkeletonCard } from "@/components/SkeletonLoader";
+import FacebookVerificationBanner from "@/components/chatbot/FacebookVerificationBanner";
+import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
+
+function pageSummaryToMessengerPage(p: ChatbotPageSummary): FacebookMessengerPage {
+  return {
+    id: p.page_id,
+    page_id: p.page_id,
+    page_name: p.page_name,
+    page_picture_url: p.page_picture_url,
+    page_category: p.page_category ?? "",
+    page_tasks: [],
+    status: p.status,
+    is_active: p.is_active,
+    webhook_subscribed: p.webhook_subscribed,
+    direct_service_synced: p.direct_service_synced,
+    connected_by_email: "",
+    connected_at: p.connected_at,
+    last_synced_at: p.last_synced_at ?? undefined,
+    last_error: p.last_error ?? undefined,
+  };
+}
 
 interface ChatbotDashboardPageProps {
   token?: string | null;
@@ -41,13 +62,15 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
     } finally {
       setLoading(false);
     }
-  }, [resolveToken]);
+  }, [resolveToken, selectedPageId]);
 
   useEffect(() => {
     void loadAll();
   }, [loadAll, selectedPageId]);
 
-  const isLive = overview?.step === "complete";
+  const isLive =
+    overview?.step === "complete" &&
+    Boolean(overview?.active_page?.webhook_subscribed && overview?.active_page?.direct_service_synced);
   const activePage = overview?.active_page;
   
   const messagesCeMois = dashData?.periodStats?.[0]?.messages ?? 0; // Utilise la première période
@@ -75,30 +98,29 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
           </div>
         )}
 
-        {/* Banner Facebook */}
-        {!loading && (
+        {/* Bannière vérification Facebook (spec : même logique que ChatbotStatusTab / FacebookVerificationBanner) */}
+        {!loading && activePage && (
+          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
+            <FacebookVerificationBanner
+              page={pageSummaryToMessengerPage(activePage)}
+              loading={loading}
+              onRefresh={() => void loadAll()}
+            />
+          </motion.div>
+        )}
+        {!loading && !activePage && (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className={`flex items-center justify-between rounded-2xl border px-5 py-4 ${
-              activePage 
-                ? "border-emerald-500/20 bg-emerald-500/5" 
-                : "border-orange-500/20 bg-orange-500/5"
-            }`}
+            className="flex items-center justify-between rounded-2xl border border-orange-500/20 bg-orange-500/5 px-5 py-4"
           >
             <div className="flex items-center gap-4">
-              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                activePage ? "bg-emerald-500/20 text-emerald-400" : "bg-orange-500/20 text-orange-400"
-              }`}>
-                {activePage ? <CheckCircle2 size={20} /> : <AlertTriangle size={20} />}
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/20 text-orange-400">
+                <AlertTriangle size={20} />
               </div>
               <div>
-                <p className="font-semibold text-fg/90">
-                  {activePage ? `Connecté à ${activePage.page_name}` : "Aucune page Facebook connectée"}
-                </p>
-                <p className="text-sm text-fg/50">
-                  {activePage ? "Votre bot répond aux messages." : "Allez dans Paramètres pour associer une page."}
-                </p>
+                <p className="font-semibold text-fg/90">Aucune page Facebook connectée</p>
+                <p className="text-sm text-fg/50">Allez dans Paramètres pour associer une page.</p>
               </div>
             </div>
           </motion.div>
@@ -113,13 +135,16 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
           ) : (
             <>
               {/* Statut Chatbot */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5"
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-fg/40">Statut Chatbot</p>
+                    <p className="text-sm font-medium text-[var(--text-muted)]">Statut chatbot</p>
                     <p className="mt-2 text-2xl font-bold text-fg/90">{isLive ? "Actif" : "Inactif"}</p>
                   </div>
                   <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isLive ? "bg-emerald-500/10 text-emerald-400" : "bg-fg/[0.05] text-fg/30"}`}>
@@ -129,13 +154,16 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
               </motion.div>
 
               {/* Messages ce mois */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5"
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-fg/40">Messages récents</p>
+                    <p className="text-sm font-medium text-[var(--text-muted)]">Messages traités ce mois</p>
                     <p className="mt-2 text-2xl font-bold text-fg/90">{messagesCeMois}</p>
                   </div>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
@@ -144,14 +172,17 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
                 </div>
               </motion.div>
 
-              {/* Contacts Captés */}
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5"
+              {/* Contacts captés */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                whileHover={{ scale: 1.02 }}
+                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-sm font-medium text-fg/40">Contacts enregistrés</p>
+                    <p className="text-sm font-medium text-[var(--text-muted)]">Contacts captés ce mois</p>
                     <p className="mt-2 text-2xl font-bold text-fg/90">{contactsCaptes}</p>
                   </div>
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">

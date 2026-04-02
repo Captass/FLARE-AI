@@ -105,7 +105,7 @@ export default function ChatbotClientsPage({
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex items-center gap-3 text-fg/40">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm">Chargement des contacts…</span>
+          <span className="text-base text-fg/50">Chargement des contacts…</span>
         </div>
       </div>
     );
@@ -139,11 +139,22 @@ export default function ChatbotClientsPage({
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex items-center gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4 text-orange-400">
-                <AlertCircle size={20} className="shrink-0" />
-                <p className="text-sm font-medium">
-                  {needsHumanCount} conversation{needsHumanCount > 1 && "s"} nécessite{needsHumanCount > 1 && "nt"} votre intervention
-                </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-orange-500/30 bg-orange-500/10 p-4 text-orange-400">
+                <div className="flex items-center gap-3">
+                  <AlertCircle size={20} className="shrink-0" />
+                  <p className="text-sm font-medium">
+                    {needsHumanCount === 1
+                      ? "1 conversation nécessite votre attention"
+                      : `${needsHumanCount} conversations nécessitent votre attention`}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFilter("human")}
+                  className="shrink-0 rounded-full bg-orange-500/20 px-4 py-2 text-sm font-semibold text-orange-200 ring-1 ring-orange-400/30 hover:bg-orange-500/30"
+                >
+                  Voir les alertes
+                </button>
               </div>
             </motion.div>
           )}
@@ -194,7 +205,7 @@ export default function ChatbotClientsPage({
                         <div className="flex items-center gap-2">
                           <p className="font-semibold text-fg/90 truncate">{c.customer || "Inconnu"}</p>
                           {c.status && (
-                            <span className="shrink-0 rounded bg-fg/[0.05] px-1.5 py-0.5 text-[10px] uppercase text-fg/40 border border-fg/[0.05]">
+                            <span className="shrink-0 rounded-md bg-fg/[0.05] px-2 py-0.5 text-sm font-medium uppercase tracking-wide text-fg/50 border border-fg/[0.08]">
                               {c.status}
                             </span>
                           )}

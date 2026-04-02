@@ -37,6 +37,7 @@ function KpiCard({
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
       className="flex-1 min-w-0 rounded-2xl backdrop-blur-md
                  bg-[var(--bg-glass)] border border-[var(--border-glass)]
@@ -181,14 +182,14 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
               delay={0.05}
             />
             <KpiCard
-              label="Messages ce mois"
+              label="Messages traités ce mois"
               value={loadingKpi ? "…" : String(messagesCount)}
               icon={MessageSquare}
               loading={loadingKpi}
               delay={0.1}
             />
             <KpiCard
-              label="Contacts enregistrés"
+              label="Contacts / leads captés"
               value={loadingKpi ? "…" : String(contactsCount)}
               icon={Users}
               loading={loadingKpi}

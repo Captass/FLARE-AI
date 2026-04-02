@@ -9,6 +9,7 @@ import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 
 import { useState, useEffect, useCallback } from "react";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
+import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
 import { MessageSquare, Bot } from "lucide-react";
 
 interface ChatbotHomePageProps {
@@ -60,6 +61,7 @@ const ENTRIES = [
 export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingHumanCount = 0, pages = [], selectedPageId = null, onSelectPage }: ChatbotHomePageProps) {
   const hasPageSelected = Boolean(selectedPageId);
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
+  const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [loadingKPIs, setLoadingKPIs] = useState(false);
 
   const loadKPIs = useCallback(async () => {
@@ -67,12 +69,17 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
     if (getFreshToken) t = await getFreshToken() || token;
     if (!t || !selectedPageId) {
       setDashData(null);
+      setOverview(null);
       return;
     }
     setLoadingKPIs(true);
     try {
-      const dash = await loadMessengerDashboardData(t, selectedPageId);
-      setDashData(dash);
+      const [dash, ov] = await Promise.allSettled([
+        loadMessengerDashboardData(t, selectedPageId),
+        getChatbotOverview(t, selectedPageId),
+      ]);
+      if (dash.status === "fulfilled") setDashData(dash.value);
+      if (ov.status === "fulfilled") setOverview(ov.value);
     } catch (e) {
       console.error(e);
     } finally {
@@ -86,6 +93,10 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
 
   const messagesCeMois = dashData?.periodStats?.[0]?.messages ?? 0;
   const contactsCaptes = dashData?.totals?.contacts ?? 0;
+  const alertCount = overview?.pending_human_count ?? pendingHumanCount;
+  const botFullyLive =
+    overview?.step === "complete" &&
+    Boolean(overview?.active_page?.webhook_subscribed && overview?.active_page?.direct_service_synced);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -126,34 +137,58 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
 
         {/* ── Aperçu KPIs (Si page sélectionnée) ── */}
         {hasPageSelected && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
-            {/* Statut Rapide */}
-            <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
+            {/* Statut (aligné spec + données réelles overview) */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
+            >
               <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Statut Bot</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">Statut chatbot</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                  </span>
-                  <p className="text-lg font-bold text-fg/90">En ligne</p>
+                  {loadingKPIs ? (
+                    <div className="h-6 w-24 bg-white/[0.06] rounded-md animate-pulse" />
+                  ) : (
+                    <>
+                      <span className="relative flex h-3 w-3">
+                        {botFullyLive ? (
+                          <>
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
+                          </>
+                        ) : (
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400" />
+                        )}
+                      </span>
+                      <p className="text-lg font-bold text-fg/90">{botFullyLive ? "Actif" : "Inactif"}</p>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="bg-emerald-500/10 text-emerald-400 p-2.5 rounded-xl">
+              <div
+                className={`p-2.5 rounded-xl ${
+                  botFullyLive ? "bg-emerald-500/10 text-emerald-400" : "bg-orange-500/10 text-orange-400"
+                }`}
+              >
                 <Bot size={20} />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Messages Récents */}
-            <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
+            {/* Messages ce mois */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
+            >
               <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Messages ce mois</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">Messages traités ce mois</p>
                 <div className="mt-1 h-7 flex items-center">
                   {loadingKPIs ? (
-                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse"></div>
+                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse" />
                   ) : (
                     <p className="text-lg font-bold text-fg/90">{messagesCeMois}</p>
                   )}
@@ -162,15 +197,18 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
               <div className="bg-blue-500/10 text-blue-400 p-2.5 rounded-xl">
                 <MessageSquare size={20} />
               </div>
-            </div>
+            </motion.div>
 
-            {/* Contacts Captés */}
-            <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
+            {/* Contacts */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
+            >
               <div>
-                <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Contacts captés</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">Contacts captés</p>
                 <div className="mt-1 h-7 flex items-center">
                   {loadingKPIs ? (
-                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse xl:w-20"></div>
+                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse md:w-20" />
                   ) : (
                     <p className="text-lg font-bold text-fg/90">{contactsCaptes}</p>
                   )}
@@ -179,7 +217,7 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
               <div className="bg-orange-500/10 text-orange-400 p-2.5 rounded-xl">
                 <Users size={20} />
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         )}
 
@@ -208,9 +246,7 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
                   locked={false}
                   glowColor="#FF7C1A"
                   badge={
-                    isClientsCard && pendingHumanCount > 0
-                      ? <NotifBadge count={pendingHumanCount} />
-                      : undefined
+                    isClientsCard && alertCount > 0 ? <NotifBadge count={alertCount} /> : undefined
                   }
                   onClick={() => onPush(entry.id)}
                 />

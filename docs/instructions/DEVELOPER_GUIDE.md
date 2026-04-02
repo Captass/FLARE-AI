@@ -224,6 +224,20 @@ Chaque utilisateur suit ce flow :
 
 Le `selectedPageId` est propagé à chaque composant chatbot. Chaque appel API inclut ce paramètre pour isoler les données par page.
 
+### Refonte UI — spec « Redesign FLARE AI » (mars 2026)
+
+Référence produit : navigation en pile (`NavStack`), breadcrumb, glass cards, drill-down 2–6 cartes par niveau, typographie **minimum `text-sm` (14px)** sur l’UI.
+
+Implémentation dans ce dépôt :
+
+| Zone | Fichiers / comportement |
+|------|-------------------------|
+| Accueil post-login | `HomePage.tsx` — KPI statut / messages / contacts, cartes accès rapide, hover scale |
+| Hub Chatbot | `ChatbotHomePage.tsx` — 4 entrées, KPI issus du dashboard + `getChatbotOverview`, badge rouge sur « Clients » si `pending_human_count` |
+| Tableau de bord | `ChatbotDashboardPage.tsx` — KPI alignés libellés spec, `FacebookVerificationBanner`, activité récente, `loadAll` dépend de `selectedPageId` |
+| Clients | `ChatbotClientsPage.tsx` — filtres, bannière + « Voir les alertes » |
+| Facebook (Meta) | `FacebookVerificationBanner.tsx` — libellés et tailles de texte conformes au plan |
+
 ### Routage multi-clés Gemini (2 avril 2026)
 
 Chaque composant IA utilise une clé dédiée pour le suivi des coûts :
