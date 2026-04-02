@@ -47,15 +47,15 @@ export default function FacebookVerificationBanner({
             pas encore complètement confirmée.
           </p>
           <p className="mt-2 text-sm leading-relaxed text-orange-50/90">
-            Dernière vérification : {formatRelativeTime(page.last_synced_at)}. Utilisez le rafraîchissement manuel si
-            Meta ou le service direct finit de propager avec retard.
+            Dernière vérification : {formatRelativeTime(page.last_synced_at)}. Vous pouvez rafraîchir l’état ci-dessous
+            si vous venez de modifier quelque chose sur Facebook.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-sm text-orange-50/95">
             <span className="rounded-full border border-orange-300/20 bg-black/20 px-3 py-1.5">
-              Webhook : {page.webhook_subscribed ? "ok" : "à vérifier"}
+              Messagerie : {page.webhook_subscribed ? "prête" : "en cours"}
             </span>
             <span className="rounded-full border border-orange-300/20 bg-black/20 px-3 py-1.5">
-              Service direct : {page.direct_service_synced ? "ok" : "à synchroniser"}
+              Synchronisation : {page.direct_service_synced ? "terminée" : "en cours"}
             </span>
           </div>
         </div>

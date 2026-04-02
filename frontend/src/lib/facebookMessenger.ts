@@ -31,17 +31,6 @@ export interface FacebookMessengerStatus {
   can_edit: boolean;
   oauth_configured: boolean;
   direct_service_configured: boolean;
-  /** URL exacte à enregistrer dans Meta → Facebook Login → Valid OAuth Redirect URIs */
-  oauth_callback_url: string;
-  /** Webhook Messenger (service direct), pas la même chose que oauth_callback_url */
-  callback_url: string;
-  verify_token_hint: boolean;
-  /** App ID public (débogage / console Meta) */
-  meta_app_id?: string;
-  /** Version Graph utilisée par le backend (ex. v25.0) */
-  meta_graph_version?: string;
-  /** Hôtes à renseigner côté Meta → Paramètres → De base → Domaines de l’app */
-  app_domain_hints?: string[];
   pages: FacebookMessengerPage[];
   has_active_page: boolean;
 }
@@ -127,15 +116,31 @@ async function facebookRequestWithTokenRetry(
 async function readErrorMessage(response: Response, fallback: string): Promise<string> {
   try {
     const payload = await response.json();
-    if (typeof payload?.detail === "string" && payload.detail.trim()) {
-      return payload.detail;
+    const d = payload?.detail;
+    if (typeof d === "string" && d.trim()) {
+      return d.trim();
     }
-  } catch {}
+    if (Array.isArray(d)) {
+      const parts = d
+        .map((item: unknown) => {
+          if (item && typeof item === "object" && "msg" in item) {
+            return String((item as { msg: string }).msg).trim();
+          }
+          return "";
+        })
+        .filter(Boolean);
+      if (parts.length) return parts.join(" ");
+    }
+  } catch {
+    /* ignore */
+  }
 
   try {
     const text = await response.text();
-    if (text.trim()) return text;
-  } catch {}
+    if (text.trim()) return text.trim();
+  } catch {
+    /* ignore */
+  }
 
   return fallback;
 }
@@ -180,6 +185,24 @@ export async function getFacebookMessengerAuthorizationUrl(
 
   const payload = await response.json();
   return String(payload?.authorization_url || "");
+}
+
+/** Met à jour la liste des pages depuis Meta (sans OAuth) si un token utilisateur est déjà stocké. */
+export async function resyncFacebookMessengerPages(
+  token: string | null | undefined
+): Promise<FacebookMessengerPage[]> {
+  const response = await facebookRequestWithTokenRetry(
+    `${getApiBaseUrl()}/api/facebook/resync-pages`,
+    { method: "POST", headers: { "Content-Type": "application/json" } },
+    token
+  );
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Impossible d'actualiser la liste des pages Facebook."));
+  }
+
+  const payload = await response.json();
+  return Array.isArray(payload?.pages) ? (payload.pages as FacebookMessengerPage[]) : [];
 }
 
 export async function activateFacebookMessengerPage(

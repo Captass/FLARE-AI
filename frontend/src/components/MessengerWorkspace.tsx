@@ -1138,11 +1138,7 @@ function FacebookConnectionPanel({
               <p>1. Cliquez sur `Connecter Facebook`.</p>
               <p>2. Autorisez FLARE a lire et brancher vos pages Messenger.</p>
               <p>3. Revenez ici et activez la ou les pages a ouvrir au bot.</p>
-              <p>4. FLARE s&apos;occupe du webhook et de la synchro vers le service Messenger direct.</p>
-            </div>
-            <div className="mt-4 rounded-xl bg-black/20 px-3 py-3 text-[11px] leading-5 text-white/28">
-              Callback webhook actuel :<br />
-              {status.callback_url || "Indisponible"}
+              <p>4. Activez la page souhaitée ; FLARE finalise la connexion avec Messenger.</p>
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, BadgeCheck, Copy, Link2, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { ArrowUpRight, Link2, Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 import type { ChatbotOverview, ChatbotPreferences } from "@/lib/api";
@@ -27,145 +27,238 @@ interface ChatbotStatusTabProps {
   onDisconnect: (pageId: string) => void;
 }
 
-// GUIDES EXPERTS PRE-EXISTANTS (conservés tels quels)
-function hasValue(value?: string | null): boolean { return Boolean(String(value || "").trim()); }
+function hasValue(value?: string | null): boolean {
+  return Boolean(String(value || "").trim());
+}
 function isIdentityReady(preferences: ChatbotPreferences | null | undefined): boolean {
   return Boolean(preferences && hasValue(preferences.bot_name) && hasValue(preferences.greeting_message) && hasValue(preferences.primary_role));
 }
 function isBusinessReady(preferences: ChatbotPreferences | null | undefined): boolean {
   return Boolean(preferences && hasValue(preferences.business_name) && hasValue(preferences.company_description));
 }
-function buildSetupGuide({ overview, canEdit, catalogueCount }: any): any {
+function buildSetupGuide({
+  overview,
+  canEdit,
+  catalogueCount,
+}: {
+  overview: ChatbotOverview | null;
+  canEdit: boolean;
+  catalogueCount: number;
+}): {
+  tone: "success" | "warning" | "error";
+  eyebrow: string;
+  title: string;
+  body: string;
+  bullets: string[];
+  ctaLabel?: string;
+  ctaTab?: ChatbotWorkspaceTab;
+} {
   const activePage = overview?.active_page || null;
   const preferences = overview?.preferences || null;
 
-  if (!canEdit) return { tone: "warning", eyebrow: "Suivi équipe", title: "Configuration verrouillée", body: "Seuls les admins peuvent configurer.", bullets: [] };
-  if (!activePage) return { tone: "warning", eyebrow: "Action requise", title: "Aucune page active sélectionnée.", body: "Veuillez activer une page Facebook via le sélecteur ci-dessus ou en connectant le compte Meta.", bullets: [] };
-  if (activePage.last_error) return { tone: "error", eyebrow: "Erreur persistante", title: "Un problème de synchronisation a été détecté.", body: activePage.last_error, bullets: [] };
-  if (!isIdentityReady(preferences)) return { tone: "warning", eyebrow: "Setup 1/3", title: "Définir l'identité du bot", body: "Donnez-lui un nom, un rôle et un message d'accueil.", bullets: ["Nom du bot", "Rôle principal"], ctaLabel: "Aller à l'Identité", ctaTab: "identity" };
-  if (!isBusinessReady(preferences)) return { tone: "warning", eyebrow: "Setup 2/3", title: "Ajouter le contexte entreprise", body: "Expliquez ce que fait votre entreprise.", bullets: ["Description", "Secteur"], ctaLabel: "Aller à l'Entreprise", ctaTab: "business" };
-  if (catalogueCount === 0) return { tone: "warning", eyebrow: "Setup 3/3", title: "Créer le catalogue", body: "Offrez des produits/services pour qualifier les leads.", bullets: ["Au moins un produit"], ctaLabel: "Aller au Catalogue", ctaTab: "catalogue" };
-  if (!activePage.webhook_subscribed || !activePage.direct_service_synced) return { tone: "warning", eyebrow: "Synchronisation", title: "Mise en service en cours...", body: "Votre bot déploie actuellement ces configurations vers Messenger.", bullets: [] };
-  
-  return { tone: "success", eyebrow: "En Ligne", title: "Le système est opérationnel.", body: "Le chatbot intercepte les messages Messenger.", bullets: ["Webhook actif", "Modèles chargés"], ctaLabel: "Script conversationnel", ctaTab: "sales" };
+  if (!canEdit) {
+    return {
+      tone: "warning",
+      eyebrow: "Lecture seule",
+      title: "Configuration réservée aux administrateurs",
+      body: "Seuls les administrateurs de l’organisation peuvent modifier la connexion Facebook.",
+      bullets: [],
+    };
+  }
+  if (!activePage) {
+    return {
+      tone: "warning",
+      eyebrow: "Étape suivante",
+      title: "Choisissez une page Facebook",
+      body: "Sélectionnez une page dans la liste ci-dessus, puis activez-la pour Messenger.",
+      bullets: [],
+    };
+  }
+  if (activePage.last_error) {
+    return {
+      tone: "error",
+      eyebrow: "À corriger",
+      title: "La synchronisation a rencontré un problème",
+      body: activePage.last_error,
+      bullets: [],
+    };
+  }
+  if (!isIdentityReady(preferences)) {
+    return {
+      tone: "warning",
+      eyebrow: "Étape 1 / 3",
+      title: "Définir l’identité du bot",
+      body: "Donnez un nom, un rôle et un message d’accueil à votre assistant.",
+      bullets: ["Nom du bot", "Rôle principal", "Message d’accueil"],
+      ctaLabel: "Aller à l’identité",
+      ctaTab: "identity",
+    };
+  }
+  if (!isBusinessReady(preferences)) {
+    return {
+      tone: "warning",
+      eyebrow: "Étape 2 / 3",
+      title: "Présenter votre activité",
+      body: "Ajoutez une description claire de votre entreprise pour des réponses pertinentes.",
+      bullets: ["Description", "Secteur"],
+      ctaLabel: "Aller à l’entreprise",
+      ctaTab: "business",
+    };
+  }
+  if (catalogueCount === 0) {
+    return {
+      tone: "warning",
+      eyebrow: "Étape 3 / 3",
+      title: "Ajouter au moins une offre au catalogue",
+      body: "Le bot pourra présenter vos produits ou services aux visiteurs.",
+      bullets: ["Au moins un produit ou service"],
+      ctaLabel: "Aller au catalogue",
+      ctaTab: "catalogue",
+    };
+  }
+  if (!activePage.webhook_subscribed || !activePage.direct_service_synced) {
+    return {
+      tone: "warning",
+      eyebrow: "Presque prêt",
+      title: "Finalisation de la connexion",
+      body: "Messenger est en cours de liaison avec votre page. Cela peut prendre une minute.",
+      bullets: [],
+    };
+  }
+  return {
+    tone: "success",
+    eyebrow: "Prêt",
+    title: "Votre assistant est opérationnel sur Messenger",
+    body: "Les messages reçus sur votre page peuvent être traités par le bot selon vos réglages.",
+    bullets: ["Messagerie connectée", "Réponses automatiques possibles"],
+    ctaLabel: "Script de vente",
+    ctaTab: "sales",
+  };
 }
 
-// MICRO-COMPOSANTS GLASSMORPHIC
-function CopyableUriRow({ label, value, accentClass }: { label: string; value: string; accentClass: string }) {
-  if (!value) return null;
-  return (
-    <div className="space-y-2">
-      <p className="text-sm font-semibold text-fg/75">{label}</p>
-      <div className="flex gap-2 items-start">
-        <code
-          className={`flex-1 text-sm break-all rounded-lg p-3 border border-fg/[0.08] bg-black/25 leading-snug ${accentClass}`}
-        >
-          {value}
-        </code>
-        <button
-          type="button"
-          onClick={() => void navigator.clipboard?.writeText(value)}
-          className="shrink-0 p-2.5 rounded-lg border border-fg/10 hover:bg-fg/[0.06] text-fg/60 hover:text-fg transition-colors"
-          title="Copier"
-        >
-          <Copy className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function PremiumMetric({ label, value, ok, glowStatus }: { label: string; value: string; ok: boolean; glowStatus: "active" | "inactive" | "error" | "pending" }) {
+function PremiumMetric({
+  label,
+  value,
+  ok,
+  glowStatus,
+}: {
+  label: string;
+  value: string;
+  ok: boolean;
+  glowStatus: "active" | "inactive" | "error" | "pending";
+}) {
   return (
     <div className="flex flex-col gap-2 p-4 rounded-xl border border-fg/[0.06] bg-gradient-to-br from-fg/[0.02] to-transparent hover:bg-fg/[0.04] transition-colors relative overflow-hidden group">
       <div className="absolute top-0 right-0 p-4 opacity-30 group-hover:opacity-100 transition-opacity">
         <GlowRing status={glowStatus} size={10} />
       </div>
       <span className="text-[10px] text-fg/40 uppercase tracking-widest font-medium">{label}</span>
-      <span className={`text-[15px] font-semibold tracking-wide ${ok ? 'text-fg/90' : 'text-orange-400'}`}>{value}</span>
+      <span className={`text-[15px] font-semibold tracking-wide ${ok ? "text-fg/90" : "text-orange-400"}`}>{value}</span>
     </div>
   );
 }
 
 export default function ChatbotStatusTab({
-  overview, status, loading, authLoading, busyPageId, error,
-  canEdit, canManagePages, catalogueCount, onRefresh, onJumpToTab, onConnect, onActivate, onDisconnect
+  overview,
+  status: _status,
+  loading,
+  authLoading,
+  busyPageId,
+  error,
+  canEdit,
+  canManagePages,
+  catalogueCount,
+  onRefresh,
+  onJumpToTab,
+  onConnect,
+  onActivate,
+  onDisconnect,
 }: ChatbotStatusTabProps) {
   const activePage = overview?.active_page || null;
   const guide = buildSetupGuide({ overview, canEdit, catalogueCount });
 
   return (
     <SectionCard
-      title="Architecture d'Intégration"
-      description="Supervisez le déploiement du chatbot vers l'écosystème Meta."
+      title="État de la connexion"
+      description="Suivez les étapes pour que votre bot réponde sur la page Facebook choisie."
       action={
-        <button onClick={onRefresh} className="flex items-center gap-2 text-xs text-fg/50 hover:text-fg font-medium tracking-wide uppercase transition-colors">
+        <button
+          type="button"
+          onClick={onRefresh}
+          className="flex items-center gap-2 text-xs text-fg/50 hover:text-fg font-medium tracking-wide uppercase transition-colors"
+        >
           Actualiser <ArrowUpRight className="w-3.5 h-3.5" />
         </button>
       }
     >
       <div className="grid gap-3 grid-cols-2 lg:grid-cols-4 mb-6">
-        <PremiumMetric 
-          label="Sélecteur Actif" 
-          value={activePage?.page_name || "En attente"} 
+        <PremiumMetric
+          label="Page dans FLARE"
+          value={activePage?.page_name || "—"}
           ok={Boolean(activePage)}
-          glowStatus={activePage ? "active" : "inactive"} 
+          glowStatus={activePage ? "active" : "inactive"}
         />
-        <PremiumMetric 
-          label="Mécanisme IA" 
-          value={activePage && overview?.has_business_profile ? "Initialisé" : "Non configuré"} 
+        <PremiumMetric
+          label="Profil du bot"
+          value={overview?.has_business_profile ? "Renseigné" : "À compléter"}
           ok={Boolean(overview?.has_business_profile)}
-          glowStatus={overview?.has_business_profile ? "active" : "pending"} 
+          glowStatus={overview?.has_business_profile ? "active" : "pending"}
         />
-        <PremiumMetric 
-          label="Webhook Meta" 
-          value={activePage?.webhook_subscribed ? "Branché" : "Hors ligne"} 
+        <PremiumMetric
+          label="Réception Messenger"
+          value={activePage?.webhook_subscribed ? "Active" : "En attente"}
           ok={Boolean(activePage?.webhook_subscribed)}
-          glowStatus={activePage?.webhook_subscribed ? "active" : "error"} 
+          glowStatus={activePage?.webhook_subscribed ? "active" : "error"}
         />
-        <PremiumMetric 
-          label="Latence Synchro" 
-          value={formatRelativeTime(activePage?.last_synced_at) || "Aucune"} 
+        <PremiumMetric
+          label="Dernière mise à jour"
+          value={formatRelativeTime(activePage?.last_synced_at) || "—"}
           ok={Boolean(activePage?.direct_service_synced)}
-          glowStatus={activePage?.direct_service_synced ? "active" : "inactive"} 
+          glowStatus={activePage?.direct_service_synced ? "active" : "inactive"}
         />
       </div>
 
       {error && (
-        <div className="p-4 mb-6 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 flex flex-col gap-3">
-          <div className="flex items-start gap-3 text-sm">
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <p>{error}</p>
-          </div>
-          <p className="text-sm text-red-100/85 pl-8 border-l-2 border-red-400/35 leading-relaxed">
-            Fenêtre Meta « URL blocked » ou « domain isn&apos;t included in the app&apos;s domains » : ouvrez{" "}
-            <span className="font-medium">developers.facebook.com</span> → votre app → ajoutez l&apos;URI{" "}
-            <strong>OAuth Redirect</strong> et les <strong>App Domains</strong> exactement comme dans le panneau{" "}
-            <strong>Diagnostic Meta</strong> ci-dessous (sans slash en trop, même hôte que dans la barre d&apos;adresse du backend).
-          </p>
+        <div className="p-4 mb-6 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 flex items-start gap-3 text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p>{error}</p>
         </div>
       )}
 
-      {/* Guide dynamique épuré */}
-      <motion.div 
+      <motion.div
         className={`relative overflow-hidden p-6 rounded-2xl border ${
-          guide.tone === 'success' ? 'border-emerald-500/20 bg-emerald-500/5' :
-          guide.tone === 'error' ? 'border-red-500/20 bg-red-500/5' : 'border-orange-500/20 bg-orange-500/5'
+          guide.tone === "success"
+            ? "border-emerald-500/20 bg-emerald-500/5"
+            : guide.tone === "error"
+              ? "border-red-500/20 bg-red-500/5"
+              : "border-orange-500/20 bg-orange-500/5"
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className={`w-4 h-4 ${guide.tone === 'success' ? 'text-emerald-400' : 'text-orange-400'}`} />
-              <span className={`text-[10px] font-bold uppercase tracking-widest ${guide.tone === 'success' ? 'text-emerald-500/80' : 'text-orange-500/80'}`}>
+              <Sparkles className={`w-4 h-4 ${guide.tone === "success" ? "text-emerald-400" : "text-orange-400"}`} />
+              <span
+                className={`text-[10px] font-bold uppercase tracking-widest ${
+                  guide.tone === "success" ? "text-emerald-500/80" : "text-orange-500/80"
+                }`}
+              >
                 {guide.eyebrow}
               </span>
             </div>
             <h3 className="text-lg font-semibold text-fg/90">{guide.title}</h3>
             <p className="text-sm text-fg/60 mt-1 max-w-xl">{guide.body}</p>
+            {guide.bullets.length > 0 && (
+              <ul className="mt-3 text-sm text-fg/55 list-disc list-inside space-y-1">
+                {guide.bullets.map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+            )}
           </div>
           {guide.ctaLabel && guide.ctaTab && (
             <button
+              type="button"
               onClick={() => onJumpToTab(guide.ctaTab!)}
               className="px-5 py-2.5 whitespace-nowrap bg-fg/10 hover:bg-fg/15 text-fg text-xs font-semibold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2"
             >
@@ -176,92 +269,57 @@ export default function ChatbotStatusTab({
         </div>
       </motion.div>
 
-      {/* Panneau technique Meta */}
-      <div className="mt-6 p-6 rounded-2xl bg-[var(--bg-background)] border border-fg/[0.04] grid md:grid-cols-2 gap-8">
-        <div>
-          <h4 className="text-xs uppercase tracking-widest text-fg/40 mb-4 font-semibold">Contrôle Meta OAuth</h4>
-          <p className="text-sm text-fg/60 mb-6 leading-relaxed">
-            Gérez la liaison sécurisée entre FLARE AI et votre écosystème Meta. Assurez-vous d'accorder les droits complets `MESSAGING` lors de la fenêtre de consentement.
-          </p>
-          <div className="flex flex-wrap gap-3">
+      <div className="mt-6 p-6 rounded-2xl bg-[var(--bg-background)] border border-fg/[0.04]">
+        <h4 className="text-xs uppercase tracking-widest text-fg/40 mb-3 font-semibold">Compte Facebook</h4>
+        <p className="text-sm text-fg/60 mb-5 leading-relaxed max-w-2xl">
+          Connectez le compte Meta qui gère vos pages. Vous pourrez ensuite choisir la page et l’activer pour Messenger.
+          Si vous avez déjà connecté un compte, utilisez « Ajouter / resynchroniser » sur l’accueil du chatbot pour mettre
+          à jour la liste des pages.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={onConnect}
+            disabled={authLoading || !canManagePages}
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-b from-[#1877F2]/20 to-[#1877F2]/10 border border-[#1877F2]/30 text-[#1877F2] font-semibold text-xs tracking-wider uppercase hover:shadow-[0_0_20px_rgba(24,119,242,0.15)] transition-all flex items-center gap-2 disabled:opacity-50"
+          >
+            {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
+            {activePage ? "Reconnecter Facebook" : "Connecter Facebook"}
+          </button>
+          {activePage && canManagePages && !activePage.is_active && (
             <button
-              onClick={onConnect}
-              disabled={authLoading || !canManagePages}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-b from-[#1877F2]/20 to-[#1877F2]/10 border border-[#1877F2]/30 text-[#1877F2] font-semibold text-xs tracking-wider uppercase hover:shadow-[0_0_20px_rgba(24,119,242,0.15)] transition-all flex items-center gap-2 disabled:opacity-50"
+              type="button"
+              onClick={() => onActivate(activePage.page_id)}
+              disabled={busyPageId === activePage.page_id}
+              className="px-5 py-2.5 rounded-xl border border-emerald-500/30 text-emerald-500 font-semibold text-xs tracking-wider uppercase hover:bg-emerald-500/10 transition-all flex items-center gap-2"
             >
-              {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
-              {activePage ? "Renouveler Token" : "Lancer Meta OAuth"}
-            </button>
-            {activePage && canManagePages && !activePage.is_active && (
-              <button
-                onClick={() => onActivate(activePage.page_id)}
-                disabled={busyPageId === activePage.page_id}
-                className="px-5 py-2.5 rounded-xl border border-emerald-500/30 text-emerald-500 font-semibold text-xs tracking-wider uppercase hover:bg-emerald-500/10 transition-all flex items-center gap-2"
-              >
-                {busyPageId === activePage.page_id ? <Loader2 className="w-4 h-4 animate-spin" /> : <BadgeCheck className="w-4 h-4" />}
-                Activer ce canal
-              </button>
-            )}
-            {activePage && canManagePages && activePage.is_active && (
-              <button
-                onClick={() => onDisconnect(activePage.page_id)}
-                disabled={busyPageId === activePage.page_id}
-                className="px-5 py-2.5 rounded-xl border border-red-500/20 text-red-400 font-semibold text-xs tracking-wider uppercase hover:bg-red-500/10 transition-all"
-              >
-                {busyPageId === activePage.page_id ? "Désactivation..." : "Désactiver canal"}
-              </button>
-            )}
-          </div>
-        </div>
-        
-        <div className="bg-white/[0.01] rounded-xl border border-fg/[0.04] p-5 text-fg/50 h-full flex flex-col gap-5">
-          <div>
-            <h4 className="text-sm font-semibold uppercase tracking-wide text-fg/45 mb-1">Diagnostic Meta</h4>
-            <p className="text-sm text-fg/55 leading-relaxed">
-              Deux URLs distinctes : OAuth (login) vs webhook Messenger. L&apos;erreur « redirect URI not whitelisted »
-              concerne la première.
-            </p>
-          </div>
-          <CopyableUriRow
-            label="1. OAuth — Valid OAuth Redirect URIs (Facebook Login → Paramètres)"
-            value={status?.oauth_callback_url || ""}
-            accentClass="text-sky-300/95"
-          />
-          <CopyableUriRow
-            label="2. Webhook Messenger (produit Messenger / service direct — autre entrée Meta)"
-            value={status?.callback_url || ""}
-            accentClass="text-emerald-300/90"
-          />
-          {status?.meta_app_id ? (
-            <p className="text-sm">
-              <span className="text-fg/45">App ID (console Meta) :</span>{" "}
-              <span className="font-mono text-fg/80">{status.meta_app_id}</span>
-              {status.meta_graph_version ? (
-                <>
-                  {" "}
-                  · Graph <span className="font-mono text-fg/80">{status.meta_graph_version}</span>
-                </>
+              {busyPageId === activePage.page_id ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : null}
-            </p>
-          ) : null}
-          {(status?.app_domain_hints?.length ?? 0) > 0 ? (
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-fg/75">App Domains (Paramètres → De base)</p>
-              <p className="text-sm text-fg/55">
-                Ajoutez chaque domaine sans <code className="text-fg/70">https://</code> :{" "}
-                <span className="font-mono text-amber-200/90">{status!.app_domain_hints!.join(", ")}</span>
-              </p>
-            </div>
-          ) : null}
-          <div className="pt-2 border-t border-fg/[0.06] text-sm">
-            <span className="text-fg/45">Page sélectionnée :</span>{" "}
-            <span className="font-mono text-orange-300/90">{activePage?.page_id || "—"}</span>
-          </div>
+              Activer cette page sur Messenger
+            </button>
+          )}
+          {activePage && canManagePages && activePage.is_active && (
+            <button
+              type="button"
+              onClick={() => onDisconnect(activePage.page_id)}
+              disabled={busyPageId === activePage.page_id}
+              className="px-5 py-2.5 rounded-xl border border-red-500/20 text-red-400 font-semibold text-xs tracking-wider uppercase hover:bg-red-500/10 transition-all"
+            >
+              {busyPageId === activePage.page_id ? "Déconnexion…" : "Retirer la page"}
+            </button>
+          )}
         </div>
       </div>
-      
-      {activePage ? <FacebookVerificationBanner page={activePage as any} loading={loading} onRefresh={onRefresh} className="mt-4" /> : null}
 
+      {activePage ? (
+        <FacebookVerificationBanner
+          page={activePage as unknown as FacebookMessengerPage}
+          loading={loading}
+          onRefresh={onRefresh}
+          className="mt-4"
+        />
+      ) : null}
     </SectionCard>
   );
 }

@@ -8,6 +8,7 @@ import PageSelector from "@/components/PageSelector";
 import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
+  resyncFacebookMessengerPages,
   type FacebookMessengerPage,
 } from "@/lib/facebookMessenger";
 
@@ -82,6 +83,7 @@ export default function ChatbotHomePage({
   const [lastKpiUpdate, setLastKpiUpdate] = useState<Date | null>(null);
   const [canManageFb, setCanManageFb] = useState(false);
   const [fbBusyPageId, setFbBusyPageId] = useState<string | null>(null);
+  const [pagesRefreshBusy, setPagesRefreshBusy] = useState(false);
 
   const resolveToken = useCallback(async () => {
     if (getFreshToken) return (await getFreshToken()) || token || null;
@@ -116,13 +118,44 @@ export default function ChatbotHomePage({
         onSelectPage?.(pageId);
       } catch (e) {
         console.error(e);
-        alert("Activation Messenger impossible. Réessayez ou ouvrez Paramètres.");
+        const msg =
+          e instanceof Error
+            ? e.message
+            : "Activation impossible. Ouvrez Paramètres et reconnectez Facebook si le problème continue.";
+        alert(msg);
       } finally {
         setFbBusyPageId(null);
       }
     },
     [resolveToken, canManageFb, onPagesChanged, onSelectPage]
   );
+
+  const handleAddOrResyncPages = useCallback(async () => {
+    const t = await resolveToken();
+    if (!t || !canManageFb) {
+      onPush("chatbot-parametres");
+      return;
+    }
+    if (pages.length === 0) {
+      onPush("chatbot-parametres");
+      return;
+    }
+    setPagesRefreshBusy(true);
+    try {
+      await resyncFacebookMessengerPages(t);
+      const st = await loadFacebookMessengerStatus(t);
+      onPagesChanged?.(st.pages);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "";
+      if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser la liste/i.test(msg)) {
+        onPush("chatbot-parametres");
+      } else {
+        alert(msg || "Impossible d’actualiser la liste des pages. Ouvrez Paramètres pour reconnecter Facebook.");
+      }
+    } finally {
+      setPagesRefreshBusy(false);
+    }
+  }, [resolveToken, canManageFb, pages.length, onPagesChanged, onPush]);
 
   const loadKPIs = useCallback(
     async (silent = false) => {
@@ -197,10 +230,14 @@ export default function ChatbotHomePage({
               pages={pages}
               selectedPageId={selectedPageId}
               onSelect={(pid) => onSelectPage?.(pid)}
-              onAddPage={() => onPush("chatbot-parametres")}
+              onAddPage={() => {
+                if (pages.length === 0) onPush("chatbot-parametres");
+                else void handleAddOrResyncPages();
+              }}
               onActivatePage={handleActivateMessengerPage}
               canManagePages={canManageFb}
               busyPageId={fbBusyPageId}
+              isRefreshingPages={pagesRefreshBusy}
             />
           </div>
         </motion.div>

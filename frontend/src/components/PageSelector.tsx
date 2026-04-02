@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
-import { Facebook, Loader2, Plus } from "lucide-react";
+import { Facebook, Loader2, Plus, RefreshCw } from "lucide-react";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 
 interface PageSelectorProps {
@@ -16,6 +16,8 @@ interface PageSelectorProps {
   onActivatePage?: (pageId: string) => void;
   canManagePages?: boolean;
   busyPageId?: string | null;
+  /** Liste des pages en cours d’actualisation depuis Meta (sans OAuth) */
+  isRefreshingPages?: boolean;
 }
 
 const staggerContainer = {
@@ -42,6 +44,7 @@ export default function PageSelector({
   onActivatePage,
   canManagePages = false,
   busyPageId = null,
+  isRefreshingPages = false,
 }: PageSelectorProps) {
   if (loading) {
     return (
@@ -92,17 +95,22 @@ export default function PageSelector({
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h3 className="text-base font-semibold text-fg/90">Vos pages Facebook</h3>
           <button
+            type="button"
             onClick={onAddPage}
-            className="text-sm flex items-center gap-1.5 text-orange-500 hover:text-orange-400 transition-colors font-medium"
+            disabled={isRefreshingPages}
+            className="text-sm flex items-center gap-1.5 text-orange-500 hover:text-orange-400 transition-colors font-medium disabled:opacity-50"
           >
-            <Plus className="w-4 h-4" />
-            Ajouter / resynchroniser
+            {isRefreshingPages ? (
+              <RefreshCw className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            Actualiser la liste ou reconnecter
           </button>
         </div>
         <p className="text-sm text-fg/50 max-w-3xl">
-          Cliquez sur une page pour la sélectionner dans FLARE (tableau de bord, catalogue). Une seule page peut être{" "}
-          <span className="text-fg/70">active sur Messenger</span> : utilisez « Activer » pour celle que vous voulez
-          recevoir sur le bot.
+          Cliquez sur une page pour la piloter dans FLARE (tableau de bord, catalogue). Une seule page à la fois peut
+          recevoir les conversations Messenger : utilisez « Activer sur Messenger » pour celle que vous choisissez.
         </p>
       </div>
 

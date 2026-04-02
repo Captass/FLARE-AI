@@ -33,6 +33,7 @@ import {
   getFacebookMessengerAuthorizationUrl,
   activateFacebookMessengerPage,
   disconnectFacebookMessengerPage,
+  resyncFacebookMessengerPages,
   type FacebookMessengerStatus,
 } from "@/lib/facebookMessenger";
 import { CATALOGUE_STARTER_TEMPLATES, EMPTY_CATALOGUE_INPUT, EMPTY_PORTFOLIO_INPUT } from "@/components/chatbot/chatbotWorkspaceUtils";
@@ -153,7 +154,7 @@ export default function ChatbotParametresPage({
     const accessToken = await resolveAccessToken(true);
     if (!accessToken) return;
     if (!canManagePages) {
-      setFacebookError("Rights required.");
+      setFacebookError("Droits insuffisants pour connecter Facebook.");
       return;
     }
     setFacebookAuthLoading(true);
@@ -229,6 +230,32 @@ export default function ChatbotParametresPage({
     }
   };
 
+  const handleResyncOrConnectFacebook = async () => {
+    if (!canManagePages) return;
+    const accessToken = await resolveAccessToken(true);
+    if (!accessToken) return;
+    const count = facebookStatus?.pages?.length ?? 0;
+    if (count === 0) {
+      await handleConnectFacebook();
+      return;
+    }
+    setFacebookAuthLoading(true);
+    setFacebookError(null);
+    try {
+      await resyncFacebookMessengerPages(accessToken);
+      await loadData(true);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser/i.test(msg)) {
+        await handleConnectFacebook();
+      } else {
+        setFacebookError(msg || "Impossible d'actualiser la liste des pages.");
+      }
+    } finally {
+      setFacebookAuthLoading(false);
+    }
+  };
+
   // --- Render ---
 
   if (loading) {
@@ -280,11 +307,12 @@ export default function ChatbotParametresPage({
              pages={facebookStatus?.pages || []}
              selectedPageId={selectedPageId || null}
              onSelect={(pageId) => onSelectPage?.(pageId)}
-             onAddPage={handleConnectFacebook}
+             onAddPage={handleResyncOrConnectFacebook}
              loading={loading}
              onActivatePage={handleActivatePage}
              canManagePages={canManagePages}
              busyPageId={facebookBusyPageId}
+             isRefreshingPages={facebookAuthLoading && (facebookStatus?.pages?.length ?? 0) > 0}
            />
 
            {/* SECTION 1: Connexion Facebook */}

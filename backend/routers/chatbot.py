@@ -21,6 +21,7 @@ from routers.facebook_pages import (
     _serialize_chatbot_preferences_for_direct_service,
     _status_for_sync_error,
     _sync_page_to_direct_service,
+    _user_safe_last_error,
 )
 
 router = APIRouter(prefix="/api", tags=["chatbot"])
@@ -237,15 +238,16 @@ async def _sync_active_pages_for_org(
             sync_warning = f"{warning_prefix}, mais au moins une page active doit etre reconnectee."
             continue
         try:
-            await _sync_page_to_direct_service(
+            synced = await _sync_page_to_direct_service(
                 page,
                 page_access_token,
                 chatbot_preferences=direct_service_payload,
             )
             page.status = "active"
-            page.direct_service_synced = "true"
+            page.direct_service_synced = "true" if synced else "false"
             page.last_error = None
-            page.last_synced_at = datetime.utcnow()
+            if synced:
+                page.last_synced_at = datetime.utcnow()
             page.updated_at = datetime.utcnow()
         except HTTPException as exc:
             page.direct_service_synced = "false"
@@ -405,7 +407,7 @@ def get_chatbot_setup_status(
             "is_active": p.is_active == "true",
             "webhook_subscribed": p.webhook_subscribed == "true",
             "direct_service_synced": p.direct_service_synced == "true",
-            "last_error": p.last_error,
+            "last_error": _user_safe_last_error(p.last_error),
             "connected_at": p.connected_at.isoformat() if p.connected_at else None,
             "last_synced_at": p.last_synced_at.isoformat() if p.last_synced_at else None,
         }
@@ -517,7 +519,7 @@ async def get_chatbot_overview(
             "is_active": p.is_active == "true",
             "webhook_subscribed": p.webhook_subscribed == "true",
             "direct_service_synced": p.direct_service_synced == "true",
-            "last_error": p.last_error,
+            "last_error": _user_safe_last_error(p.last_error),
             "connected_at": p.connected_at.isoformat() if p.connected_at else None,
             "last_synced_at": p.last_synced_at.isoformat() if p.last_synced_at else None,
         }

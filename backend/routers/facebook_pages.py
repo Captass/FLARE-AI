@@ -209,9 +209,19 @@ def _organization_context_from_authorization(
     }
 
 
+def _user_safe_last_error(raw: str | None) -> str:
+    """Évite d'exposer des réponses JSON brutes ou des URLs techniques au client."""
+    r = str(raw or "").strip()
+    if not r:
+        return ""
+    lower = r.lower()
+    if "http://" in lower or "https://" in lower or "traceback" in lower or r.strip().startswith("{"):
+        return "Une erreur technique est survenue. Réessayez ou reconnectez Facebook dans Paramètres."
+    return r[:400] + ("…" if len(r) > 400 else "")
+
+
 def _serialize_connection(row: FacebookPageConnection) -> dict[str, Any]:
     tasks = row.page_tasks if isinstance(row.page_tasks, list) else []
-    metadata = row.metadata_json if isinstance(row.metadata_json, dict) else {}
     return {
         "id": row.id,
         "page_id": row.page_id,
@@ -226,8 +236,8 @@ def _serialize_connection(row: FacebookPageConnection) -> dict[str, Any]:
         "connected_by_email": row.connected_by_email or "",
         "connected_at": row.connected_at.isoformat() if row.connected_at else None,
         "last_synced_at": row.last_synced_at.isoformat() if row.last_synced_at else None,
-        "last_error": row.last_error or "",
-        "metadata": metadata,
+        "last_error": _user_safe_last_error(row.last_error),
+        "metadata": {},
     }
 
 
@@ -303,15 +313,27 @@ def _serialize_chatbot_preferences_for_direct_service(
     }
 
 
-def _messenger_direct_headers() -> dict[str, str]:
+def _messenger_direct_headers_optional() -> dict[str, str] | None:
+    """Headers pour le service Messenger Direct. None si non configuré (sync ignorée, pas d'erreur bloquante)."""
     dashboard_key = str(settings.MESSENGER_DIRECT_DASHBOARD_KEY or "").strip()
     if not dashboard_key:
-        raise HTTPException(status_code=503, detail="La cle interne Messenger n'est pas configuree.")
+        return None
     return {
         "Accept": "application/json",
         "Content-Type": "application/json",
         DASHBOARD_ACCESS_HEADER: dashboard_key,
     }
+
+
+def _facebook_graph_error_message(response: httpx.Response) -> str | None:
+    try:
+        data = response.json()
+        err = data.get("error") if isinstance(data, dict) else None
+        if isinstance(err, dict):
+            return str(err.get("error_user_msg") or err.get("message") or "").strip() or None
+    except Exception:
+        pass
+    return None
 
 
 def _status_for_sync_error(detail: str) -> str:
@@ -390,6 +412,67 @@ async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
     ]
 
 
+def _upsert_facebook_page_connections(
+    db: Session,
+    organization_slug: str,
+    user_email: str,
+    user_access_token: str,
+    pages: list[dict[str, Any]],
+    token_payload: dict[str, Any],
+) -> None:
+    """Met à jour ou crée les lignes FacebookPageConnection pour chaque page Meta (OAuth ou resync)."""
+    encrypted_user_token = encryption_service.encrypt(user_access_token)
+    organization_scope = organization_scope_id(organization_slug)
+    now = _utcnow()
+
+    for page in pages:
+        page_id = str(page.get("id") or "").strip()
+        page_name = str(page.get("name") or "").strip() or page_id
+        if not page_id:
+            continue
+
+        connection = (
+            db.query(FacebookPageConnection)
+            .filter(
+                FacebookPageConnection.organization_slug == organization_slug,
+                FacebookPageConnection.page_id == page_id,
+            )
+            .first()
+        )
+        if not connection:
+            connection = FacebookPageConnection(
+                organization_slug=organization_slug,
+                organization_scope_id=organization_scope,
+                page_id=page_id,
+                connected_at=now,
+                created_at=now,
+            )
+            db.add(connection)
+
+        page_access_token = str(page.get("access_token") or "").strip()
+        connection.page_name = page_name
+        picture_data = page.get("picture", {})
+        if isinstance(picture_data, dict):
+            connection.page_picture_url = str(picture_data.get("data", {}).get("url") or "").strip()
+        connection.page_category = str(page.get("category") or "").strip()
+        connection.page_tasks = page.get("tasks") if isinstance(page.get("tasks"), list) else []
+        connection.page_access_token_encrypted = encryption_service.encrypt(page_access_token)
+        connection.user_access_token_encrypted = encrypted_user_token
+        connection.connected_by_email = user_email
+        connection.status = "pending"
+        connection.is_active = "false"
+        connection.webhook_subscribed = "false"
+        connection.direct_service_synced = "false"
+        connection.last_error = None
+        connection.metadata_json = {
+            "token_type": str(token_payload.get("token_type") or "").strip(),
+            "user_token_expires_in": int(token_payload.get("expires_in") or 0),
+        }
+        connection.updated_at = now
+
+    db.commit()
+
+
 async def _subscribe_page_to_app(page_id: str, page_access_token: str) -> None:
     timeout = httpx.Timeout(20.0, connect=10.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -401,8 +484,13 @@ async def _subscribe_page_to_app(page_id: str, page_access_token: str) -> None:
             },
         )
     if response.status_code >= 400:
-        detail = response.text
-        raise HTTPException(status_code=502, detail=f"Abonnement Messenger impossible: {detail}")
+        hint = _facebook_graph_error_message(response)
+        if hint:
+            raise HTTPException(status_code=502, detail=f"Meta n'a pas pu activer Messenger : {hint}")
+        raise HTTPException(
+            status_code=502,
+            detail="Impossible d'activer Messenger sur cette page. Vérifiez que vous êtes administrateur de la page Facebook.",
+        )
 
 
 async def _unsubscribe_page_from_app(page_id: str, page_access_token: str) -> None:
@@ -413,15 +501,25 @@ async def _unsubscribe_page_from_app(page_id: str, page_access_token: str) -> No
             params=_graph_token_params(page_access_token),
         )
     if response.status_code >= 400:
-        detail = response.text
-        raise HTTPException(status_code=502, detail=f"Desabonnement Messenger impossible: {detail}")
+        raise HTTPException(
+            status_code=502,
+            detail="Impossible de désactiver Messenger sur cette page pour le moment.",
+        )
 
 
 async def _sync_page_to_direct_service(
     connection: FacebookPageConnection,
     page_access_token: str,
     chatbot_preferences: dict[str, str] | None = None,
-) -> None:
+) -> bool:
+    """
+    Envoie la page au service Messenger Direct si configuré.
+    Retourne True si la synchro a réussi, False si le service n'est pas configuré (skip).
+    """
+    headers = _messenger_direct_headers_optional()
+    if headers is None:
+        logger.warning("Messenger Direct: clé dashboard absente — synchro ignorée (page_id=%s)", connection.page_id)
+        return False
     base_url = settings.MESSENGER_DIRECT_URL.rstrip("/")
     timeout = httpx.Timeout(20.0, connect=10.0)
     payload = {
@@ -437,23 +535,33 @@ async def _sync_page_to_direct_service(
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.post(
             f"{base_url}/internal/page-connections",
-            headers=_messenger_direct_headers(),
+            headers=headers,
             content=json.dumps(payload),
         )
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail="La synchro avec le service Messenger direct a echoue.")
+        raise HTTPException(
+            status_code=502,
+            detail="La messagerie automatisée n'a pas pu se synchroniser. Réessayez plus tard ou contactez le support.",
+        )
+    return True
 
 
 async def _disconnect_page_from_direct_service(page_id: str) -> None:
+    headers = _messenger_direct_headers_optional()
+    if headers is None:
+        return
     base_url = settings.MESSENGER_DIRECT_URL.rstrip("/")
     timeout = httpx.Timeout(20.0, connect=10.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
         response = await client.delete(
             f"{base_url}/internal/page-connections/{page_id}",
-            headers=_messenger_direct_headers(),
+            headers=headers,
         )
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail="La desactivation sur le service Messenger direct a echoue.")
+        raise HTTPException(
+            status_code=502,
+            detail="La désactivation côté messagerie a échoué.",
+        )
 
 
 def _callback_page(frontend_origin: str, status: str, detail: str, page_count: int = 0) -> HTMLResponse:
@@ -558,9 +666,6 @@ async def get_facebook_pages_status(
         .all()
     )
     backend_public = _public_backend_url(request)
-    frontend_host = _hostname_from_settings_url(settings.FRONTEND_URL)
-    backend_host = _hostname_from_settings_url(settings.BACKEND_URL) or _hostname_from_settings_url(backend_public)
-    app_domain_hints = sorted({h for h in (frontend_host, backend_host) if h})
     return {
         "organization_slug": context["organization_slug"],
         "organization_name": context["organization"]["name"],
@@ -568,14 +673,77 @@ async def get_facebook_pages_status(
         "can_edit": context["can_edit"],
         "oauth_configured": bool(settings.META_APP_ID and settings.META_APP_SECRET and backend_public),
         "direct_service_configured": bool(settings.MESSENGER_DIRECT_DASHBOARD_KEY and settings.MESSENGER_DIRECT_URL),
-        "oauth_callback_url": f"{backend_public}/api/facebook/callback",
-        "callback_url": f"{settings.MESSENGER_DIRECT_URL.rstrip('/')}/webhook/facebook",
-        "verify_token_hint": bool(settings.META_VERIFY_TOKEN),
-        "meta_app_id": str(settings.META_APP_ID or "").strip(),
-        "meta_graph_version": _graph_version(),
-        "app_domain_hints": app_domain_hints,
         "pages": [_serialize_connection(row) for row in rows],
         "has_active_page": any(str(row.is_active).lower() == "true" for row in rows),
+    }
+
+
+@router.post("/resync-pages")
+async def resync_facebook_pages(
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Rafraîchit la liste des pages depuis Meta sans refaire tout le flux OAuth (token utilisateur stocké)."""
+    context = _organization_context_from_authorization(authorization, require_edit=True)
+    rows = (
+        db.query(FacebookPageConnection)
+        .filter(FacebookPageConnection.organization_slug == context["organization_slug"])
+        .all()
+    )
+    user_token = ""
+    meta_payload: dict[str, Any] = {"token_type": "user", "expires_in": 0}
+    for row in rows:
+        t = encryption_service.decrypt(row.user_access_token_encrypted or "")
+        if t.strip():
+            user_token = t.strip()
+            md = row.metadata_json if isinstance(row.metadata_json, dict) else {}
+            meta_payload = {
+                "token_type": str(md.get("token_type") or "user"),
+                "expires_in": int(md.get("user_token_expires_in") or 0),
+            }
+            break
+    if not user_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Reconnectez Facebook dans Paramètres pour actualiser la liste des pages.",
+        )
+    try:
+        pages = await _fetch_facebook_pages(user_token)
+    except httpx.HTTPStatusError as exc:
+        logger.warning("Facebook resync /me/accounts HTTP error: %s", exc)
+        raise HTTPException(
+            status_code=401,
+            detail="La session Facebook a expiré. Ouvrez Paramètres et reconnectez votre compte.",
+        ) from exc
+    except Exception as exc:
+        logger.exception("Facebook resync failed: %s", exc)
+        raise HTTPException(
+            status_code=502,
+            detail="Impossible de contacter Facebook pour lister vos pages.",
+        ) from exc
+    if not pages:
+        raise HTTPException(
+            status_code=400,
+            detail="Aucune page avec les droits Messenger. Vérifiez sur Facebook que vous gérez la page.",
+        )
+    _upsert_facebook_page_connections(
+        db,
+        context["organization_slug"],
+        context["user_email"],
+        user_token,
+        pages,
+        meta_payload,
+    )
+    refreshed = (
+        db.query(FacebookPageConnection)
+        .filter(FacebookPageConnection.organization_slug == context["organization_slug"])
+        .order_by(FacebookPageConnection.updated_at.desc())
+        .all()
+    )
+    return {
+        "status": "ok",
+        "page_count": len(pages),
+        "pages": [_serialize_connection(r) for r in refreshed],
     }
 
 
@@ -658,56 +826,14 @@ async def facebook_auth_callback(
             "Aucune page Facebook avec les droits Messenger necessaires n'a ete retournee par Meta.",
         )
 
-    encrypted_user_token = encryption_service.encrypt(user_access_token)
-    organization_scope = organization_scope_id(organization_slug)
-    now = _utcnow()
-
-    for page in pages:
-        page_id = str(page.get("id") or "").strip()
-        page_name = str(page.get("name") or "").strip() or page_id
-        if not page_id:
-            continue
-
-        connection = (
-            db.query(FacebookPageConnection)
-            .filter(
-                FacebookPageConnection.organization_slug == organization_slug,
-                FacebookPageConnection.page_id == page_id,
-            )
-            .first()
-        )
-        if not connection:
-            connection = FacebookPageConnection(
-                organization_slug=organization_slug,
-                organization_scope_id=organization_scope,
-                page_id=page_id,
-                connected_at=now,
-                created_at=now,
-            )
-            db.add(connection)
-
-        page_access_token = str(page.get("access_token") or "").strip()
-        connection.page_name = page_name
-        picture_data = page.get("picture", {})
-        if isinstance(picture_data, dict):
-            connection.page_picture_url = str(picture_data.get("data", {}).get("url") or "").strip()
-        connection.page_category = str(page.get("category") or "").strip()
-        connection.page_tasks = page.get("tasks") if isinstance(page.get("tasks"), list) else []
-        connection.page_access_token_encrypted = encryption_service.encrypt(page_access_token)
-        connection.user_access_token_encrypted = encrypted_user_token
-        connection.connected_by_email = user_email
-        connection.status = "pending"
-        connection.is_active = "false"
-        connection.webhook_subscribed = "false"
-        connection.direct_service_synced = "false"
-        connection.last_error = None
-        connection.metadata_json = {
-            "token_type": str(token_payload.get("token_type") or "").strip(),
-            "user_token_expires_in": int(token_payload.get("expires_in") or 0),
-        }
-        connection.updated_at = now
-
-    db.commit()
+    _upsert_facebook_page_connections(
+        db,
+        organization_slug,
+        user_email,
+        user_access_token,
+        pages,
+        token_payload,
+    )
 
     first_page_id = ""
     if pages and isinstance(pages[0], dict):
@@ -811,7 +937,7 @@ async def _activate_facebook_page_core(
         )
         await _subscribe_page_to_app(target_page_id, page_access_token)
         subscribed_target = True
-        await _sync_page_to_direct_service(
+        direct_synced = await _sync_page_to_direct_service(
             connection,
             page_access_token,
             chatbot_preferences=chatbot_preferences,
@@ -820,7 +946,7 @@ async def _activate_facebook_page_core(
         connection.status = "active"
         connection.is_active = "true"
         connection.webhook_subscribed = "true"
-        connection.direct_service_synced = "true"
+        connection.direct_service_synced = "true" if direct_synced else "false"
         connection.last_error = None
         connection.last_synced_at = now
         connection.updated_at = now
