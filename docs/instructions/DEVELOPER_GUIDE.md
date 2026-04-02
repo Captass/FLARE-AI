@@ -1,6 +1,6 @@
 # Guide développeur FLARE AI
 
-Dernière mise à jour : 2 avril 2026
+Dernière mise à jour : 2 avril 2026 (session 2)
 
 ## But du guide
 
@@ -95,17 +95,20 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | Variable | Usage |
 |----------|-------|
 | `DATABASE_URL` | PostgreSQL Render (auto-injecté via Blueprint) |
-| `OPENAI_API_KEY` | LLM OpenAI |
-| `GOOGLE_API_KEY` | LLM Google / Gemini |
-| `META_APP_ID` | App Facebook |
-| `META_APP_SECRET` | App Facebook |
-| `META_VERIFY_TOKEN` | Webhook Facebook |
-| `SUPABASE_URL` | Supabase (si utilisé) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase (si utilisé) |
-| `FIREBASE_PROJECT_ID` | `rams-flare-ai` |
+| `GEMINI_API_KEY_GLOBAL` | Clé Gemini principale / fallback (toutes les requêtes sans clé spécifique) |
+| `GEMINI_API_KEY_CHATBOT` | Clé Gemini dédiée au Chatbot Facebook Messenger |
+| `GEMINI_API_KEY_ASSISTANT_REASONING` | Clé Gemini dédiée à l'Assistant IA (tâches complexes) |
+| `GEMINI_API_KEY_ASSISTANT_FAST` | Clé Gemini dédiée à l'Assistant IA (tâches rapides / background) |
+| `META_APP_ID` | App Facebook (depuis developers.facebook.com) |
+| `META_APP_SECRET` | App Facebook (secret) |
+| `META_VERIFY_TOKEN` | Token de vérification du webhook Messenger |
+| `BACKEND_URL` | `https://flare-backend-ab5h.onrender.com` — **critique pour OAuth Facebook** |
 | `FRONTEND_URL` | `https://flareai.ramsflare.com` |
+| `FIREBASE_PROJECT_ID` | `rams-flare-ai` |
 | `APP_ENV` | `production` |
 | `FLIGHT_MODE` | `True` (mode dégradé sans toutes les clés) |
+| `SUPABASE_URL` | Supabase (optionnel) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase (optionnel) |
 
 **Frontend (`flare-frontend` — défini dans `render.yaml`) :**
 
@@ -212,12 +215,25 @@ Certificat SSL : géré automatiquement par Render (Let's Encrypt)
 
 Chaque utilisateur suit ce flow :
 
-1. **Connexion Facebook** — OAuth popup, token stocké en DB avec chiffrement Fernet
-2. **Choix de page** — `selectedPageId` scopé dans `page.tsx` (`selectedFacebookPageId`)
-3. **Interface chatbot** — 4 vues : Dashboard, Clients, Personnalisation, Paramètres
-4. **Bot actif** — webhook Messenger → `messenger-direct` → réponses IA
+1. **Connexion Facebook** — OAuth popup `GET /api/facebook/auth` → popup navigateur → `GET /api/facebook/callback`
+2. **Token stocké** — `page_access_token` chiffré (Fernet) dans `facebook_page_connections`
+3. **Activation** — `POST /api/facebook/pages/{page_id}/activate` : subscribe webhook Meta + sync direct service
+4. **Bot actif** — webhook Messenger → `POST /webhook/facebook` → `facebook_cm/agent.py` → Gemini Chatbot
+5. **Déconnexion stricte** — `DELETE /api/facebook/pages/{page_id}` : désabonne l'app Meta, **supprime le record en base** (déconnexion définitive)
 
 Le `selectedPageId` est propagé à chaque composant chatbot. Chaque appel API inclut ce paramètre pour isoler les données par page.
+
+### Routage multi-clés Gemini (2 avril 2026)
+
+Chaque composant IA utilise une clé dédiée pour le suivi des coûts :
+
+```python
+# core/llm_factory.py — get_llm(purpose=...)
+# purpose='chatbot'              → GEMINI_API_KEY_CHATBOT
+# purpose='assistant_reasoning'  → GEMINI_API_KEY_ASSISTANT_REASONING
+# purpose='assistant_fast'       → GEMINI_API_KEY_ASSISTANT_FAST
+# fallback                       → GEMINI_API_KEY_GLOBAL
+```
 
 ### Callback pattern (2 avril 2026)
 
@@ -233,18 +249,46 @@ const handlePagesChanged = (pages) => {
 
 Cela résolvait un bug critique : après OAuth, `selectedPageId` restait `null` dans les autres vues.
 
+### Pages légales (Meta Platform Policy)
+
+Créées le 2 avril 2026 dans `frontend/src/app/` :
+
+| Page | URL | Usage Meta |
+|------|-----|------------|
+| `privacy-policy/page.tsx` | `https://flareai.ramsflare.com/privacy-policy` | Privacy Policy URL (obligatoire) |
+| `terms/page.tsx` | `https://flareai.ramsflare.com/terms` | Terms of Service URL |
+| `data-deletion/page.tsx` | `https://flareai.ramsflare.com/data-deletion` | User Data Deletion URL |
+
+### Configuration Meta Developer Console
+
+Ce qu'il faut avoir configuré dans [developers.facebook.com](https://developers.facebook.com) pour que OAuth fonctionne :
+
+1. **App Settings → Basic → App Domains** :
+   - `flareai.ramsflare.com`
+   - `flare-backend-ab5h.onrender.com`
+2. **Facebook Login → Settings → Valid OAuth Redirect URIs** :
+   - `https://flare-backend-ab5h.onrender.com/api/facebook/callback`
+3. **Privacy Policy URL** : `https://flareai.ramsflare.com/privacy-policy`
+4. **Terms of Service URL** : `https://flareai.ramsflare.com/terms`
+5. **User Data Deletion URL** : `https://flareai.ramsflare.com/data-deletion`
+
 ---
 
 ## Historique des déploiements
 
 | Date | Composant | Plateforme | Changements |
 |------|-----------|------------|-------------|
+| 2 avril 2026 (session 2) | Backend | Render | **Déconnexion stricte Facebook** : `DELETE /api/facebook/pages/{id}` supprime le record en DB |
+| 2 avril 2026 (session 2) | Backend | Render | **Routage multi-clés Gemini** : `get_llm(purpose=...)` avec fallback sur `GEMINI_API_KEY_GLOBAL` |
+| 2 avril 2026 (session 2) | Backend | Render | Nommage `GEMINI_API_KEY` → `GEMINI_API_KEY_GLOBAL` dans `config.py` + `llm_factory.py` |
+| 2 avril 2026 (session 2) | Frontend | Render | Ajout pages légales : `privacy-policy`, `terms`, `data-deletion` |
+| 2 avril 2026 (session 2) | Config | Meta Developers | App Domains + OAuth Redirect URI configurés pour Render |
+| 2 avril 2026 (session 2) | Config | Render | `BACKEND_URL` ajouté dans les env vars (critique pour OAuth callback) |
+| 2 avril 2026 (session 2) | Infrastructure | Git/Render | Résolution conflits merge dans `render.yaml`, push via token HTTPS |
 | 2 avril 2026 | Infrastructure | Render.com | Migration complète : frontend (static), backend (web), PostgreSQL |
 | 2 avril 2026 | Frontend | Render | KPIs dashboard, skeleton loading, PlatformCard premium, bannière reconnexion |
 | 2 avril 2026 | Backend | Render | Endpoint dashboard avec filtre `page_id` |
 | 2 avril 2026 | DNS | Squarespace | CNAME `flareai` → `flare-frontend-t8i4.onrender.com` |
-| 2 avril 2026 | Backend | Cloud Run (ancien) | `_serialize_page` : ajout `page_picture_url` + `page_category` |
-| 2 avril 2026 | Frontend | Firebase (ancien) | Fix chatbot multi-page, light mode, resolveToken |
 | 26 mars 2026 | Backend | Cloud Run (ancien) | Setup initial chatbot Facebook |
 
 ---

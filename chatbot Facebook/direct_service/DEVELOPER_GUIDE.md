@@ -31,17 +31,17 @@ Le fichier principal est [`.env`](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%2
 
 Variables importantes :
 
-- `META_VERIFY_TOKEN`
-- `META_PAGE_ACCESS_TOKEN`
-- `META_APP_SECRET`
-- `DASHBOARD_ACCESS_KEY`
-- `META_GRAPH_VERSION`
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
-- `GOOGLE_API_KEY`
-- `GOOGLE_GENAI_MODEL`
-- `GOOGLE_SHEET_ID`
-- `GOOGLE_SERVICE_ACCOUNT_JSON`
+- `META_VERIFY_TOKEN` : Token de vérification du webhook Messenger
+- `META_PAGE_ACCESS_TOKEN` : Token d'accès de la page Facebook
+- `META_APP_SECRET` : Clé secrète de l'application Facebook
+- `DASHBOARD_ACCESS_KEY` : Clé d'accès au dashboard
+- `META_GRAPH_VERSION` : Version de l'API Graph Meta
+- `TELEGRAM_BOT_TOKEN` : Token du bot Telegram
+- `TELEGRAM_CHAT_ID` : ID du chat Telegram
+- `GOOGLE_API_KEY` (obsolète/remplacé) / `GEMINI_API_KEY_CHATBOT` : Clé dédiée à l'interaction du Chatbot
+- `GOOGLE_GENAI_MODEL` : Modèle utilisé pour la génération
+- `GOOGLE_SHEET_ID` : ID du Google Sheet
+- `GOOGLE_SERVICE_ACCOUNT_JSON` : Clé de compte de service Google
 
 ## Fichiers cles
 
