@@ -1,8 +1,16 @@
 # FLARE AI - Documentation centrale
 
-Derniere mise a jour : 28 mars 2026
+Derniere mise a jour : 2 avril 2026
 
 Ce dossier `docs` est le point d'entree documentaire du projet.
+
+## Regle Git / agents (Windows — a appliquer systematiquement)
+
+Si le clone vit sous un chemin contenant une apostrophe (ex. `RAM'S FLARE`), le terminal integre peut ** planter avant d'executer `git`**. Pour tout `status` / `commit` / `push` en automation (agent IA, script CI local) lorsque le `cd` vers le repo echoue :
+
+1. Utiliser **`git --git-dir` / `--work-tree`** depuis un repertoire neutre (ex. `C:\Windows\System32`), comme documente pas a pas dans [instructions/DEVELOPER_GUIDE.md](instructions/DEVELOPER_GUIDE.md) (section **Deploiement**, **Technique Git**).
+2. En alternative : script [scripts/render-deploy.ps1](../scripts/render-deploy.ps1) a la racine du depot.
+
 Le but est simple :
 
 - retrouver vite les bonnes informations

@@ -1,6 +1,6 @@
 # Guide développeur FLARE AI
 
-Dernière mise à jour : 2 avril 2026 (session 3 — script déploiement Windows)
+Dernière mise à jour : 2 avril 2026 (session 4 — Git `--git-dir` / agents)
 
 ## But du guide
 
@@ -169,17 +169,59 @@ python -m py_compile main.py
 
 ### Windows — chemin avec apostrophe (`RAM'S FLARE`)
 
-Si le terminal de l’IDE ne peut pas lancer `git` à cause du chemin, utiliser l’une des options suivantes :
+Si le terminal de l’IDE **plante avant d’exécuter** `git` (souvent à cause de l’apostrophe dans `RAM'S FLARE` dans le chemin du workspace), utiliser **d’abord** la technique **`--git-dir` / `--work-tree`** ci-dessous. Les agents IA doivent **s’y tenir systématiquement** pour `status` / `add` / `commit` / `push` lorsque le shell intégré échoue.
 
-1. **Script** : double-clic sur `scripts\render-deploy.cmd`, ou en PowerShell depuis n’importe où :
+#### Technique Git : `--git-dir` et `--work-tree` (référence agents / automation)
+
+**Principe :** ne pas faire `cd` dans le dépôt. Exécuter `git` depuis un répertoire **neutre** (sans `'` dans le chemin), en pointant explicitement le dépôt.
+
+1. Définir la racine du clone (adapter au poste) — les **slashes avant** fonctionnent avec Git pour Windows :
+
+   ```text
+   D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI
+   ```
+
+2. **Exemples** (PowerShell, `cwd` = par ex. `C:\Windows\System32`) :
+
+   ```powershell
+   $G = "D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI"
+   git --git-dir="$G/.git" --work-tree="$G" status -sb
+   git --git-dir="$G/.git" --work-tree="$G" add -A
+   git --git-dir="$G/.git" --work-tree="$G" commit -m "message"
+   git --git-dir="$G/.git" --work-tree="$G" push origin main
+   ```
+
+   Variante **variables d’environnement** (même effet) :
+
+   ```powershell
+   $G = "D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI"
+   $env:GIT_DIR = "$G/.git"
+   $env:GIT_WORK_TREE = $G
+   git status -sb
+   ```
+
+3. **PowerShell 5.1 :** enchaîner les commandes avec **`;`** et non **`&&`** (sinon erreur de parse).
+
+4. **Fichiers à ne pas committer par erreur :** si besoin, après `git add -A`, exclure le cache TypeScript par exemple :
+
+   ```powershell
+   git --git-dir="$G/.git" --work-tree="$G" reset HEAD -- frontend/tsconfig.tsbuildinfo
+   git --git-dir="$G/.git" --work-tree="$G" checkout -- frontend/tsconfig.tsbuildinfo
+   ```
+
+#### Autres options (humains ou shell sain)
+
+1. **Script** : `scripts\render-deploy.cmd` ou :
+
    ```powershell
    powershell -NoProfile -ExecutionPolicy Bypass -File "…\FLARE AI\scripts\render-deploy.ps1" -Commit -Message "votre message"
    ```
-   Sans `-Commit` : uniquement `git push origin main` (après vos commits dans l’éditeur). Avec `-Build` : `npm run build` dans `frontend` avant le push (vérification locale).
 
-2. **PowerShell manuel** : toujours utiliser `-LiteralPath` pour se placer dans le dépôt, puis `git status` / `git push origin main`.
+   Sans `-Commit` : `git push origin main` seulement. Avec `-Build` : `npm run build` dans `frontend` avant le push.
 
-**Render après le push** : ouvrir [dashboard Render](https://dashboard.render.com) et attendre la fin des builds **flare-frontend** et **flare-backend** ; en secours : *Manual Deploy → Deploy latest commit*.
+2. **PowerShell manuel** : `Set-Location -LiteralPath` vers le dépôt, puis les commandes `git` habituelles — **uniquement si** le terminal accepte ce `cd`.
+
+**Render après le push** : [dashboard Render](https://dashboard.render.com) — builds **flare-frontend** et **flare-backend** ; secours : *Manual Deploy → Deploy latest commit*.
 
 ### Ancien déploiement (NE PLUS UTILISER)
 

@@ -49,18 +49,22 @@ python -m py_compile main.py
 
 ## Deploiement
 
-### Frontend
+**Production actuelle (2026-04) :** Render — `git push` sur `main` declenche les builds. Details, DNS et variables : [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md).
+
+**Git depuis un agent / terminal integre (chemin `RAM'S FLARE`) :** si `cd` ou `git` echouent sans raison, utiliser **`git --git-dir` / `--work-tree`** depuis un repertoire neutre — procedure obligatoire documentee dans le meme **DEVELOPER_GUIDE** (section Deploiement, Windows). Script optionnel : `scripts/render-deploy.ps1`.
+
+### Ancien flux (obsolete pour la prod courante — ne plus utiliser)
+
+**Frontend (Firebase Hosting — obsolete)**
 
 ```powershell
-firebase deploy --only hosting --project rams-flare-ai
+# firebase deploy --only hosting --project rams-flare-ai
 ```
 
-Pour le wizard Messenger, ne pas utiliser cette commande vers la prod avant d'avoir suivi le guide staging.
-
-### Backend
+**Backend (Cloud Run — obsolete)**
 
 ```powershell
-gcloud run deploy flare-backend --source . --region europe-west1 --project ramsflare --allow-unauthenticated --quiet
+# gcloud run deploy flare-backend --source . --region europe-west1 --project ramsflare --allow-unauthenticated --quiet
 ```
 
 ## Verification minimale apres deploiement

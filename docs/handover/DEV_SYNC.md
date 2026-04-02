@@ -2,15 +2,16 @@
 
 Ce fichier est la source unique de vérité. **LIRE avant toute action. ÉCRIRE après toute action.**
 
+**Mise à jour infra (2026-04) :** déploiement prod et procédure Git (dont **`git --git-dir` / `--work-tree`** pour chemins Windows avec apostrophe) = source de vérité **[docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md)**. Mettre à jour ce DEV_SYNC quand l’état d’équipe change, pas pour dupliquer le guide.
+
 ---
 
 ## 🎯 1. PROJET EN COURS
 **Projet** : FLARE AI — Plateforme SaaS de création de contenu IA
-**Stack** : Next.js (frontend) + FastAPI Python (backend) + Firebase Auth + Cloud SQL PostgreSQL
-**Déploiement** : Firebase Hosting (flareai.ramsflare.com) + Google Cloud Run (backend)
-**Compte GCP** : rijarandriamamonjisoa@gmail.com — Projet : ramsflare
-**Backend URL** : https://flare-backend-ynhuvwocwq-ew.a.run.app
-**Workspace local** : D:\Travail\RAM'S FLARE\Flare Group\Flare AI\Antigravity\FLARE AI OS\V2
+**Stack** : Next.js (frontend) + FastAPI (backend) + Firebase Auth + PostgreSQL (Render) — voir DEVELOPER_GUIDE
+**Déploiement** : Render (frontend statique + web service backend) — domaine public `flareai.ramsflare.com` (CNAME vers Render)
+**Référence Git / agents Windows** : `docs/instructions/DEVELOPER_GUIDE.md` (section Déploiement)
+**Workspace local typique** : `D:\Travail\RAM'S FLARE\Flare Group\Flare AI\FLARE AI` (apostrophe : utiliser technique Git du guide si le shell intégré échoue)
 
 ---
 

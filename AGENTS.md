@@ -21,7 +21,12 @@
 - Read `docs/README.md` before major work.
 - Read `docs/handover/AI_DEV_HANDOVER.md` before major work.
 - Read `docs/handover/FLARE_APP_STATUS_2026-03-28.md` before major work.
+- Read `docs/instructions/DEVELOPER_GUIDE.md` (section **Déploiement** → **Windows** / technique `git --git-dir`) before running `git` from an integrated shell when the workspace path contains an apostrophe (`RAM'S FLARE`).
 - Then read only the module-specific docs you need.
+
+## Git on Windows (automated shell)
+
+If terminal commands fail with a PowerShell parser error **before** `git` runs, do not rely on `cd` into the repo. Use the **`git --git-dir` / `--work-tree`** pattern (neutral working directory) documented in `docs/instructions/DEVELOPER_GUIDE.md`, or run `scripts/render-deploy.ps1`.
 
 ## Mandatory workflow
 

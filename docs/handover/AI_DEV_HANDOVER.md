@@ -1,6 +1,6 @@
 # Handover pour une autre IA de dev
 
-Dernière mise à jour : 26 mars 2026
+Dernière mise à jour : 2 avril 2026
 
 Ce document sert de reprise rapide si FLARE AI est repris par une autre IA de développement.
 
@@ -22,6 +22,10 @@ FLARE AI est une application IA web avec un chat central, de la mémoire, une ba
 3. lire [docs/setup/ENVIRONMENT.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/setup/ENVIRONMENT.md)
 4. lire [docs/instructions/DEVELOPER_GUIDE.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/instructions/DEVELOPER_GUIDE.md)
 5. vérifier [docs/instructions/TASKS.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/instructions/TASKS.md)
+
+## Git depuis un agent / terminal intégré (Windows)
+
+Le dépôt est souvent sous un chemin du type `...\RAM'S FLARE\...`. Le shell intégré (Cursor, etc.) peut alors **échouer avant d’exécuter `git`**. **À chaque automation** (`status`, `commit`, `push`) : appliquer la technique **`git --git-dir` / `--work-tree`** depuis un répertoire neutre, décrite dans [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md) (section Déploiement). Alternative : `scripts/render-deploy.ps1` à la racine du repo.
 
 ## Dossiers utiles
 
