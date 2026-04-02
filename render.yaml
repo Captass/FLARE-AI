@@ -15,24 +15,23 @@ services:
         value: "3.12.0"
       - key: PORT
         value: "8000"
-<<<<<<< HEAD
-      # Les clés suivantes devront être remplies manuellement dans le dashboard Render
-=======
-      # Les clés privées/secrètes (META, OPENAI) doivent être remplies manuellement pour des raisons de sécurité
->>>>>>> 04ac208 (Auto add public env vars)
-      - key: SUPABASE_URL
-        value: "a_remplir"
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        value: "a_remplir"
-      - key: FIREBASE_PROJECT_ID
-        value: "rams-flare-ai"
-      - key: FLIGHT_MODE
-        value: "True"
+      # --- Configuration serveur ---
       - key: APP_ENV
         value: "production"
       - key: FRONTEND_URL
         value: "https://flareai.ramsflare.com"
-<<<<<<< HEAD
+      - key: BACKEND_URL
+        value: "https://flare-backend-ab5h.onrender.com"
+      # --- Firebase ---
+      - key: FIREBASE_PROJECT_ID
+        value: "rams-flare-ai"
+      - key: FLIGHT_MODE
+        value: "True"
+      # --- Supabase (optionnel) ---
+      - key: SUPABASE_URL
+        value: "a_remplir"
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: "a_remplir"
       # --- Multi-Keys Gemini ---
       - key: GEMINI_API_KEY_GLOBAL
         value: "a_remplir"
@@ -42,8 +41,10 @@ services:
         value: "a_remplir"
       - key: GEMINI_API_KEY_ASSISTANT_FAST
         value: "a_remplir"
-=======
->>>>>>> 04ac208 (Auto add public env vars)
+      # --- Meta Facebook (À remplir manuellement dans Render Dashboard) ---
+      # - key: META_APP_ID
+      # - key: META_APP_SECRET
+      # - key: META_VERIFY_TOKEN
 
   - type: web
     env: static

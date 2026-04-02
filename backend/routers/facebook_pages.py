@@ -850,17 +850,11 @@ async def disconnect_facebook_page(
         except HTTPException as exc:
             direct_service_error = str(exc.detail)
 
-    connection.status = "disconnected"
-    connection.is_active = "false"
-    connection.webhook_subscribed = "false"
-    connection.direct_service_synced = "false"
-    connection.last_error = direct_service_error or unsubscribe_error
-    connection.last_synced_at = _utcnow()
-    connection.updated_at = _utcnow()
+    db.delete(connection)
     db.commit()
-    db.refresh(connection)
 
     return {
         "status": "ok",
-        "page": _serialize_connection(connection),
+        "page": None,
+        "detail": direct_service_error or unsubscribe_error or "Page déconnectée avec succès."
     }
