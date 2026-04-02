@@ -76,13 +76,14 @@ export default function PlatformCard({
         className={`
           relative flex flex-col items-center gap-3 rounded-2xl p-5 text-center
           backdrop-blur-md border border-[var(--border-glass)]
-          transition-all duration-250
+          transition-all duration-300 ease-out
           ${locked
             ? "bg-white/[0.015] opacity-50 cursor-not-allowed"
-            : `bg-[var(--bg-glass)] cursor-pointer
-               hover:bg-white/[0.06] hover:border-white/[0.12]
-               hover:shadow-[0_12px_40px_rgba(0,0,0,0.28)]
-               ${glowColor ? "hover:shadow-[0_0_32px_var(--platform-glow,transparent)]/20" : ""}`
+            : `bg-[linear-gradient(135deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01))] cursor-pointer
+               hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] 
+               hover:border-white/[0.15]
+               hover:shadow-[0_12px_40px_rgba(0,0,0,0.35)]
+               ${glowColor ? "hover:shadow-[0_0_40px_var(--platform-glow,transparent)]/25" : ""}`
           }
         `}
         role={locked ? undefined : "button"}

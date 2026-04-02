@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowUpRight, Bot, Link2, Loader2, Lock } from "lucide-react";
+import { ArrowUpRight, Bot, Link2, Loader2, Lock, AlertTriangle } from "lucide-react";
 
 import ChatbotFilesPanel from "@/components/ChatbotFilesPanel";
 import ChatbotBusinessTab from "@/components/chatbot/ChatbotBusinessTab";
@@ -580,6 +580,30 @@ export default function ChatbotWorkspace({
   return (
     <div className="flex-1 overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(255,146,51,0.14),transparent_34%),radial-gradient(circle_at_top_right,rgba(255,255,255,0.06),transparent_28%),var(--background)]">
       <div className="mx-auto flex w-full max-w-[1280px] flex-col gap-6 px-4 py-6 md:px-6 md:py-8">
+        
+        {/* Banner Reconnexion Facebook Requise */}
+        {activePage?.status === 'reconnect_required' && (
+           <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-red-500/10 to-transparent pointer-events-none" />
+             <div className="flex gap-4 items-center z-10">
+               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20 text-red-500 shrink-0">
+                 <AlertTriangle size={24} />
+               </div>
+               <div>
+                 <h3 className="text-red-100 font-bold text-lg mb-1">Connexion Facebook interrompue</h3>
+                 <p className="text-red-200/80 text-sm">Le mot de passe de la page <strong className="text-white">{activePage.page_name}</strong> a expiré ou l'accès a été révoqué. Le chatbot ne tourne plus sur cette page.</p>
+               </div>
+             </div>
+             <button 
+                onClick={handleConnectFacebook} 
+                disabled={facebookAuthLoading}
+                className="z-10 bg-red-500 hover:bg-red-400 text-white shrink-0 px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+             >
+                {facebookAuthLoading ? "Connexion..." : "Se Reconnecter"}
+             </button>
+           </div>
+        )}
+
         <div className="rounded-[32px] border border-white/[0.05] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] px-5 py-5 md:px-7">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-[42rem]">

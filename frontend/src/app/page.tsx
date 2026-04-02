@@ -1212,7 +1212,7 @@ export default function Home() {
         ) : activeView === "google" ? (
           <motion.div key="google" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GooglePage onPush={onPush} /></motion.div>
         ) : activeView === "chatbot" || activeView === "chatbot-hub" ? (
-          <motion.div key="chatbot-hub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage onPush={onPush} pages={facebookPages} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} /></motion.div>
+          <motion.div key="chatbot-hub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage onPush={onPush} token={token} getFreshToken={getFreshToken} pages={facebookPages} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbot-personnalisation" ? (
           <motion.div key="chatbot-personnalisation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotPersonnalisationPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbot-parametres" ? (
