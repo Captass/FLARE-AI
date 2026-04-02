@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Bot, MessageSquare, Users, AlertTriangle, ArrowRight } from "lucide-react";
 import { getChatbotOverview, type ChatbotOverview, type ChatbotPageSummary } from "@/lib/api";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
+import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { SkeletonCard } from "@/components/SkeletonLoader";
 import FacebookVerificationBanner from "@/components/chatbot/FacebookVerificationBanner";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
@@ -39,33 +40,49 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastKpiUpdate, setLastKpiUpdate] = useState<Date | null>(null);
 
   const resolveToken = useCallback(async () => {
     if (getFreshToken) return await getFreshToken();
     return token ?? null;
   }, [getFreshToken, token]);
 
-  const loadAll = useCallback(async () => {
-    const t = await resolveToken();
-    if (!t) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const [ov, dash] = await Promise.allSettled([
-        getChatbotOverview(t, selectedPageId),
-        loadMessengerDashboardData(t, selectedPageId)
-      ]);
-      if (ov.status === "fulfilled") setOverview(ov.value);
-      if (dash.status === "fulfilled") setDashData(dash.value);
-    } catch {
-      setError("Erreur de chargement du tableau de bord.");
-    } finally {
-      setLoading(false);
-    }
-  }, [resolveToken, selectedPageId]);
+  const loadAll = useCallback(
+    async (silent = false) => {
+      const t = await resolveToken();
+      if (!t) return;
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+      }
+      try {
+        const [ov, dash] = await Promise.allSettled([
+          getChatbotOverview(t, selectedPageId),
+          loadMessengerDashboardData(t, selectedPageId),
+        ]);
+        if (ov.status === "fulfilled") setOverview(ov.value);
+        if (dash.status === "fulfilled") setDashData(dash.value);
+        setLastKpiUpdate(new Date());
+      } catch {
+        if (!silent) setError("Erreur de chargement du tableau de bord.");
+      } finally {
+        if (!silent) setLoading(false);
+      }
+    },
+    [resolveToken, selectedPageId]
+  );
 
   useEffect(() => {
-    void loadAll();
+    void loadAll(false);
+    const intervalId = window.setInterval(() => void loadAll(true), KPI_POLL_INTERVAL_MS);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void loadAll(true);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [loadAll, selectedPageId]);
 
   const isLive =
@@ -104,7 +121,7 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
             <FacebookVerificationBanner
               page={pageSummaryToMessengerPage(activePage)}
               loading={loading}
-              onRefresh={() => void loadAll()}
+              onRefresh={() => void loadAll(false)}
             />
           </motion.div>
         )}
@@ -127,6 +144,12 @@ export default function ChatbotDashboardPage({ token, getFreshToken, selectedPag
         )}
 
         {/* KPIs */}
+        {lastKpiUpdate && !loading && (
+          <p className="text-sm text-[var(--text-muted)] -mt-4">
+            Données synchronisées avec le serveur · actualisation automatique toutes les{" "}
+            {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
+          </p>
+        )}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {loading ? (
             <>

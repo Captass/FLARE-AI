@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Zap, Bot, CheckCircle2, AlertTriangle, MessageSquare, Users } from "lucide-react";
 import { getChatbotOverview, getDashboardStats, type ChatbotOverview, type DashboardStats } from "@/lib/api";
+import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { SkeletonCard } from "@/components/SkeletonLoader";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 
@@ -127,18 +128,40 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [loadingKpi, setLoadingKpi] = useState(false);
+  const [lastKpiUpdate, setLastKpiUpdate] = useState<Date | null>(null);
+
+  const fetchKpis = useCallback(
+    async (silent = false) => {
+      if (!token) return;
+      if (!silent) setLoadingKpi(true);
+      try {
+        const [ovResult, statsResult] = await Promise.allSettled([
+          getChatbotOverview(token),
+          getDashboardStats(token),
+        ]);
+        if (ovResult.status === "fulfilled") setOverview(ovResult.value);
+        if (statsResult.status === "fulfilled") setDashStats(statsResult.value);
+        setLastKpiUpdate(new Date());
+      } finally {
+        if (!silent) setLoadingKpi(false);
+      }
+    },
+    [token]
+  );
 
   useEffect(() => {
     if (!token) return;
-    setLoadingKpi(true);
-    Promise.allSettled([
-      getChatbotOverview(token),
-      getDashboardStats(token),
-    ]).then(([ovResult, statsResult]) => {
-      if (ovResult.status === "fulfilled") setOverview(ovResult.value);
-      if (statsResult.status === "fulfilled") setDashStats(statsResult.value);
-    }).finally(() => setLoadingKpi(false));
-  }, [token]);
+    void fetchKpis(false);
+    const intervalId = window.setInterval(() => void fetchKpis(true), KPI_POLL_INTERVAL_MS);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void fetchKpis(true);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [token, fetchKpis]);
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long", day: "numeric", month: "long",
@@ -172,6 +195,12 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
 
         {/* ── KPI row ── */}
         <section aria-label="Indicateurs clés">
+          {lastKpiUpdate && (
+            <p className="text-sm text-white/35 mb-3">
+              Indicateurs synchronisés avec le serveur · actualisation automatique toutes les{" "}
+              {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
+            </p>
+          )}
           <div className="flex flex-col sm:flex-row gap-3">
             <KpiCard
               label="Statut chatbot"

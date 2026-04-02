@@ -31,8 +31,17 @@ export interface FacebookMessengerStatus {
   can_edit: boolean;
   oauth_configured: boolean;
   direct_service_configured: boolean;
+  /** URL exacte à enregistrer dans Meta → Facebook Login → Valid OAuth Redirect URIs */
+  oauth_callback_url: string;
+  /** Webhook Messenger (service direct), pas la même chose que oauth_callback_url */
   callback_url: string;
   verify_token_hint: boolean;
+  /** App ID public (débogage / console Meta) */
+  meta_app_id?: string;
+  /** Version Graph utilisée par le backend (ex. v25.0) */
+  meta_graph_version?: string;
+  /** Hôtes à renseigner côté Meta → Paramètres → De base → Domaines de l’app */
+  app_domain_hints?: string[];
   pages: FacebookMessengerPage[];
   has_active_page: boolean;
 }

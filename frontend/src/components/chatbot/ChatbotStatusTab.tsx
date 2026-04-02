@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, BadgeCheck, Link2, Loader2, Sparkles, AlertCircle } from "lucide-react";
+import { ArrowUpRight, BadgeCheck, Copy, Link2, Loader2, Sparkles, AlertCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 import type { ChatbotOverview, ChatbotPreferences } from "@/lib/api";
@@ -51,6 +51,30 @@ function buildSetupGuide({ overview, canEdit, catalogueCount }: any): any {
 }
 
 // MICRO-COMPOSANTS GLASSMORPHIC
+function CopyableUriRow({ label, value, accentClass }: { label: string; value: string; accentClass: string }) {
+  if (!value) return null;
+  return (
+    <div className="space-y-2">
+      <p className="text-sm font-semibold text-fg/75">{label}</p>
+      <div className="flex gap-2 items-start">
+        <code
+          className={`flex-1 text-sm break-all rounded-lg p-3 border border-fg/[0.08] bg-black/25 leading-snug ${accentClass}`}
+        >
+          {value}
+        </code>
+        <button
+          type="button"
+          onClick={() => void navigator.clipboard?.writeText(value)}
+          className="shrink-0 p-2.5 rounded-lg border border-fg/10 hover:bg-fg/[0.06] text-fg/60 hover:text-fg transition-colors"
+          title="Copier"
+        >
+          <Copy className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PremiumMetric({ label, value, ok, glowStatus }: { label: string; value: string; ok: boolean; glowStatus: "active" | "inactive" | "error" | "pending" }) {
   return (
     <div className="flex flex-col gap-2 p-4 rounded-xl border border-fg/[0.06] bg-gradient-to-br from-fg/[0.02] to-transparent hover:bg-fg/[0.04] transition-colors relative overflow-hidden group">
@@ -108,9 +132,17 @@ export default function ChatbotStatusTab({
       </div>
 
       {error && (
-        <div className="p-4 mb-6 rounded-xl border border-red-500/20 bg-red-500/10 text-red-200 text-sm flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-          <p>{error}</p>
+        <div className="p-4 mb-6 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 flex flex-col gap-3">
+          <div className="flex items-start gap-3 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <p>{error}</p>
+          </div>
+          <p className="text-sm text-red-100/85 pl-8 border-l-2 border-red-400/35 leading-relaxed">
+            Fenêtre Meta « URL blocked » ou « domain isn&apos;t included in the app&apos;s domains » : ouvrez{" "}
+            <span className="font-medium">developers.facebook.com</span> → votre app → ajoutez l&apos;URI{" "}
+            <strong>OAuth Redirect</strong> et les <strong>App Domains</strong> exactement comme dans le panneau{" "}
+            <strong>Diagnostic Meta</strong> ci-dessous (sans slash en trop, même hôte que dans la barre d&apos;adresse du backend).
+          </p>
         </div>
       )}
 
@@ -182,13 +214,49 @@ export default function ChatbotStatusTab({
           </div>
         </div>
         
-        <div className="bg-white/[0.01] rounded-xl border border-fg/[0.04] p-4 font-mono text-[11px] text-fg/40 break-all h-full">
-            <div className="uppercase tracking-widest text-fg/30 mb-2">// Diagnostic de routage</div>
-            Webhook Callback URI:<br />
-            <span className="text-emerald-500/70">{status?.callback_url || "NON DIFFUSÉ"}</span>
-            <br /><br />
-            ID Canal Séléctionné:<br />
-            <span className="text-orange-500/70">{activePage?.page_id || "AUCUN"}</span>
+        <div className="bg-white/[0.01] rounded-xl border border-fg/[0.04] p-5 text-fg/50 h-full flex flex-col gap-5">
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-fg/45 mb-1">Diagnostic Meta</h4>
+            <p className="text-sm text-fg/55 leading-relaxed">
+              Deux URLs distinctes : OAuth (login) vs webhook Messenger. L&apos;erreur « redirect URI not whitelisted »
+              concerne la première.
+            </p>
+          </div>
+          <CopyableUriRow
+            label="1. OAuth — Valid OAuth Redirect URIs (Facebook Login → Paramètres)"
+            value={status?.oauth_callback_url || ""}
+            accentClass="text-sky-300/95"
+          />
+          <CopyableUriRow
+            label="2. Webhook Messenger (produit Messenger / service direct — autre entrée Meta)"
+            value={status?.callback_url || ""}
+            accentClass="text-emerald-300/90"
+          />
+          {status?.meta_app_id ? (
+            <p className="text-sm">
+              <span className="text-fg/45">App ID (console Meta) :</span>{" "}
+              <span className="font-mono text-fg/80">{status.meta_app_id}</span>
+              {status.meta_graph_version ? (
+                <>
+                  {" "}
+                  · Graph <span className="font-mono text-fg/80">{status.meta_graph_version}</span>
+                </>
+              ) : null}
+            </p>
+          ) : null}
+          {(status?.app_domain_hints?.length ?? 0) > 0 ? (
+            <div className="space-y-1">
+              <p className="text-sm font-semibold text-fg/75">App Domains (Paramètres → De base)</p>
+              <p className="text-sm text-fg/55">
+                Ajoutez chaque domaine sans <code className="text-fg/70">https://</code> :{" "}
+                <span className="font-mono text-amber-200/90">{status!.app_domain_hints!.join(", ")}</span>
+              </p>
+            </div>
+          ) : null}
+          <div className="pt-2 border-t border-fg/[0.06] text-sm">
+            <span className="text-fg/45">Page sélectionnée :</span>{" "}
+            <span className="font-mono text-orange-300/90">{activePage?.page_id || "—"}</span>
+          </div>
         </div>
       </div>
       

@@ -6,7 +6,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -87,6 +87,18 @@ def _public_backend_url(request: Request | None = None) -> str:
 
 def _facebook_callback_url(request: Request | None = None) -> str:
     return f"{_public_backend_url(request)}/api/facebook/callback"
+
+
+def _hostname_from_settings_url(raw: str | None) -> str:
+    candidate = str(raw or "").strip()
+    if not candidate:
+        return ""
+    if not candidate.startswith(("http://", "https://")):
+        candidate = f"https://{candidate}"
+    try:
+        return (urlparse(candidate).hostname or "").lower()
+    except Exception:
+        return ""
 
 
 def _graph_version() -> str:
@@ -545,16 +557,23 @@ async def get_facebook_pages_status(
         .order_by(FacebookPageConnection.updated_at.desc())
         .all()
     )
+    backend_public = _public_backend_url(request)
+    frontend_host = _hostname_from_settings_url(settings.FRONTEND_URL)
+    backend_host = _hostname_from_settings_url(settings.BACKEND_URL) or _hostname_from_settings_url(backend_public)
+    app_domain_hints = sorted({h for h in (frontend_host, backend_host) if h})
     return {
         "organization_slug": context["organization_slug"],
         "organization_name": context["organization"]["name"],
         "can_manage_pages": context["can_manage_pages"],
         "can_edit": context["can_edit"],
-        "oauth_configured": bool(settings.META_APP_ID and settings.META_APP_SECRET and _public_backend_url(request)),
+        "oauth_configured": bool(settings.META_APP_ID and settings.META_APP_SECRET and backend_public),
         "direct_service_configured": bool(settings.MESSENGER_DIRECT_DASHBOARD_KEY and settings.MESSENGER_DIRECT_URL),
-        "oauth_callback_url": _facebook_callback_url(request),
+        "oauth_callback_url": f"{backend_public}/api/facebook/callback",
         "callback_url": f"{settings.MESSENGER_DIRECT_URL.rstrip('/')}/webhook/facebook",
         "verify_token_hint": bool(settings.META_VERIFY_TOKEN),
+        "meta_app_id": str(settings.META_APP_ID or "").strip(),
+        "meta_graph_version": _graph_version(),
+        "app_domain_hints": app_domain_hints,
         "pages": [_serialize_connection(row) for row in rows],
         "has_active_page": any(str(row.is_active).lower() == "true" for row in rows),
     }
@@ -589,6 +608,8 @@ async def start_facebook_auth(
     return {
         "authorization_url": f"https://www.facebook.com/{_graph_version()}/dialog/oauth?{urlencode(params)}",
         "organization_slug": context["organization_slug"],
+        "oauth_redirect_uri": callback_url,
+        "meta_graph_version": _graph_version(),
     }
 
 

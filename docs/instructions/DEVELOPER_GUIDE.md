@@ -1,6 +1,6 @@
 # Guide développeur FLARE AI
 
-Dernière mise à jour : 2 avril 2026 (session 2)
+Dernière mise à jour : 2 avril 2026 (session 3 — script déploiement Windows)
 
 ## But du guide
 
@@ -167,6 +167,20 @@ python -m py_compile main.py
 # Puis : git push (déploiement auto) ou Manual Deploy sur Render
 ```
 
+### Windows — chemin avec apostrophe (`RAM'S FLARE`)
+
+Si le terminal de l’IDE ne peut pas lancer `git` à cause du chemin, utiliser l’une des options suivantes :
+
+1. **Script** : double-clic sur `scripts\render-deploy.cmd`, ou en PowerShell depuis n’importe où :
+   ```powershell
+   powershell -NoProfile -ExecutionPolicy Bypass -File "…\FLARE AI\scripts\render-deploy.ps1" -Commit -Message "votre message"
+   ```
+   Sans `-Commit` : uniquement `git push origin main` (après vos commits dans l’éditeur). Avec `-Build` : `npm run build` dans `frontend` avant le push (vérification locale).
+
+2. **PowerShell manuel** : toujours utiliser `-LiteralPath` pour se placer dans le dépôt, puis `git status` / `git push origin main`.
+
+**Render après le push** : ouvrir [dashboard Render](https://dashboard.render.com) et attendre la fin des builds **flare-frontend** et **flare-backend** ; en secours : *Manual Deploy → Deploy latest commit*.
+
 ### Ancien déploiement (NE PLUS UTILISER)
 
 ```powershell
@@ -286,6 +300,16 @@ Ce qu'il faut avoir configuré dans [developers.facebook.com](https://developers
 3. **Privacy Policy URL** : `https://flareai.ramsflare.com/privacy-policy`
 4. **Terms of Service URL** : `https://flareai.ramsflare.com/terms`
 5. **User Data Deletion URL** : `https://flareai.ramsflare.com/data-deletion`
+
+### Dépannage « URL blocked » / « domain isn't included in the app's domains »
+
+Ces messages viennent **uniquement** de la configuration Meta, pas d’un bug FLARE tant que `BACKEND_URL` est correct.
+
+1. **Valid OAuth Redirect URIs** doit contenir **exactement** la même URL que renvoie l’API `GET /api/facebook/status` → champ `oauth_callback_url` (souvent `https://<service-backend-render>/api/facebook/callback`). Pas de slash final en trop, pas d’autre sous-domaine que celui du backend.
+2. **App Domains** : ajouter les hôtes du **frontend** et du **backend** sans `https://` (ex. `flareai.ramsflare.com`, `flare-backend-ab5h.onrender.com`). Si l’URL Render du backend change, mettre à jour Meta **et** la variable `BACKEND_URL` sur Render.
+3. **Facebook Login** : activer *Client OAuth Login* et *Web OAuth Login* selon la doc Meta.
+4. Ne pas confondre **`oauth_callback_url`** (login OAuth) et **`callback_url`** du statut (webhook Messenger vers le service direct) — deux champs différents dans l’app Paramètres → panneau **Diagnostic Meta**.
+5. Version Graph : le backend utilise `META_GRAPH_VERSION` (défaut `v25.0`). Une URL `v17.0` dans le navigateur indique souvent une **ancienne config** ou un autre environnement ; aligner Meta et les variables Render.
 
 ---
 

@@ -108,8 +108,9 @@ export default function ChatbotSetupWizard({
     [facebookStatus]
   );
 
-  const canEditChatbot = facebookStatus?.can_edit ?? true;
-  const canManagePages = facebookStatus?.can_manage_pages ?? canEditChatbot;
+  // Fail-closed si statut Facebook indisponible (aligné avec ChatbotParametresPage)
+  const canEditChatbot = facebookStatus?.can_edit ?? false;
+  const canManagePages = facebookStatus?.can_manage_pages ?? false;
   const oauthConfigured = facebookStatus?.oauth_configured;
   const directServiceConfigured = facebookStatus?.direct_service_configured;
   const facebookOauthBlocked = oauthConfigured === false;

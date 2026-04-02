@@ -5,11 +5,16 @@ import { Brush, SlidersHorizontal, BarChart3, Users } from "lucide-react";
 import PlatformCard, { NotifBadge } from "@/components/PlatformCard";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import PageSelector from "@/components/PageSelector";
-import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
+import {
+  loadFacebookMessengerStatus,
+  activateFacebookMessengerPage,
+  type FacebookMessengerPage,
+} from "@/lib/facebookMessenger";
 
 import { useState, useEffect, useCallback } from "react";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
 import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
+import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { MessageSquare, Bot } from "lucide-react";
 
 interface ChatbotHomePageProps {
@@ -21,6 +26,8 @@ interface ChatbotHomePageProps {
   pages?: FacebookMessengerPage[];
   selectedPageId?: string | null;
   onSelectPage?: (pageId: string) => void;
+  /** Remonte la liste des pages (après OAuth ou activation) vers page.tsx */
+  onPagesChanged?: (pages: FacebookMessengerPage[]) => void;
 }
 
 const ENTRIES = [
@@ -58,37 +65,103 @@ const ENTRIES = [
   },
 ];
 
-export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingHumanCount = 0, pages = [], selectedPageId = null, onSelectPage }: ChatbotHomePageProps) {
+export default function ChatbotHomePage({
+  token,
+  getFreshToken,
+  onPush,
+  pendingHumanCount = 0,
+  pages = [],
+  selectedPageId = null,
+  onSelectPage,
+  onPagesChanged,
+}: ChatbotHomePageProps) {
   const hasPageSelected = Boolean(selectedPageId);
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [loadingKPIs, setLoadingKPIs] = useState(false);
+  const [lastKpiUpdate, setLastKpiUpdate] = useState<Date | null>(null);
+  const [canManageFb, setCanManageFb] = useState(false);
+  const [fbBusyPageId, setFbBusyPageId] = useState<string | null>(null);
 
-  const loadKPIs = useCallback(async () => {
-    let t = token;
-    if (getFreshToken) t = await getFreshToken() || token;
-    if (!t || !selectedPageId) {
-      setDashData(null);
-      setOverview(null);
-      return;
-    }
-    setLoadingKPIs(true);
+  const resolveToken = useCallback(async () => {
+    if (getFreshToken) return (await getFreshToken()) || token || null;
+    return token ?? null;
+  }, [getFreshToken, token]);
+
+  const syncFacebookPages = useCallback(async () => {
+    const t = await resolveToken();
+    if (!t) return;
     try {
-      const [dash, ov] = await Promise.allSettled([
-        loadMessengerDashboardData(t, selectedPageId),
-        getChatbotOverview(t, selectedPageId),
-      ]);
-      if (dash.status === "fulfilled") setDashData(dash.value);
-      if (ov.status === "fulfilled") setOverview(ov.value);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setLoadingKPIs(false);
+      const st = await loadFacebookMessengerStatus(t);
+      setCanManageFb(st.can_manage_pages);
+      if (st.pages?.length) onPagesChanged?.(st.pages);
+    } catch {
+      /* ignore: statut Meta optionnel au chargement hub */
     }
-  }, [token, getFreshToken, selectedPageId]);
+  }, [resolveToken, onPagesChanged]);
 
   useEffect(() => {
-    void loadKPIs();
+    void syncFacebookPages();
+  }, [syncFacebookPages]);
+
+  const handleActivateMessengerPage = useCallback(
+    async (pageId: string) => {
+      const t = await resolveToken();
+      if (!t || !canManageFb) return;
+      setFbBusyPageId(pageId);
+      try {
+        await activateFacebookMessengerPage(pageId, t);
+        const st = await loadFacebookMessengerStatus(t);
+        onPagesChanged?.(st.pages);
+        onSelectPage?.(pageId);
+      } catch (e) {
+        console.error(e);
+        alert("Activation Messenger impossible. Réessayez ou ouvrez Paramètres.");
+      } finally {
+        setFbBusyPageId(null);
+      }
+    },
+    [resolveToken, canManageFb, onPagesChanged, onSelectPage]
+  );
+
+  const loadKPIs = useCallback(
+    async (silent = false) => {
+      let t = token;
+      if (getFreshToken) t = await getFreshToken() || token;
+      if (!t || !selectedPageId) {
+        setDashData(null);
+        setOverview(null);
+        return;
+      }
+      if (!silent) setLoadingKPIs(true);
+      try {
+        const [dash, ov] = await Promise.allSettled([
+          loadMessengerDashboardData(t, selectedPageId),
+          getChatbotOverview(t, selectedPageId),
+        ]);
+        if (dash.status === "fulfilled") setDashData(dash.value);
+        if (ov.status === "fulfilled") setOverview(ov.value);
+        setLastKpiUpdate(new Date());
+      } catch (e) {
+        console.error(e);
+      } finally {
+        if (!silent) setLoadingKPIs(false);
+      }
+    },
+    [token, getFreshToken, selectedPageId]
+  );
+
+  useEffect(() => {
+    void loadKPIs(false);
+    const intervalId = window.setInterval(() => void loadKPIs(true), KPI_POLL_INTERVAL_MS);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") void loadKPIs(true);
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [loadKPIs]);
 
   const messagesCeMois = dashData?.periodStats?.[0]?.messages ?? 0;
@@ -125,6 +198,9 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
               selectedPageId={selectedPageId}
               onSelect={(pid) => onSelectPage?.(pid)}
               onAddPage={() => onPush("chatbot-parametres")}
+              onActivatePage={handleActivateMessengerPage}
+              canManagePages={canManageFb}
+              busyPageId={fbBusyPageId}
             />
           </div>
         </motion.div>
@@ -219,6 +295,12 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
               </div>
             </motion.div>
           </motion.div>
+        )}
+        {hasPageSelected && lastKpiUpdate && !loadingKPIs && (
+          <p className="text-sm text-[var(--text-muted)] -mt-4">
+            Données synchronisées avec le serveur · actualisation automatique toutes les{" "}
+            {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
+          </p>
         )}
 
         {/* ── Entry cards ── */}

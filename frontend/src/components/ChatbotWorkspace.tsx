@@ -120,8 +120,9 @@ export default function ChatbotWorkspace({
   const planFeatures = billing?.features || null;
   const activePage = overview?.active_page || null;
   const hasOrgScope = overview?.step !== "need_org";
-  const canEdit = facebookStatus?.can_edit ?? true;
-  const canManagePages = facebookStatus?.can_manage_pages ?? canEdit;
+  // Fail-closed si statut Facebook indisponible (aligné avec ChatbotParametresPage)
+  const canEdit = facebookStatus?.can_edit ?? false;
+  const canManagePages = facebookStatus?.can_manage_pages ?? false;
   const readiness = useMemo(
     () => getWorkspaceReadiness({ overview, preferences, catalogue }),
     [catalogue, overview, preferences]

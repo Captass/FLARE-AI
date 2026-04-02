@@ -282,6 +282,9 @@ export default function ChatbotParametresPage({
              onSelect={(pageId) => onSelectPage?.(pageId)}
              onAddPage={handleConnectFacebook}
              loading={loading}
+             onActivatePage={handleActivatePage}
+             canManagePages={canManagePages}
+             busyPageId={facebookBusyPageId}
            />
 
            {/* SECTION 1: Connexion Facebook */}
