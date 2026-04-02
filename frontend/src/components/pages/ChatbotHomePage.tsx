@@ -151,7 +151,13 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
             <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
               <div>
                 <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Messages ce mois</p>
-                <p className="mt-1 text-lg font-bold text-fg/90">{loadingKPIs ? "..." : messagesCeMois}</p>
+                <div className="mt-1 h-7 flex items-center">
+                  {loadingKPIs ? (
+                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-fg/90">{messagesCeMois}</p>
+                  )}
+                </div>
               </div>
               <div className="bg-blue-500/10 text-blue-400 p-2.5 rounded-xl">
                 <MessageSquare size={20} />
@@ -162,7 +168,13 @@ export default function ChatbotHomePage({ token, getFreshToken, onPush, pendingH
             <div className="p-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] flex items-center justify-between hover:bg-fg/[0.03] transition-colors">
               <div>
                 <p className="text-xs uppercase tracking-wider text-[var(--text-muted)] font-semibold">Contacts captés</p>
-                <p className="mt-1 text-lg font-bold text-fg/90">{loadingKPIs ? "..." : contactsCaptes}</p>
+                <div className="mt-1 h-7 flex items-center">
+                  {loadingKPIs ? (
+                    <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse xl:w-20"></div>
+                  ) : (
+                    <p className="text-lg font-bold text-fg/90">{contactsCaptes}</p>
+                  )}
+                </div>
               </div>
               <div className="bg-orange-500/10 text-orange-400 p-2.5 rounded-xl">
                 <Users size={20} />
