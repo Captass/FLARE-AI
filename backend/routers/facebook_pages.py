@@ -474,6 +474,7 @@ def _upsert_facebook_page_connections(
             )
             .first()
         )
+        is_new_connection = connection is None
         if not connection:
             connection = FacebookPageConnection(
                 organization_slug=organization_slug,
@@ -485,6 +486,11 @@ def _upsert_facebook_page_connections(
             db.add(connection)
 
         page_access_token = str(page.get("access_token") or "").strip()
+        previous_status = str(connection.status or "").strip()
+        previous_is_active = str(connection.is_active or "false").strip().lower()
+        previous_webhook = str(connection.webhook_subscribed or "false").strip().lower()
+        previous_direct_service_synced = str(connection.direct_service_synced or "false").strip().lower()
+        has_required_tasks = _page_has_required_tasks(page)
         connection.page_name = page_name
         picture_data = page.get("picture", {})
         if isinstance(picture_data, dict):
@@ -493,25 +499,40 @@ def _upsert_facebook_page_connections(
         connection.page_tasks = page.get("tasks") if isinstance(page.get("tasks"), list) else []
         if page_access_token:
             connection.page_access_token_encrypted = encryption_service.encrypt(page_access_token)
-            connection.status = "pending"
+            connection.status = previous_status if previous_status == "active" else "pending"
             connection.last_error = None
         else:
             # Page returned by Facebook without a token — store it but flag it
-            connection.status = "reconnect_required"
-            connection.last_error = "Facebook n'a pas fourni de jeton pour cette page. Reconnectez Facebook."
+            if previous_status == "active" or previous_is_active == "true":
+                connection.status = previous_status or "active"
+                connection.last_error = "Facebook a retourne cette page sans jeton. Reconnectez Facebook."
+            else:
+                connection.status = "reconnect_required"
+                connection.last_error = "Facebook n'a pas fourni de jeton pour cette page. Reconnectez Facebook."
             logger.warning(
                 "Page %s (%s) returned by Facebook WITHOUT access_token — marked reconnect_required",
                 page_id, page_name,
             )
         connection.user_access_token_encrypted = encrypted_user_token
         connection.connected_by_email = user_email
-        connection.is_active = "false"
-        connection.webhook_subscribed = "false"
-        connection.direct_service_synced = "false"
+        if is_new_connection:
+            connection.is_active = "false"
+            connection.webhook_subscribed = "false"
+            connection.direct_service_synced = "false"
+        else:
+            connection.is_active = previous_is_active
+            connection.webhook_subscribed = previous_webhook
+            connection.direct_service_synced = previous_direct_service_synced
         connection.metadata_json = {
+            **(connection.metadata_json or {}),
             "token_type": str(token_payload.get("token_type") or "").strip(),
             "user_token_expires_in": int(token_payload.get("expires_in") or 0),
+            "has_required_page_tasks": has_required_tasks,
         }
+        if not has_required_tasks:
+            connection.last_error = connection.last_error or (
+                "Meta n'a pas retourne tous les droits de page requis (MANAGE, MESSAGING)."
+            )
         connection.updated_at = now
 
     db.commit()
@@ -851,14 +872,18 @@ async def _revoke_facebook_app_permissions(organization_slug: str) -> bool:
 async def start_facebook_auth(
     request: Request,
     frontend_origin: str | None = Query(default=None),
+    force_reauth: bool = Query(default=False),
     authorization: str | None = Header(None),
 ):
     context = _organization_context_from_authorization(authorization, require_edit=True)
     _require_meta_oauth_configured()
     callback_url = _facebook_callback_url(request)
 
-    # Revoke existing permissions so Meta shows the full page picker
-    await _revoke_facebook_app_permissions(context["organization_slug"])
+    # Do not force a fresh Meta consent on every reconnect.
+    # Some accounts can reuse an already-valid authorization, while a full
+    # permission reset sends them back through Meta's strictest review gates.
+    if force_reauth:
+        await _revoke_facebook_app_permissions(context["organization_slug"])
 
     state = _build_state(
         {

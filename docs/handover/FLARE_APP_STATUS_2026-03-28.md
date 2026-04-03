@@ -221,6 +221,12 @@ Hotfix launch 2026-04-03:
 - le chooser d'espace permet maintenant de creer un workspace dynamique depuis l'app
 - la suppression d'un workspace dynamique est reservee au proprietaire et reste bloquee tant que des pages Facebook y sont encore connectees
 
+Hotfix OAuth 2026-04-04:
+
+- `GET /api/facebook/auth` ne revoque plus automatiquement les permissions Meta existantes avant chaque tentative OAuth
+- un compte deja autorise peut donc reutiliser son autorisation sans etre force a repasser par un consentement Meta complet
+- un vrai reconsent complet reste possible via le flag backend `force_reauth` si un support technique doit repartir d'une permission Facebook propre
+
 Les roles actuellement exposes dans l'app sont :
 
 - `Proprietaire`
