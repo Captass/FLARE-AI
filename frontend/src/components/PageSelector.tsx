@@ -224,10 +224,17 @@ export default function PageSelector({
                   <span className="text-sm mt-0.5">
                     {isMessengerActive ? (
                       <span className="text-emerald-400/90 font-medium">Bot ON (webhook branché)</span>
+                    ) : page.status === "reconnect_required" ? (
+                      <span className="text-red-400/90 font-medium">Reconnexion requise</span>
                     ) : (
                       <span className="text-amber-500/90 font-medium">Bot OFF (inactif)</span>
                     )}
                   </span>
+                  {page.last_error && (
+                    <span className="text-xs text-red-400/70 mt-0.5 truncate" title={page.last_error}>
+                      {page.last_error}
+                    </span>
+                  )}
                 </div>
               </div>
 

@@ -392,38 +392,58 @@ async def _exchange_facebook_code_for_token(code: str, redirect_uri: str) -> dic
 
 async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
     timeout = httpx.Timeout(20.0, connect=10.0)
-    async with httpx.AsyncClient(timeout=timeout) as client:
-        response = await client.get(
-            f"https://graph.facebook.com/{_graph_version()}/me/accounts",
-            params={
-                "fields": "id,name,access_token,category,tasks,picture.type(large)",
-                "limit": "100",
-                **_graph_token_params(user_access_token),
-            },
-        )
-        response.raise_for_status()
-        payload = response.json()
+    all_pages: list[dict[str, Any]] = []
+    url: str | None = f"https://graph.facebook.com/{_graph_version()}/me/accounts"
+    params: dict[str, str] = {
+        "fields": "id,name,access_token,category,tasks,picture.type(large)",
+        "limit": "100",
+        **_graph_token_params(user_access_token),
+    }
 
-    pages = payload.get("data") if isinstance(payload, dict) else []
-    result = []
-    for item in pages:
-        if not isinstance(item, dict):
-            continue
-        page_id = str(item.get("id") or "").strip()
-        page_token = str(item.get("access_token") or "").strip()
-        if not page_id or not page_token:
-            continue
-        
-        tasks = item.get("tasks") or []
+    while url:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.get(url, params=params)
+            response.raise_for_status()
+            payload = response.json()
+
+        page_data = payload.get("data") if isinstance(payload, dict) else []
         logger.info(
-            "Facebook page %s (%s) fetched from Meta. Tasks=%s",
-            page_id, item.get("name", "?"), tasks,
+            "Facebook /me/accounts returned %d pages in this batch (url=%s)",
+            len(page_data) if page_data else 0,
+            url[:80],
         )
-        
-        # We now accept all pages returned by Facebook that have a token.
-        # If the page lacks permissions, it will fail gracefully during the webhook subscribe step.
-        result.append(item)
-    return result
+
+        for item in page_data or []:
+            if not isinstance(item, dict):
+                continue
+            page_id = str(item.get("id") or "").strip()
+            page_token = str(item.get("access_token") or "").strip()
+            page_name = str(item.get("name") or "?").strip()
+            tasks = item.get("tasks") or []
+
+            logger.info(
+                "Facebook page %s (%s) — has_token=%s, tasks=%s",
+                page_id, page_name, bool(page_token), tasks,
+            )
+
+            if not page_id:
+                continue
+
+            # Accept ALL pages returned by Facebook, even without a token.
+            # Pages without tokens will be stored but marked as needing reconnection.
+            all_pages.append(item)
+
+        # Handle pagination — follow the "next" link if present
+        paging = payload.get("paging", {}) if isinstance(payload, dict) else {}
+        next_url = paging.get("next")
+        if next_url:
+            url = next_url
+            params = {}  # params are embedded in the next URL
+        else:
+            url = None
+
+    logger.info("Total Facebook pages fetched: %d", len(all_pages))
+    return all_pages
 
 
 
@@ -471,14 +491,23 @@ def _upsert_facebook_page_connections(
             connection.page_picture_url = str(picture_data.get("data", {}).get("url") or "").strip()
         connection.page_category = str(page.get("category") or "").strip()
         connection.page_tasks = page.get("tasks") if isinstance(page.get("tasks"), list) else []
-        connection.page_access_token_encrypted = encryption_service.encrypt(page_access_token)
+        if page_access_token:
+            connection.page_access_token_encrypted = encryption_service.encrypt(page_access_token)
+            connection.status = "pending"
+            connection.last_error = None
+        else:
+            # Page returned by Facebook without a token — store it but flag it
+            connection.status = "reconnect_required"
+            connection.last_error = "Facebook n'a pas fourni de jeton pour cette page. Reconnectez Facebook."
+            logger.warning(
+                "Page %s (%s) returned by Facebook WITHOUT access_token — marked reconnect_required",
+                page_id, page_name,
+            )
         connection.user_access_token_encrypted = encrypted_user_token
         connection.connected_by_email = user_email
-        connection.status = "pending"
         connection.is_active = "false"
         connection.webhook_subscribed = "false"
         connection.direct_service_synced = "false"
-        connection.last_error = None
         connection.metadata_json = {
             "token_type": str(token_payload.get("token_type") or "").strip(),
             "user_token_expires_in": int(token_payload.get("expires_in") or 0),
@@ -905,9 +934,12 @@ async def facebook_auth_callback(
         token_payload,
     )
 
+    # Find the first page that has an access_token for auto-activation
     first_page_id = ""
-    if pages and isinstance(pages[0], dict):
-        first_page_id = str(pages[0].get("id") or "").strip()
+    for p in pages:
+        if isinstance(p, dict) and str(p.get("access_token") or "").strip():
+            first_page_id = str(p.get("id") or "").strip()
+            break
 
     success_detail: str
     if first_page_id:
