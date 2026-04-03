@@ -6,7 +6,7 @@ from typing import Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from core.database import ChatbotPreferences, FacebookPageConnection, SessionLocal
+from core.database import ChatbotCatalogueItem, ChatbotPreferences, FacebookPageConnection, SessionLocal
 from core.llm_factory import get_llm
 from core.memory import SessionMemory
 from .tools import (
@@ -16,6 +16,7 @@ from .tools import (
     send_quick_replies,
     send_text_message,
 )
+from sqlalchemy import or_
 
 CM_SYSTEM_PROMPT = """Tu es Alex, le commercial virtuel de FLARE AI, une agence de communication et d'audiovisuel.
 
@@ -54,8 +55,6 @@ Tu accueilles les prospects sur Messenger, qualifies leurs besoins et presentes 
 
 {user_context}"""
 
-
-from backend.database.models import FacebookPageConnection, ChatbotPreferences, ChatbotCatalogueItem
 
 def build_dynamic_prompt(prefs: ChatbotPreferences, catalogue_items: list[ChatbotCatalogueItem], user_context: str) -> str:
     tone_map = {
@@ -158,8 +157,10 @@ def _load_page_context(page_id: Optional[str]) -> dict:
             db.query(ChatbotCatalogueItem)
             .filter(ChatbotCatalogueItem.organization_slug == org_slug)
             .filter(
-                (ChatbotCatalogueItem.page_id == resolved_page_id) |
-                (ChatbotCatalogueItem.page_id.is_(None))
+                or_(
+                    ChatbotCatalogueItem.page_id == resolved_page_id,
+                    ChatbotCatalogueItem.page_id.is_(None)
+                )
             )
             .order_by(ChatbotCatalogueItem.sort_order.asc())
             .all()
