@@ -280,6 +280,13 @@ Chaque utilisateur suit ce flow :
 
 Le `selectedPageId` est propagé à chaque composant chatbot. Chaque appel API inclut ce paramètre pour isoler les données par page.
 
+### 🛠 Troubleshooting Chatbot Muet (Erreurs silencieuses)
+Si l'interface indique "Activé" mais que la page Facebook ne répond pas aux messages organiques :
+1. **Conflit d'URL Webhook (Console Meta)** : Vérifiez dans l'App Meta (developers.facebook.com) si le webhook de l'application pointe bien sur l'URL du Backend principal (`https://flare-backend-xxx.onrender.com/webhook/facebook`) et **non pas** sur l'ancien Direct Service Cloud Run (`https://messenger-direct-xxx.run.app/webhook/facebook`).
+2. **Absence de Clé IA (GEMINI_API_KEY)** : Si les clés d'API liées au LLM sont absentes sur Render, l'appel LLM crashe silencieusement (`try/except` dans `webhook.py`).
+3. **Absence d'Accès Avancé** : Le token de la page nécessite un *Advanced Access* approuvé par Meta sur la permission `pages_messaging` pour répondre à des comptes lambdas non dev/testeurs.
+4. **Logs Backend (tools.py)** : L'envoi `send_text_message` est loggé en erreur via le `logger` Python. Consultez la console Render pour y trouver les codes de refus "HTTP 400" ou "HTTP 403" provenant de Graph API.
+
 ### Refonte UI — spec « Redesign FLARE AI » (mars 2026)
 
 Référence produit : navigation en pile (`NavStack`), breadcrumb, glass cards, drill-down 2–6 cartes par niveau, typographie **minimum `text-sm` (14px)** sur l’UI.

@@ -138,3 +138,21 @@ _(vide)_
 ### 🟡 IN PROGRESS
 _(vide)_
 
+## [ALPHA] 20:23:00
+
+## 🧭 2. OBJECTIF ACTUEL
+> **TKT-112 : Diagnostic et Debug de la non-réponse du Chatbot Facebook en Production.**
+- **Demandeur** : Directeur Humain
+- **Responsable** : ALPHA (Coordination / Diagnostic)
+- **Objectif** : Identifier pourquoi bien que la Page Facebook soir "activée" avec succès (Webhook "subscribed_apps"), le Chatbot IA reste complètement muet aux messages clients sur Messenger.
+
+---
+
+## 📝 7. DÉCISIONS ARCHITECTURALES (UPDATE DIAGNOSTIC FB)
+- **Diagnostic** : L'architecture SaaS est correcte (Un seul Meta App Webhook).
+- L'échec furtif en production peut venir de :
+  1. Conflit Webhook (pointé vers service direct `messenger-direct...` au lieu de `flare-backend...`).
+  2. Crash silencieux sur le SDK Gemini si `GEMINI_API_KEY_*` n'est pas rempli côté Prod.
+  3. `pages_messaging` d'application non validé par Meta en mode Production/Advanced.
+- **Résolution immédiate** : Refonte de `_send_api_request` dans `backend/agents/facebook_cm/tools.py` pour implémenter un "logger.error" formel incluant l'HTTP_STATUS et l'erreur FB brute afin de permettre un diagnostic asynchrone (Render Logs).
+- **Docs modifiées** : `DEVELOPER_GUIDE.md` section Troubleshooting Chatbot ajoutée.

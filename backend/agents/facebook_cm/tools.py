@@ -80,15 +80,26 @@ def _send_api_request(
 ) -> dict:
     access_token = _resolve_page_access_token(page_id=page_id, page_access_token=page_access_token)
     if not access_token:
+        logger.error("[Facebook CM] Impossible d'envoyer le message : aucun token pour page_id=%s", page_id)
         return {"error": "Aucun token Messenger configure pour cette page."}
 
+    logger.info("[Facebook CM] Envoi de message a Facebook pour page_id=%s. Payload=%s...", page_id, str(payload)[:100])
+    
     response = httpx.post(
         MESSENGER_API,
         params={"access_token": access_token},
         json=payload,
         timeout=10.0,
     )
-    return response.json()
+    
+    result = response.json()
+    if response.status_code >= 400 or "error" in result:
+        logger.error(
+            "[Facebook CM] ERREUR Meta API lors de l'envoi du message : HTTP_STATUS=%s, RESPONSE=%s",
+            response.status_code,
+            result
+        )
+    return result
 
 
 def send_text_message(
