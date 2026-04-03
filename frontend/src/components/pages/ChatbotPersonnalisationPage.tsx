@@ -7,24 +7,12 @@ import { motion } from "framer-motion";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import ChatbotIdentityTab from "@/components/chatbot/ChatbotIdentityTab";
 import ChatbotBusinessTab from "@/components/chatbot/ChatbotBusinessTab";
-import ChatbotSalesTab from "@/components/chatbot/ChatbotSalesTab";
 import {
   DEFAULT_CHATBOT_PREFERENCES,
   type ChatbotPreferences,
-  type SalesConfig,
   getChatbotPreferences,
   updateChatbotPreferences,
-  getSalesConfig,
-  updateSalesConfig,
-  getBillingFeatures,
-  type BillingFeatures,
 } from "@/lib/api";
-import {
-  createEmptyHours,
-  parseBusinessHours,
-  serializeBusinessHours,
-  EMPTY_SALES_CONFIG,
-} from "@/components/chatbot/chatbotWorkspaceUtils";
 
 
 interface ChatbotPersonnalisationPageProps {
@@ -32,7 +20,6 @@ interface ChatbotPersonnalisationPageProps {
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   onPush: (level: NavLevel) => void;
   selectedPageId?: string | null;
-  /** Nom affiché de la page (hub Chatbot) — les préférences sont enregistrées par page quand un id est sélectionné. */
   selectedPageName?: string | null;
 }
 
@@ -46,9 +33,6 @@ export default function ChatbotPersonnalisationPage({
   const [error, setError] = useState<string | null>(null);
   
   const [preferences, setPreferences] = useState<ChatbotPreferences>(DEFAULT_CHATBOT_PREFERENCES);
-  const [businessHoursDraft, setBusinessHoursDraft] = useState(createEmptyHours());
-  const [salesConfig, setSalesConfig] = useState<SalesConfig>(EMPTY_SALES_CONFIG);
-  const [hasSalesScript, setHasSalesScript] = useState(false);
   
   const [savingSection, setSavingSection] = useState<string | null>(null);
 
@@ -68,24 +52,8 @@ export default function ChatbotPersonnalisationPage({
     try {
       setLoading(true);
       setError(null);
-      const [nextPrefs, nextBilling] = await Promise.all([
-        getChatbotPreferences(accessToken, selectedPageId),
-        getBillingFeatures(accessToken)
-      ]);
+      const nextPrefs = await getChatbotPreferences(accessToken, selectedPageId);
       setPreferences(nextPrefs);
-      setBusinessHoursDraft(parseBusinessHours(nextPrefs.business_hours));
-      setHasSalesScript(nextBilling.features.has_sales_script);
-      
-      if (nextBilling.features.has_sales_script) {
-        setSalesConfig(await getSalesConfig(accessToken, selectedPageId));
-      } else {
-        setSalesConfig({
-          ...EMPTY_SALES_CONFIG,
-          organization_slug: nextPrefs.organization_slug || "",
-          handoff_mode: nextPrefs.handoff_mode,
-          handoff_keywords: nextPrefs.handoff_keywords,
-        });
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     } finally {
@@ -102,35 +70,11 @@ export default function ChatbotPersonnalisationPage({
     if (!accessToken) return;
     setSavingSection(section);
     try {
-      const payload = { ...preferences };
-      if (section === "business") {
-        payload.business_hours = serializeBusinessHours(businessHoursDraft);
-      }
-      const saved = await updateChatbotPreferences(payload, accessToken, selectedPageId);
+      const saved = await updateChatbotPreferences(preferences, accessToken, selectedPageId);
       setPreferences(saved);
-      if (section === "business") setBusinessHoursDraft(parseBusinessHours(saved.business_hours));
     } catch (err) {
       console.error(err);
       alert("Erreur lors de l'enregistrement de la configuration.");
-    } finally {
-      setSavingSection(null);
-    }
-  };
-
-  const onSaveSalesConfig = async () => {
-    const accessToken = await resolveAccessToken();
-    if (!accessToken) return;
-    setSavingSection("sales");
-    try {
-      const saved = await updateSalesConfig(salesConfig, accessToken, selectedPageId);
-      setSalesConfig(saved);
-      // Synchroniser handoff (si édité dans SalesTab, ça affecte les preferences aussi via webhook ou DB)
-      // Mettre à jour l'UI avec certitude:
-      const savedPrefs = await getChatbotPreferences(accessToken, selectedPageId);
-      setPreferences(savedPrefs);
-    } catch (err) {
-      console.error(err);
-      alert("Erreur de l'enregistrement du script.");
     } finally {
       setSavingSection(null);
     }
@@ -155,7 +99,6 @@ export default function ChatbotPersonnalisationPage({
     );
   }
 
-  // Pour l'instant, seul l'admin peut editer (canEdit = true par defaut selon la table si le endpoint renvoie 200)
   const canEdit = true;
 
   return (
@@ -176,7 +119,7 @@ export default function ChatbotPersonnalisationPage({
             ) : null}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">
-            Identité, ton, langue, entreprise et offres du bot Messenger
+            Configurez l&apos;identité du bot et vos offres / produits
           </p>
         </motion.header>
 
@@ -185,20 +128,18 @@ export default function ChatbotPersonnalisationPage({
             role="status"
             className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90 leading-relaxed"
           >
-            Aucune page n’est sélectionnée dans l’accueil Chatbot : les champs affichés viennent des{" "}
-            <strong className="text-amber-50">réglages par défaut de l’espace</strong>. Pour configurer un canal précis,
-            retournez au hub, cliquez sur une page dans la liste, puis rouvrez Personnalisation — les enregistrements
-            seront alors liés à cette page.
+            Aucune page n&apos;est sélectionnée dans l&apos;accueil Chatbot : les réglages affichés sont les{" "}
+            <strong className="text-amber-50">réglages par défaut</strong>. Pour configurer une page précise,
+            retournez au hub et sélectionnez une page.
           </div>
         ) : (
           <div className="rounded-xl border border-fg/[0.08] bg-fg/[0.03] px-4 py-3 text-sm text-fg/70 leading-relaxed">
             Ces réglages sont enregistrés pour{" "}
-            <strong className="text-fg/90">{selectedPageName || `la page ${selectedPageId}`}</strong>. Pour une autre
-            page, changez la sélection sur l’accueil Chatbot puis revenez ici.
+            <strong className="text-fg/90">{selectedPageName || `la page ${selectedPageId}`}</strong>.
           </div>
         )}
 
-        {/* ── Tabs superposées linéairement ── */}
+        {/* ── Two sections only ── */}
         <motion.div
            initial={{ opacity: 0, y: 16 }}
            animate={{ opacity: 1, y: 0 }}
@@ -215,21 +156,10 @@ export default function ChatbotPersonnalisationPage({
 
            <ChatbotBusinessTab 
              preferences={preferences} 
-             businessHoursDraft={businessHoursDraft} 
              onChange={setPreferences} 
-             onBusinessHoursChange={setBusinessHoursDraft} 
              canEdit={canEdit} 
              saving={savingSection === "business"} 
              onSave={() => void onSavePreferences("business")} 
-           />
-
-           <ChatbotSalesTab 
-             salesConfig={salesConfig} 
-             onChange={setSalesConfig} 
-             canEdit={canEdit} 
-             saving={savingSection === "sales"} 
-             hasSalesScript={hasSalesScript} 
-             onSave={() => void onSaveSalesConfig()} 
            />
         </motion.div>
       </div>

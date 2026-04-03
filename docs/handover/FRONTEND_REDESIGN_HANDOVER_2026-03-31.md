@@ -28,7 +28,7 @@ basé sur la spec docs/superpowers/specs/2026-03-31-flare-ai-frontend-redesign.m
 - **Stack** : Next.js 14.2.3, TypeScript, Tailwind CSS 3.4.1, Framer Motion 12, Recharts, Firebase Auth
 - **Fonts** : Instrument Sans + Outfit (déjà chargées dans layout.tsx)
 - **Aucun test setup** : pas de Jest, pas de RTL (Playwright installé mais non configuré)
-- **Répertoire** : `D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI/frontend/src/`
+- **Répertoire** : `D:/Travail/FLARE AI/Flare Group/Flare AI/FLARE AI/frontend/src/`
 
 ---
 

@@ -51,7 +51,7 @@ python -m py_compile main.py
 
 **Production actuelle (2026-04) :** Render — `git push` sur `main` declenche les builds. Details, DNS et variables : [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md).
 
-**Git depuis un agent / terminal integre (chemin `RAM'S FLARE`) :** si `cd` ou `git` echouent sans raison, utiliser **`git --git-dir` / `--work-tree`** depuis un repertoire neutre — procedure obligatoire documentee dans le meme **DEVELOPER_GUIDE** (section Deploiement, Windows). Script optionnel : `scripts/render-deploy.ps1`.
+**Git depuis un agent / terminal integre (chemin `FLARE AI`) :** si `cd` ou `git` echouent sans raison, utiliser **`git --git-dir` / `--work-tree`** depuis un repertoire neutre — procedure obligatoire documentee dans le meme **DEVELOPER_GUIDE** (section Deploiement, Windows). Script optionnel : `scripts/render-deploy.ps1`.
 
 ### Ancien flux (obsolete pour la prod courante — ne plus utiliser)
 

@@ -59,7 +59,7 @@ Ces règles s'appliquent à **TOUS** les agents sans exception.
 ## 📁 CHEMINS IMPORTANTS
 
 ```
-Workspace V2    : D:\Travail\RAM'S FLARE\...\V2\
+Workspace V2    : D:\Travail\FLARE AI\...\V2\
 Code FLARE AI   : V2\claude\
 Frontend        : V2\claude\frontend\
 Backend         : V2\claude\backend\

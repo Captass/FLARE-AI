@@ -86,7 +86,7 @@ Les `refresh_tokens` sont critiques. Ils doivent être chiffrés avant stockage 
 Implémentation dans `backend/agents/prospecting_graph.py` utilisant un pattern **Supervisor-Worker**.
 
 ### A. Supervisor (L'Intervieweur)
-*   Accès direct en lecture à la **CoreMemory** (via `user_id`) pour injecter le contexte agence (RAM'S FLARE, services, tone of voice).
+*   Accès direct en lecture à la **CoreMemory** (via `user_id`) pour injecter le contexte agence (FLARE AI, services, tone of voice).
 *   Orchestre les transitions entre les workers après validation utilisateur.
 
 ### B. Agent Sourceur (Le Détective Modularisé)
@@ -137,7 +137,7 @@ Pour garantir la résilience sans surcoût permanent de workers Celery :
 ## 8. MODÈLE ÉCONOMIQUE & CLÉS API (BYOK)
 
 Le système adopte un modèle hybride "Bring Your Own Key" :
-*   **Clés RAM'S FLARE** (Hunter/Apollo/Apify) : Utilisées par défaut, débitées sur les "Crédits de prospection" de l'abonnement de l'utilisateur.
+*   **Clés FLARE AI** (Hunter/Apollo/Apify) : Utilisées par défaut, débitées sur les "Crédits de prospection" de l'abonnement de l'utilisateur.
 *   **Clés Utilisateur (BYOK)** : Disponibles via un nouvel onglet "Intégrations" dans `SettingsModal.tsx`. Si renseignées, elles sont utilisées en priorité et sans limite de crédit.
 
 ---

@@ -167,9 +167,9 @@ python -m py_compile main.py
 # Puis : git push (déploiement auto) ou Manual Deploy sur Render
 ```
 
-### Windows — chemin avec apostrophe (`RAM'S FLARE`)
+### Windows — chemin avec apostrophe (`FLARE AI`)
 
-Si le terminal de l’IDE **plante avant d’exécuter** `git` (souvent à cause de l’apostrophe dans `RAM'S FLARE` dans le chemin du workspace), utiliser **d’abord** la technique **`--git-dir` / `--work-tree`** ci-dessous. Les agents IA doivent **s’y tenir systématiquement** pour `status` / `add` / `commit` / `push` lorsque le shell intégré échoue.
+Si le terminal de l’IDE **plante avant d’exécuter** `git` (souvent à cause de l’apostrophe dans `FLARE AI` dans le chemin du workspace), utiliser **d’abord** la technique **`--git-dir` / `--work-tree`** ci-dessous. Les agents IA doivent **s’y tenir systématiquement** pour `status` / `add` / `commit` / `push` lorsque le shell intégré échoue.
 
 #### Technique Git : `--git-dir` et `--work-tree` (référence agents / automation)
 
@@ -178,13 +178,13 @@ Si le terminal de l’IDE **plante avant d’exécuter** `git` (souvent à cause
 1. Définir la racine du clone (adapter au poste) — les **slashes avant** fonctionnent avec Git pour Windows :
 
    ```text
-   D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI
+   D:/Travail/FLARE AI/Flare Group/Flare AI/FLARE AI
    ```
 
 2. **Exemples** (PowerShell, `cwd` = par ex. `C:\Windows\System32`) :
 
    ```powershell
-   $G = "D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI"
+   $G = "D:/Travail/FLARE AI/Flare Group/Flare AI/FLARE AI"
    git --git-dir="$G/.git" --work-tree="$G" status -sb
    git --git-dir="$G/.git" --work-tree="$G" add -A
    git --git-dir="$G/.git" --work-tree="$G" commit -m "message"
@@ -194,7 +194,7 @@ Si le terminal de l’IDE **plante avant d’exécuter** `git` (souvent à cause
    Variante **variables d’environnement** (même effet) :
 
    ```powershell
-   $G = "D:/Travail/RAM'S FLARE/Flare Group/Flare AI/FLARE AI"
+   $G = "D:/Travail/FLARE AI/Flare Group/Flare AI/FLARE AI"
    $env:GIT_DIR = "$G/.git"
    $env:GIT_WORK_TREE = $G
    git status -sb

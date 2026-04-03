@@ -194,7 +194,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="FLARE AI",
-    description="Orchestrateur IA central de RAM'S FLARE",
+    description="Orchestrateur IA central de FLARE AI",
     version="2.0.0",
     lifespan=lifespan,
 )

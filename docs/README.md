@@ -6,7 +6,7 @@ Ce dossier `docs` est le point d'entree documentaire du projet.
 
 ## Regle Git / agents (Windows — a appliquer systematiquement)
 
-Si le clone vit sous un chemin contenant une apostrophe (ex. `RAM'S FLARE`), le terminal integre peut ** planter avant d'executer `git`**. Pour tout `status` / `commit` / `push` en automation (agent IA, script CI local) lorsque le `cd` vers le repo echoue :
+Si le clone vit sous un chemin contenant une apostrophe (ex. `FLARE AI`), le terminal integre peut ** planter avant d'executer `git`**. Pour tout `status` / `commit` / `push` en automation (agent IA, script CI local) lorsque le `cd` vers le repo echoue :
 
 1. Utiliser **`git --git-dir` / `--work-tree`** depuis un repertoire neutre (ex. `C:\Windows\System32`), comme documente pas a pas dans [instructions/DEVELOPER_GUIDE.md](instructions/DEVELOPER_GUIDE.md) (section **Deploiement**, **Technique Git**).
 2. En alternative : script [scripts/render-deploy.ps1](../scripts/render-deploy.ps1) a la racine du depot.
@@ -95,7 +95,7 @@ Si une autre IA de dev ouvre le projet, elle doit commencer par :
 
 ## Messenger Direct
 
-Pour le chatbot Facebook RAM'S FLARE et son cockpit dans FLARE AI :
+Pour le chatbot Facebook FLARE AI et son cockpit dans FLARE AI :
 
 1. [Messenger direct sales flow](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/docs/specs/MESSENGER_DIRECT_SALES_FLOW.md)
 2. [Messenger direct system prompt](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/docs/prompts/MESSENGER_DIRECT_SYSTEM_PROMPT.md)

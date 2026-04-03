@@ -25,7 +25,7 @@ FLARE AI est une application IA web avec un chat central, de la mémoire, une ba
 
 ## Git depuis un agent / terminal intégré (Windows)
 
-Le dépôt est souvent sous un chemin du type `...\RAM'S FLARE\...`. Le shell intégré (Cursor, etc.) peut alors **échouer avant d’exécuter `git`**. **À chaque automation** (`status`, `commit`, `push`) : appliquer la technique **`git --git-dir` / `--work-tree`** depuis un répertoire neutre, décrite dans [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md) (section Déploiement). Alternative : `scripts/render-deploy.ps1` à la racine du repo.
+Le dépôt est souvent sous un chemin du type `...\FLARE AI\...`. Le shell intégré (Cursor, etc.) peut alors **échouer avant d’exécuter `git`**. **À chaque automation** (`status`, `commit`, `push`) : appliquer la technique **`git --git-dir` / `--work-tree`** depuis un répertoire neutre, décrite dans [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md) (section Déploiement). Alternative : `scripts/render-deploy.ps1` à la racine du repo.
 
 ## Dossiers utiles
 

@@ -11,7 +11,7 @@ Ce fichier est la source unique de vérité. **LIRE avant toute action. ÉCRIRE 
 **Stack** : Next.js (frontend) + FastAPI (backend) + Firebase Auth + PostgreSQL (Render) — voir DEVELOPER_GUIDE
 **Déploiement** : Render (frontend statique + web service backend) — domaine public `flareai.ramsflare.com` (CNAME vers Render)
 **Référence Git / agents Windows** : `docs/instructions/DEVELOPER_GUIDE.md` (section Déploiement)
-**Workspace local typique** : `D:\Travail\RAM'S FLARE\Flare Group\Flare AI\FLARE AI` (apostrophe : utiliser technique Git du guide si le shell intégré échoue)
+**Workspace local typique** : `D:\Travail\FLARE AI\Flare Group\Flare AI\FLARE AI` (apostrophe : utiliser technique Git du guide si le shell intégré échoue)
 
 ---
 

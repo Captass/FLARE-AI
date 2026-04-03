@@ -6,7 +6,7 @@
 - firebase alias: `https://rams-flare-ai.web.app`
 - backend: `https://flare-backend-236458687422.europe-west1.run.app` (voir **[docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md)** pour l’URL Render actuelle et le déploiement)
 
-**Agents / Git Windows :** si le clone est sous un chemin avec apostrophe (`RAM'S FLARE`), utiliser systématiquement la technique **`git --git-dir` / `--work-tree`** décrite dans le même **DEVELOPER_GUIDE** (section Déploiement).
+**Agents / Git Windows :** si le clone est sous un chemin avec apostrophe (`FLARE AI`), utiliser systématiquement la technique **`git --git-dir` / `--work-tree`** décrite dans le même **DEVELOPER_GUIDE** (section Déploiement).
 
 ## Parcours actuel
 
@@ -191,7 +191,7 @@ Chaque utilisateur peut travailler :
 - dans son espace personnel
 - ou dans une organisation partagee
 
-Exemple vise : plusieurs comptes peuvent partager l'organisation `RAM'S FLARE`.
+Exemple vise : plusieurs comptes peuvent partager l'organisation `FLARE AI`.
 
 ## Acces par organisation
 

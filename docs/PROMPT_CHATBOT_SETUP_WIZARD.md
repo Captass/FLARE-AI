@@ -33,7 +33,7 @@ Avant de coder quoi que ce soit, **lis et analyse** ces fichiers pour comprendre
 
 ### Backend
 - `backend/core/database.py` — tous les modeles SQLAlchemy (voir `FacebookPageConnection` ligne 295)
-- `backend/agents/facebook_cm/agent.py` — agent chatbot (prompt hardcode "Alex" pour RAM'S FLARE)
+- `backend/agents/facebook_cm/agent.py` — agent chatbot (prompt hardcode "Alex" pour FLARE AI)
 - `backend/agents/facebook_cm/tools.py` — envoi messages Messenger, catalogue hardcode
 - `backend/agents/facebook_cm/webhook.py` — traitement webhooks Meta
 - `backend/routers/facebook_pages.py` — OAuth Facebook complet (auth, callback, activate, disconnect)
@@ -68,7 +68,7 @@ Avant de coder quoi que ce soit, **lis et analyse** ces fichiers pour comprendre
 
 ### Agent chatbot — FONCTIONNE mais HARDCODE
 - `FacebookCMAgent.handle_message(psid, text)` fonctionne
-- Le system prompt est hardcode pour RAM'S FLARE uniquement (nom "Alex", offres fixes)
+- Le system prompt est hardcode pour FLARE AI uniquement (nom "Alex", offres fixes)
 - **C'est ca qu'il faut rendre dynamique par organisation**
 
 ### Multi-tenant — INFRASTRUCTURE PRETE
@@ -151,7 +151,7 @@ Le webhook contient le `page_id`. Utiliser ce `page_id` pour :
 1. Trouver la `FacebookPageConnection` active correspondante → obtenir `organization_slug`
 2. Charger les `ChatbotPreferences` de cette org
 3. Si prefs existent → construire le prompt dynamiquement
-4. Si pas de prefs → **fallback sur l'ancien CM_SYSTEM_PROMPT** (ne rien casser pour RAM'S FLARE)
+4. Si pas de prefs → **fallback sur l'ancien CM_SYSTEM_PROMPT** (ne rien casser pour FLARE AI)
 
 Prompt dynamique :
 
@@ -278,7 +278,7 @@ Ajouter un onglet "Chatbot" avec les memes champs que l'ecran 2 du wizard. Charg
 - Conversations/leads dans MessengerWorkspace (intact)
 - Structure multi-org (on s'appuie dessus)
 - Microservice Messenger Direct (pas touche)
-- Le flow actuel RAM'S FLARE doit continuer a fonctionner tel quel (fallback ancien prompt)
+- Le flow actuel FLARE AI doit continuer a fonctionner tel quel (fallback ancien prompt)
 
 ---
 
@@ -316,7 +316,7 @@ Mais **ne pas commencer par ca** — d'abord le wizard qui fonctionne.
 - [ ] Activation d'une page
 - [ ] Preferences sauvees et rechargees correctement
 - [ ] Prompt dynamique utilise les bonnes prefs
-- [ ] Fallback sur ancien prompt si pas de prefs (RAM'S FLARE)
+- [ ] Fallback sur ancien prompt si pas de prefs (FLARE AI)
 - [ ] Message entrant route vers la bonne org via page_id
 - [ ] Reponse envoyee avec le bon token
 - [ ] Wizard ne s'affiche plus apres completion

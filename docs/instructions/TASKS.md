@@ -3,7 +3,7 @@
 > Document de suivi pour la continuité entre sessions de développement.
 > Dernière mise à jour : **25 mars 2026**
 >
-> **Git automatisé / chemin Windows avec apostrophe (`RAM'S FLARE`) :** à chaque session qui fait `commit` ou `push` depuis un shell intégré fragile, suivre [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) — section *Déploiement* (*Technique Git* : `--git-dir` / `--work-tree*).
+> **Git automatisé / chemin Windows avec apostrophe (`FLARE AI`) :** à chaque session qui fait `commit` ou `push` depuis un shell intégré fragile, suivre [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md) — section *Déploiement* (*Technique Git* : `--git-dir` / `--work-tree*).
 
 ---
 

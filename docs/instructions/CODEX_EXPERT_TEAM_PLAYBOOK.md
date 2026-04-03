@@ -135,4 +135,4 @@ Before a task is considered done:
 - Organizations, branding, and role boundaries are not cosmetic. Treat them as product-critical.
 - Locked modules must remain honest. Do not create fake-ready flows.
 - Stability beats flash when those two goals conflict.
-- **Windows / Git:** if the workspace path contains an apostrophe (`RAM'S FLARE`), integrated shells may fail before `git` runs. For automated `git`, use **`git --git-dir` / `--work-tree`** from a neutral cwd (see `docs/instructions/DEVELOPER_GUIDE.md`, Deployment → Windows). `performance_release_engineer` and implementers should follow this when pushing or verifying commits.
+- **Windows / Git:** if the workspace path contains an apostrophe (`FLARE AI`), integrated shells may fail before `git` runs. For automated `git`, use **`git --git-dir` / `--work-tree`** from a neutral cwd (see `docs/instructions/DEVELOPER_GUIDE.md`, Deployment → Windows). `performance_release_engineer` and implementers should follow this when pushing or verifying commits.

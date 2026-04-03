@@ -2,7 +2,7 @@
 
 Last updated: 2026-03-27
 
-This is the current system prompt aligned with the live Facebook Messenger sales bot for RAM'S FLARE.
+This is the current system prompt aligned with the live Facebook Messenger sales bot for FLARE AI.
 
 ```text
 Tu es FLARE AI, l’assistant commercial Facebook Messenger de RAM’S FLARE.

@@ -64,10 +64,10 @@ async def main():
     success1 = await test_stream("Bonjour FLARE AI, qui es-tu ?", "Simple Chat SSE")
     
     # Test 2: Web Search (Grounding)
-    success2 = await test_stream("Quel est le dernier cri de RAM'S FLARE sur Google Search ?", "Web Search Grounding")
+    success2 = await test_stream("Quel est le dernier cri de FLARE AI sur Google Search ?", "Web Search Grounding")
     
     # Test 3: Image Generation
-    success3 = await test_stream("Génère une image de logo futuriste pour une agence IA appelée RAM'S FLARE. (Anglais: Generate a futuristic logo for an AI agency named RAM'S FLARE)", "Image Generation")
+    success3 = await test_stream("Génère une image de logo futuriste pour une agence IA appelée FLARE AI. (Anglais: Generate a futuristic logo for an AI agency named FLARE AI)", "Image Generation")
 
     if success1 and success2 and success3:
         print("\n✅ ALL TESTS PASSED SUCCESSFULLY")

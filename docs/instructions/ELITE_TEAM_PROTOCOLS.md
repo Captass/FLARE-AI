@@ -35,7 +35,7 @@
 | `LANCER_DASHBOARD.bat` | Démarrage rapide |
 
 ### Workspace Projet
-- **Chemin** : `D:\Travail\RAM'S FLARE\Flare Group\Flare AI\Antigravity\FLARE AI OS\V2\`
+- **Chemin** : `D:\Travail\FLARE AI\Flare Group\Flare AI\Antigravity\FLARE AI OS\V2\`
 - **Projet actif** : FLARE AI (`claude/` → frontend Next.js + backend FastAPI)
 
 ---

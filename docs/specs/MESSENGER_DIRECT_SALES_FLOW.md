@@ -4,7 +4,7 @@ Last updated: 2026-03-27
 
 ## Scope
 
-This document describes the current commercial and conversational behavior of the live RAM'S FLARE Facebook Messenger bot.
+This document describes the current commercial and conversational behavior of the live FLARE AI Facebook Messenger bot.
 
 ## Active scope
 
@@ -14,7 +14,7 @@ The bot currently sells or routes only these services:
 - Film documentaire
 - Livestream multicamera
 
-The ad offer gallery is separate from the service list. It represents video advertising packages, not the full RAM'S FLARE activity.
+The ad offer gallery is separate from the service list. It represents video advertising packages, not the full FLARE AI activity.
 
 ## Social proof
 
@@ -37,7 +37,7 @@ Available proof formats today:
 For livestream, the bot must stay honest:
 
 - do not invent a video proof
-- explain that RAM'S FLARE has already handled several livestreams
+- explain that FLARE AI has already handled several livestreams
 - continue the sales flow with quote or meeting capture
 
 ## Required flow
@@ -58,7 +58,7 @@ The flow is mandatory, but the bot must not ignore the user’s actual question.
 
 If the client asks:
 
-- what RAM'S FLARE does
+- what FLARE AI does
 - what is inside an offer
 - if a meeting is possible
 - for a price
@@ -90,12 +90,12 @@ Expected behavior:
 
 Examples:
 
-- Que fait RAM'S FLARE ?
-- Inona ny atao ny RAM'S FLARE ?
+- Que fait FLARE AI ?
+- Inona ny atao ny FLARE AI ?
 
 Expected behavior:
 
-- explain RAM'S FLARE in one short sentence
+- explain FLARE AI in one short sentence
 - mention the 3 active services
 - mention 300+ projects if useful
 - send the ad-offer gallery
@@ -136,7 +136,7 @@ Examples:
 
 Expected behavior:
 
-- explain that RAM'S FLARE already did several livestreams
+- explain that FLARE AI already did several livestreams
 - no fake proof video
 - ask one useful qualification question
 - push toward quote or meeting capture
@@ -161,7 +161,7 @@ Expected behavior:
 
 The offer gallery must be sent when the client asks:
 
-- what RAM'S FLARE does
+- what FLARE AI does
 - what offers are available
 - to see the ad offers
 

@@ -9,19 +9,19 @@
 
 ## Current product state
 
-The Facebook Messenger sales bot is now aligned with the RAM'S FLARE commercial scope:
+The Facebook Messenger sales bot is now aligned with the FLARE AI commercial scope:
 
 - Spot publicitaire
 - Film documentaire
 - Livestream multicamera
 
 The bot no longer exposes `conseiller` as a user-facing role.
-Human escalation is phrased as `l'equipe RAM'S FLARE`.
+Human escalation is phrased as `l'equipe FLARE AI`.
 
 ## What was fixed
 
 - Greeting no longer auto-sends the offer gallery
-- RAM'S FLARE explanation is now aligned with the 3 real services
+- FLARE AI explanation is now aligned with the 3 real services
 - Social proof `300+ projects` is available in the messaging
 - Offer carousel remains for ad offers only
 - Spot proof video works
@@ -50,8 +50,8 @@ Validated locally with simulated Messenger sends:
 
 - `Bonjour`
 - `Salama`
-- `Que fait RAM'S FLARE ?`
-- `Inona ny atao ny RAM'S FLARE ?`
+- `Que fait FLARE AI ?`
+- `Inona ny atao ny FLARE AI ?`
 - `prix spot pub`
 - `Asehoy ahy ny ohatra spot pub`
 - `Asehoy ahy ny ohatra livestream`
@@ -61,7 +61,7 @@ Validated locally with simulated Messenger sends:
 
 - `Ilay offre 4 no tiko -> Ie -> 0340210731 -> Offre 4 -> Ie`
 - `Salama` does not auto-send offers
-- `Inona ny atao ny RAM'S FLARE ?` sends the 5-offer gallery
+- `Inona ny atao ny FLARE AI ?` sends the 5-offer gallery
 - `Asehoy ahy ny ohatra spot pub` sends the spot proof video
 - `Ohatrinona ny spot pub ?` now stays in Malagasy
 - `Mila spot pub aho -> Ho an'ny entreprise` now keeps the qualification flow instead of drifting
