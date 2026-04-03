@@ -15,15 +15,16 @@ logger = logging.getLogger(__name__)
 
 
 @router.get("/facebook")
-async def facebook_verify(
-    hub_mode: str = None,
-    hub_verify_token: str = None,
-    hub_challenge: str = None,
-):
+async def facebook_verify(request: Request):
     """
     Vérification du webhook Meta Graph.
     Facebook appelle cet endpoint lors de la configuration du webhook.
     """
+    query = request.query_params
+    hub_mode = query.get("hub.mode") or query.get("hub_mode")
+    hub_verify_token = query.get("hub.verify_token") or query.get("hub_verify_token")
+    hub_challenge = query.get("hub.challenge") or query.get("hub_challenge")
+
     if hub_mode == "subscribe" and hub_verify_token == settings.META_VERIFY_TOKEN:
         logger.info("Webhook Facebook vérifié avec succès")
         return Response(content=hub_challenge, media_type="text/plain")

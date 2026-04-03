@@ -14,6 +14,25 @@ from .config import settings
 
 logger = logging.getLogger(__name__)
 
+_PLACEHOLDER_TOKENS = {
+    "",
+    "a_remplir",
+    "change-me",
+    "changeme",
+    "your-key-here",
+    "your_api_key",
+}
+
+
+def _validated_api_key(raw_value: Optional[str], *, provider: str, purpose: str) -> str:
+    value = str(raw_value or "").strip()
+    if value.lower() in _PLACEHOLDER_TOKENS:
+        raise RuntimeError(
+            f"{provider} n'est pas configuré correctement pour `{purpose}`. "
+            "Ajoutez une vraie clé API côté serveur."
+        )
+    return value
+
 
 def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: Optional[str] = None, purpose: str = "default") -> BaseChatModel:
     """
@@ -58,6 +77,7 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
             api_key = settings.GEMINI_API_KEY_ASSISTANT_REASONING
         elif purpose == "assistant_fast" and settings.GEMINI_API_KEY_ASSISTANT_FAST:
             api_key = settings.GEMINI_API_KEY_ASSISTANT_FAST
+        api_key = _validated_api_key(api_key, provider="Gemini", purpose=purpose)
 
         # Configuration de base
         # IMPORTANT: convert_system_message_to_human=True est NÉCESSAIRE pour que

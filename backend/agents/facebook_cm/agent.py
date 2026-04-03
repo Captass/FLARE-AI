@@ -2,6 +2,7 @@
 Agent CM Facebook - Vendeur IA pour FLARE AI.
 Gere les conversations Messenger avec les prospects de maniere autonome.
 """
+import logging
 from typing import Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -17,6 +18,8 @@ from .tools import (
     send_text_message,
 )
 from sqlalchemy import or_
+
+logger = logging.getLogger(__name__)
 
 CM_SYSTEM_PROMPT = """Tu es Alex, le commercial virtuel de FLARE AI, une agence de communication et d'audiovisuel.
 
@@ -233,7 +236,16 @@ class FacebookCMAgent:
         memory.save_message("assistant", reply_text)
 
         if auto_reply:
-            send_text_message(psid, reply_text, page_id=resolved_page_id)
+            send_result = send_text_message(psid, reply_text, page_id=resolved_page_id)
+            if isinstance(send_result, dict) and send_result.get("error"):
+                error_detail = str(send_result.get("error") or "").strip() or "Envoi Messenger échoué."
+                logger.error(
+                    "Messenger send failed page_id=%s psid=%s error=%s",
+                    resolved_page_id or "?",
+                    psid,
+                    error_detail,
+                )
+                raise RuntimeError(error_detail)
 
         return reply_text
 

@@ -7,6 +7,7 @@ import logging
 from typing import Any
 
 from .agent import get_cm_agent
+from .tools import send_text_message
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +47,19 @@ async def process_webhook_event(payload: dict) -> None:
                     )
                 except Exception as exc:
                     logger.error("Erreur traitement message %s: %s", sender_id, exc)
+                    try:
+                        send_text_message(
+                            sender_id,
+                            "Desole, un souci technique est survenu. Reessaie dans quelques instants ou ecris-nous encore.",
+                            page_id=page_id,
+                        )
+                    except Exception as fallback_exc:
+                        logger.error(
+                            "Erreur fallback Messenger %s sur page=%s: %s",
+                            sender_id,
+                            page_id or "?",
+                            fallback_exc,
+                        )
 
             elif "postback" in event:
                 postback_payload = event["postback"].get("payload", "")
@@ -60,13 +74,24 @@ async def process_webhook_event(payload: dict) -> None:
                     )
                 except Exception as exc:
                     logger.error("Erreur traitement postback %s: %s", sender_id, exc)
+                    try:
+                        send_text_message(
+                            sender_id,
+                            "Desole, un souci technique est survenu. Reessaie dans quelques instants ou ecris-nous encore.",
+                            page_id=page_id,
+                        )
+                    except Exception as fallback_exc:
+                        logger.error(
+                            "Erreur fallback postback %s sur page=%s: %s",
+                            sender_id,
+                            page_id or "?",
+                            fallback_exc,
+                        )
 
             elif "message" in event and "attachments" in event.get("message", {}):
                 for attachment in event["message"].get("attachments", []):
                     if attachment.get("type") == "audio":
                         logger.info("Message vocal recu de %s sur page=%s", sender_id, page_id or "?")
-                        from .tools import send_text_message
-
                         send_text_message(
                             sender_id,
                             "J'ai bien recu ton message vocal. Pour l'instant, merci d'utiliser les messages texte. Comment puis-je t'aider ?",
