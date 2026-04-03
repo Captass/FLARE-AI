@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header
 from core.config import settings
-from core.database import ChatbotPreferences, FacebookPageConnection, get_db
+from core.database import ChatbotPreferences, FacebookPageConnection, SessionLocal, get_db
 from core.encryption_service import encryption_service
 from core.organizations import (
     get_organization,
@@ -747,6 +747,56 @@ async def resync_facebook_pages(
     }
 
 
+async def _revoke_facebook_app_permissions(organization_slug: str) -> bool:
+    """Revoke all Facebook app permissions for this org's stored user token.
+
+    This forces Meta to show the full page-selection OAuth screen
+    instead of the quick 'Reconnect' shortcut.
+    Returns True if revocation succeeded (or no token was stored).
+    """
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(FacebookPageConnection)
+            .filter(FacebookPageConnection.organization_slug == organization_slug)
+            .all()
+        )
+        user_token = ""
+        for row in rows:
+            try:
+                t = encryption_service.decrypt(row.user_access_token_encrypted or "")
+                if t.strip():
+                    user_token = t.strip()
+                    break
+            except Exception:
+                continue
+
+        if not user_token:
+            return True  # nothing to revoke
+
+        timeout = httpx.Timeout(15.0, connect=8.0)
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            response = await client.delete(
+                f"https://graph.facebook.com/{_graph_version()}/me/permissions",
+                params=_graph_token_params(user_token),
+            )
+        if response.status_code < 400:
+            logger.info("Facebook permissions revoked for org=%s", organization_slug)
+            return True
+
+        logger.warning(
+            "Facebook permission revocation returned %s for org=%s: %s",
+            response.status_code, organization_slug, response.text[:300],
+        )
+        # Token may already be expired/invalid — that's fine, OAuth will still work fresh
+        return True
+    except Exception as exc:
+        logger.warning("Failed to revoke Facebook permissions for org=%s: %s", organization_slug, exc)
+        return True  # non-blocking — OAuth will still work
+    finally:
+        db.close()
+
+
 @router.get("/auth")
 async def start_facebook_auth(
     request: Request,
@@ -756,6 +806,9 @@ async def start_facebook_auth(
     context = _organization_context_from_authorization(authorization, require_edit=True)
     _require_meta_oauth_configured()
     callback_url = _facebook_callback_url(request)
+
+    # Revoke existing permissions so Meta shows the full page picker
+    await _revoke_facebook_app_permissions(context["organization_slug"])
 
     state = _build_state(
         {
@@ -771,7 +824,6 @@ async def start_facebook_auth(
         "redirect_uri": callback_url,
         "scope": ",".join(FACEBOOK_SCOPES),
         "response_type": "code",
-        "auth_type": "rerequest",
         "state": state,
     }
     return {
