@@ -403,13 +403,28 @@ async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
         payload = response.json()
 
     pages = payload.get("data") if isinstance(payload, dict) else []
-    return [
-        item
-        for item in pages
-        if isinstance(item, dict)
-        and str(item.get("id") or "").strip()
-        and _page_has_required_tasks(item)
-    ]
+    result = []
+    for item in pages:
+        if not isinstance(item, dict):
+            continue
+        page_id = str(item.get("id") or "").strip()
+        if not page_id:
+            continue
+        tasks = item.get("tasks") or []
+        logger.info(
+            "Facebook page %s (%s): tasks=%s",
+            page_id, item.get("name", "?"), tasks,
+        )
+        # Accept page if it has the required tasks OR if tasks is empty/missing
+        # (Graph API v19+ with Facebook Login for Business may omit tasks)
+        if _page_has_required_tasks(item) or not tasks:
+            result.append(item)
+        else:
+            logger.warning(
+                "Skipping page %s — tasks %s missing MANAGE or MESSAGING",
+                page_id, tasks,
+            )
+    return result
 
 
 def _upsert_facebook_page_connections(
