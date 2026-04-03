@@ -1,10 +1,13 @@
 import json
+import re
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 from core.config import settings
 
 ACTIVE_ORGANIZATION_KEY = "active_organization"
+ORGANIZATION_REGISTRY_KEY = "organization_registry_v1"
+ORGANIZATION_REGISTRY_USER_ID = "system"
 EDITABLE_ORGANIZATION_ROLES = {"owner", "admin"}
 DEFAULT_ROLE = "member"
 
@@ -51,6 +54,12 @@ def _normalize_slug(value: Optional[str]) -> str:
 def _normalize_role(value: Optional[str]) -> str:
     role = str(value or "").strip().lower()
     return role if role in ROLE_LABELS else DEFAULT_ROLE
+
+
+def _slugify(value: Optional[str]) -> str:
+    raw = str(value or "").strip().lower()
+    normalized = re.sub(r"[^a-z0-9]+", "-", raw).strip("-")
+    return normalized[:60]
 
 
 def _fallback_display_name(email: str) -> str:
@@ -124,10 +133,11 @@ def _load_registry() -> Dict[str, Dict[str, Any]]:
         source = DEFAULT_ORGANIZATIONS
 
     registry: Dict[str, Dict[str, Any]] = {}
-    for item in source:
+
+    def _register(item: Dict[str, Any], *, is_dynamic: bool) -> None:
         slug = _normalize_slug(item.get("slug"))
         if not slug:
-            continue
+            return
 
         members = _normalize_members(item)
         member_emails = [member["email"] for member in members]
@@ -142,9 +152,112 @@ def _load_registry() -> Dict[str, Dict[str, Any]]:
             "security_label": item.get("security_label") or "Compte + connexion a l'organisation",
             "description": item.get("description") or "Espace partage entre membres verifies.",
             "enabled_modules": item.get("enabled_modules") or ["chatbot", "assistant", "automations"],
+            "is_dynamic": is_dynamic,
         }
 
+    for item in source:
+        _register(item, is_dynamic=False)
+
+    try:
+        from core.database import SessionLocal, SystemSetting
+
+        db = SessionLocal()
+        try:
+            setting = db.query(SystemSetting).filter(
+                SystemSetting.user_id == ORGANIZATION_REGISTRY_USER_ID,
+                SystemSetting.key == ORGANIZATION_REGISTRY_KEY,
+            ).first()
+        finally:
+            db.close()
+
+        if setting and setting.value:
+            parsed_dynamic = json.loads(setting.value)
+            if isinstance(parsed_dynamic, list):
+                for item in parsed_dynamic:
+                    if isinstance(item, dict):
+                        _register(item, is_dynamic=True)
+    except Exception:
+        pass
+
     return registry
+
+
+def _persist_dynamic_organizations(organizations: List[Dict[str, Any]]) -> None:
+    from core.database import SessionLocal, SystemSetting
+
+    payload = json.dumps(organizations, ensure_ascii=False)
+    db = SessionLocal()
+    try:
+        setting = db.query(SystemSetting).filter(
+            SystemSetting.user_id == ORGANIZATION_REGISTRY_USER_ID,
+            SystemSetting.key == ORGANIZATION_REGISTRY_KEY,
+        ).first()
+        if setting:
+            setting.value = payload
+        else:
+            db.add(
+                SystemSetting(
+                    user_id=ORGANIZATION_REGISTRY_USER_ID,
+                    key=ORGANIZATION_REGISTRY_KEY,
+                    value=payload,
+                )
+            )
+        db.commit()
+    finally:
+        db.close()
+
+
+def list_dynamic_organizations() -> List[Dict[str, Any]]:
+    return [organization for organization in _load_registry().values() if organization.get("is_dynamic")]
+
+
+def create_organization(name: str, owner_email: str) -> Dict[str, Any]:
+    normalized_owner = _normalize_email(owner_email)
+    if not normalized_owner:
+        raise ValueError("owner_email is required")
+
+    base_slug = _slugify(name) or _slugify(normalized_owner.split("@")[0]) or "workspace"
+    registry = _load_registry()
+    slug = base_slug
+    suffix = 2
+    while slug in registry:
+        slug = f"{base_slug}-{suffix}"
+        suffix += 1
+
+    organization = {
+        "slug": slug,
+        "name": str(name or "").strip() or "Nouvel espace",
+        "members": [
+            {
+                "email": normalized_owner,
+                "display_name": _fallback_display_name(normalized_owner),
+                "role": "owner",
+            }
+        ],
+        "plan_id": "business",
+        "offer_name": "Business partage",
+        "security_label": "Compte + connexion a l'organisation",
+        "description": "Espace partage entre membres verifies.",
+        "enabled_modules": ["chatbot", "assistant", "automations"],
+        "is_dynamic": True,
+    }
+
+    dynamic = list_dynamic_organizations()
+    dynamic.append(organization)
+    _persist_dynamic_organizations(dynamic)
+    return get_organization(slug) or organization
+
+
+def delete_organization(slug: str, owner_email: str) -> bool:
+    candidate = get_organization(slug)
+    if not candidate or not candidate.get("is_dynamic"):
+        return False
+    if get_user_role_in_organization(owner_email, organization=candidate) != "owner":
+        return False
+
+    dynamic = [organization for organization in list_dynamic_organizations() if organization.get("slug") != candidate["slug"]]
+    _persist_dynamic_organizations(dynamic)
+    return True
 
 
 def get_organization(slug: Optional[str]) -> Optional[Dict[str, Any]]:
@@ -221,6 +334,8 @@ def serialize_organization(organization: Dict[str, Any], current_user_email: Opt
         "current_user_role": current_user_role,
         "current_user_role_label": get_user_role_label(current_user_role),
         "can_edit_branding": current_user_role in EDITABLE_ORGANIZATION_ROLES,
+        "is_dynamic": bool(organization.get("is_dynamic")),
+        "can_delete": bool(organization.get("is_dynamic")) and current_user_role == "owner",
     }
 
 

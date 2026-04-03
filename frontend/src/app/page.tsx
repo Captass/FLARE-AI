@@ -62,6 +62,8 @@ import {
   OrganizationAccessResponse,
   WorkspaceIdentity,
   connectToOrganization,
+  createOrganization,
+  deleteOrganization,
   getApiBaseUrl,
   getOrganizationAccess,
   getWorkspaceIdentity,
@@ -763,8 +765,8 @@ export default function Home() {
   const hasSharedOrganizations = Boolean(organizationAccess?.organizations.length);
   const organizationConnectionRequired = Boolean(
     user &&
-    hasSharedOrganizations &&
-    organizationAccess?.current_scope.type === "personal"
+    organizationAccess &&
+    organizationAccess.current_scope.type !== "organization"
   );
   const resolvedUserDisplayName =
     workspaceIdentity?.user_profile.display_name ||
@@ -846,6 +848,38 @@ export default function Home() {
     [loadOrganizationState, organizationAccess, token]
   );
 
+  const handleCreateOrganizationScope = useCallback(async (name: string) => {
+    if (!token) return;
+
+    setOrganizationLoading(true);
+    try {
+      await createOrganization(name, token);
+      await loadOrganizationState();
+      setShowOrganizationAccess(false);
+      setNavStack(["home" as NavLevel]);
+      window.location.reload();
+    } catch (err) {
+      console.error("Erreur creation organisation:", err);
+    } finally {
+      setOrganizationLoading(false);
+    }
+  }, [loadOrganizationState, token]);
+
+  const handleDeleteOrganizationScope = useCallback(async (organizationSlug: string) => {
+    if (!token) return;
+
+    setOrganizationLoading(true);
+    try {
+      await deleteOrganization(organizationSlug, token);
+      await loadOrganizationState();
+      setNavStack(["home" as NavLevel]);
+    } catch (err) {
+      console.error("Erreur suppression organisation:", err);
+    } finally {
+      setOrganizationLoading(false);
+    }
+  }, [loadOrganizationState, token]);
+
   const handleUsePersonalScope = useCallback(async () => {
     if (!token) return;
 
@@ -895,7 +929,7 @@ export default function Home() {
         requestAuth("login");
         return;
       }
-      if (user && organizationConnectionRequired && ORGANIZATION_REQUIRED_VIEWS.includes(view)) {
+      if (user && organizationConnectionRequired && ORGANIZATION_REQUIRED_VIEWS.includes(view as ActiveView)) {
         setShowOrganizationAccess(true);
         return;
       }
@@ -1222,7 +1256,7 @@ export default function Home() {
         <AnimatePresence mode="wait">
 
         {activeView === "home" ? (
-          <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} orgName={resolvedWorkspaceName} token={token} /></motion.div>
+          <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} orgName={resolvedWorkspaceName} token={token} currentScopeType={organizationAccess?.current_scope.type} onCreateWorkspace={openOrganizationAccess} /></motion.div>
         ) : activeView === "automations" ? (
           <motion.div key="automations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><AutomationsPage onPush={onPush} /></motion.div>
         ) : activeView === "facebook" ? (
@@ -1403,6 +1437,8 @@ export default function Home() {
         onClose={() => setShowOrganizationAccess(false)}
         onUsePersonal={handleUsePersonalScope}
         onConnectOrganization={handleConnectOrganizationScope}
+        onCreateOrganization={handleCreateOrganizationScope}
+        onDeleteOrganization={handleDeleteOrganizationScope}
       />
     </>
   );

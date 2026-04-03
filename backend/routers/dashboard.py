@@ -1,6 +1,6 @@
-"""
-Router Dashboard — Vue d'ensemble du système FLARE AI.
-Agrège les stats de tous les modules en un seul endpoint.
+﻿"""
+Router Dashboard â€” Vue d'ensemble du systÃ¨me FLARE AI.
+AgrÃ¨ge les stats de tous les modules en un seul endpoint.
 """
 import asyncio
 import hashlib
@@ -27,30 +27,25 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 @router.get("/stats")
 async def get_dashboard_stats(
-    from_date: Optional[str] = Query(None, description="Début de période (ISO 8601)"),
-    to_date: Optional[str] = Query(None, description="Fin de période (ISO 8601)"),
+    from_date: Optional[str] = Query(None, description="Debut de periode (ISO 8601)"),
+    to_date: Optional[str] = Query(None, description="Fin de periode (ISO 8601)"),
+    authorization: str | None = Header(None),
 ):
     """
-    Retourne les statistiques globales du système :
-    - Infos système (version, LLM)
-    - Stats conversations & messages
-    - Stats mémoire persistante
-    - Stats campagnes de prospection
-    - Statut agents
-    - Compétences
-    - Stats de la période demandée (period)
+    Retourne les statistiques scopees au compte ou a l'organisation active.
     """
+    scope_id = get_user_id_from_header(authorization)
+    if scope_id == "anonymous":
+        raise HTTPException(status_code=401, detail="Authentification requise.")
+
     db = SessionLocal()
     try:
         now = datetime.utcnow()
         today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
         week_start = now - timedelta(days=7)
 
-        # ── Période personnalisée ─────────────────────────────────────────────
-        # JS toISOString() → "2026-03-31T12:34:56.789Z" : on tronque avant le "."
-        # pour rester compatible Python 3.9+
-        def _parse_dt(s: str) -> datetime:
-            return datetime.fromisoformat(s.replace("Z", "").split(".")[0])
+        def _parse_dt(value: str) -> datetime:
+            return datetime.fromisoformat(value.replace("Z", "").split(".")[0])
 
         try:
             period_end = _parse_dt(to_date) if to_date else now
@@ -61,102 +56,74 @@ async def get_dashboard_stats(
         except Exception:
             period_start = week_start
 
-        # ── Conversations ─────────────────────────────────────────────────────
-        total_conversations = db.query(Conversation).filter(
-            Conversation.status != "deleted"
-        ).count()
-        active_conversations = db.query(Conversation).filter(
+        scoped_conversations = db.query(Conversation).filter(Conversation.user_id == scope_id)
+        scoped_messages = db.query(Message).join(
+            Conversation, Message.conversation_id == Conversation.id
+        ).filter(Conversation.user_id == scope_id)
+        scoped_facts = db.query(CoreMemoryFact).filter(CoreMemoryFact.user_id == scope_id)
+        scoped_campaigns = db.query(ProspectingCampaign).filter(ProspectingCampaign.user_id == scope_id)
+        scoped_skills = db.query(Skill).filter(Skill.user_id == scope_id)
+
+        total_conversations = scoped_conversations.filter(Conversation.status != "deleted").count()
+        active_conversations = scoped_conversations.filter(
             Conversation.status == "active",
-            Conversation.platform == "web"
+            Conversation.platform == "web",
         ).count()
-        messenger_conversations = db.query(Conversation).filter(
-            Conversation.platform == "messenger"
+        messenger_conversations = scoped_conversations.filter(
+            Conversation.platform == "messenger",
+            Conversation.status != "deleted",
         ).count()
-        recent_conversations = db.query(Conversation).filter(
+        recent_conversations = scoped_conversations.filter(
             Conversation.updated_at >= week_start,
-            Conversation.status != "deleted"
+            Conversation.status != "deleted",
         ).count()
 
-        # ── Messages ──────────────────────────────────────────────────────────
-        total_messages = db.query(Message).count()
-        messages_today = db.query(Message).filter(
-            Message.timestamp >= today_start
-        ).count()
-        messages_week = db.query(Message).filter(
-            Message.timestamp >= week_start
-        ).count()
+        total_messages = scoped_messages.count()
+        messages_today = scoped_messages.filter(Message.timestamp >= today_start).count()
+        messages_week = scoped_messages.filter(Message.timestamp >= week_start).count()
 
-        # ── Stats période ─────────────────────────────────────────────────────
-        period_messages = db.query(Message).filter(
+        period_messages = scoped_messages.filter(
             Message.timestamp >= period_start,
             Message.timestamp <= period_end,
         ).count()
-        period_conversations = db.query(Conversation).filter(
+        period_conversations = scoped_conversations.filter(
             Conversation.updated_at >= period_start,
             Conversation.updated_at <= period_end,
             Conversation.status != "deleted",
         ).count()
-        period_leads = db.query(ProspectLead).filter(
+        period_leads = db.query(ProspectLead).join(
+            ProspectingCampaign, ProspectLead.campaign_id == ProspectingCampaign.id
+        ).filter(
+            ProspectingCampaign.user_id == scope_id,
             ProspectLead.created_at >= period_start,
             ProspectLead.created_at <= period_end,
         ).count()
 
-        # ── Mémoire ───────────────────────────────────────────────────────────
-        total_facts = db.query(CoreMemoryFact).count()
-        facts_by_category = {}
-        for fact in db.query(CoreMemoryFact).all():
+        total_facts = scoped_facts.count()
+        facts_by_category: dict[str, int] = {}
+        for fact in scoped_facts.all():
             facts_by_category[fact.category] = facts_by_category.get(fact.category, 0) + 1
 
-        # ── Campagnes de prospection ───────────────────────────────────────────
-        total_campaigns = db.query(ProspectingCampaign).count()
-        running_campaigns = db.query(ProspectingCampaign).filter(
-            ProspectingCampaign.status == "running"
-        ).count()
-        completed_campaigns = db.query(ProspectingCampaign).filter(
-            ProspectingCampaign.status == "completed"
-        ).count()
-        total_leads = db.query(ProspectLead).count()
-        total_emails_sent = db.query(ProspectingCampaign).with_entities(
-            ProspectingCampaign.emails_sent
-        ).all()
-        emails_sent_total = sum(r[0] or 0 for r in total_emails_sent)
+        total_campaigns = scoped_campaigns.count()
+        running_campaigns = scoped_campaigns.filter(ProspectingCampaign.status == "running").count()
+        completed_campaigns = scoped_campaigns.filter(ProspectingCampaign.status == "completed").count()
+        total_leads = db.query(ProspectLead).join(
+            ProspectingCampaign, ProspectLead.campaign_id == ProspectingCampaign.id
+        ).filter(ProspectingCampaign.user_id == scope_id).count()
+        total_emails_sent = scoped_campaigns.with_entities(ProspectingCampaign.emails_sent).all()
+        emails_sent_total = sum(row[0] or 0 for row in total_emails_sent)
+        last_campaign = scoped_campaigns.order_by(ProspectingCampaign.created_at.desc()).first()
 
-        # Dernière campagne
-        last_campaign = db.query(ProspectingCampaign).order_by(
-            ProspectingCampaign.created_at.desc()
-        ).first()
-
-        # ── Compétences ───────────────────────────────────────────────────────
-        total_skills = db.query(Skill).count()
-        active_skills = db.query(Skill).filter(Skill.is_active == "true").count()
-        skills_by_category = {}
-        for skill in db.query(Skill).all():
+        total_skills = scoped_skills.count()
+        active_skills = scoped_skills.filter(Skill.is_active == "true").count()
+        skills_by_category: dict[str, int] = {}
+        for skill in scoped_skills.all():
             skills_by_category[skill.category] = skills_by_category.get(skill.category, 0) + 1
 
-        # ── Agents ────────────────────────────────────────────────────────────
-        cm_active_conversations = db.query(Conversation).filter(
+        cm_active_conversations = scoped_conversations.filter(
             Conversation.platform == "messenger",
             Conversation.status == "active",
         ).count()
-
-        agents = {
-            "cm_facebook": {
-                "name": "Agent CM Facebook",
-                "status": "en_ligne",
-                "icon": "facebook",
-                "conversations_actives": cm_active_conversations,
-                "description": "Community management Messenger",
-            },
-            "prosp_swarm": {
-                "name": "Groupe de Prospection",
-                "status": "running" if running_campaigns > 0 else "idle",
-                "icon": "users",
-                "campaigns_running": running_campaigns,
-                "total_leads": total_leads,
-                "emails_sent": emails_sent_total,
-                "description": "9 agents de prospection email",
-            },
-        }
 
         return {
             "system": {
@@ -204,7 +171,24 @@ async def get_dashboard_stats(
                 "active": active_skills,
                 "by_category": skills_by_category,
             },
-            "agents": agents,
+            "agents": {
+                "cm_facebook": {
+                    "name": "Agent CM Facebook",
+                    "status": "en_ligne",
+                    "icon": "facebook",
+                    "conversations_actives": cm_active_conversations,
+                    "description": "Community management Messenger",
+                },
+                "prosp_swarm": {
+                    "name": "Groupe de Prospection",
+                    "status": "running" if running_campaigns > 0 else "idle",
+                    "icon": "users",
+                    "campaigns_running": running_campaigns,
+                    "total_leads": total_leads,
+                    "emails_sent": emails_sent_total,
+                    "description": "9 agents de prospection email",
+                },
+            },
             "period": {
                 "messages": period_messages,
                 "conversations": period_conversations,
@@ -216,10 +200,9 @@ async def get_dashboard_stats(
     finally:
         db.close()
 
-
 @router.get("/agents")
 async def get_agents_status():
-    """Retourne le statut détaillé de tous les agents."""
+    """Retourne le statut dÃ©taillÃ© de tous les agents."""
     db = SessionLocal()
     try:
         # CM Facebook
@@ -804,13 +787,59 @@ def _sanitize_public_messenger_payload(payload: dict[str, Any]) -> dict[str, Any
     }
 
 
+def _empty_messenger_payload(access_scope: str) -> dict[str, Any]:
+    return {
+        "summary": [],
+        "periodStats": [],
+        "priorityQueue": [],
+        "recentMessages": [],
+        "conversations": [],
+        "archiveStatus": "",
+        "lastUpdated": datetime.utcnow().isoformat(),
+        "totals": {
+            "messages24h": 0,
+            "contacts": 0,
+            "humanModeContacts": 0,
+            "needsAttentionContacts": 0,
+            "readyToBuyContacts": 0,
+            "quoteRequests": 0,
+            "avgLatencyMs": 0,
+            "totalTokens": 0,
+            "totalCostUsd": 0.0,
+            "avgCostUsd": 0.0,
+            "tokensPerMessage": 0,
+        },
+        "statusBreakdown": [],
+        "intentBreakdown": [],
+        "providerBreakdown": [],
+        "customerHighlights": [],
+        "access": {
+            "scope": access_scope,
+            "canViewSensitive": access_scope == "operator",
+            "canExport": False,
+            "canSwitchMode": False,
+            "message": "Selectionnez d'abord un espace de travail pour acceder aux donnees Messenger.",
+        },
+        "urls": {
+            "json24h": "",
+            "csv24h": "",
+            "csvAll": "",
+            "jsonAll": "",
+        },
+    }
+
+
 @router.get("/messenger")
 async def get_messenger_dashboard_data(
     authorization: str | None = Header(None),
     page_id: str | None = Query(None, description="Filtre par ID de Page Facebook")
 ):
-    """Expose une vue native FLARE des données du chatbot Messenger prêt."""
+    """Expose une vue native FLARE des donnÃ©es du chatbot Messenger prÃªt."""
     organization_slug = _active_organization_slug(authorization)
+    access_scope = _messenger_dashboard_access_scope(authorization)
+    if not organization_slug:
+        return _empty_messenger_payload(access_scope)
+
     parsed, records = await _fetch_messenger_dashboard_bundle(
         organization_slug=organization_slug,
         page_id=page_id
@@ -820,8 +849,6 @@ async def get_messenger_dashboard_data(
         records,
         parsed.get("conversations", []),
     )
-    access_scope = _messenger_dashboard_access_scope(authorization)
-
     payload = {
         "summary": parsed.get("summary", []),
         "periodStats": parsed.get("periodStats", []),
@@ -941,3 +968,4 @@ async def update_messenger_contact_mode(
         raise HTTPException(status_code=502, detail="Le changement de mode Messenger a echoue.")
 
     return {"status": "ok", "psid": psid, "mode": mode}
+

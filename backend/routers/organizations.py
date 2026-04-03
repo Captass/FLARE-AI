@@ -8,10 +8,18 @@ from sqlalchemy.orm import Session
 
 from core.auth import get_user_identity
 from core.config import settings
-from core.database import SystemSetting, UserSubscription, get_db, get_user_subscription
+from core.database import (
+    FacebookPageConnection,
+    SystemSetting,
+    UserSubscription,
+    get_db,
+    get_user_subscription,
+)
 from core.identity import load_organization_branding, load_user_profile
 from core.organizations import (
     ACTIVE_ORGANIZATION_KEY,
+    create_organization,
+    delete_organization,
     decode_active_organization,
     encode_active_organization,
     get_organization,
@@ -32,6 +40,10 @@ router = APIRouter(prefix="/api/organizations", tags=["organizations"])
 
 class ConnectOrganizationRequest(BaseModel):
     organization_slug: str
+
+
+class CreateOrganizationRequest(BaseModel):
+    name: str
 
 
 def _get_active_organization_setting(db: Session, raw_user_id: str) -> Optional[SystemSetting]:
@@ -214,6 +226,97 @@ def connect_organization(
         "status": "connected",
         "current_scope": _get_current_scope(raw_user_id, user_email, db),
         "organization": serialize_organization(organization, user_email),
+    }
+
+
+@router.post("")
+def create_workspace_organization(
+    req: CreateOrganizationRequest,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    raw_user_id, user_email = get_user_identity(authorization)
+    if raw_user_id == "anonymous":
+        raise HTTPException(status_code=401, detail="Authentification requise.")
+
+    workspace_name = str(req.name or "").strip()
+    if len(workspace_name) < 2:
+        raise HTTPException(status_code=400, detail="Le nom de l'espace est trop court.")
+
+    organization = create_organization(workspace_name, user_email)
+    setting = _get_active_organization_setting(db, raw_user_id)
+    value = encode_active_organization(organization["slug"])
+    if setting:
+        setting.value = value
+    else:
+        db.add(SystemSetting(user_id=raw_user_id, key=ACTIVE_ORGANIZATION_KEY, value=value))
+
+    _ensure_organization_subscription(db, organization)
+    db.commit()
+
+    logger.info(
+        "Organisation creee: user=%s email=%s org=%s",
+        raw_user_id,
+        user_email,
+        organization["slug"],
+    )
+
+    return {
+        "status": "created",
+        "current_scope": _get_current_scope(raw_user_id, user_email, db),
+        "organization": serialize_organization(organization, user_email),
+    }
+
+
+@router.delete("/{organization_slug}")
+def delete_workspace_organization(
+    organization_slug: str,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    raw_user_id, user_email = get_user_identity(authorization)
+    if raw_user_id == "anonymous":
+        raise HTTPException(status_code=401, detail="Authentification requise.")
+
+    organization = get_organization(organization_slug)
+    if not organization:
+        raise HTTPException(status_code=404, detail="Organisation introuvable.")
+    if not organization.get("is_dynamic"):
+        raise HTTPException(status_code=400, detail="Cet espace ne peut pas etre supprime depuis l'application.")
+    if get_user_role_in_organization(user_email, organization=organization) != "owner":
+        raise HTTPException(status_code=403, detail="Seul le proprietaire peut supprimer cet espace.")
+
+    connected_pages = db.query(FacebookPageConnection).filter(
+        FacebookPageConnection.organization_slug == organization["slug"]
+    ).count()
+    if connected_pages > 0:
+        raise HTTPException(
+            status_code=409,
+            detail="Deconnectez d'abord les pages Facebook liees a cet espace.",
+        )
+
+    deleted = delete_organization(organization["slug"], user_email)
+    if not deleted:
+        raise HTTPException(status_code=400, detail="Suppression impossible pour cet espace.")
+
+    setting = _get_active_organization_setting(db, raw_user_id)
+    if setting:
+        active_slug, _ = decode_active_organization(setting.value)
+        if active_slug == organization["slug"]:
+            db.delete(setting)
+    db.commit()
+
+    logger.info(
+        "Organisation supprimee: user=%s email=%s org=%s",
+        raw_user_id,
+        user_email,
+        organization["slug"],
+    )
+
+    return {
+        "status": "deleted",
+        "current_scope": _get_current_scope(raw_user_id, user_email, db),
+        "organization_slug": organization["slug"],
     }
 
 

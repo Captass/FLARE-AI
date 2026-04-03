@@ -1302,6 +1302,8 @@ export interface OrganizationSummary {
   current_user_role?: string | null;
   current_user_role_label?: string | null;
   can_edit_branding?: boolean;
+  is_dynamic?: boolean;
+  can_delete?: boolean;
 }
 
 export interface OrganizationAccessResponse {
@@ -1326,6 +1328,33 @@ export async function connectToOrganization(
     {
       method: "POST",
       body: JSON.stringify({ organization_slug: organizationSlug }),
+    },
+    authToken
+  );
+}
+
+export async function createOrganization(
+  name: string,
+  authToken?: string | null
+): Promise<{ status: string; current_scope: OrganizationScope; organization: OrganizationSummary }> {
+  return apiRequest<{ status: string; current_scope: OrganizationScope; organization: OrganizationSummary }>(
+    "/api/organizations",
+    {
+      method: "POST",
+      body: JSON.stringify({ name }),
+    },
+    authToken
+  );
+}
+
+export async function deleteOrganization(
+  organizationSlug: string,
+  authToken?: string | null
+): Promise<{ status: string; current_scope: OrganizationScope; organization_slug: string }> {
+  return apiRequest<{ status: string; current_scope: OrganizationScope; organization_slug: string }>(
+    `/api/organizations/${organizationSlug}`,
+    {
+      method: "DELETE",
     },
     authToken
   );
@@ -1609,4 +1638,3 @@ export async function setContactBotStatus(psid: string, botEnabled: boolean, tok
     throw new Error("Impossible de modifier le mode du bot.");
   }
 }
-

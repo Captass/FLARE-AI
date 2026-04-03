@@ -214,6 +214,13 @@ Le flow actuel est le suivant :
 3. FLARE applique le nom, le logo, l'offre et les modules de cet espace
 4. la session d'organisation reste temporaire et doit etre renouvelee ensuite
 
+Hotfix launch 2026-04-03:
+
+- un compte personnel ne doit plus voir de KPI dashboard globaux ; `/dashboard/stats` est maintenant scope a l'espace actif
+- `/dashboard/messenger` retourne un payload vide si aucun scope organisation n'est actif
+- le chooser d'espace permet maintenant de creer un workspace dynamique depuis l'app
+- la suppression d'un workspace dynamique est reservee au proprietaire et reste bloquee tant que des pages Facebook y sont encore connectees
+
 Les roles actuellement exposes dans l'app sont :
 
 - `Proprietaire`

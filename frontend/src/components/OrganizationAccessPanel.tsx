@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Building2, Check, Clock3, Layers3, ShieldCheck, X } from "lucide-react";
+import { ArrowRight, Building2, Check, Loader2, Plus, ShieldCheck, Trash2, X } from "lucide-react";
 import { toRenderableMediaUrl, type OrganizationAccessResponse, type OrganizationSummary } from "@/lib/api";
 import FlareMark from "./FlareMark";
 
@@ -13,6 +13,8 @@ interface OrganizationAccessPanelProps {
   onClose: () => void;
   onUsePersonal: () => void;
   onConnectOrganization: (slug: string) => void;
+  onCreateOrganization: (name: string) => void;
+  onDeleteOrganization: (slug: string) => void;
 }
 
 function formatRemainingTime(minutes?: number | null): string {
@@ -40,8 +42,11 @@ export default function OrganizationAccessPanel({
   onClose,
   onUsePersonal,
   onConnectOrganization,
+  onCreateOrganization,
+  onDeleteOrganization,
 }: OrganizationAccessPanelProps) {
   const [selectedSlug, setSelectedSlug] = useState<string>("personal");
+  const [newOrganizationName, setNewOrganizationName] = useState("");
 
   useEffect(() => {
     if (!data) return;
@@ -57,6 +62,7 @@ export default function OrganizationAccessPanel({
 
   const scope = data.current_scope;
   const isPersonalActive = scope.type === "personal";
+  const canCreateOrganization = scope.type === "personal" || scope.current_user_role === "owner" || scope.current_user_role === "admin";
 
   return (
     <div className="fixed inset-0 z-[150]">
@@ -130,22 +136,33 @@ export default function OrganizationAccessPanel({
             </button>
 
             {/* Organizations */}
+            {data.organizations.length === 0 && (
+              <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-4">
+                <p className="text-[13px] font-medium text-white/70">Aucun espace de travail</p>
+                <p className="mt-1 text-[11px] leading-relaxed text-white/35">
+                  Creez votre premier espace pour connecter Facebook et activer votre chatbot.
+                </p>
+              </div>
+            )}
             {data.organizations.map((org) => {
               const isActive = scope.organization_slug === org.slug;
               const isSelected = selectedSlug === org.slug;
               const logoUrl = toRenderableMediaUrl(org.logo_url);
 
               return (
-                <button
+                <div
                   key={org.slug}
-                  onClick={() => { setSelectedSlug(org.slug); onConnectOrganization(org.slug); }}
-                  onMouseEnter={() => setSelectedSlug(org.slug)}
                   className={`w-full flex items-center gap-3.5 rounded-xl px-4 py-3.5 text-left transition-all ${
                     isActive
                       ? "bg-white/[0.06] ring-1 ring-white/[0.08]"
                       : "bg-white/[0.02] hover:bg-white/[0.04]"
                   }`}
                 >
+                  <button
+                    onClick={() => { setSelectedSlug(org.slug); onConnectOrganization(org.slug); }}
+                    onMouseEnter={() => setSelectedSlug(org.slug)}
+                    className="contents"
+                  >
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] overflow-hidden">
                     {logoUrl ? (
                       <img src={logoUrl} alt={org.name} className="h-full w-full object-cover" />
@@ -189,14 +206,29 @@ export default function OrganizationAccessPanel({
                       <ArrowRight size={14} className="text-white/20" />
                     )}
                   </div>
-                </button>
+                  </button>
+                  {org.can_delete && (
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteOrganization(org.slug);
+                      }}
+                      disabled={loading}
+                      className="ml-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/[0.06] text-red-300/70 hover:bg-red-500/[0.12] hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
+                      aria-label={`Supprimer ${org.workspace_name || org.name}`}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
 
           {/* Selected org details (compact) */}
-          {selectedOrg && (
-            <div className="border-t border-white/[0.04] px-6 py-4 shrink-0">
+          <div className="border-t border-white/[0.04] px-6 py-4 shrink-0 space-y-4">
+            {selectedOrg && (
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-white/30">
                   {selectedOrg.member_count} membre{selectedOrg.member_count > 1 ? "s" : ""}
@@ -205,8 +237,36 @@ export default function OrganizationAccessPanel({
                   {selectedOrg.can_edit_branding ? "Vous pouvez modifier l'identite" : "Identite geree par un admin"}
                 </p>
               </div>
-            </div>
-          )}
+            )}
+
+            {canCreateOrganization && (
+              <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                <p className="text-[11px] uppercase tracking-[0.14em] text-white/25">Nouveau workspace</p>
+                <div className="mt-3 flex items-center gap-2">
+                  <input
+                    value={newOrganizationName}
+                    onChange={(event) => setNewOrganizationName(event.target.value)}
+                    placeholder="Nom de votre espace"
+                    className="h-10 flex-1 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 text-[13px] text-white outline-none placeholder:text-white/20 focus:border-white/[0.14]"
+                  />
+                  <button
+                    type="button"
+                    disabled={loading || newOrganizationName.trim().length < 2}
+                    onClick={() => {
+                      const value = newOrganizationName.trim();
+                      if (value.length < 2) return;
+                      onCreateOrganization(value);
+                      setNewOrganizationName("");
+                    }}
+                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#ff7a1a] px-3 text-[12px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                    Creer
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </motion.div>
       </div>
     </div>

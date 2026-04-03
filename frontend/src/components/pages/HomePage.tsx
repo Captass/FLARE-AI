@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
@@ -12,7 +12,9 @@ interface HomePageProps {
   displayName: string;
   orgName?: string;
   token?: string | null;
+  currentScopeType?: "personal" | "organization";
   onPush: (level: NavLevel) => void;
+  onCreateWorkspace?: () => void;
 }
 
 function KpiCard({
@@ -124,15 +126,29 @@ function QuickCard({
   );
 }
 
-export default function HomePage({ displayName, orgName, token, onPush }: HomePageProps) {
+export default function HomePage({
+  displayName,
+  orgName,
+  token,
+  currentScopeType = "personal",
+  onPush,
+  onCreateWorkspace,
+}: HomePageProps) {
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [loadingKpi, setLoadingKpi] = useState(false);
   const [lastKpiUpdate, setLastKpiUpdate] = useState<Date | null>(null);
+  const isOrganizationScope = currentScopeType === "organization";
 
   const fetchKpis = useCallback(
     async (silent = false) => {
-      if (!token) return;
+      if (!token || !isOrganizationScope) {
+        setOverview(null);
+        setDashStats(null);
+        setLastKpiUpdate(null);
+        setLoadingKpi(false);
+        return;
+      }
       if (!silent) setLoadingKpi(true);
       try {
         const [ovResult, statsResult] = await Promise.allSettled([
@@ -146,11 +162,17 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
         if (!silent) setLoadingKpi(false);
       }
     },
-    [token]
+    [isOrganizationScope, token]
   );
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || !isOrganizationScope) {
+      setOverview(null);
+      setDashStats(null);
+      setLastKpiUpdate(null);
+      setLoadingKpi(false);
+      return;
+    }
     void fetchKpis(false);
     const intervalId = window.setInterval(() => void fetchKpis(true), KPI_POLL_INTERVAL_MS);
     const onVisibility = () => {
@@ -161,21 +183,21 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [token, fetchKpis]);
+  }, [fetchKpis, isOrganizationScope, token]);
 
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long", day: "numeric", month: "long",
   });
 
-  const isActive = overview?.step === "complete";
-  const messagesCount = dashStats?.period?.messages ?? dashStats?.messages?.total ?? "—";
-  const contactsCount = dashStats?.conversations?.messenger ?? dashStats?.conversations?.total ?? "—";
+  const isActive = isOrganizationScope && overview?.step === "complete";
+  const messagesCount = isOrganizationScope ? (dashStats?.period?.messages ?? dashStats?.messages?.total ?? 0) : 0;
+  const contactsCount = isOrganizationScope ? (dashStats?.conversations?.messenger ?? dashStats?.conversations?.total ?? 0) : 0;
 
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[900px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
 
-        {/* ── Header ── */}
+        {/* â”€â”€ Header â”€â”€ */}
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -183,43 +205,61 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
           className="space-y-1"
         >
           <h1 className="text-3xl font-bold tracking-tight text-white/90">
-            Bonjour, {displayName || "vous"} 👋
+            Bonjour, {displayName || "vous"} ðŸ‘‹
           </h1>
           <p className="text-lg text-[var(--text-muted)]">
             {orgName ? (
-              <>{orgName} · </>
+              <>{orgName} Â· </>
             ) : null}
             <span className="capitalize">{today}</span>
           </p>
         </motion.header>
 
-        {/* ── KPI row ── */}
-        <section aria-label="Indicateurs clés">
+        {/* â”€â”€ KPI row â”€â”€ */}
+        <section aria-label="Indicateurs clÃ©s">
+          {!isOrganizationScope && (
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#ff7a1a]/20 bg-[#ff7a1a]/[0.05] px-4 py-3">
+              <div>
+                <p className="text-sm font-medium text-white/80">Aucun espace de travail actif</p>
+                <p className="mt-1 text-xs text-white/40">
+                  Creez votre espace pour connecter Facebook et lancer le chatbot.
+                </p>
+              </div>
+              {onCreateWorkspace && (
+                <button
+                  onClick={onCreateWorkspace}
+                  className="shrink-0 rounded-lg bg-[#ff7a1a] px-3 py-2 text-xs font-medium text-white"
+                >
+                  Creer mon espace
+                </button>
+              )}
+            </div>
+          )}
           {lastKpiUpdate && (
             <p className="text-sm text-white/35 mb-3">
-              Indicateurs synchronisés avec le serveur · actualisation automatique toutes les{" "}
+              Indicateurs synchronisÃ©s avec le serveur Â· actualisation automatique toutes les{" "}
               {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
             </p>
           )}
           <div className="flex flex-col sm:flex-row gap-3">
             <KpiCard
               label="Statut chatbot"
-              value={loadingKpi ? "…" : isActive ? "Actif" : overview ? "Inactif" : "—"}
+              value={loadingKpi ? "â€¦" : isActive ? "Actif" : overview ? "Inactif" : "â€”"}
               icon={Bot}
               status={loadingKpi ? undefined : isActive ? "ok" : overview ? "warn" : undefined}
               loading={loadingKpi}
               delay={0.05}
             />
             <KpiCard
-              label="Messages traités ce mois"
-              value={loadingKpi ? "…" : String(messagesCount)}
+              label="Messages traitÃ©s ce mois"
+              value={loadingKpi ? "â€¦" : String(messagesCount)}
               icon={MessageSquare}
               loading={loadingKpi}
               delay={0.1}
             />
             <KpiCard
-              label="Contacts / leads captés"
-              value={loadingKpi ? "…" : String(contactsCount)}
+              label="Contacts / leads captÃ©s"
+              value={loadingKpi ? "â€¦" : String(contactsCount)}
               icon={Users}
               loading={loadingKpi}
               delay={0.15}
@@ -227,22 +267,22 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
           </div>
         </section>
 
-        {/* ── Accès rapide ── */}
-        <section aria-label="Accès rapide">
+        {/* â”€â”€ AccÃ¨s rapide â”€â”€ */}
+        <section aria-label="AccÃ¨s rapide">
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             className="text-sm font-medium text-white/25 uppercase tracking-[0.12em] mb-4"
           >
-            Accès rapide
+            AccÃ¨s rapide
           </motion.h2>
           <div className="flex flex-col sm:flex-row gap-4">
             <QuickCard
               icon={Zap}
               iconColor="bg-orange-500/15 text-orange-400"
               title="Automatisations"
-              description="Gérez votre chatbot Facebook, suivez vos clients et pilotez vos automatisations."
+              description="GÃ©rez votre chatbot Facebook, suivez vos clients et pilotez vos automatisations."
               onClick={() => onPush("automations")}
               delay={0.22}
             />
@@ -250,7 +290,7 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
               icon={Bot}
               iconColor="bg-blue-500/15 text-blue-400"
               title="Assistant IA"
-              description="Posez des questions, préparez du contenu et travaillez avec votre assistant intelligent."
+              description="Posez des questions, prÃ©parez du contenu et travaillez avec votre assistant intelligent."
               onClick={() => onPush("assistant")}
               delay={0.28}
             />
@@ -261,3 +301,4 @@ export default function HomePage({ displayName, orgName, token, onPush }: HomePa
     </div>
   );
 }
+
