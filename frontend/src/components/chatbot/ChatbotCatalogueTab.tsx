@@ -55,7 +55,7 @@ export default function ChatbotCatalogueTab({
       }
     >
       <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
-        <div className="rounded-[26px] border border-white/[0.06] bg-white/[0.02] p-4">
+        <div className="flex flex-col">
           <h3 className="text-[16px] font-semibold text-white">
             {editingId ? "Modifier un produit ou service" : "Ajouter un produit ou service"}
           </h3>
@@ -162,7 +162,7 @@ export default function ChatbotCatalogueTab({
             />
           ) : (
             items.map((item) => (
-              <article key={item.id} className="rounded-[26px] border border-white/[0.06] bg-white/[0.02] p-4">
+              <article key={item.id} className="border-b border-white/[0.04] pb-4 last:border-0 last:pb-0">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">

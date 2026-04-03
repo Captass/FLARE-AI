@@ -240,26 +240,24 @@ export default function ChatbotParametresPage({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="pb-12 space-y-8"
+          className="pb-12"
         >
           {/* FACEBOOK PAGES ONLY */}
           {facebookStatus && (
-            <div className="rounded-[32px] border border-fg/[0.06] bg-fg/[0.02] p-1">
-              <div className="rounded-[28px] bg-[var(--bg-card)] border border-fg/[0.03] p-5 sm:p-7 pt-6 shadow-sm">
-                <PageSelector
-                  pages={facebookStatus.pages}
-                  selectedPageId={selectedPageId || null}
-                  onSelect={(pid) => onSelectPage?.(pid)}
-                  onConnectMetaPages={handleConnectFacebook}
-                  onSyncPagesList={facebookStatus.pages.length > 0 ? handleSyncPagesListOnly : undefined}
-                  connectMetaBusy={facebookAuthLoading}
-                  syncListBusy={facebookSyncLoading}
-                  onActivatePage={handleActivatePage}
-                  onDeactivatePage={handleDeactivatePage}
-                  canManagePages={canManagePages}
-                  busyPageId={facebookBusyPageId}
-                />
-              </div>
+            <div className="pt-6">
+              <PageSelector
+                pages={facebookStatus.pages}
+                selectedPageId={selectedPageId || null}
+                onSelect={(pid) => onSelectPage?.(pid)}
+                onConnectMetaPages={handleConnectFacebook}
+                onSyncPagesList={facebookStatus.pages.length > 0 ? handleSyncPagesListOnly : undefined}
+                connectMetaBusy={facebookAuthLoading}
+                syncListBusy={facebookSyncLoading}
+                onActivatePage={handleActivatePage}
+                onDeactivatePage={handleDeactivatePage}
+                canManagePages={canManagePages}
+                busyPageId={facebookBusyPageId}
+              />
             </div>
           )}
         </motion.div>

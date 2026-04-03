@@ -337,12 +337,9 @@ export default function ChatbotHomePage({
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="flex flex-col gap-6 bg-fg/[0.02] border border-fg/[0.05] p-6 rounded-3xl relative overflow-hidden"
+          className="flex flex-col gap-6 relative"
         >
-          {/* Decorative glow */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-orange-500/20 blur-[80px] rounded-full pointer-events-none" />
-          
-          <div className="relative z-10">
+          <div className="relative z-10 pb-6 border-b border-white/[0.04]">
             <h1 className="text-3xl font-bold tracking-tight text-fg/90 mb-2">
               Chatbot IA Facebook
             </h1>

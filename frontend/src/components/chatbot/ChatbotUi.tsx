@@ -180,15 +180,19 @@ export function SectionCard({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-[30px] border border-white/[0.05] bg-white/[0.03] p-5 md:p-6">
-      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+    <section className="pb-10 pt-4 border-b border-white/[0.04] last:border-0 last:pb-0">
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="max-w-[42rem]">
-          <h2 className="text-[20px] font-semibold tracking-[-0.03em] text-white">{title}</h2>
-          {description ? <p className="mt-2 text-[14px] leading-6 text-white/42">{description}</p> : null}
+          <h2 className="text-[22px] font-medium tracking-tight text-white/95">{title}</h2>
+          {description ? <p className="mt-2 text-[15px] leading-relaxed text-white/50">{description}</p> : null}
         </div>
-        {action}
+        <div>
+          {action}
+        </div>
       </div>
-      {children}
+      <div>
+        {children}
+      </div>
     </section>
   );
 }
