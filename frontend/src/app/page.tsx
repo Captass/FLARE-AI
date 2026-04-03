@@ -786,14 +786,21 @@ export default function Home() {
     workspaceIdentity?.current_branding.logo_url || undefined
   );
 
-  const openOrganizationAccess = useCallback(() => {
+  const openOrganizationAccess = useCallback(async () => {
     if (!user) {
       handleStart("login");
       return;
     }
+    if (!organizationAccess) {
+      const next = await loadOrganizationState().catch(() => null);
+      if (!next) {
+        alert("Impossible de charger les espaces. Rechargez la page puis reessayez.");
+        return;
+      }
+    }
     setOrganizationPromptSeen(true);
     setShowOrganizationAccess(true);
-  }, [handleStart, user]);
+  }, [handleStart, loadOrganizationState, organizationAccess, user]);
 
   useEffect(() => {
     if (!user) {
@@ -806,9 +813,8 @@ export default function Home() {
       return;
     }
 
-    setShowOrganizationAccess(true);
-    setOrganizationPromptSeen(true);
-  }, [organizationConnectionRequired, organizationPromptSeen, showOrganizationAccess, user]);
+    void openOrganizationAccess();
+  }, [openOrganizationAccess, organizationConnectionRequired, organizationPromptSeen, showOrganizationAccess, user]);
 
   const handleWorkspaceIdentitySaved = useCallback(
     async (next: WorkspaceIdentity) => {
@@ -849,21 +855,32 @@ export default function Home() {
   );
 
   const handleCreateOrganizationScope = useCallback(async (name: string) => {
-    if (!token) return;
+    const accessToken = await resolveAccessToken(true);
+    if (!accessToken) {
+      alert("Session invalide. Reconnectez-vous puis reessayez.");
+      return false;
+    }
 
     setOrganizationLoading(true);
     try {
-      await createOrganization(name, token);
+      await createOrganization(name, accessToken);
       await loadOrganizationState();
       setShowOrganizationAccess(false);
       setNavStack(["home" as NavLevel]);
       window.location.reload();
+      return true;
     } catch (err) {
       console.error("Erreur creation organisation:", err);
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Creation de l'espace impossible pour le moment.";
+      alert(message);
+      return false;
     } finally {
       setOrganizationLoading(false);
     }
-  }, [loadOrganizationState, token]);
+  }, [loadOrganizationState, resolveAccessToken]);
 
   const handleDeleteOrganizationScope = useCallback(async (organizationSlug: string) => {
     if (!token) return;
@@ -879,6 +896,21 @@ export default function Home() {
       setOrganizationLoading(false);
     }
   }, [loadOrganizationState, token]);
+
+  const handleQuickCreateWorkspace = useCallback(async () => {
+    if (!user) {
+      handleStart("login");
+      return;
+    }
+    const name = window.prompt("Nom du nouvel espace de travail :");
+    if (!name) return;
+    const cleaned = name.trim();
+    if (cleaned.length < 2) {
+      alert("Le nom de l'espace doit contenir au moins 2 caracteres.");
+      return;
+    }
+    await handleCreateOrganizationScope(cleaned);
+  }, [handleCreateOrganizationScope, handleStart, user]);
 
   const handleUsePersonalScope = useCallback(async () => {
     if (!token) return;
@@ -1256,7 +1288,7 @@ export default function Home() {
         <AnimatePresence mode="wait">
 
         {activeView === "home" ? (
-          <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} orgName={resolvedWorkspaceName} token={token} currentScopeType={organizationAccess?.current_scope.type} onCreateWorkspace={openOrganizationAccess} /></motion.div>
+          <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} orgName={resolvedWorkspaceName} token={token} currentScopeType={organizationAccess?.current_scope.type} onCreateWorkspace={handleQuickCreateWorkspace} /></motion.div>
         ) : activeView === "automations" ? (
           <motion.div key="automations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><AutomationsPage onPush={onPush} /></motion.div>
         ) : activeView === "facebook" ? (

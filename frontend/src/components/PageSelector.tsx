@@ -66,7 +66,7 @@ export default function PageSelector({
     );
   }
 
-  const metaDisabled = !canManagePages || connectMetaBusy || syncListBusy;
+  const metaDisabled = connectMetaBusy || syncListBusy;
   const syncDisabled = !canManagePages || !onSyncPagesList || syncListBusy || connectMetaBusy;
 
   if (pages.length === 0) {

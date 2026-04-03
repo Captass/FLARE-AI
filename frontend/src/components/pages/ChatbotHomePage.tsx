@@ -238,12 +238,7 @@ export default function ChatbotHomePage({
   const handleConnectMetaPages = useCallback(async () => {
     const t = await resolveToken();
     if (!t) {
-      alert("Session expirée. Reconnectez-vous à FLARE.");
-      return;
-    }
-    if (!canManageFb) {
-      alert("Vous n’avez pas les droits pour lier Facebook. Demandez à un administrateur de l’espace, ou ouvrez Paramètres.");
-      onPush("chatbot-parametres");
+      alert("Session expiree. Reconnectez-vous a FLARE.");
       return;
     }
     setFbOauthBusy(true);
@@ -254,11 +249,18 @@ export default function ChatbotHomePage({
       onPagesChanged?.(st.pages || []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connexion Meta interrompue.";
+      if (/organisation|espace|scope|selectionnez d'abord/i.test(msg)) {
+        onRequestOrganizationSelection?.();
+      }
+      if (/403|forbidden|permission|owner|admin/i.test(msg)) {
+        alert("Seuls les roles Owner/Admin peuvent ouvrir Meta dans cet espace.");
+        return;
+      }
       alert(msg);
     } finally {
       setFbOauthBusy(false);
     }
-  }, [resolveToken, canManageFb, onPagesChanged, onPush]);
+  }, [onPagesChanged, onRequestOrganizationSelection, resolveToken]);
 
   const handleSyncPagesList = useCallback(async () => {
     const t = await resolveToken();
