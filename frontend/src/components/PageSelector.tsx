@@ -161,7 +161,8 @@ export default function PageSelector({
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3">
         {pages.map((page) => {
           const isSelected = page.page_id === selectedPageId;
-          const isMessengerActive = page.is_active && page.webhook_subscribed;
+          const isBotOn = page.is_active && page.webhook_subscribed && page.direct_service_synced;
+          const isPartiallyActive = page.is_active || page.webhook_subscribed || page.direct_service_synced;
           const isBusy = busyPageId === page.page_id;
           const InitialBadge = page.page_name.substring(0, 2).toUpperCase();
 
@@ -210,9 +211,9 @@ export default function PageSelector({
                   )}
                   <div
                     className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[var(--bg-background)] ${
-                      isMessengerActive ? "bg-emerald-500" : "bg-amber-500"
+                      isBotOn ? "bg-emerald-500" : "bg-amber-500"
                     }`}
-                    title={isMessengerActive ? "Messenger actif" : "Messenger (pas encore activé)"}
+                    title={isBotOn ? "Bot ON" : "Bot OFF"}
                   />
                 </div>
 
@@ -222,12 +223,12 @@ export default function PageSelector({
                   </span>
                   <span className="text-sm text-fg/45 font-mono truncate">ID · {page.page_id}</span>
                   <span className="text-sm mt-0.5">
-                    {isMessengerActive ? (
-                      <span className="text-emerald-400/90 font-medium">Bot ON (webhook branché)</span>
+                    {isBotOn ? (
+                      <span className="text-emerald-400/90 font-medium">Bot ON (reponses actives)</span>
                     ) : page.status === "reconnect_required" ? (
                       <span className="text-red-400/90 font-medium">Reconnexion requise</span>
                     ) : (
-                      <span className="text-amber-500/90 font-medium">Bot OFF (inactif)</span>
+                      <span className="text-amber-500/90 font-medium">Bot OFF (aucune reponse)</span>
                     )}
                   </span>
                   {page.last_error && (
@@ -245,7 +246,7 @@ export default function PageSelector({
                   </span>
                 )}
                 
-                {showActivate && !isMessengerActive && (
+                {showActivate && !isBotOn && (
                   <button
                     type="button"
                     disabled={isBusy}
@@ -260,7 +261,7 @@ export default function PageSelector({
                   </button>
                 )}
 
-                {showDeactivate && isMessengerActive && (
+                {showDeactivate && isPartiallyActive && (
                   <button
                     type="button"
                     disabled={isBusy}
@@ -275,7 +276,7 @@ export default function PageSelector({
                   </button>
                 )}
                 
-                {showRemove && canManagePages && !isMessengerActive && (
+                {showRemove && canManagePages && !isPartiallyActive && (
                   <button
                     type="button"
                     disabled={isBusy}

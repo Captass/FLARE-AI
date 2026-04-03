@@ -105,7 +105,7 @@ export default function ChatbotHomePage({
   const showSetupWizard =
     Boolean(setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
 
-  const hasPageSelected = Boolean(selectedPageId);
+  const hasPageSelected = Boolean(selectedPageId && pages.some((page) => page.page_id === selectedPageId));
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [loadingKPIs, setLoadingKPIs] = useState(false);
@@ -127,7 +127,7 @@ export default function ChatbotHomePage({
     try {
       const st = await loadFacebookMessengerStatus(t);
       setCanManageFb(st.can_manage_pages);
-      if (st.pages?.length) onPagesChanged?.(st.pages);
+      onPagesChanged?.(st.pages || []);
     } catch {
       /* ignore: statut Meta optionnel au chargement hub */
     }
@@ -155,11 +155,21 @@ export default function ChatbotHomePage({
           onSelectPage(responsePage.page_id);
         }
 
-        const name = st.pages.find((p) => p.page_id === pageId)?.page_name?.trim();
+        const activatedPage = st.pages.find((p) => p.page_id === pageId);
+        const name = activatedPage?.page_name?.trim();
+        const botReallyOn = Boolean(
+          activatedPage?.is_active &&
+          activatedPage?.webhook_subscribed &&
+          activatedPage?.direct_service_synced
+        );
         setActivationNotice(
-          name
-            ? `« ${name} » est activée sur Messenger : le webhook est branché. Envoyez un message test à la Page.`
-            : "Page activée sur Messenger : le webhook est branché. Envoyez un message test à la Page."
+          botReallyOn
+            ? name
+              ? `"${name}" est activée. Bot ON : vous pouvez envoyer un message test à la page.`
+              : "Page activée. Bot ON : vous pouvez envoyer un message test à la page."
+            : name
+              ? `"${name}" reste OFF tant que la synchronisation technique n'est pas totalement terminée.`
+              : "La page reste OFF tant que la synchronisation technique n'est pas totalement terminée."
         );
         window.setTimeout(() => setActivationNotice(null), 12000);
       } catch (e) {
@@ -185,7 +195,7 @@ export default function ChatbotHomePage({
         const { deactivateFacebookMessengerPage } = await import("@/lib/facebookMessenger");
         await deactivateFacebookMessengerPage(pageId, t);
         const st = await loadFacebookMessengerStatus(t);
-        onPagesChanged?.(st.pages);
+        onPagesChanged?.(st.pages || []);
       } catch (e) {
         console.error(e);
         const msg = e instanceof Error ? e.message : "Désactivation impossible.";
@@ -237,7 +247,7 @@ export default function ChatbotHomePage({
       await runFacebookMessengerOAuthPopup(t);
       const st = await loadFacebookMessengerStatus(t);
       setCanManageFb(st.can_manage_pages);
-      if (st.pages?.length) onPagesChanged?.(st.pages);
+      onPagesChanged?.(st.pages || []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connexion Meta interrompue.";
       alert(msg);
@@ -253,7 +263,7 @@ export default function ChatbotHomePage({
     try {
       await resyncFacebookMessengerPages(t);
       const st = await loadFacebookMessengerStatus(t);
-      onPagesChanged?.(st.pages);
+      onPagesChanged?.(st.pages || []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser la liste/i.test(msg)) {
@@ -313,7 +323,11 @@ export default function ChatbotHomePage({
   const alertCount = overview?.pending_human_count ?? pendingHumanCount;
   const botFullyLive =
     overview?.step === "complete" &&
-    Boolean(overview?.active_page?.webhook_subscribed && overview?.active_page?.direct_service_synced);
+    Boolean(
+      overview?.active_page?.is_active &&
+      overview?.active_page?.webhook_subscribed &&
+      overview?.active_page?.direct_service_synced
+    );
 
   if (showSetupWizard && setupStatus) {
     return (
@@ -432,7 +446,7 @@ export default function ChatbotHomePage({
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400" />
                         )}
                       </span>
-                      <p className="text-lg font-bold text-fg/90">{botFullyLive ? "Actif" : "Inactif"}</p>
+                      <p className="text-lg font-bold text-fg/90">{botFullyLive ? "Bot ON" : "Bot OFF"}</p>
                     </>
                   )}
                 </div>

@@ -711,7 +711,11 @@ async def get_facebook_pages_status(
         .order_by(FacebookPageConnection.updated_at.desc())
         .all()
     )
-    backend_public = _public_backend_url(request)
+    try:
+        backend_public = _public_backend_url(request)
+    except HTTPException:
+        # Status endpoint must stay readable even if OAuth callback URL is not configured yet.
+        backend_public = ""
     return {
         "organization_slug": context["organization_slug"],
         "organization_name": context["organization"]["name"],
@@ -933,36 +937,11 @@ async def facebook_auth_callback(
         pages,
         token_payload,
     )
-
-    # Find the first page that has an access_token for auto-activation
-    first_page_id = ""
-    for p in pages:
-        if isinstance(p, dict) and str(p.get("access_token") or "").strip():
-            first_page_id = str(p.get("id") or "").strip()
-            break
-
-    success_detail: str
-    if first_page_id:
-        try:
-            result = await _activate_facebook_page_core(db, organization_slug, first_page_id)
-            activated_name = str(result.get("page", {}).get("page_name") or first_page_id)
-            if len(pages) > 1:
-                success_detail = (
-                    f"{len(pages)} pages liees a FLARE. «{activated_name}» est activee sur Messenger "
-                    "(changez de page active dans Parametres si besoin)."
-                )
-            else:
-                success_detail = (
-                    f"Votre page «{activated_name}» est connectee et activee pour le bot Messenger."
-                )
-        except HTTPException as exc:
-            success_detail = (
-                f"{len(pages)} page(s) enregistree(s). "
-                f"L'activation automatique a echoue : {exc.detail}. "
-                "Ouvrez Parametres du chatbot pour activer une page manuellement."
-            )
-    else:
-        success_detail = f"{len(pages)} page(s) enregistree(s). Ouvrez Parametres pour activer une page."
+    success_detail = (
+        f"{len(pages)} page(s) enregistree(s). "
+        "Aucune page n'est activee automatiquement. "
+        "Ouvrez Parametres du chatbot pour activer manuellement la page a demarrer."
+    )
 
     return _callback_page(
         frontend_origin,
@@ -979,7 +958,7 @@ async def _activate_facebook_page_core(
 ) -> dict[str, Any]:
     """
     Abonnement Meta subscribed_apps, synchro Messenger direct, desactivation des autres pages actives de l'org.
-    Utilise par POST /pages/{id}/activate et par le callback OAuth (auto-activation de la 1re page).
+    Utilise par POST /pages/{id}/activate.
     """
     connection = (
         db.query(FacebookPageConnection)
@@ -1195,4 +1174,3 @@ async def disconnect_facebook_page(
         "page": None,
         "detail": direct_service_error or unsubscribe_error or "Page déconnectée avec succès."
     }
-

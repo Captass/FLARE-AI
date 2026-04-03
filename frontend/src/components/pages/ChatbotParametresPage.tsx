@@ -91,7 +91,7 @@ export default function ChatbotParametresPage({
     } finally {
       setLoading(false);
     }
-  }, [resolveAccessToken, selectedPageId]);
+  }, [onPagesChanged, resolveAccessToken, selectedPageId]);
 
   useEffect(() => {
     void loadData();

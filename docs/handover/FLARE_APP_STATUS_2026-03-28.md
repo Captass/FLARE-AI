@@ -22,6 +22,17 @@ L'application connectee reste l'espace de travail.
 
 Le cockpit `Chatbot Facebook` a ete remonte autour d'un espace unique `Mon chatbot`.
 
+## Update 2026-04-03
+
+Le comportement d'activation du chatbot a ete simplifie pour le lancement :
+
+- apres OAuth Meta, les pages sont seulement importees dans FLARE
+- aucune page ne passe ON automatiquement
+- l'utilisateur doit cliquer `Activer` pour demarrer le bot
+- `Bot ON` signifie maintenant : page active + webhook branche + synchro direct service OK
+- `Bot OFF` signifie : aucune reponse automatique envoyee sur Messenger
+- une seule page peut etre ON par organisation ; activer une page coupe les autres
+
 Le setup premiere connexion suit maintenant 3 etapes :
 
 1. connexion et activation d'une page Facebook

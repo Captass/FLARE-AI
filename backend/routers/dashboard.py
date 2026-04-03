@@ -636,33 +636,6 @@ async def _fetch_messenger_dashboard_bundle(
     return dashboard_state if isinstance(dashboard_state, dict) else {}, records if isinstance(records, list) else []
 
 
-@router.post("/messenger/contact-mode")
-async def update_messenger_contact_mode(
-    psid: str = Form(...),
-    mode: str = Form(...),
-    authorization: Optional[str] = Header(None),
-) -> dict[str, Any]:
-    _require_authenticated_dashboard_access(authorization)
-    if mode not in {"human", "agent"}:
-        raise HTTPException(status_code=400, detail="Mode invalide (human ou agent attendu).")
-        
-    base_url = settings.MESSENGER_DIRECT_URL.rstrip("/")
-    timeout = httpx.Timeout(10.0, connect=5.0)
-    headers = _messenger_direct_headers()
-    
-    async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
-        response = await client.post(
-            f"{base_url}/dashboard/contact-mode",
-            headers=headers,
-            data={"psid": psid, "mode": mode},
-        )
-        
-    if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail="Le changement de mode a echoue coté Messenger.")
-        
-    return {"status": "ok", "psid": psid, "mode": mode}
-
-
 def _build_messenger_totals(summary: list[dict[str, Any]], conversations: list[dict[str, Any]], records: list[dict[str, Any]]) -> dict[str, Any]:
     summary_lookup = {item["label"]: item["value"] for item in summary}
     return {

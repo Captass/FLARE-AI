@@ -4,8 +4,6 @@ Point d'entrée de l'application.
 """
 import logging
 from contextlib import asynccontextmanager
-from dotenv import load_dotenv
-load_dotenv()
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware

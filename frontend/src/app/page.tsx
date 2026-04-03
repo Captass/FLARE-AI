@@ -93,6 +93,30 @@ export type ActiveView =
   | "files"
   | "admin";
 
+function resolvePreferredFacebookPageId(
+  pages: FacebookMessengerPage[],
+  currentSelectedPageId: string | null | undefined,
+  activePageId?: string | null
+): string | null {
+  if (pages.length === 0) {
+    return null;
+  }
+
+  if (currentSelectedPageId && pages.some((page) => page.page_id === currentSelectedPageId)) {
+    return currentSelectedPageId;
+  }
+
+  if (activePageId) {
+    const activePage = pages.find((page) => page.page_id === activePageId);
+    if (activePage) {
+      return activePage.page_id;
+    }
+  }
+
+  const activeFallback = pages.find((page) => page.is_active);
+  return (activeFallback || pages[0]).page_id;
+}
+
 const GUEST_LOCKED_VIEWS: ActiveView[] = ["chat", "memory", "prompts", "knowledge", "files", "admin"];
 const ORGANIZATION_REQUIRED_VIEWS: ActiveView[] = [
   "chatbot",
@@ -597,11 +621,11 @@ export default function Home() {
       const next = await getChatbotSetupStatus(accessToken);
       setSetupStatus(next);
       if (next?.all_pages) {
-        setFacebookPages(next.all_pages as unknown as import("@/lib/facebookMessenger").FacebookMessengerPage[]);
-        if (!selectedFacebookPageId && next.all_pages.length > 0) {
-          const active = next.all_pages.find(p => p.page_id === next.active_page_id);
-          setSelectedFacebookPageId(active ? active.page_id : next.all_pages[0].page_id);
-        }
+        const nextPages = next.all_pages as unknown as import("@/lib/facebookMessenger").FacebookMessengerPage[];
+        setFacebookPages(nextPages);
+        setSelectedFacebookPageId((prev) =>
+          resolvePreferredFacebookPageId(nextPages, prev, next.active_page_id)
+        );
       }
       return next;
     } catch (err) {
@@ -615,13 +639,7 @@ export default function Home() {
   // Keeps facebookPages in sync without needing a full setup-status reload.
   const handlePagesChanged = useCallback((pages: FacebookMessengerPage[]) => {
     setFacebookPages(pages);
-    setSelectedFacebookPageId(prev => {
-      if (!prev && pages.length > 0) {
-        const active = pages.find(p => p.is_active);
-        return active ? active.page_id : pages[0].page_id;
-      }
-      return prev;
-    });
+    setSelectedFacebookPageId((prev) => resolvePreferredFacebookPageId(pages, prev));
   }, []);
 
   const handleStop = useCallback(() => {
@@ -1306,11 +1324,11 @@ export default function Home() {
             )}
           </motion.div>
         ) : activeView === "leads" ? (
-          <motion.div key="leads" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="leads" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} /></motion.div>
+          <motion.div key="leads" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="leads" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "conversations" ? (
-          <motion.div key="conversations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="conversations" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} /></motion.div>
+          <motion.div key="conversations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="conversations" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "expenses" ? (
-          <motion.div key="expenses" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="expenses" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} /></motion.div>
+          <motion.div key="expenses" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="expenses" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbotFiles" ? (
           <motion.div key="chatbotFiles" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotWorkspace token={token} getFreshToken={getFreshToken} initialTab="content" onRequestAccess={() => requestAuth("login")} onRequestOrganizationSelection={openOrganizationAccess} onRequestUpgrade={openSettingsWithAccess} /></motion.div>
         ) : activeView === "automationHub" ? (

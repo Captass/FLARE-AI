@@ -27,6 +27,8 @@ Ils sont utilises directement par le code.
 
 - `.env`
   Fichier actif local pour le backend.
+- `.env.local`
+  Surcharge locale optionnelle chargee apres `.env` sans ecraser les vraies variables deja injectees dans l'environnement systeme.
 - `.env.example`
   Modele local development.
 - `.env.staging.example`

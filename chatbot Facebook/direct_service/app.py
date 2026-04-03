@@ -499,12 +499,16 @@ def deactivate_page_connection(page_id: str) -> None:
 
 def resolve_page_context(page_id: str = "") -> dict[str, Any]:
     row = get_page_connection(page_id)
-    if row and str(row.get("page_access_token") or "").strip() and int(row.get("is_active") or 0):
+    if row:
+        raw_is_active = str(row.get("is_active") or "").strip().lower()
+        is_active = raw_is_active in {"1", "true", "yes", "on"}
+        page_access_token = str(row.get("page_access_token") or "").strip() if is_active else ""
         return {
             "page_id": str(row.get("page_id") or "").strip(),
             "page_name": str(row.get("page_name") or "").strip(),
             "organization_slug": str(row.get("organization_slug") or "").strip().lower(),
-            "page_access_token": str(row.get("page_access_token") or "").strip(),
+            "page_access_token": page_access_token,
+            "is_active": is_active,
             "bot_name": str(row.get("bot_name") or "").strip(),
             "tone": str(row.get("tone") or "").strip(),
             "language": str(row.get("language") or "").strip(),
@@ -515,10 +519,11 @@ def resolve_page_context(page_id: str = "") -> dict[str, Any]:
         }
 
     return {
-        "page_id": str(page_id or CONFIG.get("meta_page_id") or "").strip(),
+        "page_id": str(page_id or "").strip(),
         "page_name": "",
         "organization_slug": "",
-        "page_access_token": str(CONFIG.get("meta_page_access_token") or "").strip(),
+        "page_access_token": "",
+        "is_active": False,
         "bot_name": "",
         "tone": "",
         "language": "",
@@ -4881,6 +4886,20 @@ async def process_message(payload: dict[str, Any]) -> None:
             or f"{psid}_{int(dt.datetime.utcnow().timestamp())}"
         )
         page_context = extract_page_context(payload, messaging)
+        if not bool(page_context.get("is_active")):
+            LOGGER.info(
+                "incoming ignored page_off page_id=%s psid=%s",
+                str(page_context.get("page_id") or "").strip(),
+                psid,
+            )
+            continue
+        if not str(page_context.get("page_access_token") or "").strip():
+            LOGGER.warning(
+                "incoming ignored missing_page_token page_id=%s psid=%s",
+                str(page_context.get("page_id") or "").strip(),
+                psid,
+            )
+            continue
         received_at = utc_now()
         contact_state = get_contact_state(psid)
         dialog_state = get_recent_dialog_state(psid)

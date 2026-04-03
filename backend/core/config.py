@@ -1,12 +1,41 @@
+import os
+from io import StringIO
+from pathlib import Path
 from typing import Optional
 
+from dotenv import dotenv_values
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def _load_local_environment() -> None:
+    """Load backend env files safely without choking on stray NUL bytes."""
+
+    backend_dir = Path(__file__).resolve().parents[1]
+    merged_values: dict[str, str] = {}
+
+    for filename in (".env", ".env.local"):
+        path = backend_dir / filename
+        if not path.is_file():
+            continue
+
+        raw = path.read_bytes().replace(b"\x00", b"")
+        text = raw.decode("utf-8", errors="ignore")
+        parsed = dotenv_values(stream=StringIO(text))
+
+        for key, value in parsed.items():
+            if not key or value is None:
+                continue
+            merged_values[key] = value
+
+    for key, value in merged_values.items():
+        os.environ.setdefault(key, value)
+
+
+_load_local_environment()
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
         extra="ignore"
     )
 
@@ -30,6 +59,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o"
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
+    GEMINI_API_KEY: Optional[str] = None
     GEMINI_API_KEY_GLOBAL: Optional[str] = None
     GEMINI_API_KEY_CHATBOT: Optional[str] = None
     GEMINI_API_KEY_ASSISTANT_REASONING: Optional[str] = None
@@ -90,6 +120,15 @@ class Settings(BaseSettings):
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
     SMTP_FROM_NAME: str = "FLARE AI"
+
+    def model_post_init(self, __context) -> None:
+        if not self.GEMINI_API_KEY:
+            self.GEMINI_API_KEY = (
+                self.GEMINI_API_KEY_GLOBAL
+                or self.GEMINI_API_KEY_CHATBOT
+                or self.GEMINI_API_KEY_ASSISTANT_FAST
+                or self.GEMINI_API_KEY_ASSISTANT_REASONING
+            )
 
 
 settings = Settings()
