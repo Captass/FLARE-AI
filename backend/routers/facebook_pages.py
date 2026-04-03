@@ -397,6 +397,7 @@ async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
             f"https://graph.facebook.com/{_graph_version()}/me/accounts",
             params={
                 "fields": "id,name,access_token,category,tasks,picture.type(large)",
+                "limit": "100",
                 **_graph_token_params(user_access_token),
             },
         )
