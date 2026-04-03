@@ -161,7 +161,8 @@ export default function PageSelector({
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3">
         {pages.map((page) => {
           const isSelected = page.page_id === selectedPageId;
-          const isBotOn = page.is_active && page.webhook_subscribed && page.direct_service_synced;
+          const isBotOn = page.is_active && page.webhook_subscribed;
+          const hasDirectSyncLag = isBotOn && !page.direct_service_synced;
           const isPartiallyActive = page.is_active || page.webhook_subscribed || page.direct_service_synced;
           const isBusy = busyPageId === page.page_id;
           const InitialBadge = page.page_name.substring(0, 2).toUpperCase();
@@ -231,6 +232,11 @@ export default function PageSelector({
                       <span className="text-amber-500/90 font-medium">Bot OFF (aucune reponse)</span>
                     )}
                   </span>
+                  {hasDirectSyncLag ? (
+                    <span className="text-xs text-amber-400/70 mt-0.5 truncate" title="Le bot repond deja, mais la synchronisation des stats Messenger est encore indisponible.">
+                      Reponses actives. Synchronisation dashboard en attente.
+                    </span>
+                  ) : null}
                   {page.last_error && (
                     <span className="text-xs text-red-400/70 mt-0.5 truncate" title={page.last_error}>
                       {page.last_error}

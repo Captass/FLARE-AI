@@ -159,14 +159,18 @@ export default function ChatbotHomePage({
         const name = activatedPage?.page_name?.trim();
         const botReallyOn = Boolean(
           activatedPage?.is_active &&
-          activatedPage?.webhook_subscribed &&
-          activatedPage?.direct_service_synced
+          activatedPage?.webhook_subscribed
         );
+        const directSyncPending = Boolean(botReallyOn && !activatedPage?.direct_service_synced);
         setActivationNotice(
           botReallyOn
             ? name
-              ? `"${name}" est activée. Bot ON : vous pouvez envoyer un message test à la page.`
-              : "Page activée. Bot ON : vous pouvez envoyer un message test à la page."
+              ? directSyncPending
+                ? `"${name}" est activée. Bot ON : vous pouvez envoyer un message test à la page. La synchronisation des stats Messenger reste en attente.`
+                : `"${name}" est activée. Bot ON : vous pouvez envoyer un message test à la page.`
+              : directSyncPending
+                ? "Page activée. Bot ON : vous pouvez envoyer un message test à la page. La synchronisation des stats Messenger reste en attente."
+                : "Page activée. Bot ON : vous pouvez envoyer un message test à la page."
             : name
               ? `"${name}" reste OFF tant que la synchronisation technique n'est pas totalement terminée.`
               : "La page reste OFF tant que la synchronisation technique n'est pas totalement terminée."
@@ -325,8 +329,7 @@ export default function ChatbotHomePage({
     overview?.step === "complete" &&
     Boolean(
       overview?.active_page?.is_active &&
-      overview?.active_page?.webhook_subscribed &&
-      overview?.active_page?.direct_service_synced
+      overview?.active_page?.webhook_subscribed
     );
 
   if (showSetupWizard && setupStatus) {
