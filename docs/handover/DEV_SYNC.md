@@ -149,10 +149,8 @@ _(vide)_
 ---
 
 ## 📝 7. DÉCISIONS ARCHITECTURALES (UPDATE DIAGNOSTIC FB)
-- **Diagnostic** : L'architecture SaaS est correcte (Un seul Meta App Webhook).
-- L'échec furtif en production peut venir de :
-  1. Conflit Webhook (pointé vers service direct `messenger-direct...` au lieu de `flare-backend...`).
-  2. Crash silencieux sur le SDK Gemini si `GEMINI_API_KEY_*` n'est pas rempli côté Prod.
-  3. `pages_messaging` d'application non validé par Meta en mode Production/Advanced.
-- **Résolution immédiate** : Refonte de `_send_api_request` dans `backend/agents/facebook_cm/tools.py` pour implémenter un "logger.error" formel incluant l'HTTP_STATUS et l'erreur FB brute afin de permettre un diagnostic asynchrone (Render Logs).
-- **Docs modifiées** : `DEVELOPER_GUIDE.md` section Troubleshooting Chatbot ajoutée.
+- **Diagnostics FB** : L'architecture SaaS est correcte. L'échec peut venir d'un conflit Webhook Meta -> `messenger-direct` vs `flare-backend`, ou clé Gemini manquante.
+- **Render API Integration** : La clé `RENDER_API_KEY` (`rnd_...`) est désormais intégrée dans `.env` et `.env.local`. 
+- **Capacité de Monitoring** : Un script de monitoring `scripts/fetch-prod-logs.py` est prêt. Bien que l'API Render pour les logs soit complexe (SSE), elle nous permettra de "recharger" les dernières secondes d'activité dès que l'utilisateur lancera un nouveau test du Chatbot.
+- **Docs modifiées** : `DEVELOPER_GUIDE.md` section Troubleshooting Chatbot mise à jour.
+- **Prochaine étape** : Dès que l'utilisateur relance un test, exécuter le script de monitoring pour lire l'erreur Meta API logguée par le backend.

@@ -131,6 +131,7 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | **OpenAI** | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) → API Keys |
 | **Google Gemini** | `GOOGLE_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
 | **Firebase** | `FIREBASE_PROJECT_ID`, etc. | Console Firebase → Paramètres du projet → Général → "Vos applications" |
+| **Render** | `RENDER_API_KEY` | Dashboard Render → User Settings → API Keys |
 
 ### Local
 
