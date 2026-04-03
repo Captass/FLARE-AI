@@ -771,6 +771,7 @@ async def start_facebook_auth(
         "redirect_uri": callback_url,
         "scope": ",".join(FACEBOOK_SCOPES),
         "response_type": "code",
+        "auth_type": "rerequest",
         "state": state,
     }
     return {
