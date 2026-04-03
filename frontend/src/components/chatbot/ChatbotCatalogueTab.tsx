@@ -112,10 +112,10 @@ export default function ChatbotCatalogueTab({
               />
             </div>
             <InputField
-              label="Image"
+              label="Photo du produit (Lien web URL)"
               value={draft.image_url || ""}
               onChange={(image_url) => onChangeDraft({ ...draft, image_url })}
-              placeholder="Lien image optionnel"
+              placeholder="Ex: https://monsite.com/image.jpg"
               type="url"
               disabled={!canEdit}
             />

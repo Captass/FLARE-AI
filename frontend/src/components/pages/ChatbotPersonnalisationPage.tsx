@@ -7,13 +7,20 @@ import { motion } from "framer-motion";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import ChatbotIdentityTab from "@/components/chatbot/ChatbotIdentityTab";
 import ChatbotBusinessTab from "@/components/chatbot/ChatbotBusinessTab";
+import ChatbotCatalogueTab from "@/components/chatbot/ChatbotCatalogueTab";
 import {
   DEFAULT_CHATBOT_PREFERENCES,
   type ChatbotPreferences,
   getChatbotPreferences,
   updateChatbotPreferences,
+  getCatalogue,
+  createCatalogueItem,
+  updateCatalogueItem,
+  deleteCatalogueItem,
+  type CatalogueItem,
+  type CatalogueItemInput,
 } from "@/lib/api";
-
+import { CATALOGUE_STARTER_TEMPLATES, EMPTY_CATALOGUE_INPUT } from "@/components/chatbot/chatbotWorkspaceUtils";
 
 interface ChatbotPersonnalisationPageProps {
   token?: string | null;
@@ -33,8 +40,13 @@ export default function ChatbotPersonnalisationPage({
   const [error, setError] = useState<string | null>(null);
   
   const [preferences, setPreferences] = useState<ChatbotPreferences>(DEFAULT_CHATBOT_PREFERENCES);
+  const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
   
   const [savingSection, setSavingSection] = useState<string | null>(null);
+
+  // Catalogue edit states
+  const [catalogueDraft, setCatalogueDraft] = useState<CatalogueItemInput>(EMPTY_CATALOGUE_INPUT);
+  const [editingCatalogueId, setEditingCatalogueId] = useState<string | null>(null);
 
   const resolveAccessToken = useCallback(async () => {
     if (token) return token;
@@ -52,8 +64,14 @@ export default function ChatbotPersonnalisationPage({
     try {
       setLoading(true);
       setError(null);
-      const nextPrefs = await getChatbotPreferences(accessToken, selectedPageId);
+      
+      const [nextPrefs, nextCat] = await Promise.all([
+        getChatbotPreferences(accessToken, selectedPageId),
+        getCatalogue(accessToken, selectedPageId)
+      ]);
+      
       setPreferences(nextPrefs);
+      setCatalogue(nextCat);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
     } finally {
@@ -80,6 +98,44 @@ export default function ChatbotPersonnalisationPage({
     }
   };
 
+  const handleSaveCatalogue = async () => {
+    if (!catalogueDraft.name?.trim()) {
+      alert("Le nom du produit est requis.");
+      return;
+    }
+    const accessToken = await resolveAccessToken();
+    if (!accessToken) return;
+    setSavingSection("catalogue");
+    try {
+      if (editingCatalogueId) {
+        await updateCatalogueItem(editingCatalogueId, catalogueDraft, accessToken);
+      } else {
+        await createCatalogueItem(catalogueDraft, accessToken, selectedPageId);
+      }
+      const nextCat = await getCatalogue(accessToken, selectedPageId);
+      setCatalogue(nextCat);
+      setEditingCatalogueId(null);
+      setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+    } catch (err) {
+      alert("Erreur saving catalogue: " + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const handleDeleteCatalogue = async (id: string) => {
+    if (!confirm("Supprimer ce produit / service ?")) return;
+    const accessToken = await resolveAccessToken();
+    if (!accessToken) return;
+    try {
+      await deleteCatalogueItem(id, accessToken);
+      const nextCat = await getCatalogue(accessToken, selectedPageId);
+      setCatalogue(nextCat);
+    } catch (err) {
+      alert("Erreur delete catalogue: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
@@ -100,6 +156,8 @@ export default function ChatbotPersonnalisationPage({
   }
 
   const canEdit = true;
+  // We mock planFeatures since we deleted billing limitations for the deadline
+  const unlimitedPlan = { catalogue_items_limit: -1 } as any;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -139,7 +197,7 @@ export default function ChatbotPersonnalisationPage({
           </div>
         )}
 
-        {/* ── Two sections only ── */}
+        {/* ── Sections ── */}
         <motion.div
            initial={{ opacity: 0, y: 16 }}
            animate={{ opacity: 1, y: 0 }}
@@ -160,6 +218,36 @@ export default function ChatbotPersonnalisationPage({
              canEdit={canEdit} 
              saving={savingSection === "business"} 
              onSave={() => void onSavePreferences("business")} 
+           />
+
+           <ChatbotCatalogueTab
+             items={catalogue}
+             draft={catalogueDraft}
+             editingId={editingCatalogueId}
+             canEdit={canEdit}
+             saving={savingSection === "catalogue"}
+             planFeatures={unlimitedPlan}
+             templates={CATALOGUE_STARTER_TEMPLATES}
+             onChangeDraft={setCatalogueDraft}
+             onApplyTemplate={(tpl) => setCatalogueDraft(tpl)}
+             onEdit={(item) => {
+               setEditingCatalogueId(item.id);
+               setCatalogueDraft({
+                 name: item.name,
+                 description: item.description,
+                 price: item.price,
+                 category: item.category,
+                 image_url: item.image_url,
+                 sort_order: item.sort_order,
+                 is_active: item.is_active,
+               });
+             }}
+             onReset={() => {
+               setEditingCatalogueId(null);
+               setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+             }}
+             onSave={() => void handleSaveCatalogue()}
+             onDelete={(id) => void handleDeleteCatalogue(id)}
            />
         </motion.div>
       </div>

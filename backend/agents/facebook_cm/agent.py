@@ -55,7 +55,9 @@ Tu accueilles les prospects sur Messenger, qualifies leurs besoins et presentes 
 {user_context}"""
 
 
-def build_dynamic_prompt(prefs: ChatbotPreferences, user_context: str) -> str:
+from backend.database.models import FacebookPageConnection, ChatbotPreferences, ChatbotCatalogueItem
+
+def build_dynamic_prompt(prefs: ChatbotPreferences, catalogue_items: list[ChatbotCatalogueItem], user_context: str) -> str:
     tone_map = {
         "professionnel": "Tu es professionnel, courtois et structure. Tu vouvoies.",
         "amical": "Tu es chaleureux, tu tutoies et tu es enthousiaste. Emojis avec moderation.",
@@ -69,6 +71,26 @@ def build_dynamic_prompt(prefs: ChatbotPreferences, user_context: str) -> str:
         if preferred_language
         else "Si la langue du client n'est pas claire, reponds par defaut en francais."
     )
+
+    catalogue_str = ""
+    if catalogue_items:
+        lines = []
+        for i in catalogue_items:
+            if str(i.is_active).lower() != "false":
+                price_str = f" - Prix: {i.price}" if i.price else ""
+                cat_str = f" (Cat: {i.category})" if i.category else ""
+                img_str = f" - [Image: {i.image_url}]" if i.image_url else ""
+                desc = f" : {i.description}" if i.description else ""
+                lines.append(f"- {i.name}{cat_str}{price_str}{desc}{img_str}")
+        catalogue_str = "\n".join(lines)
+    
+    products_display = prefs.products_summary or ""
+    if catalogue_str:
+        products_display += "\n\nListe des produits du catalogue :\n" + catalogue_str
+
+    if not products_display.strip():
+        products_display = "Catalogue non defini. Propose au client de contacter l'equipe."
+
     return f"""Tu es {prefs.bot_name or "L'assistant"}, l'assistant virtuel.
 
 ## Personnalite
@@ -78,7 +100,7 @@ def build_dynamic_prompt(prefs: ChatbotPreferences, user_context: str) -> str:
 {prefs.company_description or "Information non fournie."}
 
 ## Offres et Services
-{prefs.products_summary or "Catalogue non defini. Propose au client de contacter l'equipe."}
+{products_display}
 
 ## Message d'accueil
 Quand un nouveau client te contacte : {prefs.greeting_message or "accueil chaleureux avec prenom."}
@@ -92,6 +114,7 @@ Quand un nouveau client te contacte : {prefs.greeting_message or "accueil chaleu
 - Ne promets rien qui n'est pas dans les offres
 - Si demande hors catalogue, propose de contacter l'equipe
 - Termine par un appel a l'action clair
+- Si le client demande de voir un produit de maniere detaillee, et que ce produit a une [Image: url], inclus l'URL de l'image directement dans la chat pour que le client la voit si necessaire.
 
 {user_context}"""
 
@@ -130,9 +153,22 @@ def _load_page_context(page_id: Optional[str]) -> dict:
                 )
                 .first()
             )
+
+        catalogue_items = (
+            db.query(ChatbotCatalogueItem)
+            .filter(ChatbotCatalogueItem.organization_slug == org_slug)
+            .filter(
+                (ChatbotCatalogueItem.page_id == resolved_page_id) |
+                (ChatbotCatalogueItem.page_id.is_(None))
+            )
+            .order_by(ChatbotCatalogueItem.sort_order.asc())
+            .all()
+        )
+
         return {
             "organization_slug": str(org_slug or "").strip().lower(),
             "preferences": preferences,
+            "catalogue": catalogue_items,
         }
     finally:
         db.close()
@@ -163,6 +199,7 @@ class FacebookCMAgent:
         page_context = _load_page_context(resolved_page_id)
         organization_slug = str(page_context.get("organization_slug") or "").strip().lower()
         preferences = page_context.get("preferences")
+        catalogue_items = page_context.get("catalogue", [])
 
         user_profile = get_user_profile(psid, page_id=resolved_page_id)
         user_name = str(user_profile.get("first_name") or "").strip()
@@ -178,7 +215,7 @@ class FacebookCMAgent:
         user_context = "\n" + "\n".join(user_context_lines)
 
         system_content = (
-            build_dynamic_prompt(preferences, user_context)
+            build_dynamic_prompt(preferences, catalogue_items, user_context)
             if isinstance(preferences, ChatbotPreferences)
             else CM_SYSTEM_PROMPT.format(user_context=user_context)
         )
