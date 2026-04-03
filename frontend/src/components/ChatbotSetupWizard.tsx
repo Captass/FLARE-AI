@@ -628,7 +628,7 @@ export default function ChatbotSetupWizard({
                       value={preferences.business_name}
                       onChange={(event) => setPreferences((prev) => ({ ...prev, business_name: event.target.value }))}
                       className="ui-input"
-                      placeholder="Ex: RAM'S FLARE"
+                      placeholder="Ex: FLARE AI"
                     />
                   </Field>
                   <Field label="Description *" fullWidth>

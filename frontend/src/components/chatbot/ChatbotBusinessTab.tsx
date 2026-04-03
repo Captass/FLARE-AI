@@ -46,7 +46,7 @@ export default function ChatbotBusinessTab({
           label="Nom de l'entreprise"
           value={preferences.business_name}
           onChange={(business_name) => onChange({ ...preferences, business_name })}
-          placeholder="Ex: RAM'S FLARE"
+          placeholder="Ex: FLARE AI"
           disabled={!canEdit}
         />
         <InputField

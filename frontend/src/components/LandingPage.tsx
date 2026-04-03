@@ -84,7 +84,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         setCanInstall(false);
       }
     } else {
-      alert("Pour installer RAM'S FLARE :\n• Sur mobile : utilisez Ajouter a l ecran d accueil.\n• Sur PC : utilisez l option d installation dans la barre d adresse.");
+      alert("Pour installer FLARE AI :\n• Sur mobile : utilisez Ajouter a l ecran d accueil.\n• Sur PC : utilisez l option d installation dans la barre d adresse.");
     }
   };
 

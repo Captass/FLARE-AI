@@ -1772,7 +1772,7 @@ class OrchestratorAgent:
                 quota_msg = (
                     f"\U0001F512 **Limite du plan {plan_name} atteinte** ({limit} messages/mois).\n\n"
                     "Pour continuer à utiliser FLARE AI sans interruption, passez sur un plan supérieur.\n"
-                    "Contactez RAM'S FLARE pour upgrader votre abonnement !"
+                    "Contactez FLARE AI pour upgrader votre abonnement !"
                 )
                 yield f'data: {{"type": "response", "content": {json.dumps(quota_msg)}}}\n\n'
                 return
@@ -2111,7 +2111,7 @@ class OrchestratorAgent:
                     "response": (
                         f"\U0001F512 **Limite du plan {plan_name} atteinte** ({limit} messages/mois).\n\n"
                         "Pour continuer à utiliser FLARE AI sans interruption, passez sur un plan supérieur.\n"
-                        "Contactez RAM'S FLARE pour upgrader votre abonnement !"
+                        "Contactez FLARE AI pour upgrader votre abonnement !"
                     ),
                     "images": [],
                     "knowledge_saved": [],

@@ -761,7 +761,7 @@ export default function Home() {
     workspaceIdentity?.current_branding.workspace_name ||
     organizationAccess?.current_scope.label ||
     "Mon espace";
-  const resolvedBrandName = workspaceIdentity?.current_branding.brand_name || "RAM'S FLARE";
+  const resolvedBrandName = workspaceIdentity?.current_branding.brand_name || "FLARE AI";
   const resolvedBrandLogoUrl = toRenderableMediaUrl(
     workspaceIdentity?.current_branding.logo_url || undefined
   );

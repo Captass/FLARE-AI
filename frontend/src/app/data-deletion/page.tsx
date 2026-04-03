@@ -83,7 +83,7 @@ export default function DataDeletionPage() {
 
         <div style={{ marginTop: "48px", paddingTop: "24px", borderTop: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
           <a href="https://flareai.ramsflare.com" style={{ color: "#FF7C1A", textDecoration: "none", fontSize: "14px", fontWeight: "600" }}>← Retour à FLARE AI</a>
-          <p style={{ color: "rgba(248,250,252,0.25)", fontSize: "12px", marginTop: "16px" }}>© 2026 RAM'S FLARE. Tous droits réservés.</p>
+          <p style={{ color: "rgba(248,250,252,0.25)", fontSize: "12px", marginTop: "16px" }}>© 2026 FLARE AI. Tous droits réservés.</p>
         </div>
       </div>
     </div>

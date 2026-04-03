@@ -66,7 +66,7 @@ async def agent_analyste_web(state: dict) -> dict:
 
 async def agent_qualificateur(state: dict) -> dict:
     """
-    Valide la pertinence de chaque lead pour RAM'S FLARE.
+    Valide la pertinence de chaque lead pour FLARE AI.
     Score de 0 à 10 basé sur la description et les signaux.
     """
     logger.info("[Qualificateur] Qualification des leads...")
@@ -88,7 +88,7 @@ async def agent_qualificateur(state: dict) -> dict:
         description = lead.get("description", "")
         if description:
             try:
-                prompt = f"""Évalue ce prospect pour une agence de communication et d'audiovisuel (RAM'S FLARE).
+                prompt = f"""Évalue ce prospect pour une agence de communication et d'audiovisuel (FLARE AI).
 Score de 1 à 10 selon son besoin potentiel en communication digitale.
 Réponds UNIQUEMENT avec un nombre entre 1 et 10.
 
@@ -139,7 +139,7 @@ async def agent_redacteur(state: dict) -> dict:
             else "Je n'ai pas trouvé de présence forte sur les réseaux sociaux."
         )
 
-        prompt = f"""Rédige un email de prospection pour RAM'S FLARE, une agence de communication et d'audiovisuel.
+        prompt = f"""Rédige un email de prospection pour FLARE AI, une agence de communication et d'audiovisuel.
 
 Destinataire : {company} (secteur : {sector})
 Description de l'entreprise : {description}
@@ -149,9 +149,9 @@ Consignes :
 - Email court (8-12 lignes maximum)
 - Ton professionnel mais chaleureux
 - Personnalisé avec le nom de l'entreprise
-- Mentionner 1-2 services pertinents de RAM'S FLARE
+- Mentionner 1-2 services pertinents de FLARE AI
 - Appel à l'action clair (répondre pour un échange de 15 minutes)
-- Signature : L'équipe RAM'S FLARE
+- Signature : L'équipe FLARE AI
 - NE PAS inclure d'objet, juste le corps de l'email
 
 Écris l'email en français."""
@@ -184,7 +184,7 @@ Consignes :
 
 async def agent_compliance(state: dict) -> dict:
     """
-    Vérifie chaque email : ton RAM'S FLARE, RGPD, absence de spam triggers.
+    Vérifie chaque email : ton FLARE AI, RGPD, absence de spam triggers.
     Filtre ou corrige les emails problématiques.
     """
     logger.info("[Compliance] Vérification des emails...")
@@ -244,7 +244,7 @@ async def agent_gestionnaire_envoi(state: dict) -> dict:
                 to_email=email,
                 to_name=lead.get("contact_name", ""),
                 company_name=lead.get("company_name", ""),
-                subject=lead.get("email_subject", "Collaboration RAM'S FLARE"),
+                subject=lead.get("email_subject", "Collaboration FLARE AI"),
                 body_html=lead.get("email_html", ""),
                 body_text=lead.get("email_body", ""),
             )

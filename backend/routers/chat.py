@@ -67,7 +67,7 @@ except ImportError as e:
 _SEED_KNOWLEDGE_TITLE = "Techniques Fondamentales â€” Marketing, Communication & Audiovisuel"
 
 _SEED_KNOWLEDGE_CONTENT = """# Techniques Fondamentales â€” Marketing, Communication & Audiovisuel
-## Base de rÃ©fÃ©rence RAM'S FLARE
+## Base de rÃ©fÃ©rence FLARE AI
 
 ---
 
@@ -388,7 +388,7 @@ def _build_message_attachment_payload(media: dict) -> dict:
 def _seed_user_knowledge_if_empty(user_id: str) -> None:
     """
     Si l'utilisateur n'a aucun document dans sa base de connaissances,
-    on lui ajoute automatiquement le document de rÃ©fÃ©rence RAM'S FLARE.
+    on lui ajoute automatiquement le document de rÃ©fÃ©rence FLARE AI.
     Utilise KnowledgeManager pour la vectorisation (Cloud SQL).
     """
     try:

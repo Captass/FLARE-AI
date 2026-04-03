@@ -89,7 +89,7 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_USER: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
-    SMTP_FROM_NAME: str = "RAM'S FLARE"
+    SMTP_FROM_NAME: str = "FLARE AI"
 
 
 settings = Settings()

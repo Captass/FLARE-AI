@@ -113,7 +113,7 @@ def get_file_metadata(file_id: str) -> dict:
 def get_file_content(file_id: str) -> bytes:
     """
     Télécharge le contenu binaire d'un fichier.
-    Utile pour les images du catalogue RAM'S FLARE.
+    Utile pour les images du catalogue FLARE AI.
 
     Args:
         file_id: L'ID du fichier Drive

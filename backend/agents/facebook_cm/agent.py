@@ -1,5 +1,5 @@
 """
-Agent CM Facebook - Vendeur IA pour RAM'S FLARE.
+Agent CM Facebook - Vendeur IA pour FLARE AI.
 Gere les conversations Messenger avec les prospects de maniere autonome.
 """
 from typing import Optional
@@ -17,7 +17,7 @@ from .tools import (
     send_text_message,
 )
 
-CM_SYSTEM_PROMPT = """Tu es Alex, le commercial virtuel de RAM'S FLARE, une agence de communication et d'audiovisuel.
+CM_SYSTEM_PROMPT = """Tu es Alex, le commercial virtuel de FLARE AI, une agence de communication et d'audiovisuel.
 
 ## Ton Role
 Tu accueilles les prospects sur Messenger, qualifies leurs besoins et presentes les offres de l'agence de maniere chaleureuse et persuasive. Ton objectif : transformer chaque visiteur en client.
@@ -34,7 +34,7 @@ Tu accueilles les prospects sur Messenger, qualifies leurs besoins et presentes 
 3. Presentation : proposer 1-2 offres adaptees avec details et prix
 4. Closing : proposer un appel ou un devis gratuit
 
-## Offres RAM'S FLARE
+## Offres FLARE AI
 - Pack Essentiel : 500 EUR/mois (3 posts/semaine, 1 reseau)
 - Pack Pro : 1 200 EUR/mois (5 posts, 2 reseaux, Meta Ads)
 - Pack Premium : 2 500 EUR/mois (illimite, 3 reseaux, video, Ads)

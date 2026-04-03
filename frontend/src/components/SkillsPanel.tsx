@@ -37,7 +37,7 @@ const STARTER_SKILLS: SkillIn[] = [
     name: "email_prospection",
     title: "Email de prospection",
     description: "Rédige un email de prospection B2B personnalisé",
-    prompt_template: "Rédige un email de prospection B2B pour {{entreprise}} dans le secteur {{secteur}} à {{ville}}. Ton : professionnel mais chaleureux. Mets en avant nos services de communication digitale de RAM'S FLARE. Appel à l'action : rendez-vous découverte. 150 mots max.",
+    prompt_template: "Rédige un email de prospection B2B pour {{entreprise}} dans le secteur {{secteur}} à {{ville}}. Ton : professionnel mais chaleureux. Mets en avant nos services de communication digitale de FLARE AI. Appel à l'action : rendez-vous découverte. 150 mots max.",
     category: "marketing",
   },
   {

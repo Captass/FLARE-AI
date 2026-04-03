@@ -134,7 +134,7 @@ def _build_identity_response(
     current_branding = {
         "scope_type": "organization" if organization_branding else "personal",
         "organization_slug": organization["slug"] if organization else None,
-        "brand_name": organization_branding["organization_name"] if organization_branding else "RAM'S FLARE",
+        "brand_name": organization_branding["organization_name"] if organization_branding else "FLARE AI",
         "workspace_name": (
             organization_branding["workspace_name"]
             if organization_branding

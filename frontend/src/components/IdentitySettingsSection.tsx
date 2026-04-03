@@ -377,7 +377,7 @@ export default function IdentitySettingsSection({
                       setOrganizationBranding((current) => ({ ...current, organization_name: event.target.value }))
                     }
                     className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-orange-500/30"
-                    placeholder="RAM'S FLARE"
+                    placeholder="FLARE AI"
                   />
                 </div>
 
@@ -391,7 +391,7 @@ export default function IdentitySettingsSection({
                       setOrganizationBranding((current) => ({ ...current, workspace_name: event.target.value }))
                     }
                     className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-orange-500/30"
-                    placeholder="Pilotage RAM'S FLARE"
+                    placeholder="Pilotage FLARE AI"
                   />
                 </div>
 

@@ -99,7 +99,7 @@ def _send_email(to_email: str, pin: str) -> bool:
             f"Votre code de vérification FLARE AI est : {pin}\n\n"
             f"Ce code expire dans {PIN_EXPIRY_MINUTES} minutes.\n\n"
             f"Si vous n'avez pas demandé ce code, ignorez ce message.\n\n"
-            f"— RAM'S FLARE"
+            f"— FLARE AI"
         )
 
         html_body = f"""<!DOCTYPE html>
@@ -138,7 +138,7 @@ def _send_email(to_email: str, pin: str) -> bool:
               Si vous n'avez pas demandé ce code, ignorez ce message. Votre compte n'a pas été créé.
             </p>
             <p style="margin:0;color:#4a4a5a;font-size:11px;">
-              © RAM'S FLARE — <a href="https://flareai.ramsflare.com" style="color:#f97316;text-decoration:none;">flareai.ramsflare.com</a>
+              © FLARE AI — <a href="https://flareai.ramsflare.com" style="color:#f97316;text-decoration:none;">flareai.ramsflare.com</a>
             </p>
           </td>
         </tr>

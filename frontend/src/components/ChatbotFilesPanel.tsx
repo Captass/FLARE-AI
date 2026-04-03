@@ -276,7 +276,7 @@ export default function ChatbotFilesPanel({ token }: ChatbotFilesPanelProps) {
 
   const handleImportLibraryItem = async (item: ChatbotLibraryItem) => {
     if (!token) {
-      setError("Connectez votre espace pour importer la bibliotheque RAM'S FLARE.");
+      setError("Connectez votre espace pour importer la bibliotheque FLARE AI.");
       return;
     }
 
@@ -301,7 +301,7 @@ export default function ChatbotFilesPanel({ token }: ChatbotFilesPanelProps) {
 
   const handleImportCategory = async () => {
     if (!token) {
-      setError("Connectez votre espace pour importer la bibliotheque RAM'S FLARE.");
+      setError("Connectez votre espace pour importer la bibliotheque FLARE AI.");
       return;
     }
     if (pendingLibraryItems.length === 0) return;

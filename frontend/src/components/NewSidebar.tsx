@@ -34,7 +34,7 @@ interface NewSidebarProps {
   displayName?: string;
   /** URL avatar utilisateur */
   avatarUrl?: string;
-  /** Nom de la marque (ex: "RAM'S FLARE") */
+  /** Nom de la marque (ex: "FLARE AI") */
   brandName?: string;
   /** URL logo de la marque */
   logoUrl?: string;

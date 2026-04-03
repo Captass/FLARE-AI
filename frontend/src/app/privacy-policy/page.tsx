@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Politique de Confidentialité — FLARE AI",
-  description: "Politique de confidentialité de FLARE AI par RAM'S FLARE.",
+  description: "Politique de confidentialité de FLARE AI par FLARE AI.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -82,7 +82,7 @@ export default function PrivacyPolicyPage() {
           {
             title: "1. Introduction",
             content:
-              "FLARE AI est une plateforme d'intelligence artificielle développée par RAM'S FLARE. Cette politique de confidentialité explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre service via notre application web (flareai.ramsflare.com) ou via notre intégration Facebook Messenger.",
+              "FLARE AI est une plateforme d'intelligence artificielle développée par FLARE AI. Cette politique de confidentialité explique comment nous collectons, utilisons et protégeons vos données personnelles lorsque vous utilisez notre service via notre application web (flareai.ramsflare.com) ou via notre intégration Facebook Messenger.",
           },
           {
             title: "2. Données collectées",
@@ -102,7 +102,7 @@ export default function PrivacyPolicyPage() {
           {
             title: "5. Partage des données",
             content:
-              "Nous ne vendons, louons ni ne partageons vos données personnelles avec des tiers, sauf dans les cas suivants : (a) avec vos fournisseurs de services IA (Google Gemini) pour générer les réponses du chatbot, (b) en cas d'obligation légale, (c) pour protéger les droits et la sécurité de RAM'S FLARE et de ses utilisateurs.",
+              "Nous ne vendons, louons ni ne partageons vos données personnelles avec des tiers, sauf dans les cas suivants : (a) avec vos fournisseurs de services IA (Google Gemini) pour générer les réponses du chatbot, (b) en cas d'obligation légale, (c) pour protéger les droits et la sécurité de FLARE AI et de ses utilisateurs.",
           },
           {
             title: "6. Conservation des données",
@@ -122,7 +122,7 @@ export default function PrivacyPolicyPage() {
           {
             title: "9. Contact",
             content:
-              "Pour toute question relative à cette politique de confidentialité ou pour exercer vos droits, contactez-nous : RAM'S FLARE — Email : contact@ramsflare.com — Site : ramsflare.com",
+              "Pour toute question relative à cette politique de confidentialité ou pour exercer vos droits, contactez-nous : FLARE AI — Email : contact@ramsflare.com — Site : ramsflare.com",
           },
         ].map((section, i) => (
           <div
@@ -180,7 +180,7 @@ export default function PrivacyPolicyPage() {
             ← Retour à FLARE AI
           </a>
           <p style={{ color: "rgba(248,250,252,0.25)", fontSize: "12px", marginTop: "16px" }}>
-            © 2026 RAM'S FLARE. Tous droits réservés.
+            © 2026 FLARE AI. Tous droits réservés.
           </p>
         </div>
       </div>

@@ -18,7 +18,7 @@ ROLE_LABELS = {
 DEFAULT_ORGANIZATIONS: List[Dict[str, Any]] = [
     {
         "slug": "rams-flare",
-        "name": "RAM'S FLARE",
+        "name": "FLARE AI",
         "members": [
             {
                 "email": "cptskevin@gmail.com",
@@ -34,7 +34,7 @@ DEFAULT_ORGANIZATIONS: List[Dict[str, Any]] = [
         "plan_id": "business",
         "offer_name": "Business partage",
         "security_label": "Compte + connexion a l'organisation",
-        "description": "Agents, automatisations et offre partages pour RAM'S FLARE.",
+        "description": "Agents, automatisations et offre partages pour FLARE AI.",
         "enabled_modules": ["chatbot", "assistant", "automations"],
     }
 ]
