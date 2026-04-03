@@ -389,6 +389,7 @@ async def _exchange_facebook_code_for_token(code: str, redirect_uri: str) -> dic
     return short_lived
 
 
+
 async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
     timeout = httpx.Timeout(20.0, connect=10.0)
     async with httpx.AsyncClient(timeout=timeout) as client:
@@ -408,23 +409,21 @@ async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
         if not isinstance(item, dict):
             continue
         page_id = str(item.get("id") or "").strip()
-        if not page_id:
+        page_token = str(item.get("access_token") or "").strip()
+        if not page_id or not page_token:
             continue
+        
         tasks = item.get("tasks") or []
         logger.info(
-            "Facebook page %s (%s): tasks=%s",
+            "Facebook page %s (%s) fetched from Meta. Tasks=%s",
             page_id, item.get("name", "?"), tasks,
         )
-        # Accept page if it has the required tasks OR if tasks is empty/missing
-        # (Graph API v19+ with Facebook Login for Business may omit tasks)
-        if _page_has_required_tasks(item) or not tasks:
-            result.append(item)
-        else:
-            logger.warning(
-                "Skipping page %s — tasks %s missing MANAGE or MESSAGING",
-                page_id, tasks,
-            )
+        
+        # We now accept all pages returned by Facebook that have a token.
+        # If the page lacks permissions, it will fail gracefully during the webhook subscribe step.
+        result.append(item)
     return result
+
 
 
 def _upsert_facebook_page_connections(
