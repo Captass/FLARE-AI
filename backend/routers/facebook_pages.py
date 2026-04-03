@@ -1070,6 +1070,53 @@ async def activate_facebook_page(
     return await _activate_facebook_page_core(db, context["organization_slug"], target_page_id)
 
 
+@router.post("/pages/{page_id}/deactivate")
+async def deactivate_facebook_page(
+    page_id: str,
+    authorization: str | None = Header(None),
+    db: Session = Depends(get_db),
+):
+    """Désactive le bot sur cette page (désinscrit le webhook) sans supprimer la connexion."""
+    context = _organization_context_from_authorization(authorization, require_edit=True)
+    resolved_page_id = str(page_id or "").strip()
+
+    connection = (
+        db.query(FacebookPageConnection)
+        .filter(
+            FacebookPageConnection.organization_slug == context["organization_slug"],
+            FacebookPageConnection.page_id == resolved_page_id,
+        )
+        .first()
+    )
+    if not connection:
+        raise HTTPException(status_code=404, detail="Page Facebook introuvable.")
+
+    page_access_token = encryption_service.decrypt(connection.page_access_token_encrypted or "")
+
+    if page_access_token:
+        try:
+            await _unsubscribe_page_from_app(resolved_page_id, page_access_token)
+        except HTTPException as exc:
+            logger.warning("Unsubscribe failed for %s: %s", resolved_page_id, exc.detail)
+
+    try:
+        await _disconnect_page_from_direct_service(resolved_page_id)
+    except HTTPException as exc:
+        logger.warning("Direct service disconnect failed for %s: %s", resolved_page_id, exc.detail)
+
+    now = _utcnow()
+    connection.status = "inactive"
+    connection.is_active = "false"
+    connection.webhook_subscribed = "false"
+    connection.direct_service_synced = "false"
+    connection.last_error = None
+    connection.updated_at = now
+    db.commit()
+    db.refresh(connection)
+
+    return {"status": "ok", "page": _serialize_connection(connection)}
+
+
 @router.delete("/pages/{page_id}")
 async def disconnect_facebook_page(
     page_id: str,
@@ -1113,3 +1160,4 @@ async def disconnect_facebook_page(
         "page": None,
         "detail": direct_service_error or unsubscribe_error or "Page déconnectée avec succès."
     }
+

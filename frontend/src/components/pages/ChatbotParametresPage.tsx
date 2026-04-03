@@ -5,37 +5,21 @@ import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
 import type { NavLevel } from "@/components/NavBreadcrumb";
-import ChatbotStatusTab from "@/components/chatbot/ChatbotStatusTab";
-import ChatbotCatalogueTab from "@/components/chatbot/ChatbotCatalogueTab";
-import ChatbotPortfolioTab from "@/components/chatbot/ChatbotPortfolioTab";
-import { FeatureLockedPanel } from "@/components/chatbot/ChatbotUi";
 import PageSelector from "@/components/PageSelector";
 
 import {
   getChatbotOverview,
-  getBillingFeatures,
-  getCatalogue,
-  getPortfolio,
-  createCatalogueItem,
-  updateCatalogueItem,
-  deleteCatalogueItem,
-  createPortfolioItem,
-  updatePortfolioItem,
-  deletePortfolioItem,
   type ChatbotOverview,
-  type BillingFeatures,
-  type CatalogueItem,
-  type PortfolioItem,
 } from "@/lib/api";
 import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
-  disconnectFacebookMessengerPage,
+  deactivateFacebookMessengerPage,
   resyncFacebookMessengerPages,
   runFacebookMessengerOAuthPopup,
   type FacebookMessengerStatus,
 } from "@/lib/facebookMessenger";
-import { CATALOGUE_STARTER_TEMPLATES, EMPTY_CATALOGUE_INPUT, EMPTY_PORTFOLIO_INPUT } from "@/components/chatbot/chatbotWorkspaceUtils";
+
 
 interface ChatbotParametresPageProps {
   token?: string | null;
@@ -52,8 +36,6 @@ interface ChatbotParametresPageProps {
 export default function ChatbotParametresPage({
   token,
   getFreshToken,
-  onRequestAccess,
-  onRequestUpgrade,
   selectedPageId,
   onSelectPage,
   onPagesChanged,
@@ -62,23 +44,13 @@ export default function ChatbotParametresPage({
   const [error, setError] = useState<string | null>(null);
 
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
-  const [billing, setBilling] = useState<BillingFeatures | null>(null);
   const [facebookStatus, setFacebookStatus] = useState<FacebookMessengerStatus | null>(null);
-  
-  const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
-  const [portfolio, setPortfolio] = useState<PortfolioItem[]>([]);
 
   // States interactifs
   const [facebookAuthLoading, setFacebookAuthLoading] = useState(false);
   const [facebookSyncLoading, setFacebookSyncLoading] = useState(false);
   const [facebookBusyPageId, setFacebookBusyPageId] = useState<string | null>(null);
   const [facebookError, setFacebookError] = useState<string | null>(null);
-
-  const [savingSection, setSavingSection] = useState<string | null>(null);
-  const [catalogueDraft, setCatalogueDraft] = useState(EMPTY_CATALOGUE_INPUT);
-  const [editingCatalogueId, setEditingCatalogueId] = useState<string | null>(null);
-  const [portfolioDraft, setPortfolioDraft] = useState(EMPTY_PORTFOLIO_INPUT);
-  const [editingPortfolioId, setEditingPortfolioId] = useState<string | null>(null);
 
   const resolveAccessToken = useCallback(async (force = false) => {
     if (getFreshToken) {
@@ -98,17 +70,12 @@ export default function ChatbotParametresPage({
     if (!isRefresh) setLoading(true);
     setError(null);
     try {
-      const [ovResult, billingResult, catalogueResult, fbResult] = await Promise.allSettled([
+      const [ovResult, fbResult] = await Promise.allSettled([
         getChatbotOverview(accessToken, selectedPageId),
-        getBillingFeatures(accessToken),
-        getCatalogue(accessToken, selectedPageId),
         loadFacebookMessengerStatus(accessToken),
       ]);
 
       if (ovResult.status === "fulfilled") setOverview(ovResult.value);
-      const nextBilling = billingResult.status === "fulfilled" ? billingResult.value : null;
-      if (nextBilling) setBilling(nextBilling);
-      if (catalogueResult.status === "fulfilled") setCatalogue(catalogueResult.value);
       if (fbResult.status === "fulfilled") {
         setFacebookStatus(fbResult.value);
         onPagesChanged?.(fbResult.value.pages);
@@ -118,12 +85,6 @@ export default function ChatbotParametresPage({
             ? fbResult.reason.message
             : "État Facebook Messenger indisponible.";
         setFacebookError((prev) => prev ?? msg);
-      }
-
-      if (nextBilling?.features.has_portfolio) {
-        getPortfolio(accessToken, selectedPageId)
-          .then(setPortfolio)
-          .catch(() => {});
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur de chargement");
@@ -144,9 +105,7 @@ export default function ChatbotParametresPage({
   }, [selectedPageId, overview, onSelectPage]);
 
 
-  const canEdit = facebookStatus?.can_edit ?? false;
   const canManagePages = facebookStatus?.can_manage_pages ?? false;
-  const planFeatures = billing?.features || null;
 
   // --- Facebook Actions ---
 
@@ -184,16 +143,16 @@ export default function ChatbotParametresPage({
     }
   };
 
-  const handleDisconnectPage = async (pageId: string) => {
+  const handleDeactivatePage = async (pageId: string) => {
     if (!canManagePages) return;
     const accessToken = await resolveAccessToken(true);
     if (!accessToken) return;
     setFacebookBusyPageId(pageId);
     try {
-      await disconnectFacebookMessengerPage(pageId, accessToken);
+      await deactivateFacebookMessengerPage(pageId, accessToken);
       await loadData(true);
     } catch (err) {
-      setFacebookError(err instanceof Error ? err.message : "Erreur déconnexion");
+      setFacebookError(err instanceof Error ? err.message : "Erreur désactivation");
     } finally {
       setFacebookBusyPageId(null);
     }
@@ -248,6 +207,8 @@ export default function ChatbotParametresPage({
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 md:px-8 flex flex-col gap-8">
+        
+        {/* ── Header ── */}
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -255,157 +216,52 @@ export default function ChatbotParametresPage({
           className="space-y-2"
         >
           <h1 className="text-3xl font-bold tracking-tight text-white/90">
-            {selectedPageName ? `Paramètres : ${selectedPageName}` : "Paramètres Assistant"}
+            Paramètres
+            {selectedPageName ? (
+              <span className="block mt-1 text-xl font-semibold text-cyan-400/95">— {selectedPageName}</span>
+            ) : null}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">
-            Connexion Facebook, instructions et catalogue
+            Gérez votre connexion Facebook.
           </p>
         </motion.header>
 
+        {facebookError && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200/90 shadow-sm"
+          >
+            {facebookError}
+          </motion.div>
+        )}
+
         <motion.div
-           initial={{ opacity: 0, y: 16 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-           className="flex flex-col gap-8 pb-12"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="pb-12 space-y-8"
         >
-           {/* SECTION 0: Multi-pages Facebook */}
-           <PageSelector
-             pages={facebookStatus?.pages || []}
-             selectedPageId={selectedPageId || null}
-             onSelect={(pageId) => onSelectPage?.(pageId)}
-             onConnectMetaPages={() => void handleConnectFacebook()}
-             onSyncPagesList={
-               (facebookStatus?.pages?.length ?? 0) > 0 && canManagePages
-                 ? () => void handleSyncPagesListOnly()
-                 : undefined
-             }
-             connectMetaBusy={facebookAuthLoading}
-             syncListBusy={facebookSyncLoading}
-             loading={loading}
-             onActivatePage={handleActivatePage}
-             canManagePages={canManagePages}
-             busyPageId={facebookBusyPageId}
-           />
-
-           {/* SECTION 1: Connexion Facebook */}
-           <ChatbotStatusTab
-             overview={overview}
-             status={facebookStatus}
-             loading={loading}
-             authLoading={facebookAuthLoading}
-             busyPageId={facebookBusyPageId}
-             error={facebookError}
-             canEdit={canEdit}
-             canManagePages={canManagePages}
-             catalogueCount={catalogue.length}
-             onRefresh={() => void loadData(true)}
-             onJumpToTab={() => {}} 
-             onConnect={handleConnectFacebook}
-             onActivate={handleActivatePage}
-             onDisconnect={handleDisconnectPage}
-           />
-
-           {/* SECTION 2: Catalogue */}
-           <ChatbotCatalogueTab
-             items={catalogue}
-             draft={catalogueDraft}
-             editingId={editingCatalogueId}
-             canEdit={canEdit}
-             saving={savingSection === "catalogue"}
-             planFeatures={planFeatures}
-             templates={CATALOGUE_STARTER_TEMPLATES}
-             onChangeDraft={setCatalogueDraft}
-             onApplyTemplate={(template) => {
-               setEditingCatalogueId(null);
-               setCatalogueDraft({ ...template, sort_order: Math.max(0, catalogue.length) });
-             }}
-             onEdit={(item) => {
-               setEditingCatalogueId(item.id);
-               setCatalogueDraft({ ...item });
-             }}
-             onReset={() => {
-               setEditingCatalogueId(null);
-               setCatalogueDraft({ ...EMPTY_CATALOGUE_INPUT, sort_order: Math.max(0, catalogue.length) });
-             }}
-             onSave={async () => {
-               if (!catalogueDraft.name?.trim()) return;
-               const accessToken = await resolveAccessToken();
-               if (!accessToken) return;
-               setSavingSection("catalogue");
-               try {
-                 if (editingCatalogueId) await updateCatalogueItem(editingCatalogueId, catalogueDraft, accessToken);
-                 else await createCatalogueItem(catalogueDraft, accessToken, selectedPageId);
-                 setCatalogue(await getCatalogue(accessToken, selectedPageId));
-                 setEditingCatalogueId(null);
-                 setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
-               } catch (err) {
-                 console.error(err);
-                 alert("Erreur catalogue");
-               } finally { setSavingSection(null); }
-             }}
-             onDelete={async (id) => {
-               const accessToken = await resolveAccessToken(true);
-               if (!accessToken) return;
-               setSavingSection("catalogue");
-               try {
-                 await deleteCatalogueItem(id, accessToken);
-                 setCatalogue(await getCatalogue(accessToken, selectedPageId));
-               } catch { alert("Erreur suppr catalogue"); }
-               finally { setSavingSection(null); }
-             }}
-           />
-
-           {/* SECTION 3: Portfolio */}
-           {planFeatures?.has_portfolio ? (
-             <ChatbotPortfolioTab
-               items={portfolio}
-               draft={portfolioDraft}
-               editingId={editingPortfolioId}
-               canEdit={canEdit}
-               saving={savingSection === "portfolio"}
-               onChangeDraft={setPortfolioDraft}
-               onEdit={(item) => {
-                 setEditingPortfolioId(item.id);
-                 setPortfolioDraft({ ...item });
-               }}
-               onReset={() => {
-                 setEditingPortfolioId(null);
-                 setPortfolioDraft({ ...EMPTY_PORTFOLIO_INPUT, sort_order: Math.max(0, portfolio.length) });
-               }}
-               onSave={async () => {
-                 if (!portfolioDraft.title?.trim()) return;
-                 const accessToken = await resolveAccessToken();
-                 if (!accessToken) return;
-                 setSavingSection("portfolio");
-                 try {
-                   if (editingPortfolioId) await updatePortfolioItem(editingPortfolioId, portfolioDraft, accessToken);
-                   else await createPortfolioItem(portfolioDraft, accessToken, selectedPageId);
-                   setPortfolio(await getPortfolio(accessToken, selectedPageId));
-                   setEditingPortfolioId(null);
-                 } catch (err) {
-                   console.error(err);
-                   alert("Erreur portfolio");
-                 } finally { setSavingSection(null); }
-               }}
-               onDelete={async (id) => {
-                 const accessToken = await resolveAccessToken(true);
-                 if (!accessToken) return;
-                 setSavingSection("portfolio");
-                 try {
-                   await deletePortfolioItem(id, accessToken);
-                   setPortfolio(await getPortfolio(accessToken, selectedPageId));
-                 } catch { alert("Erreur suppr portfolio"); }
-                 finally { setSavingSection(null); }
-               }}
-             />
-           ) : (
-             <FeatureLockedPanel 
-               title="Disponible dès le plan Pro" 
-               body="Votre chatbot peut partager automatiquement vos réalisations et preuves sociales en conversation." 
-               ctaLabel="Passer à Pro" 
-               onRequestUpgrade={onRequestUpgrade} 
-             />
-           )}
+          {/* FACEBOOK PAGES ONLY */}
+          {facebookStatus && (
+            <div className="rounded-[32px] border border-fg/[0.06] bg-fg/[0.02] p-1">
+              <div className="rounded-[28px] bg-[var(--bg-card)] border border-fg/[0.03] p-5 sm:p-7 pt-6 shadow-sm">
+                <PageSelector
+                  pages={facebookStatus.pages}
+                  selectedPageId={selectedPageId || null}
+                  onSelect={(pid) => onSelectPage?.(pid)}
+                  onConnectMetaPages={handleConnectFacebook}
+                  onSyncPagesList={facebookStatus.pages.length > 0 ? handleSyncPagesListOnly : undefined}
+                  connectMetaBusy={facebookAuthLoading}
+                  syncListBusy={facebookSyncLoading}
+                  onActivatePage={handleActivatePage}
+                  onDeactivatePage={handleDeactivatePage}
+                  canManagePages={canManagePages}
+                  busyPageId={facebookBusyPageId}
+                />
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
-import { Facebook, Loader2, Plus, RefreshCw } from "lucide-react";
+import { motion, Variants } from "framer-motion";
+import { Facebook, Loader2, Plus, RefreshCw, Power, PowerOff } from "lucide-react";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 
 interface PageSelectorProps {
@@ -19,11 +19,13 @@ interface PageSelectorProps {
   syncListBusy?: boolean;
   /** Définir cette page comme canal Messenger actif pour l’organisation */
   onActivatePage?: (pageId: string) => void;
+  /** Désactiver le webhook */
+  onDeactivatePage?: (pageId: string) => void;
   canManagePages?: boolean;
   busyPageId?: string | null;
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -33,7 +35,7 @@ const staggerContainer = {
   },
 };
 
-const itemAnim = {
+const itemAnim: Variants = {
   hidden: { opacity: 0, y: 15 },
   show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
 };
@@ -48,6 +50,7 @@ export default function PageSelector({
   connectMetaBusy = false,
   syncListBusy = false,
   onActivatePage,
+  onDeactivatePage,
   canManagePages = false,
   busyPageId = null,
 }: PageSelectorProps) {
@@ -101,53 +104,62 @@ export default function PageSelector({
     );
   }
 
-  const showActivate = Boolean(onActivatePage && canManagePages);
+  const showActivate = typeof onActivatePage === "function";
+  const showDeactivate = typeof onDeactivatePage === "function";
 
   return (
-    <div className="w-full">
-      <div className="flex flex-col gap-2 mb-4 px-1">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <h3 className="text-base font-semibold text-fg/90">Vos pages Facebook</h3>
-          <div className="flex flex-row flex-wrap gap-2 shrink-0">
-            {onSyncPagesList ? (
-              <button
-                type="button"
-                onClick={() => onSyncPagesList()}
-                disabled={syncDisabled}
-                title="Met à jour la liste avec le compte Meta déjà lié, sans rouvrir la fenêtre de login."
-                className="text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-fg/[0.1] bg-fg/[0.03] text-fg/75 hover:bg-fg/[0.06] transition-colors font-medium disabled:opacity-45 disabled:pointer-events-none"
-              >
-                {syncListBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                Actualiser la liste
-              </button>
-            ) : null}
+    <div className="space-y-4">
+      {/* ── HEADER ET BOUTONS ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-fg/[0.04] pb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-fg/90 flex items-center gap-2">
+            <Facebook className="w-5 h-5 text-[#1877F2]" />
+            Vos pages Facebook
+          </h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {onSyncPagesList && (
             <button
               type="button"
-              onClick={() => onConnectMetaPages()}
-              disabled={metaDisabled}
-              title="Ouvre Facebook pour autoriser d’autres pages ou renouveler la session."
-              className="text-sm flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-orange-500/12 border border-orange-500/25 text-orange-400 hover:bg-orange-500/20 transition-colors font-medium disabled:opacity-45 disabled:pointer-events-none"
+              onClick={() => onSyncPagesList()}
+              disabled={syncDisabled}
+              title="Synchroniser les pages si vous en avez ajouté à l'autorisation existante"
+              className="inline-flex items-center gap-2 rounded-lg bg-fg/[0.03] border border-fg/[0.08] px-3 py-1.5 text-xs font-medium text-fg/60 hover:bg-fg/[0.06] hover:text-fg/90 transition-colors disabled:opacity-40 disabled:pointer-events-none"
             >
-              {connectMetaBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Facebook className="w-4 h-4" />}
-              Ajouter des pages (Meta)
+              {syncListBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+              Actualiser la liste
             </button>
-          </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => onConnectMetaPages()}
+            disabled={metaDisabled}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#1877F2]/10 border border-[#1877F2]/20 px-3 py-1.5 text-xs font-medium text-[#1877F2] hover:bg-[#1877F2]/15 transition-colors disabled:opacity-40 disabled:pointer-events-none"
+          >
+            {connectMetaBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+            Ajouter (Meta)
+          </button>
         </div>
-        <p className="text-sm text-fg/50 max-w-3xl leading-relaxed">
-          <strong className="text-fg/65">Choisir dans FLARE :</strong> cliquez sur une ligne pour la piloter (personnalisation, stats).{" "}
-          <strong className="text-fg/65">Messenger :</strong> une seule page à la fois reçoit les messages — bouton{" "}
-          <span className="text-emerald-400/90 font-medium">Activer sur Messenger</span>. La fenêtre Meta sert uniquement à lier le compte ou de nouvelles pages à
-          FLARE, pas à choisir la page active ici.
-        </p>
       </div>
 
-      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="flex flex-col gap-3">
+      {!canManagePages && (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200/90 leading-snug">
+          Vous devez être Owner ou Admin de cet espace FLARE AI pour gérer l’intégration Facebook.
+        </div>
+      )}
+
+      <div className="rounded-lg bg-fg/[0.015] border border-fg/[0.06] p-3 text-xs leading-relaxed text-fg/50">
+        <strong className="text-fg/65">Choisir dans FLARE :</strong> cliquez sur une carte pour configurer la personnalisation.{" "}
+        <strong className="text-fg/65">Messenger :</strong> utilisez le bouton <strong className="text-emerald-400">Activer</strong> ou <strong className="text-amber-500">Désactiver</strong> pour brancher / débrancher le bot sur une page spécifique.
+      </div>
+
+      <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3">
         {pages.map((page) => {
           const isSelected = page.page_id === selectedPageId;
           const isMessengerActive = page.is_active && page.webhook_subscribed;
           const isBusy = busyPageId === page.page_id;
           const InitialBadge = page.page_name.substring(0, 2).toUpperCase();
-          const needsActivation = !page.is_active;
 
           return (
             <motion.div
@@ -194,15 +206,9 @@ export default function PageSelector({
                   )}
                   <div
                     className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[var(--bg-background)] ${
-                      isMessengerActive ? "bg-emerald-500" : needsActivation ? "bg-amber-500" : "bg-fg/30"
+                      isMessengerActive ? "bg-emerald-500" : "bg-amber-500"
                     }`}
-                    title={
-                      isMessengerActive
-                        ? "Messenger actif"
-                        : needsActivation
-                          ? "Messenger : pas encore activé"
-                          : "Statut partiel"
-                    }
+                    title={isMessengerActive ? "Messenger actif" : "Messenger (pas encore activé)"}
                   />
                 </div>
 
@@ -213,9 +219,9 @@ export default function PageSelector({
                   <span className="text-sm text-fg/45 font-mono truncate">ID · {page.page_id}</span>
                   <span className="text-sm mt-0.5">
                     {isMessengerActive ? (
-                      <span className="text-emerald-400/90 font-medium">Bot actif sur Messenger (webhook)</span>
+                      <span className="text-emerald-400/90 font-medium">Bot ON (webhook branché)</span>
                     ) : (
-                      <span className="text-amber-400/90 font-medium">Pas encore activé sur Messenger</span>
+                      <span className="text-amber-500/90 font-medium">Bot OFF (inactif)</span>
                     )}
                   </span>
                 </div>
@@ -223,11 +229,12 @@ export default function PageSelector({
 
               <div className="flex items-center gap-2 shrink-0 sm:pl-2">
                 {isSelected && (
-                  <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-orange-400/90 hidden sm:inline">
+                  <span className="text-xs sm:text-sm font-semibold uppercase tracking-wide text-orange-400/90 hidden sm:inline mr-2">
                     Sélection FLARE
                   </span>
                 )}
-                {showActivate && needsActivation && (
+                
+                {showActivate && !isMessengerActive && (
                   <button
                     type="button"
                     disabled={isBusy}
@@ -237,8 +244,23 @@ export default function PageSelector({
                     }}
                     className="px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-400 text-sm font-semibold hover:bg-emerald-500/25 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
                   >
-                    {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                    Activer sur Messenger
+                    {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Power className="w-4 h-4" />}
+                    Activer
+                  </button>
+                )}
+
+                {showDeactivate && isMessengerActive && (
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeactivatePage?.(page.page_id);
+                    }}
+                    className="px-4 py-2 rounded-lg bg-amber-500/10 border border-amber-500/25 text-amber-500 text-sm font-semibold hover:bg-amber-500/20 transition-colors disabled:opacity-50 inline-flex items-center gap-2"
+                  >
+                    {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <PowerOff className="w-4 h-4" />}
+                    Désactiver
                   </button>
                 )}
               </div>

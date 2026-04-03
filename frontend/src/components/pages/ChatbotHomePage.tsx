@@ -137,16 +137,24 @@ export default function ChatbotHomePage({
     void syncFacebookPages();
   }, [syncFacebookPages]);
 
-  const handleActivateMessengerPage = useCallback(
+  const handleActivatePage = useCallback(
     async (pageId: string) => {
       const t = await resolveToken();
       if (!t || !canManageFb) return;
       setFbBusyPageId(pageId);
       try {
-        await activateFacebookMessengerPage(pageId, t);
+        const responsePage = await activateFacebookMessengerPage(pageId, t);
         const st = await loadFacebookMessengerStatus(t);
+        
+        let shouldSelect = true;
+        if (responsePage.page_id === selectedPageId) shouldSelect = false;
+
         onPagesChanged?.(st.pages);
-        onSelectPage?.(pageId);
+        
+        if (shouldSelect && onSelectPage) {
+          onSelectPage(responsePage.page_id);
+        }
+
         const name = st.pages.find((p) => p.page_id === pageId)?.page_name?.trim();
         setActivationNotice(
           name
@@ -165,7 +173,28 @@ export default function ChatbotHomePage({
         setFbBusyPageId(null);
       }
     },
-    [resolveToken, canManageFb, onPagesChanged, onSelectPage]
+    [resolveToken, canManageFb, onPagesChanged, onSelectPage, selectedPageId]
+  );
+
+  const handleDeactivatePage = useCallback(
+    async (pageId: string) => {
+      const t = await resolveToken();
+      if (!t || !canManageFb) return;
+      setFbBusyPageId(pageId);
+      try {
+        const { deactivateFacebookMessengerPage } = await import("@/lib/facebookMessenger");
+        await deactivateFacebookMessengerPage(pageId, t);
+        const st = await loadFacebookMessengerStatus(t);
+        onPagesChanged?.(st.pages);
+      } catch (e) {
+        console.error(e);
+        const msg = e instanceof Error ? e.message : "Désactivation impossible.";
+        alert(msg);
+      } finally {
+        setFbBusyPageId(null);
+      }
+    },
+    [resolveToken, canManageFb, onPagesChanged]
   );
 
   const handleConnectMetaPages = useCallback(async () => {
@@ -330,17 +359,18 @@ export default function ChatbotHomePage({
               </div>
             ) : null}
             <PageSelector
-              pages={pages}
-              selectedPageId={selectedPageId}
-              onSelect={(pid) => onSelectPage?.(pid)}
-              onConnectMetaPages={() => void handleConnectMetaPages()}
-              onSyncPagesList={pages.length > 0 && canManageFb ? () => void handleSyncPagesList() : undefined}
-              connectMetaBusy={fbOauthBusy}
-              syncListBusy={pagesRefreshBusy}
-              onActivatePage={handleActivateMessengerPage}
-              canManagePages={canManageFb}
-              busyPageId={fbBusyPageId}
-            />
+                pages={pages}
+                selectedPageId={selectedPageId}
+                onSelect={(pid) => onSelectPage?.(pid)}
+                onConnectMetaPages={() => void handleConnectMetaPages()}
+                onSyncPagesList={pages.length > 0 && canManageFb ? () => void handleSyncPagesList() : undefined}
+                connectMetaBusy={fbOauthBusy}
+                syncListBusy={pagesRefreshBusy}
+                onActivatePage={handleActivatePage}
+                onDeactivatePage={handleDeactivatePage}
+                canManagePages={canManageFb}
+                busyPageId={fbBusyPageId}
+              />
           </div>
         </motion.div>
 

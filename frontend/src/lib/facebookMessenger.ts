@@ -280,6 +280,29 @@ export async function activateFacebookMessengerPage(
   return payload.page as FacebookMessengerPage;
 }
 
+export async function deactivateFacebookMessengerPage(
+  pageId: string,
+  token: string | null | undefined
+): Promise<FacebookMessengerPage> {
+  const response = await facebookRequestWithTokenRetry(
+    `${getApiBaseUrl()}/api/facebook/pages/${encodeURIComponent(pageId)}/deactivate`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    },
+    token
+  );
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Desactivation Facebook impossible."));
+  }
+
+  const payload = await response.json();
+  return payload.page as FacebookMessengerPage;
+}
+
 export async function disconnectFacebookMessengerPage(
   pageId: string,
   token: string | null | undefined
