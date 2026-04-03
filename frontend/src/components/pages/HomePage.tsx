@@ -197,7 +197,7 @@ export default function HomePage({
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[900px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
 
-        {/* â”€â”€ Header â”€â”€ */}
+        {/* Header */}
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -205,18 +205,18 @@ export default function HomePage({
           className="space-y-1"
         >
           <h1 className="text-3xl font-bold tracking-tight text-white/90">
-            Bonjour, {displayName || "vous"} ðŸ‘‹
+            Bonjour, {displayName || "vous"}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">
             {orgName ? (
-              <>{orgName} Â· </>
+              <>{orgName} - </>
             ) : null}
             <span className="capitalize">{today}</span>
           </p>
         </motion.header>
 
-        {/* â”€â”€ KPI row â”€â”€ */}
-        <section aria-label="Indicateurs clÃ©s">
+        {/* KPI row */}
+        <section aria-label="Indicateurs cles">
           {!isOrganizationScope && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#ff7a1a]/20 bg-[#ff7a1a]/[0.05] px-4 py-3">
               <div>
@@ -237,29 +237,29 @@ export default function HomePage({
           )}
           {lastKpiUpdate && (
             <p className="text-sm text-white/35 mb-3">
-              Indicateurs synchronisÃ©s avec le serveur Â· actualisation automatique toutes les{" "}
+              Indicateurs synchronises avec le serveur - actualisation automatique toutes les{" "}
               {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
             </p>
           )}
           <div className="flex flex-col sm:flex-row gap-3">
             <KpiCard
               label="Statut chatbot"
-              value={loadingKpi ? "â€¦" : isActive ? "Actif" : overview ? "Inactif" : "â€”"}
+              value={loadingKpi ? "..." : isActive ? "Actif" : overview ? "Inactif" : "--"}
               icon={Bot}
               status={loadingKpi ? undefined : isActive ? "ok" : overview ? "warn" : undefined}
               loading={loadingKpi}
               delay={0.05}
             />
             <KpiCard
-              label="Messages traitÃ©s ce mois"
-              value={loadingKpi ? "â€¦" : String(messagesCount)}
+              label="Messages traites ce mois"
+              value={loadingKpi ? "..." : String(messagesCount)}
               icon={MessageSquare}
               loading={loadingKpi}
               delay={0.1}
             />
             <KpiCard
-              label="Contacts / leads captÃ©s"
-              value={loadingKpi ? "â€¦" : String(contactsCount)}
+              label="Contacts / leads captes"
+              value={loadingKpi ? "..." : String(contactsCount)}
               icon={Users}
               loading={loadingKpi}
               delay={0.15}
@@ -267,22 +267,22 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* â”€â”€ AccÃ¨s rapide â”€â”€ */}
-        <section aria-label="AccÃ¨s rapide">
+        {/* Acces rapide */}
+        <section aria-label="Acces rapide">
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             className="text-sm font-medium text-white/25 uppercase tracking-[0.12em] mb-4"
           >
-            AccÃ¨s rapide
+            Acces rapide
           </motion.h2>
           <div className="flex flex-col sm:flex-row gap-4">
             <QuickCard
               icon={Zap}
               iconColor="bg-orange-500/15 text-orange-400"
               title="Automatisations"
-              description="GÃ©rez votre chatbot Facebook, suivez vos clients et pilotez vos automatisations."
+              description="Gerez votre chatbot Facebook, suivez vos clients et pilotez vos automatisations."
               onClick={() => onPush("automations")}
               delay={0.22}
             />
@@ -290,7 +290,7 @@ export default function HomePage({
               icon={Bot}
               iconColor="bg-blue-500/15 text-blue-400"
               title="Assistant IA"
-              description="Posez des questions, prÃ©parez du contenu et travaillez avec votre assistant intelligent."
+              description="Posez des questions, preparez du contenu et travaillez avec votre assistant intelligent."
               onClick={() => onPush("assistant")}
               delay={0.28}
             />
