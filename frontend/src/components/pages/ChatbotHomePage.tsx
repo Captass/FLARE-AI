@@ -197,6 +197,30 @@ export default function ChatbotHomePage({
     [resolveToken, canManageFb, onPagesChanged]
   );
 
+  const handleRemovePage = useCallback(
+    async (pageId: string) => {
+      const t = await resolveToken();
+      if (!t || !canManageFb) return;
+      setFbBusyPageId(pageId);
+      try {
+        const { disconnectFacebookMessengerPage } = await import("@/lib/facebookMessenger");
+        await disconnectFacebookMessengerPage(pageId, t);
+        const st = await loadFacebookMessengerStatus(t);
+        onPagesChanged?.(st.pages);
+        if (selectedPageId === pageId && onSelectPage && st.pages.length > 0) {
+          onSelectPage(st.pages[0].page_id);
+        }
+      } catch (e) {
+        console.error(e);
+        const msg = e instanceof Error ? e.message : "Suppression impossible.";
+        alert(msg);
+      } finally {
+        setFbBusyPageId(null);
+      }
+    },
+    [resolveToken, canManageFb, onPagesChanged, selectedPageId, onSelectPage]
+  );
+
   const handleConnectMetaPages = useCallback(async () => {
     const t = await resolveToken();
     if (!t) {
@@ -365,6 +389,7 @@ export default function ChatbotHomePage({
                 syncListBusy={pagesRefreshBusy}
                 onActivatePage={handleActivatePage}
                 onDeactivatePage={handleDeactivatePage}
+                onRemovePage={handleRemovePage}
                 canManagePages={canManageFb}
                 busyPageId={fbBusyPageId}
               />

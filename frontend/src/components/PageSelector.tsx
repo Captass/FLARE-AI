@@ -2,7 +2,7 @@
 
 import React from "react";
 import { motion, Variants } from "framer-motion";
-import { Facebook, Loader2, Plus, RefreshCw, Power, PowerOff } from "lucide-react";
+import { Facebook, Loader2, Plus, RefreshCw, Power, PowerOff, Trash2 } from "lucide-react";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 
 interface PageSelectorProps {
@@ -21,6 +21,8 @@ interface PageSelectorProps {
   onActivatePage?: (pageId: string) => void;
   /** Désactiver le webhook */
   onDeactivatePage?: (pageId: string) => void;
+  /** Supprimer la page */
+  onRemovePage?: (pageId: string) => void;
   canManagePages?: boolean;
   busyPageId?: string | null;
 }
@@ -51,6 +53,7 @@ export default function PageSelector({
   syncListBusy = false,
   onActivatePage,
   onDeactivatePage,
+  onRemovePage,
   canManagePages = false,
   busyPageId = null,
 }: PageSelectorProps) {
@@ -106,6 +109,7 @@ export default function PageSelector({
 
   const showActivate = typeof onActivatePage === "function";
   const showDeactivate = typeof onDeactivatePage === "function";
+  const showRemove = typeof onRemovePage === "function";
 
   return (
     <div className="space-y-4">
@@ -261,6 +265,23 @@ export default function PageSelector({
                   >
                     {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <PowerOff className="w-4 h-4" />}
                     Désactiver
+                  </button>
+                )}
+                
+                {showRemove && canManagePages && !isMessengerActive && (
+                  <button
+                    type="button"
+                    disabled={isBusy}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm(`Voulez-vous vraiment supprimer la page ${page.page_name} de FLARE AI ?`)) {
+                        onRemovePage?.(page.page_id);
+                      }
+                    }}
+                    className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 transition-colors disabled:opacity-50 inline-flex items-center"
+                    title="Supprimer cette page"
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 )}
               </div>

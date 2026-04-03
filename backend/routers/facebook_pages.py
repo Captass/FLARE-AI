@@ -579,6 +579,8 @@ async def _disconnect_page_from_direct_service(page_id: str) -> None:
         )
 
 
+
+
 def _callback_page(frontend_origin: str, status: str, detail: str, page_count: int = 0) -> HTMLResponse:
     safe_origin = json.dumps(_normalize_frontend_origin(frontend_origin))
     safe_status = json.dumps(status)

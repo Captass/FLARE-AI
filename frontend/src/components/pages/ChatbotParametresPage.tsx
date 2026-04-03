@@ -158,6 +158,22 @@ export default function ChatbotParametresPage({
     }
   };
 
+  const handleRemovePage = async (pageId: string) => {
+    if (!canManagePages) return;
+    const accessToken = await resolveAccessToken(true);
+    if (!accessToken) return;
+    setFacebookBusyPageId(pageId);
+    try {
+      const { disconnectFacebookMessengerPage } = await import("@/lib/facebookMessenger");
+      await disconnectFacebookMessengerPage(pageId, accessToken);
+      await loadData(true);
+    } catch (err) {
+      setFacebookError(err instanceof Error ? err.message : "Erreur suppression");
+    } finally {
+      setFacebookBusyPageId(null);
+    }
+  };
+
   const handleSyncPagesListOnly = async () => {
     if (!canManagePages) return;
     const accessToken = await resolveAccessToken(true);
@@ -255,6 +271,7 @@ export default function ChatbotParametresPage({
                 syncListBusy={facebookSyncLoading}
                 onActivatePage={handleActivatePage}
                 onDeactivatePage={handleDeactivatePage}
+                onRemovePage={handleRemovePage}
                 canManagePages={canManagePages}
                 busyPageId={facebookBusyPageId}
               />
