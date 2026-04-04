@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, type Variants } from "framer-motion";
 import { Facebook, Loader2, Plus, RefreshCw, Power, PowerOff, Trash2 } from "lucide-react";
-import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
+import type { FacebookAuthDebugInfo, FacebookMessengerPage } from "@/lib/facebookMessenger";
 
 interface PageSelectorProps {
   pages: FacebookMessengerPage[];
@@ -19,6 +19,7 @@ interface PageSelectorProps {
   onRemovePage?: (pageId: string) => void;
   canManagePages?: boolean;
   busyPageId?: string | null;
+  authDebug?: FacebookAuthDebugInfo | null;
 }
 
 const staggerContainer: Variants = {
@@ -50,6 +51,7 @@ export default function PageSelector({
   onRemovePage,
   canManagePages = false,
   busyPageId = null,
+  authDebug = null,
 }: PageSelectorProps) {
   if (loading) {
     return (
@@ -100,6 +102,7 @@ export default function PageSelector({
             {connectMetaBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Ouvrir Meta et importer mes pages
           </button>
+          {authDebug ? <OAuthDebugCard authDebug={authDebug} /> : null}
         </div>
       </motion.div>
     );
@@ -154,6 +157,8 @@ export default function PageSelector({
       <div className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-xs leading-relaxed text-orange-100/90">
         Si la popup Facebook affiche <strong>&quot;Fonctionnalité indisponible&quot;</strong>, le blocage vient de Meta avant le retour vers FLARE.
       </div>
+
+      {authDebug ? <OAuthDebugCard authDebug={authDebug} /> : null}
 
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3">
         {pages.map((page) => {
@@ -305,6 +310,42 @@ export default function PageSelector({
           );
         })}
       </motion.div>
+    </div>
+  );
+}
+
+function OAuthDebugCard({ authDebug }: { authDebug: FacebookAuthDebugInfo }) {
+  return (
+    <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.03] p-4 text-left">
+      <p className="text-[11px] uppercase tracking-[0.14em] text-white/30">Verification Facebook</p>
+      <p className="mt-1 text-xs text-white/55">
+        Ce bloc montre simplement quelle application Facebook FLARE utilise vraiment.
+      </p>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <DebugItem label="App ID" value={authDebug.client_id} />
+        <DebugItem label="Version" value={authDebug.graph_version} />
+        <DebugItem label="Retour Facebook" value={authDebug.redirect_uri} fullWidth />
+        <DebugItem label="Autorisations" value={authDebug.scopes.join(", ")} fullWidth />
+      </div>
+    </div>
+  );
+}
+
+function DebugItem({
+  label,
+  value,
+  fullWidth = false,
+}: {
+  label: string;
+  value: string;
+  fullWidth?: boolean;
+}) {
+  return (
+    <div className={fullWidth ? "md:col-span-2" : ""}>
+      <p className="text-[10px] uppercase tracking-[0.12em] text-white/28">{label}</p>
+      <p className="mt-1 break-all rounded-lg border border-white/[0.06] bg-black/20 px-3 py-2 font-mono text-[12px] text-white/78">
+        {value || "Non configure"}
+      </p>
     </div>
   );
 }

@@ -10,8 +10,10 @@ import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
   resyncFacebookMessengerPages,
+  loadFacebookAuthDebugInfo,
   META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
   runFacebookMessengerOAuthPopup,
+  type FacebookAuthDebugInfo,
   type FacebookMessengerPage,
 } from "@/lib/facebookMessenger";
 
@@ -123,6 +125,7 @@ export default function ChatbotHomePage({
   const [pagesRefreshBusy, setPagesRefreshBusy] = useState(false);
   const [fbOauthBusy, setFbOauthBusy] = useState(false);
   const [activationNotice, setActivationNotice] = useState<string | null>(null);
+  const [facebookAuthDebug, setFacebookAuthDebug] = useState<FacebookAuthDebugInfo | null>(null);
 
   const resolveToken = useCallback(async () => {
     if (getFreshToken) return await getFreshToken();
@@ -144,6 +147,39 @@ export default function ChatbotHomePage({
   useEffect(() => {
     void syncFacebookPages();
   }, [syncFacebookPages]);
+
+  useEffect(() => {
+    const normalizedRole = String(currentUserRole || "").toLowerCase();
+    const canInspectMeta = currentScopeType === "organization" && (canManageFb || ["owner", "admin"].includes(normalizedRole));
+
+    if (!canInspectMeta || typeof window === "undefined") {
+      setFacebookAuthDebug(null);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      const t = await resolveToken();
+      if (!t) {
+        if (!cancelled) setFacebookAuthDebug(null);
+        return;
+      }
+      try {
+        const debugInfo = await loadFacebookAuthDebugInfo(t, window.location.origin);
+        if (!cancelled) {
+          setFacebookAuthDebug(debugInfo);
+        }
+      } catch {
+        if (!cancelled) {
+          setFacebookAuthDebug(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canManageFb, currentScopeType, currentUserRole, resolveToken]);
 
   const handleActivatePage = useCallback(
     async (pageId: string) => {
@@ -435,6 +471,7 @@ export default function ChatbotHomePage({
                 onRemovePage={handleRemovePage}
                 canManagePages={canManageFb}
                 busyPageId={fbBusyPageId}
+                authDebug={facebookAuthDebug}
               />
           </div>
         </motion.div>
