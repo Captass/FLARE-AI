@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Crown, CheckCircle2, Lock, ArrowRight, Calendar, Zap } from "lucide-react";
+import { Crown, CheckCircle2, Lock, ArrowRight, Calendar, Zap, Sparkles, MessageSquare } from "lucide-react";
 import { getBillingFeatures, type BillingFeatures, type PlanFeatures } from "@/lib/api";
 import { SkeletonCard } from "@/components/SkeletonLoader";
+import type { NavLevel } from "@/components/NavBreadcrumb";
 
 interface BillingPageProps {
   token?: string | null;
+  getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   planLabel?: string;
+  onPush?: (level: NavLevel) => void;
 }
 
 // Module display
@@ -19,31 +22,124 @@ const MODULE_LIST = [
   { key: "has_sales_script", label: "Script de vente" },
   { key: "has_chatbot_content", label: "Contenu IA chatbot" },
   { key: "has_multi_page", label: "Multi-pages Facebook" },
-  { key: "has_team", label: "Équipe & collaboration" },
-  { key: "has_image_generation", label: "Génération d'images" },
-  { key: "has_file_generation", label: "Génération de fichiers" },
-  { key: "has_advanced_analytics", label: "Analytics avancés" },
+  { key: "has_team", label: "Equipe & collaboration" },
+  { key: "has_image_generation", label: "Generation d'images" },
+  { key: "has_file_generation", label: "Generation de fichiers" },
+  { key: "has_advanced_analytics", label: "Analytics avances" },
 ];
 
-export default function BillingPage({ token, planLabel: planLabelProp }: BillingPageProps) {
+type Plan = {
+  id: string;
+  name: string;
+  price: string;
+  priceNote?: string;
+  color: string;
+  accent: string;
+  popular?: boolean;
+  contact?: boolean;
+  features: string[];
+};
+
+const PLANS: Plan[] = [
+  {
+    id: "starter",
+    name: "Starter",
+    price: "30 000 Ar",
+    priceNote: "/mois",
+    color: "border-white/[0.08] bg-white/[0.02]",
+    accent: "text-white/70",
+    features: [
+      "1 page Facebook",
+      "Chatbot IA 24h/24",
+      "Jusqu'a 500 conversations/mois",
+      "Personnalisation basique",
+      "Support par email",
+    ],
+  },
+  {
+    id: "pro",
+    name: "Pro",
+    price: "60 000 Ar",
+    priceNote: "/mois",
+    color: "border-orange-500/30 bg-orange-500/[0.06]",
+    accent: "text-orange-400",
+    popular: true,
+    features: [
+      "1 page Facebook",
+      "Chatbot IA 24h/24",
+      "Conversations illimitees",
+      "Personnalisation avancee",
+      "Catalogue produits",
+      "Gestion des commandes",
+      "Support prioritaire",
+    ],
+  },
+  {
+    id: "business",
+    name: "Business",
+    price: "120 000 Ar",
+    priceNote: "/mois",
+    color: "border-purple-500/25 bg-purple-500/[0.04]",
+    accent: "text-purple-400",
+    features: [
+      "Multi-pages Facebook",
+      "Chatbot IA 24h/24",
+      "Conversations illimitees",
+      "Toutes les personnalisations",
+      "Equipe & collaboration",
+      "Analytics avances",
+      "Support dedie",
+    ],
+  },
+  {
+    id: "enterprise",
+    name: "Entreprise",
+    price: "Sur devis",
+    color: "border-white/[0.06] bg-white/[0.01]",
+    accent: "text-white/50",
+    contact: true,
+    features: [
+      "Solution sur mesure",
+      "Infrastructure dediee",
+      "Integrations personnalisees",
+      "SLA garanti",
+      "Accompagnement complet",
+    ],
+  },
+];
+
+export default function BillingPage({ token, getFreshToken, planLabel: planLabelProp, onPush }: BillingPageProps) {
   const [billing, setBilling] = useState<BillingFeatures | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
-    setLoading(true);
-    getBillingFeatures(token)
-      .then(setBilling)
-      .catch(() => setBilling(null))
-      .finally(() => setLoading(false));
-  }, [token]);
+    const load = async () => {
+      const t = getFreshToken ? await getFreshToken() : token;
+      if (!t) return;
+      setLoading(true);
+      getBillingFeatures(t)
+        .then(setBilling)
+        .catch(() => setBilling(null))
+        .finally(() => setLoading(false));
+    };
+    void load();
+  }, [token, getFreshToken]);
 
-  const planLabel = planLabelProp ?? (billing?.plan_id ? billing.plan_id.charAt(0).toUpperCase() + billing.plan_id.slice(1) : "Gratuit");
-  const expiresAt: string | null = null; // expires_at is in billing router, not in features endpoint
+  const currentPlanId = billing?.plan_id ?? null;
+  const planLabel = planLabelProp ?? (currentPlanId ? currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1) : "Gratuit");
+  const expiresAt: string | null = null;
+
+  const handleActivate = (plan: Plan) => {
+    if (plan.contact) {
+      window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
+      return;
+    }
+    onPush?.("chatbot-activation" as NavLevel);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[760px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
+      <div className="mx-auto w-full max-w-[900px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-10">
 
         {/* ── Header ── */}
         <motion.header
@@ -53,7 +149,7 @@ export default function BillingPage({ token, planLabel: planLabelProp }: Billing
           className="space-y-2"
         >
           <h1 className="text-3xl font-bold tracking-tight text-white/90">Abonnements</h1>
-          <p className="text-lg text-[var(--text-muted)]">Votre plan actuel et vos modules</p>
+          <p className="text-lg text-[var(--text-muted)]">Votre plan actuel et les offres disponibles</p>
         </motion.header>
 
         {/* ── Plan card ── */}
@@ -89,26 +185,28 @@ export default function BillingPage({ token, planLabel: planLabelProp }: Billing
               </div>
 
               {/* Upgrade CTA */}
-              {billing?.features?.upgrade_to && (
-                <a
-                  href="#"
+              {(billing?.features?.upgrade_to || (!currentPlanId || currentPlanId === "free")) && onPush && (
+                <button
+                  type="button"
+                  onClick={() => onPush("chatbot-activation" as NavLevel)}
                   className="flex items-center justify-between rounded-xl
                              bg-orange-500/10 border border-orange-500/20
                              px-5 py-4 hover:bg-orange-500/15 hover:border-orange-500/30
-                             transition-all duration-200 group"
-                  aria-label={`Mettre à niveau vers ${billing.features.upgrade_to}`}
+                             transition-all duration-200 group text-left w-full"
                 >
                   <div className="flex items-center gap-3">
                     <Zap size={16} className="text-orange-400" />
                     <span className="text-base font-semibold text-orange-400">
-                      Mettre à niveau →
+                      {(!currentPlanId || currentPlanId === "free") ? "Choisir un plan" : "Changer de plan"}
                     </span>
-                    <span className="text-sm text-white/35">
-                      Passer au plan {billing.features.upgrade_to}
-                    </span>
+                    {billing?.features?.upgrade_to && (
+                      <span className="text-sm text-white/35">
+                        Passer au plan {billing.features.upgrade_to}
+                      </span>
+                    )}
                   </div>
                   <ArrowRight size={16} className="text-orange-400/60 group-hover:translate-x-1 transition-transform" />
-                </a>
+                </button>
               )}
             </>
           )}
@@ -124,7 +222,7 @@ export default function BillingPage({ token, planLabel: planLabelProp }: Billing
                      px-6 py-6 flex flex-col gap-2"
         >
           <p className="text-sm font-medium text-white/30 uppercase tracking-[0.1em] mb-4">
-            Modules inclus
+            Modules inclus dans votre plan
           </p>
           {loading ? (
             <SkeletonCard lines={5} />
@@ -147,6 +245,97 @@ export default function BillingPage({ token, planLabel: planLabelProp }: Billing
             })
           )}
         </motion.div>
+
+        {/* ── Plans comparison ── */}
+        <motion.section
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <p className="text-sm font-medium text-white/30 uppercase tracking-[0.1em] mb-5">
+            Toutes les offres
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {PLANS.map((plan) => {
+              const isCurrent = currentPlanId === plan.id;
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative flex flex-col rounded-2xl border px-5 py-5 gap-4 transition-all duration-200 ${plan.color} ${
+                    isCurrent ? "ring-1 ring-orange-500/40" : ""
+                  }`}
+                >
+                  {/* Popular badge */}
+                  {plan.popular && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-orange-500 px-3 py-0.5 text-[11px] font-semibold text-white shadow-md">
+                      <Sparkles size={10} />
+                      Recommande
+                    </span>
+                  )}
+
+                  {/* Current badge */}
+                  {isCurrent && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-0.5 text-[11px] font-semibold text-white shadow-md">
+                      <CheckCircle2 size={10} />
+                      Plan actuel
+                    </span>
+                  )}
+
+                  {/* Name & price */}
+                  <div>
+                    <p className={`text-base font-bold ${plan.accent}`}>{plan.name}</p>
+                    <p className="mt-1 text-2xl font-bold text-white/90 tracking-tight">
+                      {plan.price}
+                      {plan.priceNote && (
+                        <span className="text-sm font-normal text-white/35">{plan.priceNote}</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="flex flex-col gap-2 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2 text-sm text-white/60">
+                        <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-white/25" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  {isCurrent ? (
+                    <div className="mt-auto pt-2 text-center text-sm text-emerald-400/80 font-medium">
+                      Plan actif
+                    </div>
+                  ) : plan.contact ? (
+                    <a
+                      href="mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI"
+                      className="mt-auto flex items-center justify-center gap-2 rounded-xl border border-white/10
+                                 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white/60
+                                 hover:bg-white/[0.08] hover:text-white/80 transition-all duration-150"
+                    >
+                      <MessageSquare size={13} />
+                      Nous contacter
+                    </a>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => handleActivate(plan)}
+                      className={`mt-auto flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${
+                        plan.popular
+                          ? "bg-orange-500 text-white hover:bg-orange-400 shadow-md"
+                          : "border border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white/90"
+                      }`}
+                    >
+                      Choisir ce plan
+                      <ArrowRight size={13} />
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </motion.section>
 
       </div>
     </div>

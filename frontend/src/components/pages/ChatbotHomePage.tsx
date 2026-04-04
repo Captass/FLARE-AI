@@ -196,6 +196,7 @@ export default function ChatbotHomePage({
   const [skipSetupWizard, setSkipSetupWizard] = useState(false);
   const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
+  const [activationLoading, setActivationLoading] = useState(true);
 
   const isActivationActive = activationRequest?.status === "active";
 
@@ -233,7 +234,10 @@ export default function ChatbotHomePage({
     let cancelled = false;
     void (async () => {
       const t = await resolveToken();
-      if (!t || cancelled) return;
+      if (!t || cancelled) {
+        if (!cancelled) setActivationLoading(false);
+        return;
+      }
       try {
         const [ar, billing] = await Promise.allSettled([
           getMyActivationRequest(t),
@@ -244,6 +248,9 @@ export default function ChatbotHomePage({
           setCurrentPlanId(billing.status === "fulfilled" ? (billing.value as any)?.plan_id ?? null : null);
         }
       } catch { /* silent */ }
+      finally {
+        if (!cancelled) setActivationLoading(false);
+      }
     })();
     return () => { cancelled = true; };
   }, [resolveToken]);
@@ -571,7 +578,7 @@ export default function ChatbotHomePage({
             </p>
 
             {/* ── Activation status banner ── */}
-            {activationBanner && (
+            {!activationLoading && activationBanner && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}

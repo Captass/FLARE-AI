@@ -1469,7 +1469,7 @@ export default function Home() {
         ) : activeView === "settings" ? (
            <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onThemeToggle={handleThemeToggle} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
         ) : activeView === "billing" ? (
-           <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BillingPage token={token} /></motion.div>
+           <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BillingPage token={token} getFreshToken={getFreshToken} onPush={onPush} /></motion.div>
         ) : activeView === "guide" ? (
            <motion.div key="guide" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GuidePage /></motion.div>
         ) : activeView === "contact" ? (
