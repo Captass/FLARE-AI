@@ -433,7 +433,7 @@ export default function SettingsPage({
   // Resolve a fresh token
   const getToken = useCallback(async (): Promise<string | null> => {
     if (getFreshToken) {
-      try { return await getFreshToken(true); } catch { /* fall through */ }
+      try { return await getFreshToken(true); } catch { return null; }
     }
     return token ?? null;
   }, [getFreshToken, token]);

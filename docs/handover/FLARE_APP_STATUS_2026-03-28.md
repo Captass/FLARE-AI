@@ -100,6 +100,20 @@ Points encore connus apres cette passe :
 - le detail client s'appuie encore sur `MessengerWorkspace`, plus large que le parcours minimal de lundi
 - le repo complet contient encore des erreurs TypeScript legacy hors cockpit chatbot, notamment dans des modules Assistant/Studio non critiques pour le lancement
 
+## Update 2026-04-04 - isolation des espaces / changement de compte
+
+Durcissement multi-tenant sur le chooser d'espace et les tokens frontend :
+
+- le frontend purge maintenant immediatement `organizationAccess`, l'identite workspace, le setup chatbot et les pages Facebook quand l'identite authentifiee change
+- une reponse `getOrganizationAccess()` est ignoree si `user_email` ne correspond pas au compte courant
+- les composants sensibles ne retombent plus sur un ancien bearer si `getFreshToken()` echoue
+- le backend ne charge plus d'organisation seedee globale par defaut (`DEFAULT_ORGANIZATIONS = []`)
+
+Objectif garanti par ce lot :
+
+- un utilisateur ne doit voir que ses espaces autorises
+- un changement de compte ne doit plus reutiliser le chooser ou le bearer de la session precedente
+
 
 ## Update 2026-03-31
 

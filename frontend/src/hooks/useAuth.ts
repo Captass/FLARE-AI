@@ -77,9 +77,10 @@ export function useAuth(): AuthState {
       return nextToken;
     } catch (nextError) {
       console.error("Failed to resolve Firebase token:", nextError);
-      return token;
+      setToken(null);
+      return null;
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -89,9 +90,15 @@ export function useAuth(): AuthState {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
       if (!mounted) return;
       setUser(currentUser);
+      setToken(null);
       if (currentUser) {
-        const idToken = await currentUser.getIdToken();
-        if (mounted) setToken(idToken);
+        try {
+          const idToken = await currentUser.getIdToken();
+          if (mounted) setToken(idToken);
+        } catch (e) {
+          console.error("Initial token fetch failed:", e);
+          if (mounted) setToken(null);
+        }
         // Rafraîchir le token toutes les 50 minutes (expire après 60 min)
         if (refreshInterval) clearInterval(refreshInterval);
         refreshInterval = setInterval(async () => {

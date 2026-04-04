@@ -18,29 +18,9 @@ ROLE_LABELS = {
     "viewer": "Lecture",
 }
 
-DEFAULT_ORGANIZATIONS: List[Dict[str, Any]] = [
-    {
-        "slug": "rams-flare",
-        "name": "FLARE AI",
-        "members": [
-            {
-                "email": "cptskevin@gmail.com",
-                "display_name": "Kevin",
-                "role": "owner",
-            },
-            {
-                "email": "rijarandriamamonjisoa@gmail.com",
-                "display_name": "Rijarandriamamonjisoa",
-                "role": "admin",
-            },
-        ],
-        "plan_id": "business",
-        "offer_name": "Business partage",
-        "security_label": "Compte + connexion a l'organisation",
-        "description": "Agents, automatisations et offre partages pour FLARE AI.",
-        "enabled_modules": ["chatbot", "assistant", "automations"],
-    }
-]
+# Never ship a shared seed workspace by default in production. Every visible
+# organization must come from the explicit registry JSON or dynamic creations.
+DEFAULT_ORGANIZATIONS: List[Dict[str, Any]] = []
 
 
 def _normalize_email(value: Optional[str]) -> str:

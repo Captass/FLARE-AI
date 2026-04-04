@@ -80,13 +80,13 @@ async function resolveAuthToken(token?: string | null, forceRefresh = false): Pr
 
   const currentUser = auth.currentUser;
   if (!currentUser) {
-    return token ?? null;
+    return null;
   }
 
   try {
     return await currentUser.getIdToken(forceRefresh);
   } catch {
-    return token ?? null;
+    return null;
   }
 }
 

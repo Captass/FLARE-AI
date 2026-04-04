@@ -139,10 +139,7 @@ export default function ChatbotWorkspace({
   const showFlash = (message: string, tone: "success" | "error" | "warning" = "success") => setFlash({ tone, message });
   const resolveAccessToken = useCallback(async (forceRefresh = false) => {
     if (getFreshToken) {
-      const nextToken = await getFreshToken(forceRefresh);
-      if (nextToken) {
-        return nextToken;
-      }
+      return await getFreshToken(forceRefresh);
     }
     return token ?? null;
   }, [getFreshToken, token]);
@@ -595,7 +592,7 @@ export default function ChatbotWorkspace({
                </div>
                <div>
                  <h3 className="text-red-100 font-bold text-lg mb-1">Connexion Facebook interrompue</h3>
-                 <p className="text-red-200/80 text-sm">Le mot de passe de la page <strong className="text-white">{activePage.page_name}</strong> a expiré ou l'accès a été révoqué. Le chatbot ne tourne plus sur cette page.</p>
+                 <p className="text-red-200/80 text-sm">Le mot de passe de la page <strong className="text-white">{activePage.page_name}</strong> a expiré ou l&apos;accès a été révoqué. Le chatbot ne tourne plus sur cette page.</p>
                </div>
              </div>
              <button 

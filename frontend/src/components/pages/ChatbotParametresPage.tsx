@@ -6,11 +6,7 @@ import { motion } from "framer-motion";
 
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import PageSelector from "@/components/PageSelector";
-
-import {
-  getChatbotOverview,
-  type ChatbotOverview,
-} from "@/lib/api";
+import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
 import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
@@ -19,7 +15,6 @@ import {
   runFacebookMessengerOAuthPopup,
   type FacebookMessengerStatus,
 } from "@/lib/facebookMessenger";
-
 
 interface ChatbotParametresPageProps {
   token?: string | null;
@@ -36,78 +31,77 @@ interface ChatbotParametresPageProps {
 export default function ChatbotParametresPage({
   token,
   getFreshToken,
+  onRequestOrganizationSelection,
   selectedPageId,
   onSelectPage,
   onPagesChanged,
 }: ChatbotParametresPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [facebookStatus, setFacebookStatus] = useState<FacebookMessengerStatus | null>(null);
-
-  // States interactifs
   const [facebookAuthLoading, setFacebookAuthLoading] = useState(false);
   const [facebookSyncLoading, setFacebookSyncLoading] = useState(false);
   const [facebookBusyPageId, setFacebookBusyPageId] = useState<string | null>(null);
   const [facebookError, setFacebookError] = useState<string | null>(null);
 
-  const resolveAccessToken = useCallback(async (force = false) => {
-    if (getFreshToken) {
-      const t = await getFreshToken(force);
-      if (t) return t;
-    }
-    return token || null;
-  }, [getFreshToken, token]);
-
-  const loadData = useCallback(async (isRefresh = false) => {
-    const accessToken = await resolveAccessToken(isRefresh);
-    if (!accessToken) {
-      setError("Session expirée. Veuillez recharger.");
-      setLoading(false);
-      return;
-    }
-    if (!isRefresh) setLoading(true);
-    setError(null);
-    try {
-      const [ovResult, fbResult] = await Promise.allSettled([
-        getChatbotOverview(accessToken, selectedPageId),
-        loadFacebookMessengerStatus(accessToken),
-      ]);
-
-      if (ovResult.status === "fulfilled") setOverview(ovResult.value);
-      if (fbResult.status === "fulfilled") {
-        setFacebookStatus(fbResult.value);
-        onPagesChanged?.(fbResult.value.pages);
-      } else if (fbResult.status === "rejected") {
-        const msg =
-          fbResult.reason instanceof Error
-            ? fbResult.reason.message
-            : "État Facebook Messenger indisponible.";
-        setFacebookError((prev) => prev ?? msg);
+  const resolveAccessToken = useCallback(
+    async (force = false) => {
+      if (getFreshToken) {
+        return await getFreshToken(force);
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Erreur de chargement");
-    } finally {
-      setLoading(false);
-    }
-  }, [onPagesChanged, resolveAccessToken, selectedPageId]);
+      return token || null;
+    },
+    [getFreshToken, token]
+  );
+
+  const loadData = useCallback(
+    async (isRefresh = false) => {
+      const accessToken = await resolveAccessToken(isRefresh);
+      if (!accessToken) {
+        setError("Session expirée. Veuillez recharger.");
+        setLoading(false);
+        return;
+      }
+      if (!isRefresh) setLoading(true);
+      setError(null);
+      try {
+        const [overviewResult, facebookResult] = await Promise.allSettled([
+          getChatbotOverview(accessToken, selectedPageId),
+          loadFacebookMessengerStatus(accessToken),
+        ]);
+
+        if (overviewResult.status === "fulfilled") setOverview(overviewResult.value);
+        if (facebookResult.status === "fulfilled") {
+          setFacebookStatus(facebookResult.value);
+          onPagesChanged?.(facebookResult.value.pages);
+        } else {
+          const message =
+            facebookResult.reason instanceof Error
+              ? facebookResult.reason.message
+              : "État Facebook Messenger indisponible.";
+          setFacebookError((prev) => prev ?? message);
+        }
+      } catch (loadError) {
+        setError(loadError instanceof Error ? loadError.message : "Erreur de chargement");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [onPagesChanged, resolveAccessToken, selectedPageId]
+  );
 
   useEffect(() => {
     void loadData();
   }, [loadData, selectedPageId]);
 
-  // Auto-select the active page if none is selected yet
   useEffect(() => {
     if (!selectedPageId && overview?.active_page?.page_id) {
       onSelectPage?.(overview.active_page.page_id);
     }
   }, [selectedPageId, overview, onSelectPage]);
 
-
   const canManagePages = facebookStatus?.can_manage_pages ?? false;
-
-  // --- Facebook Actions ---
 
   const handleConnectFacebook = async () => {
     const accessToken = await resolveAccessToken(true);
@@ -119,13 +113,14 @@ export default function ChatbotParametresPage({
       );
       return;
     }
+
     setFacebookAuthLoading(true);
     setFacebookError(null);
     try {
       await runFacebookMessengerOAuthPopup(accessToken);
       await loadData(true);
-    } catch (err) {
-      setFacebookError(err instanceof Error ? err.message : "Impossible de connecter");
+    } catch (connectError) {
+      setFacebookError(connectError instanceof Error ? connectError.message : "Impossible de connecter Facebook.");
     } finally {
       setFacebookAuthLoading(false);
     }
@@ -139,8 +134,8 @@ export default function ChatbotParametresPage({
     try {
       await activateFacebookMessengerPage(pageId, accessToken);
       await loadData(true);
-    } catch (err) {
-      setFacebookError(err instanceof Error ? err.message : "Erreur activation");
+    } catch (activateError) {
+      setFacebookError(activateError instanceof Error ? activateError.message : "Erreur activation");
     } finally {
       setFacebookBusyPageId(null);
     }
@@ -154,8 +149,8 @@ export default function ChatbotParametresPage({
     try {
       await deactivateFacebookMessengerPage(pageId, accessToken);
       await loadData(true);
-    } catch (err) {
-      setFacebookError(err instanceof Error ? err.message : "Erreur désactivation");
+    } catch (deactivateError) {
+      setFacebookError(deactivateError instanceof Error ? deactivateError.message : "Erreur désactivation");
     } finally {
       setFacebookBusyPageId(null);
     }
@@ -170,8 +165,8 @@ export default function ChatbotParametresPage({
       const { disconnectFacebookMessengerPage } = await import("@/lib/facebookMessenger");
       await disconnectFacebookMessengerPage(pageId, accessToken);
       await loadData(true);
-    } catch (err) {
-      setFacebookError(err instanceof Error ? err.message : "Erreur suppression");
+    } catch (removeError) {
+      setFacebookError(removeError instanceof Error ? removeError.message : "Erreur suppression");
     } finally {
       setFacebookBusyPageId(null);
     }
@@ -186,48 +181,56 @@ export default function ChatbotParametresPage({
     try {
       await resyncFacebookMessengerPages(accessToken);
       await loadData(true);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "";
-      if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser/i.test(msg)) {
-        setFacebookError(
-          `${msg} Utilisez le bouton « Ajouter des pages (Meta) » pour rouvrir Facebook et renouveler l’autorisation.`
-        );
+    } catch (syncError) {
+      const message = syncError instanceof Error ? syncError.message : "";
+      if (/expiré|Reconnectez|session|Facebook|actualiser/i.test(message)) {
+        setFacebookError(`${message} Utilisez le bouton \"Ouvrir Meta\" pour renouveler l'autorisation.`);
       } else {
-        setFacebookError(msg || "Impossible d'actualiser la liste des pages.");
+        setFacebookError(message || "Impossible d'actualiser la liste des pages.");
       }
     } finally {
       setFacebookSyncLoading(false);
     }
   };
 
-  // --- Render ---
-
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex items-center gap-3 text-white/40">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm">Chargement des paramètres…</span>
+          <span className="text-sm">Chargement des paramètres...</span>
         </div>
       </div>
     );
   }
 
   if (error) {
+    const needsWorkspaceSelection = /organisation|espace|workspace/i.test(error);
     return (
       <div className="flex flex-1 items-center justify-center py-20">
-        <p className="text-red-400">{error}</p>
+        <div className="flex max-w-xl flex-col items-center gap-4 text-center">
+          <p className="text-red-400">{error}</p>
+          {needsWorkspaceSelection && onRequestOrganizationSelection ? (
+            <button
+              type="button"
+              onClick={onRequestOrganizationSelection}
+              className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-300 hover:bg-orange-500/20"
+            >
+              Choisir un espace de travail
+            </button>
+          ) : null}
+        </div>
       </div>
     );
   }
 
-  const selectedPageName = facebookStatus?.pages.find(p => p.page_id === selectedPageId)?.page_name || overview?.active_page?.page_name;
+  const selectedPageName =
+    facebookStatus?.pages.find((page) => page.page_id === selectedPageId)?.page_name ||
+    overview?.active_page?.page_name;
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[1100px] px-4 py-6 md:px-8 flex flex-col gap-8">
-        
-        {/* ── Header ── */}
+      <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-8 px-4 py-6 md:px-8">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -237,15 +240,13 @@ export default function ChatbotParametresPage({
           <h1 className="text-3xl font-bold tracking-tight text-white/90">
             Paramètres
             {selectedPageName ? (
-              <span className="block mt-1 text-xl font-semibold text-cyan-400/95">— {selectedPageName}</span>
+              <span className="mt-1 block text-xl font-semibold text-cyan-400/95">— {selectedPageName}</span>
             ) : null}
           </h1>
-          <p className="text-lg text-[var(--text-muted)]">
-            Gérez votre connexion Facebook.
-          </p>
+          <p className="text-lg text-[var(--text-muted)]">Gérez votre connexion Facebook.</p>
         </motion.header>
 
-        {facebookError && (
+        {facebookError ? (
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -253,7 +254,7 @@ export default function ChatbotParametresPage({
           >
             {facebookError}
           </motion.div>
-        )}
+        ) : null}
 
         <motion.div
           initial={{ opacity: 0, y: 16 }}
@@ -261,13 +262,12 @@ export default function ChatbotParametresPage({
           transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
           className="pb-12"
         >
-          {/* FACEBOOK PAGES ONLY */}
-          {facebookStatus && (
+          {facebookStatus ? (
             <div className="pt-6">
               <PageSelector
                 pages={facebookStatus.pages}
                 selectedPageId={selectedPageId || null}
-                onSelect={(pid) => onSelectPage?.(pid)}
+                onSelect={(pageId) => onSelectPage?.(pageId)}
                 onConnectMetaPages={handleConnectFacebook}
                 onSyncPagesList={facebookStatus.pages.length > 0 ? handleSyncPagesListOnly : undefined}
                 connectMetaBusy={facebookAuthLoading}
@@ -279,7 +279,7 @@ export default function ChatbotParametresPage({
                 busyPageId={facebookBusyPageId}
               />
             </div>
-          )}
+          ) : null}
         </motion.div>
       </div>
     </div>

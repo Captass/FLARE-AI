@@ -127,10 +127,7 @@ export default function ChatbotSetupWizard({
 
   const resolveAccessToken = useCallback(async (forceRefresh = false) => {
     if (getFreshToken) {
-      const nextToken = await getFreshToken(forceRefresh);
-      if (nextToken) {
-        return nextToken;
-      }
+      return await getFreshToken(forceRefresh);
     }
     return token ?? null;
   }, [getFreshToken, token]);

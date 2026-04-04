@@ -19,6 +19,7 @@ import {
   deleteCatalogueItem,
   type CatalogueItem,
   type CatalogueItemInput,
+  type PlanFeatures,
 } from "@/lib/api";
 import { CATALOGUE_STARTER_TEMPLATES, EMPTY_CATALOGUE_INPUT } from "@/components/chatbot/chatbotWorkspaceUtils";
 
@@ -38,38 +39,37 @@ export default function ChatbotPersonnalisationPage({
 }: ChatbotPersonnalisationPageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [preferences, setPreferences] = useState<ChatbotPreferences>(DEFAULT_CHATBOT_PREFERENCES);
   const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
-  
-  const [savingSection, setSavingSection] = useState<string | null>(null);
 
-  // Catalogue edit states
+  const [savingSection, setSavingSection] = useState<string | null>(null);
   const [catalogueDraft, setCatalogueDraft] = useState<CatalogueItemInput>(EMPTY_CATALOGUE_INPUT);
   const [editingCatalogueId, setEditingCatalogueId] = useState<string | null>(null);
 
   const resolveAccessToken = useCallback(async () => {
-    if (token) return token;
     if (getFreshToken) return await getFreshToken();
+    if (token) return token;
     return null;
   }, [token, getFreshToken]);
 
   const loadData = useCallback(async () => {
     const accessToken = await resolveAccessToken();
     if (!accessToken) {
-      setError("Session expirée. Veuillez recharger.");
+      setError("Session expiree. Veuillez recharger.");
       setLoading(false);
       return;
     }
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const [nextPrefs, nextCat] = await Promise.all([
         getChatbotPreferences(accessToken, selectedPageId),
-        getCatalogue(accessToken, selectedPageId)
+        getCatalogue(accessToken, selectedPageId),
       ]);
-      
+
       setPreferences(nextPrefs);
       setCatalogue(nextCat);
     } catch (err) {
@@ -103,8 +103,10 @@ export default function ChatbotPersonnalisationPage({
       alert("Le nom du produit est requis.");
       return;
     }
+
     const accessToken = await resolveAccessToken();
     if (!accessToken) return;
+
     setSavingSection("catalogue");
     try {
       if (editingCatalogueId) {
@@ -117,7 +119,7 @@ export default function ChatbotPersonnalisationPage({
       setEditingCatalogueId(null);
       setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
     } catch (err) {
-      alert("Erreur saving catalogue: " + (err instanceof Error ? err.message : String(err)));
+      alert("Erreur catalog: " + (err instanceof Error ? err.message : String(err)));
     } finally {
       setSavingSection(null);
     }
@@ -125,14 +127,16 @@ export default function ChatbotPersonnalisationPage({
 
   const handleDeleteCatalogue = async (id: string) => {
     if (!confirm("Supprimer ce produit / service ?")) return;
+
     const accessToken = await resolveAccessToken();
     if (!accessToken) return;
+
     try {
       await deleteCatalogueItem(id, accessToken);
       const nextCat = await getCatalogue(accessToken, selectedPageId);
       setCatalogue(nextCat);
     } catch (err) {
-      alert("Erreur delete catalogue: " + (err instanceof Error ? err.message : String(err)));
+      alert("Erreur suppression catalogue: " + (err instanceof Error ? err.message : String(err)));
     }
   };
 
@@ -141,7 +145,7 @@ export default function ChatbotPersonnalisationPage({
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex items-center gap-3 text-white/40">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm">Chargement de la personnalisation…</span>
+          <span className="text-sm">Chargement de la personnalisation...</span>
         </div>
       </div>
     );
@@ -156,14 +160,25 @@ export default function ChatbotPersonnalisationPage({
   }
 
   const canEdit = true;
-  // We mock planFeatures since we deleted billing limitations for the deadline
-  const unlimitedPlan = { catalogue_items_limit: -1 } as any;
+  const unlimitedPlan: PlanFeatures = {
+    chatbot_messages_limit: -1,
+    catalogue_items_limit: -1,
+    has_leads: true,
+    has_budget: true,
+    has_portfolio: true,
+    has_sales_script: true,
+    has_chatbot_content: true,
+    has_multi_page: false,
+    has_team: false,
+    has_image_generation: true,
+    has_file_generation: true,
+    assistant_tier: "full",
+    upgrade_to: null,
+  };
 
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[1100px] px-4 py-6 md:px-8 flex flex-col gap-8">
-        
-        {/* ── Header ── */}
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -173,82 +188,79 @@ export default function ChatbotPersonnalisationPage({
           <h1 className="text-3xl font-bold tracking-tight text-white/90">
             Personnalisation
             {selectedPageName ? (
-              <span className="block mt-1 text-xl font-semibold text-orange-400/95">— {selectedPageName}</span>
+              <span className="mt-1 block text-xl font-semibold text-orange-400/95">- {selectedPageName}</span>
             ) : null}
           </h1>
-          <p className="text-lg text-[var(--text-muted)]">
-            Configurez l&apos;identité du bot et vos offres / produits
-          </p>
+          <p className="text-lg text-[var(--text-muted)]">Configurez l&apos;identite du bot et vos offres / produits</p>
         </motion.header>
 
         {!selectedPageId ? (
           <div
             role="status"
-            className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90 leading-relaxed"
+            className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-100/90"
           >
-            Aucune page n&apos;est sélectionnée dans l&apos;accueil Chatbot : les réglages affichés sont les{" "}
-            <strong className="text-amber-50">réglages par défaut</strong>. Pour configurer une page précise,
-            retournez au hub et sélectionnez une page.
+            Aucune page n&apos;est selectionnee dans l&apos;accueil Chatbot. Les reglages affiches sont les{" "}
+            <strong className="text-amber-50">reglages par defaut</strong>. Pour configurer une page precise,
+            retournez au hub et selectionnez une page.
           </div>
         ) : (
-          <div className="rounded-xl border border-fg/[0.08] bg-fg/[0.03] px-4 py-3 text-sm text-fg/70 leading-relaxed">
-            Ces réglages sont enregistrés pour{" "}
+          <div className="rounded-xl border border-fg/[0.08] bg-fg/[0.03] px-4 py-3 text-sm leading-relaxed text-fg/70">
+            Ces reglages sont enregistres pour{" "}
             <strong className="text-fg/90">{selectedPageName || `la page ${selectedPageId}`}</strong>.
           </div>
         )}
 
-        {/* ── Sections ── */}
         <motion.div
-           initial={{ opacity: 0, y: 16 }}
-           animate={{ opacity: 1, y: 0 }}
-           transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-           className="flex flex-col gap-8 pb-12"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          className="flex flex-col gap-8 pb-12"
         >
-           <ChatbotIdentityTab 
-             preferences={preferences} 
-             onChange={setPreferences} 
-             canEdit={canEdit} 
-             saving={savingSection === "identity"} 
-             onSave={() => void onSavePreferences("identity")} 
-           />
+          <ChatbotIdentityTab
+            preferences={preferences}
+            onChange={setPreferences}
+            canEdit={canEdit}
+            saving={savingSection === "identity"}
+            onSave={() => void onSavePreferences("identity")}
+          />
 
-           <ChatbotBusinessTab 
-             preferences={preferences} 
-             onChange={setPreferences} 
-             canEdit={canEdit} 
-             saving={savingSection === "business"} 
-             onSave={() => void onSavePreferences("business")} 
-           />
+          <ChatbotBusinessTab
+            preferences={preferences}
+            onChange={setPreferences}
+            canEdit={canEdit}
+            saving={savingSection === "business"}
+            onSave={() => void onSavePreferences("business")}
+          />
 
-           <ChatbotCatalogueTab
-             items={catalogue}
-             draft={catalogueDraft}
-             editingId={editingCatalogueId}
-             canEdit={canEdit}
-             saving={savingSection === "catalogue"}
-             planFeatures={unlimitedPlan}
-             templates={CATALOGUE_STARTER_TEMPLATES}
-             onChangeDraft={setCatalogueDraft}
-             onApplyTemplate={(tpl) => setCatalogueDraft(tpl)}
-             onEdit={(item) => {
-               setEditingCatalogueId(item.id);
-               setCatalogueDraft({
-                 name: item.name,
-                 description: item.description,
-                 price: item.price,
-                 category: item.category,
-                 image_url: item.image_url,
-                 sort_order: item.sort_order,
-                 is_active: item.is_active,
-               });
-             }}
-             onReset={() => {
-               setEditingCatalogueId(null);
-               setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
-             }}
-             onSave={() => void handleSaveCatalogue()}
-             onDelete={(id) => void handleDeleteCatalogue(id)}
-           />
+          <ChatbotCatalogueTab
+            items={catalogue}
+            draft={catalogueDraft}
+            editingId={editingCatalogueId}
+            canEdit={canEdit}
+            saving={savingSection === "catalogue"}
+            planFeatures={unlimitedPlan}
+            templates={CATALOGUE_STARTER_TEMPLATES}
+            onChangeDraft={setCatalogueDraft}
+            onApplyTemplate={(tpl) => setCatalogueDraft(tpl)}
+            onEdit={(item) => {
+              setEditingCatalogueId(item.id);
+              setCatalogueDraft({
+                name: item.name,
+                description: item.description,
+                price: item.price,
+                category: item.category,
+                image_url: item.image_url,
+                sort_order: item.sort_order,
+                is_active: item.is_active,
+              });
+            }}
+            onReset={() => {
+              setEditingCatalogueId(null);
+              setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+            }}
+            onSave={() => void handleSaveCatalogue()}
+            onDelete={(id) => void handleDeleteCatalogue(id)}
+          />
         </motion.div>
       </div>
     </div>

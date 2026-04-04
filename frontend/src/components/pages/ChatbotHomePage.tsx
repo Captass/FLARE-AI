@@ -121,7 +121,7 @@ export default function ChatbotHomePage({
   const [activationNotice, setActivationNotice] = useState<string | null>(null);
 
   const resolveToken = useCallback(async () => {
-    if (getFreshToken) return (await getFreshToken()) || token || null;
+    if (getFreshToken) return await getFreshToken();
     return token ?? null;
   }, [getFreshToken, token]);
 
@@ -303,7 +303,7 @@ export default function ChatbotHomePage({
   const loadKPIs = useCallback(
     async (silent = false) => {
       let t = token;
-      if (getFreshToken) t = await getFreshToken() || token;
+      if (getFreshToken) t = await getFreshToken();
       if (!t || !selectedPageId) {
         setDashData(null);
         setOverview(null);
@@ -340,7 +340,7 @@ export default function ChatbotHomePage({
     };
   }, [loadKPIs]);
 
-  const messagesCeMois = dashData?.periodStats?.[0]?.messages ?? 0;
+  const messagesTraites = dashData?.totals?.messages24h ?? dashData?.periodStats?.[0]?.messages ?? 0;
   const contactsCaptes = dashData?.totals?.contacts ?? 0;
   const alertCount = overview?.pending_human_count ?? pendingHumanCount;
   const botFullyLive =
@@ -481,18 +481,18 @@ export default function ChatbotHomePage({
               </div>
             </motion.div>
 
-            {/* Messages ce mois */}
+            {/* Messages */}
             <motion.div
               whileHover={{ scale: 1.02 }}
               className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
             >
               <div>
-                <p className="text-sm font-medium text-[var(--text-muted)]">Messages traites ce mois</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">Messages traites</p>
                 <div className="mt-1 h-7 flex items-center">
                   {loadingKPIs ? (
                     <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse" />
                   ) : (
-                    <p className="text-lg font-bold text-fg/90">{messagesCeMois}</p>
+                    <p className="text-lg font-bold text-fg/90">{messagesTraites}</p>
                   )}
                 </div>
               </div>
