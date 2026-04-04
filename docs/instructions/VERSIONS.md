@@ -5,6 +5,23 @@
 
 ---
 
+## v4.0.1 — 5 avril 2026 — "Correctifs lancement v1 — activation flow, admin sidebar, prix"
+
+### Resume
+Correctifs post-lancement identifies lors des tests live sur flareai.ramsflare.com.
+
+### Changements
+- **Activation flow** : le wizard d'installation Facebook self-serve ne bloque plus le parcours. `showSetupWizard` est maintenant conditionne par `isActivationActive` — il ne s'affiche qu'apres activation complete et uniquement si la configuration technique est incomplete.
+- **Admin sidebar** : ajout du bouton "Administration" dans la barre laterale gauche, visible uniquement pour `cptskevin@gmail.com`. Composant `NewSidebar` accepte maintenant la prop `userEmail`.
+- **Prix corriges** : Starter 30 000 Ar, Pro 60 000 Ar, Business 120 000 Ar, Entreprise sur devis (mailto). Les valeurs incorrectes (50k/120k/250k) ont ete remplacees.
+- **Etape 4 de l'activation** : reecrite pour indiquer qu'un technicien FLARE sera notifie et se chargera de connecter le chatbot. L'utilisateur confirme ses informations et notifie l'equipe, sans avoir a ajouter FLARE comme admin lui-meme.
+- **`page.tsx`** : passe `userEmail={user?.email ?? null}` au composant `NewSidebar`.
+
+### Commits
+- `fix: activation flow -- bypass setup wizard, add admin sidebar, fix prices` (e890129)
+
+---
+
 ## v4.0.0 — 4 avril 2026 — "Lancement v1 — activation assistee, paiement manuel, commandes"
 
 ### Resume

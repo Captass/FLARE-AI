@@ -1,6 +1,6 @@
 # Guide développeur FLARE AI
 
-Dernière mise à jour : 2 avril 2026 (session 4 — Git `--git-dir` / agents)
+Dernière mise à jour : 5 avril 2026 (session 5 — activation assistee v1 + correctifs lancement)
 
 ## But du guide
 
@@ -63,15 +63,22 @@ FLARE AI est une application web avec :
 - `backend/routers/chatbot.py` — logique chatbot Facebook
 - `backend/routers/chat.py` — chat IA principal
 - `backend/routers/dashboard.py` — API tableau de bord + KPIs
+- `backend/routers/activation.py` — **[v4.0.0]** 22 routes : activation assistee, paiements manuels, commandes, admin ops
 - `backend/core/config.py` — variables d'environnement (pydantic-settings)
+- `backend/core/database.py` — modeles SQLAlchemy ; **[v4.0.0]** nouveaux : `ActivationRequest`, `ActivationRequestEvent`, `ManualPaymentSubmission`, `ChatbotOrder`
 - `backend/core/memory.py` — mémoire utilisateur
 - `backend/agents/supervisor.py` — orchestration des agents
 
 ### Frontend
 
-- `frontend/src/app/page.tsx` — racine SPA (NavStack, auth, routing)
+- `frontend/src/app/page.tsx` — racine SPA (NavStack, auth, routing) ; **[v4.0.1]** passe `userEmail` a `NewSidebar`
 - `frontend/src/lib/firebase.ts` — initialisation Firebase Auth (clés publiques via env vars)
-- `frontend/src/components/pages/ChatbotHomePage.tsx` — accueil chatbot avec KPIs
+- `frontend/src/components/NavBreadcrumb.tsx` — type `NavLevel` et breadcrumb ; **[v4.0.0]** ajout de `chatbot-orders`, `chatbot-activation`, `admin`
+- `frontend/src/components/NewSidebar.tsx` — barre laterale SPA ; **[v4.0.1]** ajout admin conditionnel (`ADMIN_EMAILS`), prop `userEmail`
+- `frontend/src/components/AdminPanel.tsx` — panneau admin ; **[v4.0.0]** 3 nouveaux onglets : Activations, Paiements, Commandes
+- `frontend/src/components/pages/ChatbotHomePage.tsx` — accueil chatbot ; **[v4.0.0]** banniere activation, `isActivationActive`, `showSetupWizard` conditionnel
+- `frontend/src/components/pages/ChatbotActivationPage.tsx` — **[v4.0.0]** tunnel activation 5 etapes (plan → paiement → config → technicien → attente)
+- `frontend/src/components/pages/ChatbotOrdersPage.tsx` — **[v4.0.0]** liste et gestion des commandes chatbot
 - `frontend/src/components/pages/ChatbotParametresPage.tsx` — connexion Facebook, choix de page
 - `frontend/src/components/pages/ChatbotDashboardPage.tsx` — tableau de bord chatbot
 - `frontend/src/components/pages/ChatbotClientsPage.tsx` — liste des contacts
@@ -109,6 +116,10 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | `FLIGHT_MODE` | `True` (mode dégradé sans toutes les clés) |
 | `SUPABASE_URL` | Supabase (optionnel) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase (optionnel) |
+| `MANUAL_PAYMENT_METHODS_JSON` | **[v4.0.0]** JSON liste des methodes de paiement manuel, ex: `[{"id":"mvola","label":"MVola","number":"034 00 000 00"}]` |
+| `FLARE_FACEBOOK_OPERATOR_NAME` | **[v4.0.0]** Nom du compte Facebook FLARE affiche a l'etape "technicien" du tunnel d'activation |
+| `FLARE_FACEBOOK_OPERATOR_URL` | **[v4.0.0]** URL du profil Facebook FLARE operateur (optionnel) |
+| `ACTIVATION_NOTIFICATION_EMAIL` | **[v4.0.0]** Email notifie lors d'une nouvelle demande d'activation (optionnel) |
 
 **Frontend (`flare-frontend` — défini dans `render.yaml`) :**
 
@@ -301,6 +312,48 @@ Implémentation dans ce dépôt :
 | Tableau de bord | `ChatbotDashboardPage.tsx` — KPI alignés libellés spec, `FacebookVerificationBanner`, activité récente, `loadAll` dépend de `selectedPageId` |
 | Clients | `ChatbotClientsPage.tsx` — filtres, bannière + « Voir les alertes » |
 | Facebook (Meta) | `FacebookVerificationBanner.tsx` — libellés et tailles de texte conformes au plan |
+
+### Acces admin (v4.0.1)
+
+L'acces au panneau "Administration" est controle cote frontend uniquement dans `NewSidebar.tsx` :
+
+```ts
+const ADMIN_EMAILS = ["cptskevin@gmail.com"];
+const isAdmin = Boolean(userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()));
+```
+
+- Seuls les emails de cette liste voient le bouton "Administration" dans la sidebar
+- `page.tsx` passe `userEmail={user?.email ?? null}` au composant `NewSidebar`
+- Le bouton navigue vers le `NavLevel` `"admin"` qui affiche `<AdminPanel />`
+- Pour ajouter un admin : ajouter son email a `ADMIN_EMAILS` dans `NewSidebar.tsx`
+- Cette approche est volontairement simple pour le lancement v1 ; une gestion par roles backend peut etre ajoutee plus tard
+
+### Systeme d'activation assistee (v4.0.0)
+
+Le parcours d'activation v1 est entierement assiste : FLARE connecte le chatbot, l'utilisateur ne touche pas a Facebook.
+
+**Machine a etats** (`ActivationRequest.status`) :
+
+```
+draft → awaiting_payment → payment_submitted → payment_verified
+     → awaiting_flare_page_admin_access → queued_for_activation
+     → activation_in_progress → testing → active
+     (+ blocked / rejected / canceled)
+```
+
+**Tunnel frontend** (`ChatbotActivationPage.tsx`) — 5 etapes :
+
+1. `choose_plan` — grille 4 plans (Starter 30k / Pro 60k / Business 120k / Entreprise sur devis)
+2. `payment` — instructions paiement manuel (MVola etc.), upload preuve, confirmation
+3. `config` — infos Facebook (nom page, URL, email admin)
+4. `flare_admin` — confirmation + notification technicien FLARE
+5. `awaiting` — polling automatique toutes les 15s jusqu'a passage en `active`
+
+**Regles importantes** :
+- `isActivationActive = activationRequest?.status === "active"` gate tout le cockpit chatbot
+- `showSetupWizard` necessite `isActivationActive` : le wizard self-serve ne s'affiche jamais avant activation
+- Le plan Entreprise ouvre `mailto:contact@ramsflare.com` et n'entre pas dans le tunnel
+- Le backend (`backend/routers/activation.py`) gere 22 routes : 13 client + 9 admin
 
 ### Routage multi-clés Gemini (2 avril 2026)
 

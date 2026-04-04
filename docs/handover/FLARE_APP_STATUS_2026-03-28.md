@@ -46,6 +46,31 @@ Le wizard bloque maintenant le CTA Facebook si le backend ne declare pas l'OAuth
 L'utilisateur voit un message d'indisponibilite avant clic, au lieu d'une erreur serveur apres clic.
 `Continuer plus tard` quitte le wizard sans le marquer localement comme termine.
 
+## Update 2026-04-05 - correctifs et documentation v1
+
+Tests live sur `flareai.ramsflare.com` ont revele trois problemes corriges dans la session :
+
+**1. Wizard self-serve bloquait le parcours activation**
+Le `ChatbotSetupWizard` (connexion Facebook self-serve) s'affichait avant l'activation, bloquant l'acces a l'interface chatbot. Corrige en conditionnant `showSetupWizard` par `isActivationActive` : le wizard ne peut apparaitre qu'apres activation reussie, si la configuration technique reste incomplete.
+
+**2. Panneau admin absent de la barre laterale**
+Le compte admin `cptskevin@gmail.com` ne voyait pas l'entree "Administration" dans le menu. Corrige dans `NewSidebar.tsx` : ajout de `ADMIN_ITEM`, `ADMIN_EMAILS`, prop `userEmail`, et affichage conditionnel du bouton admin. `page.tsx` passe maintenant `userEmail={user?.email ?? null}`.
+
+**3. Prix incorrects dans le tunnel d'activation**
+L'agent avait genere des prix incorrects (50 000 / 120 000 / 250 000 Ar). Corriges a : Starter 30 000 Ar/mois, Pro 60 000 Ar/mois, Business 120 000 Ar/mois, Entreprise sur devis (mailto:contact@ramsflare.com).
+
+**4. Etape 4 du tunnel — technicien FLARE**
+Reecrite suite a la decision produit : l'utilisateur ne doit plus ajouter FLARE comme admin Facebook lui-meme. L'etape affiche maintenant ses informations de page, et un bouton "Confirmer et notifier l'equipe" envoie la demande a un technicien FLARE.
+
+Commits de la session :
+- `feat: chatbot v1 activation launch -- tunnel, orders page, admin panel ops tabs` (prevision session precedente)
+- `fix: activation flow -- bypass setup wizard, add admin sidebar, fix prices` (e890129)
+
+Nouvelles pages frontend operationnelles :
+- `ChatbotActivationPage.tsx` — tunnel 5 etapes (plan → paiement → config → technicien → attente)
+- `ChatbotOrdersPage.tsx` — liste et gestion des commandes chatbot
+- `AdminActivationsTab`, `AdminPaymentsTab`, `AdminOrdersTab` — dans `AdminPanel.tsx`
+
 ## Update 2026-04-04 - lancement v1 activation assistee
 
 Specification complete de la version de lancement dans :
