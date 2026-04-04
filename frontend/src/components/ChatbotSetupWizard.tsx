@@ -18,6 +18,7 @@ import {
   type FacebookMessengerPage,
   type FacebookMessengerStatus,
   loadFacebookMessengerStatus,
+  META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
   runFacebookMessengerOAuthPopup,
 } from "@/lib/facebookMessenger";
 import { formatRelativeTime } from "@/components/chatbot/chatbotWorkspaceUtils";
@@ -49,11 +50,14 @@ const DEFAULT_PRODUCT_DRAFT: CatalogueItemInput = {
 
 const STEP_LABELS = ["Connexion page Facebook", "Identite rapide", "Mon entreprise"];
 const SESSION_RECOVERY_MESSAGE = "Votre session FLARE doit etre rechargee avant de continuer. Reouvrez votre session puis relancez Facebook.";
+const META_BLOCKER_GUIDANCE =
+  "Si Facebook affiche 'Fonctionnalite indisponible', le blocage vient de Meta. FLARE ne peut pas terminer la connexion tant que l'app Meta n'est pas ouverte aux nouveaux comptes publics.";
 
 function normalizeSessionError(message: string, fallback: string): string {
   const value = String(message || "").trim();
   if (!value) return fallback;
   if (value === "Connexion requise.") return SESSION_RECOVERY_MESSAGE;
+  if (value === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) return META_BLOCKER_GUIDANCE;
   return value;
 }
 
@@ -212,7 +216,7 @@ export default function ChatbotSetupWizard({
       return;
     }
     if (facebookOauthBlocked) {
-      setFacebookError("Connexion Facebook temporairement indisponible. Reessayez dans quelques minutes.");
+      setFacebookError(META_BLOCKER_GUIDANCE);
       return;
     }
     if (!canManagePages) {
@@ -459,6 +463,10 @@ export default function ChatbotSetupWizard({
               Cliquez sur le bouton, autorisez Facebook, puis revenez ici.
               Vos pages apparaissent ensuite dans FLARE : choisissez-en une et activez-la pour demarrer le bot.
             </p>
+            <div className="mt-4 rounded-xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-[13px] text-orange-50">
+              Si Facebook affiche <strong>&quot;Fonctionnalite indisponible&quot;</strong>, le blocage vient de Meta.
+              FLARE ne peut pas finaliser la connexion tant que l&apos;app Meta n&apos;est pas ouverte aux nouveaux comptes publics.
+            </div>
             <div className="mt-5 flex flex-wrap gap-3">
               <button
                 onClick={handleConnectFacebook}
@@ -478,7 +486,7 @@ export default function ChatbotSetupWizard({
 
             {facebookOauthBlocked ? (
               <div className="mt-4 rounded-xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-[13px] text-orange-50">
-                La connexion Facebook est temporairement indisponible. Reessayez dans quelques minutes.
+                {META_BLOCKER_GUIDANCE}
               </div>
             ) : null}
 

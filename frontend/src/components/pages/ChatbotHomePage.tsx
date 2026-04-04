@@ -10,6 +10,7 @@ import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
   resyncFacebookMessengerPages,
+  META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
   runFacebookMessengerOAuthPopup,
   type FacebookMessengerPage,
 } from "@/lib/facebookMessenger";
@@ -82,6 +83,9 @@ const ENTRIES = [
     iconBg: "bg-orange-500/12",
   },
 ];
+
+const META_BLOCKER_ALERT =
+  "Facebook a bloque la connexion avant le retour vers FLARE. Si la popup affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de votre espace FLARE.";
 
 export default function ChatbotHomePage({
   token,
@@ -270,6 +274,10 @@ export default function ChatbotHomePage({
       }
       if (/403|forbidden|permission|owner|admin/i.test(msg)) {
         alert("Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.");
+        return;
+      }
+      if (msg === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) {
+        alert(META_BLOCKER_ALERT);
         return;
       }
       alert(msg);

@@ -66,6 +66,9 @@ export interface ChatbotSetupStatus {
   active_page_id: string | null;
 }
 
+export const META_PUBLIC_ACCESS_BLOCKED_MESSAGE =
+  "La connexion Meta n'a pas abouti. Si Facebook affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de FLARE.";
+
 function buildAuthHeaders(token?: string | null): HeadersInit | undefined {
   if (!token) return undefined;
   return {
@@ -237,7 +240,7 @@ export async function runFacebookMessengerOAuthPopup(token: string): Promise<voi
       if (receivedResult) {
         resolve();
       } else {
-        reject(new Error("Fenêtre Meta fermée avant la fin de la connexion."));
+        reject(new Error(META_PUBLIC_ACCESS_BLOCKED_MESSAGE));
       }
     }, 400);
     window.addEventListener("message", handleMessage);
