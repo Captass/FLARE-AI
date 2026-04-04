@@ -95,6 +95,8 @@ export type ActiveView =
   | "files"
   | "admin";
 
+type AppView = NavLevel | ActiveView;
+
 function resolvePreferredFacebookPageId(
   pages: FacebookMessengerPage[],
   currentSelectedPageId: string | null | undefined,
@@ -306,7 +308,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
 
 export default function Home() {
   const { user, token, loading: authLoading, error: authError, getFreshToken, login, loginWithPassword, signUpWithPassword, loginWithGoogle, resetPassword, logout, sendSignupPin, verifySignupPin } = useAuth();
-  const [navStack, setNavStack] = useState<NavLevel[]>(["home"]);
+  const [navStack, setNavStack] = useState<AppView[]>(["home"]);
   const activeView = navStack[navStack.length - 1];
   const onPush = (level: NavLevel) => setNavStack(prev => [...prev, level]);
   const onPop = () => setNavStack(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
@@ -328,8 +330,7 @@ export default function Home() {
   const [organizationAccess, setOrganizationAccess] = useState<OrganizationAccessResponse | null>(null);
   const [organizationLoading, setOrganizationLoading] = useState(false);
   const [showOrganizationAccess, setShowOrganizationAccess] = useState(false);
-  const [organizationPromptSeen, setOrganizationPromptSeen] = useState(false);
-  const [pendingOrganizationTarget, setPendingOrganizationTarget] = useState<NavLevel | null>(null);
+  const [pendingOrganizationTarget, setPendingOrganizationTarget] = useState<AppView | null>(null);
   const [workspaceIdentity, setWorkspaceIdentity] = useState<WorkspaceIdentity | null>(null);
   const [setupStatus, setSetupStatus] = useState<ChatbotSetupStatus | null>(null);
   const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string | null>(null);
@@ -747,7 +748,7 @@ export default function Home() {
   const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
 
   useEffect(() => {
-    if (token && initialPrompt && activeView === "chat") {
+    if (token && initialPrompt && activeView === "assistant") {
       // Small delay to ensure ChatWindow is ready
       setTimeout(() => {
         // Envoi automatique ou pré-remplissage via un event ou state
@@ -787,7 +788,7 @@ export default function Home() {
     workspaceIdentity?.current_branding.logo_url || undefined
   );
 
-  const openOrganizationAccess = useCallback(async (targetView?: NavLevel) => {
+  const openOrganizationAccess = useCallback(async (targetView?: AppView) => {
     if (!user) {
       handleStart("login");
       return;
@@ -802,30 +803,12 @@ export default function Home() {
         return;
       }
     }
-    setOrganizationPromptSeen(true);
     setShowOrganizationAccess(true);
   }, [handleStart, loadOrganizationState, organizationAccess, user]);
 
   const openChatbotOrganizationAccess = useCallback(() => {
     void openOrganizationAccess("chatbot");
   }, [openOrganizationAccess]);
-
-  useEffect(() => {
-    if (!user) {
-      setOrganizationPromptSeen(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    if (!user || !organizationConnectionRequired || showOrganizationAccess || organizationPromptSeen) {
-      return;
-    }
-
-    const fallbackTarget = ORGANIZATION_REQUIRED_VIEWS.includes(activeView as ActiveView)
-      ? (activeView as NavLevel)
-      : ("chatbot" as NavLevel);
-    void openOrganizationAccess(fallbackTarget);
-  }, [activeView, openOrganizationAccess, organizationConnectionRequired, organizationPromptSeen, showOrganizationAccess, user]);
 
   const handleWorkspaceIdentitySaved = useCallback(
     async (next: WorkspaceIdentity) => {
@@ -981,20 +964,20 @@ export default function Home() {
   );
 
   const navigateWithAccess = useCallback(
-    (view: NavLevel | ActiveView | string) => {
+    (view: AppView | string) => {
       // Map legacy views to new nav levels
       if (view === "dashboard") view = "home";
       if (view === "chat") view = "assistant";
 
-      if (!user && GUEST_LOCKED_VIEWS.includes(view)) {
+      if (!user && GUEST_LOCKED_VIEWS.includes(view as ActiveView)) {
         requestAuth("login");
         return;
       }
       if (user && organizationConnectionRequired && ORGANIZATION_REQUIRED_VIEWS.includes(view as ActiveView)) {
-        void openOrganizationAccess(view as NavLevel);
+        void openOrganizationAccess(view as AppView);
         return;
       }
-      setNavStack([view as NavLevel]);
+      setNavStack([view as AppView]);
     },
     [openOrganizationAccess, organizationConnectionRequired, requestAuth, user]
   );
@@ -1036,7 +1019,7 @@ export default function Home() {
   );
 
   useEffect(() => {
-    if (!user && GUEST_LOCKED_VIEWS.includes(activeView)) {
+    if (!user && GUEST_LOCKED_VIEWS.includes(activeView as ActiveView)) {
       setNavStack(["home" as NavLevel]);
     }
   }, [activeView, user]);
@@ -1081,7 +1064,21 @@ export default function Home() {
     return <LandingPage onStart={handleStart} />;
   }
 
-  const viewTitleMap: Partial<Record<ActiveView, string>> = {
+  const viewTitleMap: Partial<Record<AppView, string>> = {
+    home: "Accueil",
+    automations: "Automatisations",
+    facebook: "Facebook",
+    google: "Google",
+    assistant: "Assistant IA",
+    guide: "Guide",
+    billing: "Abonnements",
+    contact: "Contact",
+    settings: "Parametres",
+    "chatbot-personnalisation": "Personnalisation",
+    "chatbot-parametres": "Parametres",
+    "chatbot-dashboard": "Tableau de bord",
+    "chatbot-clients": "Clients",
+    "chatbot-client-detail": "Client",
     chat: activeConvTitle || "Assistant IA",
     memory: "Memoire de l'agent",
     dashboard: "Accueil",
@@ -1095,8 +1092,23 @@ export default function Home() {
     admin: "Controle Administrateur",
   };
   const viewTitle = viewTitleMap[activeView];
+  const breadcrumbStack = navStack.filter((view): view is NavLevel => view in NAV_LABELS);
 
-  const resolvedViewTitleMap: Partial<Record<ActiveView, string>> = {
+  const resolvedViewTitleMap: Partial<Record<AppView, string>> = {
+    home: "Accueil",
+    automations: "Automatisations",
+    facebook: "Facebook",
+    google: "Google",
+    assistant: "Assistant IA",
+    guide: "Guide",
+    billing: "Abonnements",
+    contact: "Contact",
+    settings: "Parametres",
+    "chatbot-personnalisation": "Personnalisation",
+    "chatbot-parametres": "Parametres",
+    "chatbot-dashboard": "Tableau de bord",
+    "chatbot-clients": "Clients",
+    "chatbot-client-detail": "Client",
     chat: activeConvTitle || "Assistant IA",
     dashboard: "Accueil",
     chatbot: "Chatbot Facebook",
@@ -1112,7 +1124,21 @@ export default function Home() {
   };
   const resolvedViewTitle = resolvedViewTitleMap[activeView] ?? viewTitle;
 
-  const resolvedViewSubtitleMap: Partial<Record<ActiveView, string>> = {
+  const resolvedViewSubtitleMap: Partial<Record<AppView, string>> = {
+    home: "Votre espace FLARE actif",
+    automations: "Modules disponibles et verrouilles",
+    facebook: "Connexion et statut Facebook",
+    google: "Connexion Google",
+    assistant: sessionId ? "Conversation assistant active" : "Assistant d'ecriture disponible",
+    guide: "Reperes rapides pour demarrer",
+    billing: "Offre et modules actifs",
+    contact: "Besoin d'aide ou de support",
+    settings: "Reglages du compte et de l'espace",
+    "chatbot-personnalisation": "Identite, ton et entreprise du chatbot",
+    "chatbot-parametres": "Pages Facebook, catalogue et options",
+    "chatbot-dashboard": "Stats et verification Messenger",
+    "chatbot-clients": "Conversations et leads du chatbot",
+    "chatbot-client-detail": "Details du contact",
     chat: sessionId ? "Conversation assistant active" : "Assistant d'ecriture disponible",
     dashboard: "Choisissez un agent ou une automatisation",
     chatbot: "Clients a suivre, messages et depenses du chatbot",
@@ -1128,8 +1154,14 @@ export default function Home() {
   };
   const resolvedViewSubtitle = resolvedViewSubtitleMap[activeView] ?? "";
 
-  const viewSubtitleMap: Partial<Record<ActiveView, string>> = {
+  const viewSubtitleMap: Partial<Record<AppView, string>> = {
+    assistant: sessionId ? `Session active` : "Pret a vous aider",
     chat: sessionId ? `Session active` : "Pret a vous aider",
+    home: "Vue d'ensemble",
+    guide: "Guide rapide",
+    billing: "Abonnement et modules",
+    contact: "Contacter FLARE",
+    settings: "Preferences et securite",
     memory: "Informations memorisees contextuelles",
     dashboard: "Vue d'ensemble",
     prospection: "Page bloquee pour le moment",
@@ -1142,6 +1174,21 @@ export default function Home() {
     admin: "Surveillance de la consommation et des couts",
   };
   const viewSubtitle = viewSubtitleMap[activeView];
+  const sidebarActiveView: NavLevel =
+    activeView === "assistant" || activeView === "chat"
+      ? "assistant"
+      : activeView === "dashboard" ||
+          activeView === "leads" ||
+          activeView === "conversations" ||
+          activeView === "expenses" ||
+          activeView === "chatbotFiles" ||
+          activeView === "automationHub" ||
+          activeView === "prospection" ||
+          activeView === "content" ||
+          activeView === "followup" ||
+          activeView === "agents"
+        ? "chatbot"
+        : (activeView as NavLevel);
 
   // Variables supprimées — la navigation assistant est maintenant dans la sidebar uniquement
 
@@ -1207,7 +1254,7 @@ export default function Home() {
 
         {/* Sidebar */}
         <NewSidebar
-          activeView={activeView}
+          activeView={sidebarActiveView}
           onNavigate={(v) => { navigateWithAccess(v); setSidebarOpen(false); }}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
@@ -1236,12 +1283,12 @@ export default function Home() {
                  Accueil
                </span>
              ) : null}
-              {navStack.length > 1 && (
-                <div className="flex-1 min-w-0">
-                  <NavBreadcrumb navStack={navStack} onPop={onPop} />
-                </div>
-              )}
-              {activeView !== "dashboard" && (
+               {breadcrumbStack.length > 1 && (
+                 <div className="flex-1 min-w-0">
+                  <NavBreadcrumb navStack={breadcrumbStack} onPop={onPop} />
+                 </div>
+               )}
+              {activeView !== "home" && (
                 <div className="hidden md:flex flex-col items-start">
                   <span className="text-[16px] md:text-[18px] font-medium text-[var(--text-primary)] tracking-wide truncate font-sans">{resolvedViewTitle}</span>
                 </div>
@@ -1259,8 +1306,8 @@ export default function Home() {
                 </span>
              </div>
 
-             <div className={`flex items-center gap-1.5 md:gap-3 ${activeView !== "dashboard" ? "md:border-l md:border-white/[0.04] md:pl-4" : ""}`}>
-                 {activeView === "chat" && (
+              <div className={`flex items-center gap-1.5 md:gap-3 ${activeView !== "home" ? "md:border-l md:border-white/[0.04] md:pl-4" : ""}`}>
+                  {activeView === "assistant" && (
                     <button
                       onClick={() => setShowFilesPanel(!showFilesPanel)}
                       className={`p-2 md:p-2.5 rounded-xl transition-all ${showFilesPanel ? 'bg-[var(--bg-active)] text-[var(--text-primary)] border border-[var(--border-glass)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'}`}
@@ -1274,7 +1321,7 @@ export default function Home() {
                  <div className="flex items-center gap-2">
                  {user && organizationAccess ? (
                    <button
-                     onClick={openOrganizationAccess}
+                      onClick={() => { void openOrganizationAccess(); }}
                      className="hidden md:flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-left transition-colors hover:border-white/[0.08] hover:bg-white/[0.04]"
                      title="Choisir l'espace"
                    >
@@ -1323,9 +1370,9 @@ export default function Home() {
         ) : activeView === "facebook" ? (
           <motion.div key="facebook" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><FacebookPage onPush={onPush} /></motion.div>
         ) : activeView === "google" ? (
-          <motion.div key="google" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GooglePage onPush={onPush} /></motion.div>
-        ) : activeView === "chatbot" || activeView === "chatbot-hub" ? (
-          <motion.div key="chatbot-hub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage
+          <motion.div key="google" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GooglePage /></motion.div>
+        ) : activeView === "chatbot" ? (
+          <motion.div key="chatbot" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage
               onPush={onPush}
               token={token}
               getFreshToken={getFreshToken}
@@ -1362,11 +1409,11 @@ export default function Home() {
         ) : activeView === "settings" ? (
            <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onThemeToggle={handleThemeToggle} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
         ) : activeView === "billing" ? (
-           <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BillingPage token={token} getFreshToken={getFreshToken} /></motion.div>
+           <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BillingPage token={token} /></motion.div>
         ) : activeView === "guide" ? (
-           <motion.div key="guide" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GuidePage onPush={onPush} /></motion.div>
+           <motion.div key="guide" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GuidePage /></motion.div>
         ) : activeView === "contact" ? (
-           <motion.div key="contact" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ContactPage userEmail={user?.email || ""} /></motion.div>
+           <motion.div key="contact" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ContactPage /></motion.div>
         ) : activeView === "assistant" || activeView === "chat" ? (
           <motion.div key="assistant" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex flex-1 overflow-hidden relative">
             <AssistantPage

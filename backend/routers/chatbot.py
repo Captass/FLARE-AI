@@ -175,7 +175,7 @@ def _organization_context(
 
     can_edit = user_can_edit_organization(user_email, organization_slug, organization)
     if require_edit and not can_edit:
-        raise HTTPException(status_code=403, detail="Seuls les owners/admins peuvent modifier le chatbot.")
+        raise HTTPException(status_code=403, detail="Seuls le proprietaire ou un admin peuvent modifier le chatbot.")
 
     return {
         "organization_slug": organization_slug,

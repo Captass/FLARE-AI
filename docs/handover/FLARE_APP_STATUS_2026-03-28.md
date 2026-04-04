@@ -46,6 +46,33 @@ Le wizard bloque maintenant le CTA Facebook si le backend ne declare pas l'OAuth
 L'utilisateur voit un message d'indisponibilite avant clic, au lieu d'une erreur serveur apres clic.
 `Continuer plus tard` quitte le wizard sans le marquer localement comme termine.
 
+## Update 2026-04-04 - workspace owner self-serve
+
+Le parcours de lancement a ete simplifie pour le mode solo :
+
+- tout utilisateur connecte peut creer son propre workspace FLARE
+- le createur du workspace devient automatiquement `owner`
+- le workspace cree devient immediatement l'espace actif
+- le parcours renvoie ensuite directement vers `Chatbot Facebook`
+- l'utilisateur connecte Facebook depuis cet espace, pas depuis l'espace personnel
+- seuls le proprietaire ou un admin peuvent connecter, activer, desactiver ou supprimer une page Facebook
+- les autres membres peuvent voir l'etat, mais pas gerer Facebook
+- si Meta ne renvoie pas les droits de page `MANAGE` et `MESSAGING`, la page reste visible mais l'activation est refusee avec un message clair
+- un reconnect OAuth ne doit plus remettre silencieusement une page active a `OFF`
+
+Verification technique faite le 4 avril 2026 :
+
+- `python -m py_compile backend/core/organizations.py backend/routers/organizations.py backend/routers/facebook_pages.py backend/routers/chatbot.py` -> OK
+- `PYTHONPATH=backend python -m unittest backend.tests.test_organizations` -> OK
+- `npm run build` frontend -> OK avec contournement Windows via chemin neutre (`subst X:`) pour eviter le bug Next.js sur un chemin contenant une apostrophe
+
+Reste a valider en QA manuelle :
+
+- compte FLARE neuf -> `Creer mon espace` -> `Connecter Facebook` -> importer une page -> `Activer`
+- verifier qu'un membre non owner/admin ne peut pas connecter ni activer Facebook
+- verifier qu'une page Facebook sans droits admin ne peut pas etre activee
+
+
 ## Update 2026-03-31
 
 La connexion Facebook production a ete remise en etat cote runtime :
@@ -241,6 +268,13 @@ Hotfix self-serve workspace 2026-04-04:
 - `GET /api/facebook/status` expose le role workspace courant, la capacite de connexion Facebook et la raison de blocage (`facebook_access_code`, `facebook_access_message`), plus `permission_warning_count` pour les pages sans droits Meta complets
 - `POST /api/facebook/pages/{page_id}/activate` refuse explicitement l'activation si Meta ne retourne pas les taches requises (`MANAGE`, `MESSAGING`) et renvoie un message utilisateur clair
 - `GET /api/facebook/auth?force_reauth=true` est maintenant reserve au support interne via cle dashboard; les appels frontend standards ignorent ce mode
+
+Audit stabilisation 2026-04-04:
+
+- le fallback frontend qui reouvrait automatiquement le chooser d'espace a chaque session personnelle a ete retire pour eviter un parcours parasite; l'ouverture du chooser reste maintenant liee a une action claire (`Creer mon espace`, ouverture Chatbot Facebook, changement d'espace)
+- aucun `window.prompt` ni `window.location.reload()` ne reste dans le flow `workspace -> Facebook -> activation`
+- verification locale refaite sur ce lot: `python -m py_compile backend/core/organizations.py backend/routers/organizations.py backend/routers/facebook_pages.py backend/routers/chatbot.py`, `PYTHONPATH=backend python -m unittest backend.tests.test_organizations`, `npm run build`, `npx eslint` cible sur les fichiers workspace/Facebook
+- resultat connu au 4 avril 2026: le parcours self-serve FLARE est stabilise cote code, mais la preuve finale "tous les utilisateurs" demande encore une QA reelle avec un compte FLARE neuf, une page Facebook admin valide et un message Messenger entrant
 
 Les roles actuellement exposes dans l'app sont :
 

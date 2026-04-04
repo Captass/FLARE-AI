@@ -26,6 +26,7 @@ Le but est simple :
 - `Automatisations` et les autres agents non prets restent visibles mais verrouilles honnetement
 - chaque compte peut travailler dans son espace personnel ou dans une organisation partagee
 - le choix d'organisation se fait apres connexion quand un compte partage plusieurs espaces
+- un compte connecte peut maintenant creer son propre workspace FLARE depuis l'app, puis ouvrir directement `Chatbot Facebook`
 - chaque organisation peut afficher son propre nom, logo, offre et modules actifs
 - les droits suivent maintenant le role dans l'organisation : `Proprietaire`, `Admin`, `Membre`, `Lecture`
 - l'identite visuelle de l'espace actif se regle dans `Parametres > Identite`

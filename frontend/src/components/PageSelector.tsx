@@ -83,11 +83,11 @@ export default function PageSelector({
             <Facebook className="w-8 h-8 text-[#1877F2]" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-fg/90 mb-1">Aucune page Facebook enregistrée</h3>
+            <h3 className="text-lg font-semibold text-fg/90 mb-1">Aucune page Facebook enregistree</h3>
             <p className="text-sm text-fg/50 max-w-lg mx-auto leading-relaxed text-left sm:text-center">
-              <strong className="text-fg/70">Étape 1 - Autorisation Facebook :</strong> une fenêtre Facebook s'ouvre. Autorisez votre compte pour importer vos pages dans FLARE.
+              <strong className="text-fg/70">Etape 1 - Autorisation Facebook :</strong> une fenetre Facebook se lance. Autorisez votre compte pour importer vos pages dans FLARE.
               <br />
-              <strong className="text-fg/70">Étape 2 - Activation :</strong> vos pages apparaissent ici ; choisissez-en une puis cliquez sur <strong className="text-fg/70">Activer</strong>.
+              <strong className="text-fg/70">Etape 2 - Activation :</strong> vos pages apparaissent ici ; choisissez-en une puis cliquez sur <strong className="text-fg/70">Activer</strong>.
             </p>
           </div>
           <button
@@ -140,7 +140,7 @@ export default function PageSelector({
             className="inline-flex items-center gap-2 rounded-lg bg-[#1877F2]/10 border border-[#1877F2]/20 px-3 py-1.5 text-xs font-medium text-[#1877F2] hover:bg-[#1877F2]/15 transition-colors disabled:opacity-40 disabled:pointer-events-none"
           >
             {connectMetaBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-            Ajouter (Meta)
+            Ouvrir Meta
           </button>
         </div>
       </div>

@@ -539,20 +539,20 @@ export default function SettingsModal({
             <div className="animate-fade-in-up space-y-6">
               <div className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-5">
                 <h3 className="text-[14px] font-bold uppercase tracking-[0.05em] text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">
-                  Chatbot de l'organisation active
+                  Chatbot de l&apos;organisation active
                 </h3>
                 <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-muted)]">
-                  Ces reglages pilotent le bot Messenger de l'espace actuellement actif. Ils sont separes des preferences de l'assistant general.
+                  Ces reglages pilotent le bot Messenger de l&apos;espace actuellement actif. Ils sont separes des preferences de l&apos;assistant general.
                 </p>
               </div>
 
               {!isOrganizationScope ? (
                 <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
                   <h4 className="text-[16px] font-semibold text-[var(--text-primary)]">
-                    Ouvrez d'abord une organisation
+                    Ouvrez d&apos;abord une organisation
                   </h4>
                   <p className="mt-2 max-w-[38rem] text-[13px] leading-6 text-[var(--text-muted)]">
-                    Le chatbot SaaS fonctionne dans un scope organisation. Choisissez votre organisation active, puis revenez ici pour modifier le ton, les offres et le message d'accueil.
+                    Le chatbot SaaS fonctionne dans un scope organisation. Choisissez votre organisation active, puis revenez ici pour modifier le ton, les offres et le message d&apos;accueil.
                   </p>
                   {onOpenOrganizationAccess && (
                     <button
@@ -594,7 +594,7 @@ export default function SettingsModal({
 
                   {!canEditChatbot && (
                     <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-[13px] leading-6 text-amber-100/90">
-                      Seuls les owners/admins peuvent enregistrer ces reglages.
+                      Seuls le proprietaire ou un admin peuvent enregistrer ces reglages.
                     </div>
                   )}
                   {chatbotError && (

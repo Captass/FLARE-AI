@@ -243,7 +243,7 @@ export default function OrganizationAccessPanel({
               <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
                 <p className="text-[11px] uppercase tracking-[0.14em] text-white/25">Nouvel espace</p>
                 <p className="mt-1 text-[11px] text-white/30">
-                  Vous pouvez creer votre propre espace meme si vous etes membre d'un autre.
+                  Vous pouvez creer votre propre espace meme si vous appartenez deja a un autre.
                 </p>
                 <div className="mt-3 flex items-center gap-2">
                   <input

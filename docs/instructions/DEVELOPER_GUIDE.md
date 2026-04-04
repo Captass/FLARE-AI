@@ -391,3 +391,20 @@ Toujours laisser :
 - ce qui a été déployé (avec l'URL Render si applicable)
 - ce qu'il reste à faire
 - ce guide à jour
+
+#### Build frontend Next.js si `npm run build` casse sur Windows
+
+Sur certaines machines Windows, `next build` peut echouer avec `ENOENT ... rename ... 500.html` quand le projet est dans un chemin contenant une apostrophe.
+
+Contournement fiable :
+
+```powershell
+$frontend = "D:\Travail\RAM'S FLARE\Flare Group\Flare AI\FLARE AI\frontend"
+subst X: $frontend
+Set-Location X:\
+npm run build
+Set-Location C:\Windows\System32
+subst X: /d
+```
+
+Le but est de lancer le build depuis un chemin neutre sans apostrophe. Ce n'est pas un bug produit FLARE, c'est un probleme de chemin Windows/Next.js.

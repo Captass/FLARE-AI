@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import {
   activateFacebookMessengerPage,
+  type FacebookMessengerPage,
   type FacebookMessengerStatus,
   loadFacebookMessengerStatus,
   runFacebookMessengerOAuthPopup,

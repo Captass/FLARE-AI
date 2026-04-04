@@ -61,7 +61,7 @@ def _facebook_access_info(scope_type: str, current_user_role: Optional[str]) -> 
         return {
             "can_manage_facebook": False,
             "facebook_access_code": "workspace_role_forbidden",
-            "facebook_access_message": "Seuls les owners/admins peuvent connecter et activer Facebook.",
+            "facebook_access_message": "Seuls le proprietaire ou un admin peuvent connecter et activer Facebook.",
         }
     return {
         "can_manage_facebook": True,

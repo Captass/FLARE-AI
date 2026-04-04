@@ -290,7 +290,7 @@ export default function ChatbotHomePage({
       const msg = e instanceof Error ? e.message : "";
       if (/expir|reconnect|session|actualiser la liste/i.test(msg)) {
         alert(
-          `${msg}\n\nUtilisez le bouton "Ajouter (Meta)" pour rouvrir Facebook et renouveler l'autorisation.`
+          `${msg}\n\nUtilisez le bouton "Ouvrir Meta" pour rouvrir Facebook et renouveler l'autorisation.`
         );
       } else {
         alert(msg || "Impossible d'actualiser la liste des pages.");
@@ -379,7 +379,7 @@ export default function ChatbotHomePage({
               onClick={() => setSkipSetupWizard(true)}
               className="text-sm text-fg/45 hover:text-fg/70 underline underline-offset-4 transition-colors"
             >
-              Acceder a l'accueil du chatbot sans terminer
+              Acceder au chatbot sans terminer le setup
             </button>
           </div>
         </div>
