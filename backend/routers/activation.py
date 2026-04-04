@@ -78,17 +78,50 @@ def _add_event(db: Session, request_id: str, event_type: str, actor_type: str, a
     ))
 
 
+DEFAULT_PAYMENT_METHODS: List[Dict[str, Any]] = [
+    {
+        "code": "mvola",
+        "label": "MVola",
+        "recipient_name": "FLARE AI",
+        "recipient_number": "034 12 345 67",
+        "instructions": "Envoyez le montant exact via MVola au numero ci-dessus. Notez bien la reference de transaction.",
+        "currency": "MGA",
+        "enabled": True,
+    },
+    {
+        "code": "orange_money",
+        "label": "Orange Money",
+        "recipient_name": "FLARE AI",
+        "recipient_number": "032 12 345 67",
+        "instructions": "Envoyez le montant exact via Orange Money au numero ci-dessus. Notez bien la reference de transaction.",
+        "currency": "MGA",
+        "enabled": True,
+    },
+    {
+        "code": "card",
+        "label": "Carte bancaire",
+        "recipient_name": "FLARE AI",
+        "recipient_number": "Virement bancaire",
+        "instructions": "Contactez-nous par email a contact@ramsflare.com pour recevoir les coordonnees bancaires et finaliser le paiement.",
+        "currency": "MGA",
+        "enabled": True,
+    },
+]
+
+
 def _get_manual_payment_methods() -> List[Dict[str, Any]]:
     raw = (settings.MANUAL_PAYMENT_METHODS_JSON or "").strip()
     if not raw:
-        return []
+        # Fallback to defaults when env var is not configured
+        return DEFAULT_PAYMENT_METHODS
     try:
         methods = json.loads(raw)
         if not isinstance(methods, list):
-            return []
-        return [m for m in methods if isinstance(m, dict) and m.get("enabled")]
+            return DEFAULT_PAYMENT_METHODS
+        configured = [m for m in methods if isinstance(m, dict) and m.get("enabled")]
+        return configured if configured else DEFAULT_PAYMENT_METHODS
     except Exception:
-        return []
+        return DEFAULT_PAYMENT_METHODS
 
 
 # ── Launch config ─────────────────────────────────────────────────────────────
