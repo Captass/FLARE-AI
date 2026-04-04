@@ -1318,6 +1318,7 @@ export default function Home() {
           onLogout={logoutWithScopeReset}
           logoUrl={resolvedBrandLogoUrl}
           lang={lang}
+          userEmail={user?.email ?? null}
         />
 
       {/* Zone principale 3D Glass */}

@@ -197,14 +197,19 @@ export default function ChatbotHomePage({
   const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
 
+  const isActivationActive = activationRequest?.status === "active";
+
   useEffect(() => {
     if (setupStatus?.step === "complete") {
       setSkipSetupWizard(false);
     }
   }, [setupStatus?.step]);
 
+  // En mode activation assistee v1, on ne montre le setup wizard QUE si
+  // l'activation est terminee (status=active) et le setup chatbot pas fini.
+  // Sinon on montre le tunnel d'activation.
   const showSetupWizard =
-    Boolean(setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
+    Boolean(isActivationActive && setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
 
   const hasPageSelected = Boolean(selectedPageId && pages.some((page) => page.page_id === selectedPageId));
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
@@ -505,7 +510,6 @@ export default function ChatbotHomePage({
       overview?.active_page?.webhook_subscribed
     );
 
-  const isActivationActive = activationRequest?.status === "active";
   const activationBanner = getActivationBanner(currentScopeType, currentPlanId, activationRequest);
 
   if (showSetupWizard && setupStatus) {

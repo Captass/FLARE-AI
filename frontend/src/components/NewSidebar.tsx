@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronRight,
+  ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
@@ -46,6 +47,8 @@ interface NewSidebarProps {
   lang?: "fr" | "en";
   /** Token utilisateur (non utilisé dans la sidebar mais accepté pour compat) */
   token?: string | null;
+  /** Email de l'utilisateur (pour vérifier accès admin) */
+  userEmail?: string | null;
 }
 
 // ─── Navigation items ─────────────────────────────────────────────────────────
@@ -67,6 +70,15 @@ const SECONDARY_ITEMS: NavItem[] = [
   { id: "billing", labelFr: "Abonnements", labelEn: "Subscriptions", icon: CreditCard },
   { id: "contact", labelFr: "Contactez-nous", labelEn: "Contact us", icon: MessageCircle },
 ];
+
+const ADMIN_ITEM: NavItem = {
+  id: "admin" as NavLevel,
+  labelFr: "Administration",
+  labelEn: "Administration",
+  icon: ShieldCheck,
+};
+
+const ADMIN_EMAILS = ["cptskevin@gmail.com"];
 
 const SETTINGS_ITEM: NavItem = {
   id: "settings",
@@ -196,17 +208,23 @@ export default function NewSidebar({
   open = false,
   onClose,
   lang = "fr",
+  userEmail,
 }: NewSidebarProps) {
   const [expanded, setExpanded] = useState(true);
   const sidebarWidth = expanded ? "w-[240px]" : "w-[64px]";
 
+  const isAdmin = Boolean(userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()));
+
   // Detect which top-level section is "active" based on current nav level
   const activeMainItem = (["automations", "facebook", "google", "chatbot",
     "chatbot-personnalisation", "chatbot-parametres", "chatbot-dashboard",
-    "chatbot-clients", "chatbot-client-detail"] as NavLevel[]).includes(activeView)
+    "chatbot-clients", "chatbot-client-detail", "chatbot-orders",
+    "chatbot-activation"] as NavLevel[]).includes(activeView)
     ? "automations"
     : activeView === "assistant"
     ? "assistant"
+    : activeView === ("admin" as NavLevel)
+    ? "admin"
     : null;
 
   const navigate = (level: NavLevel) => {
@@ -311,6 +329,22 @@ export default function NewSidebar({
               />
             ))}
           </nav>
+
+          {/* Admin (visible uniquement pour les admins) */}
+          {isAdmin && (
+            <>
+              <SectionDivider />
+              <nav className="space-y-0.5" aria-label="Administration">
+                <NavButton
+                  item={ADMIN_ITEM}
+                  isActive={activeView === ("admin" as NavLevel)}
+                  expanded={expanded}
+                  lang={lang}
+                  onClick={() => navigate("admin" as NavLevel)}
+                />
+              </nav>
+            </>
+          )}
 
           {/* Spacer */}
           <div className="flex-1" />

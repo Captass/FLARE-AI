@@ -14,6 +14,7 @@ import {
   Upload,
   Copy,
   Check,
+  MessageSquare,
 } from "lucide-react";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import {
@@ -60,7 +61,7 @@ const STEP_LABELS: Record<WizardStep, string> = {
   choose_plan: "Offre",
   payment: "Paiement",
   config: "Configuration",
-  flare_admin: "Acces page",
+  flare_admin: "Connexion",
   awaiting: "Activation",
 };
 
@@ -68,7 +69,7 @@ const PLANS = [
   {
     id: "starter",
     name: "Starter",
-    price: "50 000 Ar/mois",
+    price: "30 000 Ar/mois",
     features: [
       "1 page Facebook",
       "500 messages/mois",
@@ -79,7 +80,7 @@ const PLANS = [
   {
     id: "pro",
     name: "Pro",
-    price: "120 000 Ar/mois",
+    price: "60 000 Ar/mois",
     popular: true,
     features: [
       "3 pages Facebook",
@@ -93,7 +94,7 @@ const PLANS = [
   {
     id: "business",
     name: "Business",
-    price: "250 000 Ar/mois",
+    price: "120 000 Ar/mois",
     features: [
       "Pages illimitees",
       "Messages illimites",
@@ -104,12 +105,26 @@ const PLANS = [
       "Operateur FLARE assigne",
     ],
   },
+  {
+    id: "enterprise",
+    name: "Entreprise",
+    price: "Sur devis",
+    features: [
+      "Tout Business inclus",
+      "Solution sur mesure",
+      "Integration personnalisee",
+      "Accompagnement dedie",
+      "SLA garanti",
+    ],
+    contact: true,
+  },
 ];
 
 const PLAN_PRICES: Record<string, string> = {
-  starter: "50 000",
-  pro: "120 000",
-  business: "250 000",
+  starter: "30 000",
+  pro: "60 000",
+  business: "120 000",
+  enterprise: "Sur devis",
 };
 
 const SECTORS = [
@@ -661,16 +676,23 @@ export default function ChatbotActivationPage({
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {PLANS.map((plan) => {
                   const isSelected = selectedPlanId === plan.id;
+                  const isEnterprise = (plan as any).contact === true;
                   return (
                     <motion.button
                       key={plan.id}
                       type="button"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setSelectedPlanId(plan.id)}
+                      onClick={() => {
+                        if (isEnterprise) {
+                          window.open("mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI", "_blank");
+                          return;
+                        }
+                        setSelectedPlanId(plan.id);
+                      }}
                       className={`relative flex flex-col items-start text-left p-5 rounded-2xl border transition-all duration-200 ${
                         isSelected
                           ? "border-orange-500 bg-orange-500/5 shadow-lg shadow-orange-500/10"
@@ -699,14 +721,21 @@ export default function ChatbotActivationPage({
                           </li>
                         ))}
                       </ul>
-                      {isSelected && (
+                      {isEnterprise ? (
+                        <div className="mt-4 w-full">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-fg/50">
+                            <MessageSquare size={14} />
+                            Contactez-nous
+                          </span>
+                        </div>
+                      ) : isSelected ? (
                         <div className="mt-4 w-full">
                           <span className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-400">
                             <CheckCircle2 size={14} />
                             Selectionne
                           </span>
                         </div>
-                      )}
+                      ) : null}
                     </motion.button>
                   );
                 })}
@@ -1135,11 +1164,10 @@ export default function ChatbotActivationPage({
             >
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-fg/85 mb-1">
-                  Ajoutez FLARE comme admin
+                  Connexion de votre page Facebook
                 </h2>
                 <p className="text-sm text-[var(--text-muted)]">
-                  Pour activer votre chatbot, FLARE doit etre administrateur de
-                  votre page Facebook.
+                  Un technicien FLARE va connecter votre chatbot a votre page Facebook.
                 </p>
               </div>
 
@@ -1150,72 +1178,40 @@ export default function ChatbotActivationPage({
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-fg/85">
-                      Compte FLARE a ajouter
+                      Comment ca marche ?
                     </p>
-                    <p className="text-base font-bold text-orange-400">
-                      {launchConfig?.flare_operator?.name || "FLARE AI"}
+                    <p className="text-xs text-fg/50 mt-1 leading-relaxed">
+                      Notre equipe technique se chargera de connecter votre chatbot
+                      a votre page Facebook. Vous n&apos;avez rien a faire de votre cote.
                     </p>
-                    {launchConfig?.flare_operator?.contact && (
-                      <p className="text-xs text-fg/40 mt-0.5">
-                        {launchConfig.flare_operator.contact}
-                      </p>
-                    )}
                   </div>
                 </div>
 
                 <div className="border-t border-fg/[0.06] pt-4">
                   <p className="text-sm font-semibold text-fg/70 mb-3">
-                    Instructions :
+                    Informations de votre page :
                   </p>
-                  <ol className="flex flex-col gap-3 text-sm text-fg/60 list-decimal list-inside">
-                    <li>
-                      Ouvrez votre page Facebook dans un navigateur web.
-                    </li>
-                    <li>
-                      Allez dans{" "}
-                      <span className="text-fg/80 font-medium">
-                        Parametres de la page
-                      </span>{" "}
-                      (en bas a gauche).
-                    </li>
-                    <li>
-                      Cliquez sur{" "}
-                      <span className="text-fg/80 font-medium">
-                        Roles de la page
-                      </span>
-                      .
-                    </li>
-                    <li>
-                      Dans le champ{" "}
-                      <span className="text-fg/80 font-medium">
-                        &quot;Attribuer un nouveau role&quot;
-                      </span>
-                      , tapez{" "}
-                      <span className="font-mono text-orange-400 bg-white/5 px-1.5 py-0.5 rounded">
-                        {launchConfig?.flare_operator?.name || "FLARE AI"}
-                      </span>
-                      .
-                    </li>
-                    <li>
-                      Selectionnez le role{" "}
-                      <span className="text-fg/80 font-medium">
-                        Administrateur
-                      </span>
-                      .
-                    </li>
-                    <li>
-                      Cliquez sur{" "}
-                      <span className="text-fg/80 font-medium">Ajouter</span>{" "}
-                      et confirmez avec votre mot de passe Facebook.
-                    </li>
-                  </ol>
+                  <div className="flex flex-col gap-2 text-sm text-fg/60">
+                    <div className="flex justify-between">
+                      <span>Page Facebook</span>
+                      <span className="text-fg/80 font-medium">{cfg.facebook_page_name || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>URL</span>
+                      <span className="text-fg/80 font-medium truncate max-w-[60%]">{cfg.facebook_page_url || "-"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Email admin</span>
+                      <span className="text-fg/80 font-medium">{cfg.facebook_admin_email || "-"}</span>
+                    </div>
+                  </div>
                 </div>
 
-                {launchConfig?.assistance_text && (
-                  <div className="rounded-lg bg-blue-500/5 border border-blue-500/10 px-4 py-3 text-xs text-fg/50 leading-relaxed">
-                    {launchConfig.assistance_text}
-                  </div>
-                )}
+                <div className="rounded-lg bg-blue-500/5 border border-blue-500/10 px-4 py-3 text-xs text-fg/50 leading-relaxed">
+                  En cliquant sur &quot;Confirmer&quot;, un technicien FLARE sera notifie
+                  et se chargera de connecter votre chatbot. Vous serez prevenu
+                  des que votre chatbot sera actif.
+                </div>
 
                 {/* Checkbox */}
                 <label className="flex items-start gap-3 mt-2 cursor-pointer group">
@@ -1226,8 +1222,8 @@ export default function ChatbotActivationPage({
                     className="mt-0.5 h-5 w-5 rounded border-fg/20 bg-white/5 text-orange-500 focus:ring-orange-500/30 accent-orange-500"
                   />
                   <span className="text-sm text-fg/70 group-hover:text-fg/90 transition-colors">
-                    J&apos;ai ajoute le compte FLARE comme administrateur de ma
-                    page Facebook.
+                    Je confirme les informations ci-dessus et je souhaite que
+                    l&apos;equipe FLARE connecte mon chatbot.
                   </span>
                 </label>
               </div>
@@ -1252,7 +1248,7 @@ export default function ChatbotActivationPage({
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <>
-                      Confirmer et finaliser
+                      Confirmer et notifier l&apos;equipe
                       <ArrowRight size={16} />
                     </>
                   )}
