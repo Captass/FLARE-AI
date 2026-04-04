@@ -47,6 +47,20 @@ class FacebookPageActivationPayload(BaseModel):
     page_id: str
 
 
+class FacebookAuthDebugResponse(BaseModel):
+    organization_slug: str
+    organization_name: str
+    workspace_role: str | None = None
+    workspace_role_label: str | None = None
+    client_id: str
+    redirect_uri: str
+    frontend_origin: str
+    graph_version: str
+    scopes: list[str]
+    oauth_configured: bool
+    backend_url: str
+
+
 def _facebook_access_context(scope_type: str, workspace_role: str | None) -> dict[str, Any]:
     normalized_role = str(workspace_role or "").strip().lower()
     if scope_type != "organization":
@@ -964,6 +978,30 @@ async def start_facebook_auth(
         "oauth_redirect_uri": callback_url,
         "meta_graph_version": _graph_version(),
     }
+
+
+@router.get("/auth-debug", response_model=FacebookAuthDebugResponse)
+async def get_facebook_auth_debug(
+    request: Request,
+    frontend_origin: str | None = Query(default=None),
+    authorization: str | None = Header(None),
+):
+    context = _organization_context_from_authorization(authorization, require_edit=True)
+    callback_url = _facebook_callback_url(request)
+    backend_public = _public_backend_url(request)
+    return FacebookAuthDebugResponse(
+        organization_slug=context["organization_slug"],
+        organization_name=str(context["organization"]["name"]),
+        workspace_role=context["workspace_role"],
+        workspace_role_label=context["workspace_role_label"],
+        client_id=str(settings.META_APP_ID or "").strip(),
+        redirect_uri=callback_url,
+        frontend_origin=_normalize_frontend_origin(frontend_origin),
+        graph_version=_graph_version(),
+        scopes=list(FACEBOOK_SCOPES),
+        oauth_configured=bool(settings.META_APP_ID and settings.META_APP_SECRET and backend_public),
+        backend_url=backend_public,
+    )
 
 
 @router.get("/callback")

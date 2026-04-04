@@ -318,6 +318,18 @@ Audit stabilisation 2026-04-04:
 - verification locale refaite sur ce lot: `python -m py_compile backend/core/organizations.py backend/routers/organizations.py backend/routers/facebook_pages.py backend/routers/chatbot.py`, `PYTHONPATH=backend python -m unittest backend.tests.test_organizations`, `npm run build`, `npx eslint` cible sur les fichiers workspace/Facebook
 - resultat connu au 4 avril 2026: le parcours self-serve FLARE est stabilise cote code, mais la preuve finale "tous les utilisateurs" demande encore une QA reelle avec un compte FLARE neuf, une page Facebook admin valide et un message Messenger entrant
 
+Hotfix diagnostic Meta 2026-04-04:
+
+- `GET /api/facebook/auth-debug` expose maintenant, pour `owner/admin` seulement, les valeurs OAuth runtime reelles utilisees par la prod
+- le setup Facebook affiche ce diagnostic dans l'etape 1:
+  - `App ID`
+  - `Redirect URI`
+  - `Frontend origin`
+  - `Backend URL`
+  - `Graph API`
+  - `Scopes`
+- objectif: verifier immediatement si la prod pointe bien vers la meme app Meta que celle verifiee dans Meta Developer, sans supposition ni lecture des logs serveur
+
 Les roles actuellement exposes dans l'app sont :
 
 - `Proprietaire`

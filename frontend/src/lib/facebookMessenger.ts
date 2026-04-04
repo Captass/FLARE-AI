@@ -69,6 +69,20 @@ export interface ChatbotSetupStatus {
 export const META_PUBLIC_ACCESS_BLOCKED_MESSAGE =
   "La connexion Meta n'a pas abouti. Si Facebook affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de FLARE.";
 
+export interface FacebookAuthDebugInfo {
+  organization_slug: string;
+  organization_name: string;
+  workspace_role?: string | null;
+  workspace_role_label?: string | null;
+  client_id: string;
+  redirect_uri: string;
+  frontend_origin: string;
+  graph_version: string;
+  scopes: string[];
+  oauth_configured: boolean;
+  backend_url: string;
+}
+
 function buildAuthHeaders(token?: string | null): HeadersInit | undefined {
   if (!token) return undefined;
   return {
@@ -194,6 +208,22 @@ export async function getFacebookMessengerAuthorizationUrl(
 
   const payload = await response.json();
   return String(payload?.authorization_url || "");
+}
+
+export async function loadFacebookAuthDebugInfo(
+  token: string | null | undefined,
+  frontendOrigin: string
+): Promise<FacebookAuthDebugInfo> {
+  const url = new URL(`${getApiBaseUrl()}/api/facebook/auth-debug`);
+  url.searchParams.set("frontend_origin", frontendOrigin);
+
+  const response = await facebookRequestWithTokenRetry(url.toString(), {}, token);
+
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response, "Impossible de charger le diagnostic OAuth Facebook."));
+  }
+
+  return response.json();
 }
 
 /**

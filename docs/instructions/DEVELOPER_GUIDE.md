@@ -351,6 +351,23 @@ Ce qu'il faut avoir configuré dans [developers.facebook.com](https://developers
 4. **Terms of Service URL** : `https://flareai.ramsflare.com/terms`
 5. **User Data Deletion URL** : `https://flareai.ramsflare.com/data-deletion`
 
+### Diagnostic OAuth runtime
+
+Pour verifier rapidement quelle app Meta la prod utilise reellement, FLARE expose maintenant :
+
+- `GET /api/facebook/auth-debug`
+
+Cet endpoint est reserve aux `owner/admin` de l'espace actif et retourne uniquement des infos non secretes :
+
+- `client_id`
+- `redirect_uri`
+- `frontend_origin`
+- `graph_version`
+- `scopes`
+- `backend_url`
+
+Le wizard `Chatbot Facebook -> Etape 1` affiche deja ce diagnostic dans l'UI pour eviter de comparer la mauvaise app Meta avec la prod.
+
 ### Dépannage « URL blocked » / « domain isn't included in the app's domains »
 
 Ces messages viennent **uniquement** de la configuration Meta, pas d’un bug FLARE tant que `BACKEND_URL` est correct.
