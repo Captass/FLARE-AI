@@ -72,6 +72,34 @@ Reste a valider en QA manuelle :
 - verifier qu'un membre non owner/admin ne peut pas connecter ni activer Facebook
 - verifier qu'une page Facebook sans droits admin ne peut pas etre activee
 
+## Update 2026-04-04 - cockpit chatbot QA pass
+
+Verification et durcissement des ecrans lies au chatbot :
+
+- `Tableau de bord` :
+  - une session manquante remonte maintenant une vraie erreur au lieu de laisser un ecran vide
+  - le statut `Actif` suit la regle metier de lancement : page active + webhook branche
+  - le dashboard n'utilise plus `direct_service_synced` pour afficher a tort un faux `Inactif`
+  - les comptes sans acces complet voient un message clair sur le mode restreint Messenger
+  - un bloc graphique live affiche maintenant le flux Messenger a partir de `periodStats` avec fallback sur `recentMessages`
+  - l'etat vide distingue maintenant `aucune page connectee` de `pages importees mais aucune active`
+  - l'activite recente ouvre la bonne fiche client via `psid`, pas via le nom affiche
+  - un changement de page vide maintenant les anciennes donnees avant reload complet pour eviter des KPI stale
+  - l'indicateur `ONLINE/OFFLINE` du header utilise maintenant un probe backend plus robuste (timeout plus large + retry) et un fallback API plus fiable sur les domaines frontend non listes
+- `Clients & Conversations` :
+  - les comptes non autorises voient les conversations mais ne peuvent plus basculer silencieusement le mode bot/humain
+  - le bouton de bascule respecte maintenant `access.canSwitchMode`
+  - une session manquante remonte un message explicite
+- `Personnalisation` :
+  - l'UI ne laisse plus croire qu'un membre simple peut modifier les reglages
+  - les sauvegardes et le catalogue sont maintenant bloques cote interface pour les non `owner/admin`
+
+Points encore connus apres cette passe :
+
+- les KPI Messenger restent dependants du service `messenger-direct`
+- le detail client s'appuie encore sur `MessengerWorkspace`, plus large que le parcours minimal de lundi
+- le repo complet contient encore des erreurs TypeScript legacy hors cockpit chatbot, notamment dans des modules Assistant/Studio non critiques pour le lancement
+
 
 ## Update 2026-03-31
 

@@ -1,12 +1,12 @@
-/**
- * Client API typé pour FLARE AI Backend.
- * Toutes les requêtes vers le backend FLARE AI
+﻿/**
+ * Client API typÃ© pour FLARE AI Backend.
+ * Toutes les requÃªtes vers le backend FLARE AI
  */
 
 /**
  * Fallback si `NEXT_PUBLIC_API_URL` est absent au build ou en runtime.
- * Doit rester aligné avec le backend Render actuel (voir `render.yaml` / DEVELOPER_GUIDE).
- * L’ancienne URL Cloud Run ne doit plus être utilisée en prod.
+ * Doit rester alignÃ© avec le backend Render actuel (voir `render.yaml` / DEVELOPER_GUIDE).
+ * Lâ€™ancienne URL Cloud Run ne doit plus Ãªtre utilisÃ©e en prod.
  */
 const PRODUCTION_BACKEND_URL = "https://flare-backend-ab5h.onrender.com";
 
@@ -42,7 +42,8 @@ export function getApiBaseUrl(): string {
       return "http://localhost:8000";
     }
 
-    return `${protocol}//${hostname}:8000`;
+    // Unknown hosted domains should still use production backend.
+    return PRODUCTION_BACKEND_URL;
   }
 
   return PRODUCTION_BACKEND_URL;
@@ -83,21 +84,21 @@ export function trackClientEvent(type: string, detail: Record<string, unknown> =
   }
 }
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface FileAttachment {
   content: string;    // base64 (images) ou texte brut
   type: string;       // MIME type : "image/png", "text/plain", etc.
   name: string;
-  dataUrl?: string;   // URL data: pour prévisualisation côté client
+  dataUrl?: string;   // URL data: pour prÃ©visualisation cÃ´tÃ© client
 }
 
 export interface MessageAttachment {
   kind: "image" | "file" | "audio" | "video" | "document" | "sheet" | "spreadsheet";
   name: string;
   dataUrl?: string;   // Pour afficher l'image ou audio dans la bulle
-  url?: string;       // URL Firebase Storage (persistance après rechargement)
-  duration?: number;  // Durée audio en secondes
+  url?: string;       // URL Firebase Storage (persistance aprÃ¨s rechargement)
+  duration?: number;  // DurÃ©e audio en secondes
   type?: string;
 }
 
@@ -107,10 +108,10 @@ export interface Message {
   content: string;
   timestamp?: string;
   attachment?: MessageAttachment;
-  knowledgeSaved?: string[];  // Titres des docs sauvegardés dans ce message
-  sources?: SourceInfo[];     // Sources web citées dans la réponse
-  thoughts?: string[];        // Étapes de raisonnement (pensées intermédiaires)
-  responseTime?: number;      // Temps de réponse en secondes
+  knowledgeSaved?: string[];  // Titres des docs sauvegardÃ©s dans ce message
+  sources?: SourceInfo[];     // Sources web citÃ©es dans la rÃ©ponse
+  thoughts?: string[];        // Ã‰tapes de raisonnement (pensÃ©es intermÃ©diaires)
+  responseTime?: number;      // Temps de rÃ©ponse en secondes
   suggestions?: string[];      // Suggestions d'actions de suivi
 }
 
@@ -137,7 +138,7 @@ export interface ChatResponse {
   response: string;
   session_id: string;
   images?: { prompt: string; type: string; data: string }[];
-  knowledge_saved?: string[];  // Titres des docs sauvegardés/mis à jour par l'agent
+  knowledge_saved?: string[];  // Titres des docs sauvegardÃ©s/mis Ã  jour par l'agent
   suggestions?: string[];
 }
 
@@ -170,7 +171,7 @@ export interface MemoryFact {
   updated_at: string;
 }
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 async function apiRequest<T>(
   endpoint: string,
@@ -208,7 +209,7 @@ async function apiRequest<T>(
 
       if (!response.ok) {
         const error = await response.text();
-        throw new Error(error || "Erreur réseau.");
+        throw new Error(error || "Erreur rÃ©seau.");
       }
 
       if (response.status === 204) return undefined as T;
@@ -228,30 +229,66 @@ async function apiRequest<T>(
     }
   }
 
-  throw lastError ?? new Error("Erreur réseau.");
+  throw lastError ?? new Error("Erreur rÃ©seau.");
 }
 
 /**
  * Health Check du backend
  */
 export async function healthCheck(): Promise<boolean> {
-  try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
-    // mode:'no-cors' avoids CORS preflight — opaque response means server is up,
-    // only a real network failure throws an exception.
-    await fetch(`${getApiBaseUrl()}/health`, {
-      signal: controller.signal,
-      mode: "no-cors",
-    });
-    clearTimeout(timeout);
-    return true;
-  } catch (e) {
+  if (typeof navigator !== "undefined" && navigator.onLine === false) {
     return false;
   }
-}
 
-// ─── Chat API ─────────────────────────────────────────────────────────────────
+  const baseUrl = getApiBaseUrl().replace(/\/+$/, "");
+  const targets = [`${baseUrl}/health`, baseUrl];
+
+  const probe = async (url: string, mode: "default" | "no-cors"): Promise<boolean> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    try {
+      if (mode === "default") {
+        const response = await fetch(url, {
+          signal: controller.signal,
+          cache: "no-store",
+        });
+        return response.ok;
+      }
+
+      await fetch(url, {
+        signal: controller.signal,
+        cache: "no-store",
+        mode: "no-cors",
+      });
+      return true;
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    for (const url of targets) {
+      try {
+        if (await probe(url, "default")) return true;
+      } catch {
+        // continue probing
+      }
+
+      try {
+        if (await probe(url, "no-cors")) return true;
+      } catch {
+        // continue probing
+      }
+    }
+
+    if (attempt < 1) {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+  }
+
+  return false;
+}
+// â”€â”€â”€ Chat API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function sendMessage(
   message: string,
@@ -432,10 +469,10 @@ export async function getMessages(conversationId: string, authToken?: string | n
         }
       }
 
-      // Reconstituer les URLs pour l'affichage (images ET vidéos)
+      // Reconstituer les URLs pour l'affichage (images ET vidÃ©os)
       if (att.url) {
         m.attachment.url = att.url;
-        // Si pas de dataUrl mais on a une URL distante, utiliser une URL d'aperçu fiable
+        // Si pas de dataUrl mais on a une URL distante, utiliser une URL d'aperÃ§u fiable
         if (!m.attachment.dataUrl) {
           m.attachment.dataUrl = toRenderableMediaUrl(att.url);
         }
@@ -493,7 +530,7 @@ export async function deleteMessagesAfter(conversationId: string, timestamp: str
   );
 }
 
-// ─── Folders API ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Folders API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getFolders(authToken?: string | null): Promise<Folder[]> {
   return apiRequest<Folder[]>("/folders", {}, authToken);
@@ -519,7 +556,7 @@ export async function deleteFolder(id: string, authToken?: string | null): Promi
   }, authToken);
 }
 
-// ─── Files API ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Files API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ChatFile {
   id: string;
@@ -550,7 +587,7 @@ export async function deleteConversationFile(conversationId: string, fileId: str
   }, authToken);
 }
 
-// ─── Knowledge API ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Knowledge API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface KnowledgeDoc {
   id: string;
@@ -607,7 +644,7 @@ export async function uploadKnowledgeFile(file: File, authToken?: string | null)
     return response.json();
 }
 
-// ─── Memory API ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Memory API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getFacts(category?: string, authToken?: string | null): Promise<MemoryFact[]> {
   const qs = category ? `?category=${encodeURIComponent(category)}` : "";
@@ -625,7 +662,7 @@ export async function deleteFact(key: string, authToken?: string | null): Promis
   await apiRequest(`/memory/facts/${encodeURIComponent(key)}`, { method: "DELETE" }, authToken);
 }
 
-// ─── Agents API ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Agents API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getCMStatus(authToken?: string | null): Promise<AgentStatus> {
   return apiRequest<AgentStatus>("/agents/cm/status", {}, authToken);
@@ -648,7 +685,7 @@ export async function listCampaigns(authToken?: string | null): Promise<Campaign
 }
 
 
-// ─── Skills API ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ Skills API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface Skill {
   id: number;
@@ -694,7 +731,7 @@ export async function deleteSkill(name: string, authToken?: string | null): Prom
   await apiRequest(`/skills/${name}`, { method: "DELETE" }, authToken);
 }
 
-// ─── Tracker (Local only) ──────────────────────────────────────────────────
+// â”€â”€â”€ Tracker (Local only) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface TrackedFile {
     id: string;
@@ -723,13 +760,13 @@ export function saveTrackedFile(file: TrackedFile) {
         const filtered = list.filter(f => f.id !== file.id);
         filtered.unshift(file);
         
-        // Limiter à 40 éléments max pour le confort, mais on va prôner la sécurité
+        // Limiter Ã  40 Ã©lÃ©ments max pour le confort, mais on va prÃ´ner la sÃ©curitÃ©
         const limitedList = filtered.slice(0, 40);
         
         try {
             localStorage.setItem("flare_tracked_files", JSON.stringify(limitedList));
         } catch (e) {
-            // Si quota dépassé, on essaie une version plus légère (sans les dataUrls pour les vieux fichiers)
+            // Si quota dÃ©passÃ©, on essaie une version plus lÃ©gÃ¨re (sans les dataUrls pour les vieux fichiers)
             console.warn("localStorage quota exceeded, pruning tracked files...");
             const prunedList = limitedList.map((f, idx) => {
                 if (idx > 5) { // Garder les previews uniquement pour les 5 derniers
@@ -751,7 +788,7 @@ export function deleteTrackedFile(id: string) {
     const filtered = list.filter(f => f.id !== id);
     localStorage.setItem("flare_tracked_files", JSON.stringify(filtered));
 }
-// ─── Settings API ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Settings API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function getUserPreferences(authToken?: string | null): Promise<string> {
   const res = await apiRequest<{ value: string }>("/api/settings/user-preferences", {}, authToken);
@@ -938,7 +975,7 @@ export async function getChatbotOverview(authToken?: string | null, pageId?: str
   return apiRequest<ChatbotOverview>(url, {}, authToken);
 }
 
-// ─── Plan features ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Plan features â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface PlanFeatures {
   chatbot_messages_limit: number;
@@ -965,7 +1002,7 @@ export async function getBillingFeatures(authToken?: string | null): Promise<Bil
   return apiRequest<BillingFeatures>("/api/billing/features", {}, authToken);
 }
 
-// ─── Catalogue ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Catalogue â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface CatalogueItem {
   id: string;
@@ -1018,7 +1055,7 @@ export async function deleteCatalogueItem(id: string, authToken?: string | null)
   await apiRequest<void>(`/api/chatbot/catalogue/${id}`, { method: "DELETE" }, authToken);
 }
 
-// ─── Portfolio ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Portfolio â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface PortfolioItem {
   id: string;
@@ -1071,7 +1108,7 @@ export async function deletePortfolioItem(id: string, authToken?: string | null)
   await apiRequest<void>(`/api/chatbot/portfolio/${id}`, { method: "DELETE" }, authToken);
 }
 
-// ─── Sales config ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Sales config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface SalesObjectionPair {
   objection: string;
@@ -1230,12 +1267,12 @@ export async function uploadIdentityAsset(
   );
 }
 
-// Rétro-compatibilité (alias)
+// RÃ©tro-compatibilitÃ© (alias)
 export const getSystemPrompt = getUserPreferences;
 export const updateSystemPrompt = updateUserPreferences;
 export const resetSystemPrompt = resetUserPreferences;
 
-// ─── Abonnements & Plans ─────────────────────────────────────────────────────
+// â”€â”€â”€ Abonnements & Plans â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface UserPlan {
   plan: string;
@@ -1250,7 +1287,7 @@ export interface UserPlan {
   allowed_models: string[];
 }
 
-/** Appelé après chaque login Firebase. Inscrit le nouvel utilisateur automatiquement. */
+/** AppelÃ© aprÃ¨s chaque login Firebase. Inscrit le nouvel utilisateur automatiquement. */
 export async function syncUser(authToken?: string | null): Promise<{ status: string; plan: string }> {
   return apiRequest<{ status: string; plan: string }>("/api/auth/sync", {
     method: "POST",
@@ -1385,7 +1422,7 @@ export async function getUserPlan(authToken?: string | null): Promise<UserPlan> 
   return apiRequest<UserPlan>("/api/auth/plan", {}, authToken);
 }
 
-/** Crée une session de checkout Stripe et retourne l'URL de redirection. */
+/** CrÃ©e une session de checkout Stripe et retourne l'URL de redirection. */
 export async function createCheckoutSession(planId: string, authToken?: string | null): Promise<{ url: string }> {
   const returnUrl = typeof window !== "undefined" ? window.location.href : "https://flareai.ramsflare.com";
   return apiRequest<{ url: string }>("/api/billing/create-checkout-session", {
@@ -1399,7 +1436,7 @@ export async function createCheckoutSession(planId: string, authToken?: string |
   }, authToken);
 }
 
-/** Crée une session pour le portail client Stripe et retourne l'URL. */
+/** CrÃ©e une session pour le portail client Stripe et retourne l'URL. */
 export async function createCustomerPortalSession(authToken?: string | null): Promise<{ url: string }> {
   const returnUrl = typeof window !== "undefined" ? window.location.href : "https://flareai.ramsflare.com";
   return apiRequest<{ url: string }>("/api/billing/create-portal-session", {
@@ -1410,7 +1447,7 @@ export async function createCustomerPortalSession(authToken?: string | null): Pr
   }, authToken);
 }
 
-/** ─── Memory API ─── */
+/** â”€â”€â”€ Memory API â”€â”€â”€ */
 export async function saveFact(key: string, value: string, category: string = "general", authToken?: string | null): Promise<void> {
   await apiRequest("/memory/facts", {
     method: "POST",
@@ -1418,7 +1455,7 @@ export async function saveFact(key: string, value: string, category: string = "g
   }, authToken);
 }
 
-// ─── Prospecting (Sub-Agent) API ───────────────────────────────────────────
+// â”€â”€â”€ Prospecting (Sub-Agent) API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface ProspectingChatResponse {
   response: string;
@@ -1462,7 +1499,7 @@ export async function approveCampaign(
   }, authToken);
 }
 
-// ─── Admin API ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Admin API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface AdminUsageSummary {
   total_users: number;
@@ -1543,7 +1580,7 @@ export async function getAdminNewAccounts(token: string, days: number = 30): Pro
   return apiRequest<NewAccountsResponse>(`/api/admin/new-accounts?days=${days}`, {}, token);
 }
 
-// ─── Email Verification (inscription sécurisée PIN 6 chiffres) ───────────────
+// â”€â”€â”€ Email Verification (inscription sÃ©curisÃ©e PIN 6 chiffres) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export async function sendVerificationPin(email: string): Promise<{ status: string; message: string; dev_pin?: string }> {
   const res = await fetch(`${getApiBaseUrl()}/api/auth/send-pin`, {
@@ -1566,7 +1603,7 @@ export async function verifyEmailPin(email: string, pin: string): Promise<void> 
   if (!res.ok) throw new Error(data.detail || "Code incorrect");
 }
 
-// ─── Dashboard Stats ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Dashboard Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface DashboardStats {
   system: {
@@ -1612,7 +1649,7 @@ export async function getDashboardStats(
   return apiRequest<DashboardStats>(`/dashboard/stats${qs}`, {}, authToken);
 }
 
-// ─── Prompt Templates (slash commands) ───────────────────────────────────────
+// â”€â”€â”€ Prompt Templates (slash commands) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export interface PromptTemplate {
   id: number;
@@ -1626,9 +1663,9 @@ export async function getPrompts(authToken?: string | null): Promise<PromptTempl
   return apiRequest<PromptTemplate[]>("/api/prompts", {}, authToken);
 }
 
-// ─── Contact Bot Status ────────────────────────────────────────────────────────
+// â”€â”€â”€ Contact Bot Status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 /**
- * Active ou désactive le bot pour un contact donné (Messenger).
+ * Active ou dÃ©sactive le bot pour un contact donnÃ© (Messenger).
  */
 export async function setContactBotStatus(psid: string, botEnabled: boolean, token?: string | null, pageId?: string | null): Promise<void> {
   const mode = botEnabled ? "agent" : "human";
@@ -1648,3 +1685,4 @@ export async function setContactBotStatus(psid: string, botEnabled: boolean, tok
     throw new Error("Impossible de modifier le mode du bot.");
   }
 }
+
