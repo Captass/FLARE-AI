@@ -227,6 +227,21 @@ Hotfix OAuth 2026-04-04:
 - un compte deja autorise peut donc reutiliser son autorisation sans etre force a repasser par un consentement Meta complet
 - un vrai reconsent complet reste possible via le flag backend `force_reauth` si un support technique doit repartir d'une permission Facebook propre
 
+Hotfix workspace self-serve 2026-04-04:
+
+- tout compte connecte peut maintenant creer son propre workspace FLARE depuis le chooser d'espace, meme s'il est seulement membre d'un autre espace
+- la creation d'un workspace bascule immediatement sur ce nouvel espace et renvoie directement vers le parcours `Chatbot Facebook`
+- la connexion Facebook est maintenant bloquee proprement tant qu'aucun workspace organisationnel n'est actif
+- le frontend rappelle clairement que seuls le proprietaire et les admins d'un espace peuvent connecter, activer, desactiver ou supprimer des pages Facebook
+- les rechargements complets de page ont ete retires du flow `creer espace -> choisir espace -> ouvrir Facebook`, pour garder un parcours self-serve plus fiable
+
+Hotfix self-serve workspace 2026-04-04:
+
+- `GET /api/organizations/access` expose maintenant un diagnostic explicite pour Facebook (`can_manage_facebook`, `facebook_access_code`, `facebook_access_message`) sur le scope courant et les organisations listees
+- `GET /api/facebook/status` expose le role workspace courant, la capacite de connexion Facebook et la raison de blocage (`facebook_access_code`, `facebook_access_message`), plus `permission_warning_count` pour les pages sans droits Meta complets
+- `POST /api/facebook/pages/{page_id}/activate` refuse explicitement l'activation si Meta ne retourne pas les taches requises (`MANAGE`, `MESSAGING`) et renvoie un message utilisateur clair
+- `GET /api/facebook/auth?force_reauth=true` est maintenant reserve au support interne via cle dashboard; les appels frontend standards ignorent ce mode
+
 Les roles actuellement exposes dans l'app sont :
 
 - `Proprietaire`

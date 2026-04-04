@@ -13,7 +13,7 @@ interface OrganizationAccessPanelProps {
   onClose: () => void;
   onUsePersonal: () => void;
   onConnectOrganization: (slug: string) => void;
-  onCreateOrganization: (name: string) => void;
+  onCreateOrganization: (name: string) => Promise<boolean> | boolean;
   onDeleteOrganization: (slug: string) => void;
 }
 
@@ -62,7 +62,7 @@ export default function OrganizationAccessPanel({
 
   const scope = data.current_scope;
   const isPersonalActive = scope.type === "personal";
-  const canCreateOrganization = scope.type === "personal" || scope.current_user_role === "owner" || scope.current_user_role === "admin";
+  const canCreateOrganization = true;
 
   return (
     <div className="fixed inset-0 z-[150]">
@@ -79,7 +79,7 @@ export default function OrganizationAccessPanel({
             <div>
               <p className="text-[10px] uppercase tracking-[0.16em] text-white/30">Espace de travail</p>
               <h2 className="mt-1 text-[20px] font-semibold tracking-tight text-white">
-                Choisissez votre espace
+                Creez ou choisissez votre espace
               </h2>
             </div>
             <button
@@ -138,11 +138,11 @@ export default function OrganizationAccessPanel({
             {/* Organizations */}
             {data.organizations.length === 0 && (
               <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-4">
-                <p className="text-[13px] font-medium text-white/70">Aucun espace de travail</p>
-                <p className="mt-1 text-[11px] leading-relaxed text-white/35">
-                  Creez votre premier espace pour connecter Facebook et activer votre chatbot.
-                </p>
-              </div>
+              <p className="text-[13px] font-medium text-white/70">Aucun espace de travail</p>
+              <p className="mt-1 text-[11px] leading-relaxed text-white/35">
+                  Creez votre premier espace FLARE pour connecter Facebook et activer votre chatbot.
+              </p>
+            </div>
             )}
             {data.organizations.map((org) => {
               const isActive = scope.organization_slug === org.slug;
@@ -241,7 +241,10 @@ export default function OrganizationAccessPanel({
 
             {canCreateOrganization && (
               <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
-                <p className="text-[11px] uppercase tracking-[0.14em] text-white/25">Nouveau workspace</p>
+                <p className="text-[11px] uppercase tracking-[0.14em] text-white/25">Nouvel espace</p>
+                <p className="mt-1 text-[11px] text-white/30">
+                  Vous pouvez creer votre propre espace meme si vous etes membre d'un autre.
+                </p>
                 <div className="mt-3 flex items-center gap-2">
                   <input
                     value={newOrganizationName}
@@ -252,11 +255,13 @@ export default function OrganizationAccessPanel({
                   <button
                     type="button"
                     disabled={loading || newOrganizationName.trim().length < 2}
-                    onClick={() => {
+                    onClick={async () => {
                       const value = newOrganizationName.trim();
                       if (value.length < 2) return;
-                      onCreateOrganization(value);
-                      setNewOrganizationName("");
+                      const created = await onCreateOrganization(value);
+                      if (created) {
+                        setNewOrganizationName("");
+                      }
                     }}
                     className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#ff7a1a] px-3 text-[12px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >

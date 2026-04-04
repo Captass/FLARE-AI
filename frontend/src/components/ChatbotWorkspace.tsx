@@ -209,7 +209,10 @@ export default function ChatbotWorkspace({
       return;
     }
     if (!canManagePages) {
-      setFacebookError("Vous n'avez pas les droits requis pour connecter une page Facebook sur cette organisation.");
+      setFacebookError(
+        facebookStatus?.facebook_access_message ||
+          "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook."
+      );
       return;
     }
     setFacebookAuthLoading(true);

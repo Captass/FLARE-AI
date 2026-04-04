@@ -329,6 +329,7 @@ export default function Home() {
   const [organizationLoading, setOrganizationLoading] = useState(false);
   const [showOrganizationAccess, setShowOrganizationAccess] = useState(false);
   const [organizationPromptSeen, setOrganizationPromptSeen] = useState(false);
+  const [pendingOrganizationTarget, setPendingOrganizationTarget] = useState<NavLevel | null>(null);
   const [workspaceIdentity, setWorkspaceIdentity] = useState<WorkspaceIdentity | null>(null);
   const [setupStatus, setSetupStatus] = useState<ChatbotSetupStatus | null>(null);
   const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string | null>(null);
@@ -786,10 +787,13 @@ export default function Home() {
     workspaceIdentity?.current_branding.logo_url || undefined
   );
 
-  const openOrganizationAccess = useCallback(async () => {
+  const openOrganizationAccess = useCallback(async (targetView?: NavLevel) => {
     if (!user) {
       handleStart("login");
       return;
+    }
+    if (targetView) {
+      setPendingOrganizationTarget(targetView);
     }
     if (!organizationAccess) {
       const next = await loadOrganizationState().catch(() => null);
@@ -802,6 +806,10 @@ export default function Home() {
     setShowOrganizationAccess(true);
   }, [handleStart, loadOrganizationState, organizationAccess, user]);
 
+  const openChatbotOrganizationAccess = useCallback(() => {
+    void openOrganizationAccess("chatbot");
+  }, [openOrganizationAccess]);
+
   useEffect(() => {
     if (!user) {
       setOrganizationPromptSeen(false);
@@ -813,8 +821,11 @@ export default function Home() {
       return;
     }
 
-    void openOrganizationAccess();
-  }, [openOrganizationAccess, organizationConnectionRequired, organizationPromptSeen, showOrganizationAccess, user]);
+    const fallbackTarget = ORGANIZATION_REQUIRED_VIEWS.includes(activeView as ActiveView)
+      ? (activeView as NavLevel)
+      : ("chatbot" as NavLevel);
+    void openOrganizationAccess(fallbackTarget);
+  }, [activeView, openOrganizationAccess, organizationConnectionRequired, organizationPromptSeen, showOrganizationAccess, user]);
 
   const handleWorkspaceIdentitySaved = useCallback(
     async (next: WorkspaceIdentity) => {
@@ -830,28 +841,42 @@ export default function Home() {
 
   const handleConnectOrganizationScope = useCallback(
     async (organizationSlug: string) => {
-      if (!token) return;
+      const accessToken = await resolveAccessToken(true);
+      if (!accessToken) {
+        alert("Session invalide. Reconnectez-vous puis reessayez.");
+        return;
+      }
 
       const alreadyActive = organizationAccess?.current_scope.organization_slug === organizationSlug;
       if (alreadyActive) {
         setShowOrganizationAccess(false);
+        const targetView = pendingOrganizationTarget;
+        setPendingOrganizationTarget(null);
+        if (targetView) {
+          setNavStack([targetView]);
+        }
         return;
       }
 
       setOrganizationLoading(true);
       try {
-        await connectToOrganization(organizationSlug, token);
-        await loadOrganizationState();
+        await connectToOrganization(organizationSlug, accessToken);
+        await Promise.all([
+          loadOrganizationState(),
+          loadWorkspaceIdentity().catch(() => null),
+          loadSetupStatus().catch(() => null),
+        ]);
         setShowOrganizationAccess(false);
-        setNavStack(["home" as NavLevel]);
-        window.location.reload();
+        const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
+        setPendingOrganizationTarget(null);
+        setNavStack([targetView]);
       } catch (err) {
         console.error("Erreur connexion organisation:", err);
       } finally {
         setOrganizationLoading(false);
       }
     },
-    [loadOrganizationState, organizationAccess, token]
+    [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, pendingOrganizationTarget, resolveAccessToken]
   );
 
   const handleCreateOrganizationScope = useCallback(async (name: string) => {
@@ -864,10 +889,15 @@ export default function Home() {
     setOrganizationLoading(true);
     try {
       await createOrganization(name, accessToken);
-      await loadOrganizationState();
+      await Promise.all([
+        loadOrganizationState(),
+        loadWorkspaceIdentity().catch(() => null),
+        loadSetupStatus().catch(() => null),
+      ]);
       setShowOrganizationAccess(false);
-      setNavStack(["home" as NavLevel]);
-      window.location.reload();
+      const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
+      setPendingOrganizationTarget(null);
+      setNavStack([targetView]);
       return true;
     } catch (err) {
       console.error("Erreur creation organisation:", err);
@@ -880,7 +910,7 @@ export default function Home() {
     } finally {
       setOrganizationLoading(false);
     }
-  }, [loadOrganizationState, resolveAccessToken]);
+  }, [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, pendingOrganizationTarget, resolveAccessToken]);
 
   const handleDeleteOrganizationScope = useCallback(async (organizationSlug: string) => {
     if (!token) return;
@@ -902,37 +932,36 @@ export default function Home() {
       handleStart("login");
       return;
     }
-    const name = window.prompt("Nom du nouvel espace de travail :");
-    if (!name) return;
-    const cleaned = name.trim();
-    if (cleaned.length < 2) {
-      alert("Le nom de l'espace doit contenir au moins 2 caracteres.");
-      return;
-    }
-    await handleCreateOrganizationScope(cleaned);
-  }, [handleCreateOrganizationScope, handleStart, user]);
+    await openOrganizationAccess("chatbot");
+  }, [handleStart, openOrganizationAccess, user]);
 
   const handleUsePersonalScope = useCallback(async () => {
-    if (!token) return;
+    const accessToken = await resolveAccessToken(true);
+    if (!accessToken) return;
 
     if (organizationAccess?.current_scope.type === "personal") {
       setShowOrganizationAccess(false);
+      setPendingOrganizationTarget(null);
       return;
     }
 
     setOrganizationLoading(true);
     try {
-      await returnToPersonalScope(token);
-      await loadOrganizationState();
+      await returnToPersonalScope(accessToken);
+      await Promise.all([
+        loadOrganizationState(),
+        loadWorkspaceIdentity().catch(() => null),
+        loadSetupStatus().catch(() => null),
+      ]);
       setShowOrganizationAccess(false);
+      setPendingOrganizationTarget(null);
       setNavStack(["home" as NavLevel]);
-      window.location.reload();
     } catch (err) {
       console.error("Erreur retour espace personnel:", err);
     } finally {
       setOrganizationLoading(false);
     }
-  }, [loadOrganizationState, organizationAccess, token]);
+  }, [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, resolveAccessToken]);
 
   const logoutWithScopeReset = useCallback(async () => {
     try {
@@ -962,12 +991,12 @@ export default function Home() {
         return;
       }
       if (user && organizationConnectionRequired && ORGANIZATION_REQUIRED_VIEWS.includes(view as ActiveView)) {
-        setShowOrganizationAccess(true);
+        void openOrganizationAccess(view as NavLevel);
         return;
       }
       setNavStack([view as NavLevel]);
     },
-    [organizationConnectionRequired, requestAuth, user]
+    [openOrganizationAccess, organizationConnectionRequired, requestAuth, user]
   );
 
   const openMessengerConversation = useCallback(
@@ -1300,13 +1329,15 @@ export default function Home() {
               onPush={onPush}
               token={token}
               getFreshToken={getFreshToken}
+              currentScopeType={organizationAccess?.current_scope.type ?? "personal"}
+              currentUserRole={organizationAccess?.current_scope.current_user_role ?? null}
               pages={facebookPages}
               selectedPageId={selectedFacebookPageId}
               onSelectPage={setSelectedFacebookPageId}
               onPagesChanged={handlePagesChanged}
               setupStatus={setupStatus}
               onRefreshSetupStatus={loadSetupStatus}
-              onRequestOrganizationSelection={openOrganizationAccess}
+              onRequestOrganizationSelection={openChatbotOrganizationAccess}
             /></motion.div>
         ) : activeView === "chatbot-personnalisation" ? (
           <motion.div key="chatbot-personnalisation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotPersonnalisationPage
@@ -1382,7 +1413,7 @@ export default function Home() {
                 onSkip={() => {
                   setNavStack(["chatbot" as NavLevel]);
                 }}
-                onRequestOrganizationSelection={openOrganizationAccess}
+                onRequestOrganizationSelection={openChatbotOrganizationAccess}
                 onRefreshSetupStatus={loadSetupStatus}
               />
             ) : (
@@ -1396,7 +1427,7 @@ export default function Home() {
         ) : activeView === "expenses" ? (
           <motion.div key="expenses" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="expenses" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbotFiles" ? (
-          <motion.div key="chatbotFiles" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotWorkspace token={token} getFreshToken={getFreshToken} initialTab="content" onRequestAccess={() => requestAuth("login")} onRequestOrganizationSelection={openOrganizationAccess} onRequestUpgrade={openSettingsWithAccess} /></motion.div>
+          <motion.div key="chatbotFiles" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotWorkspace token={token} getFreshToken={getFreshToken} initialTab="content" onRequestAccess={() => requestAuth("login")} onRequestOrganizationSelection={openChatbotOrganizationAccess} onRequestUpgrade={openSettingsWithAccess} /></motion.div>
         ) : activeView === "automationHub" ? (
           <motion.div key="automationHub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><AutomationHubPanel onNavigate={(v) => navigateWithAccess(v as ActiveView)} token={token} /></motion.div>
         ) : activeView === "prospection" ? (

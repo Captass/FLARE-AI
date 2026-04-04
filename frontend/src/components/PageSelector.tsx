@@ -85,11 +85,9 @@ export default function PageSelector({
           <div>
             <h3 className="text-lg font-semibold text-fg/90 mb-1">Aucune page Facebook enregistrée</h3>
             <p className="text-sm text-fg/50 max-w-lg mx-auto leading-relaxed text-left sm:text-center">
-              <strong className="text-fg/70">Étape 1 — Fenêtre Meta :</strong> un écran Facebook s’ouvre (parfois intitulé « continuer » ou « reconnecter »). C’est
-              l’autorisation du compte, pas encore le choix dans FLARE.
+              <strong className="text-fg/70">Étape 1 - Autorisation Facebook :</strong> une fenêtre Facebook s'ouvre. Autorisez votre compte pour importer vos pages dans FLARE.
               <br />
-              <strong className="text-fg/70">Étape 2 — Liste FLARE :</strong> après succès, vos pages autorisées apparaissent ici ; cliquez sur une carte pour la
-              sélectionner, puis utilisez <strong className="text-fg/70">Activer sur Messenger</strong> pour brancher le webhook.
+              <strong className="text-fg/70">Étape 2 - Activation :</strong> vos pages apparaissent ici ; choisissez-en une puis cliquez sur <strong className="text-fg/70">Activer</strong>.
             </p>
           </div>
           <button
@@ -149,7 +147,7 @@ export default function PageSelector({
 
       {!canManagePages && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-200/90 leading-snug">
-          Vous devez être Owner ou Admin de cet espace FLARE AI pour gérer l’intégration Facebook.
+          Seuls le proprietaire ou un admin de cet espace peuvent gerer Facebook.
         </div>
       )}
 

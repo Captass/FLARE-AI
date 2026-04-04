@@ -113,7 +113,10 @@ export default function ChatbotParametresPage({
     const accessToken = await resolveAccessToken(true);
     if (!accessToken) return;
     if (!canManagePages) {
-      setFacebookError("Droits insuffisants pour connecter Facebook.");
+      setFacebookError(
+        facebookStatus?.facebook_access_message ||
+          "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook."
+      );
       return;
     }
     setFacebookAuthLoading(true);

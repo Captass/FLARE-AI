@@ -107,7 +107,7 @@ export default function ChatbotSetupWizard({
     [facebookStatus]
   );
 
-  // Fail-closed si statut Facebook indisponible (aligné avec ChatbotParametresPage)
+  // Fail-closed si statut Facebook indisponible (aligne avec ChatbotParametresPage)
   const canEditChatbot = facebookStatus?.can_edit ?? false;
   const canManagePages = facebookStatus?.can_manage_pages ?? false;
   const oauthConfigured = facebookStatus?.oauth_configured;
@@ -188,8 +188,14 @@ export default function ChatbotSetupWizard({
   }, [localStatus.step, resolveAccessToken]);
 
   useEffect(() => {
+    if (localStatus.step === "need_org") {
+      setFacebookStatus(null);
+      setFacebookError(null);
+      setFacebookLoading(false);
+      return;
+    }
     void refreshFacebookState();
-  }, [refreshFacebookState, token]);
+  }, [localStatus.step, refreshFacebookState, token]);
 
   useEffect(() => {
     if (localStatus.step === "configure") {
@@ -208,11 +214,14 @@ export default function ChatbotSetupWizard({
       return;
     }
     if (facebookOauthBlocked) {
-      setFacebookError("Connexion Facebook temporairement indisponible. La configuration Meta du serveur doit etre finalisee.");
+      setFacebookError("Connexion Facebook temporairement indisponible. Reessayez dans quelques minutes.");
       return;
     }
     if (!canManagePages) {
-      setFacebookError("Vous n'avez pas les droits requis pour connecter une page Facebook sur cette organisation.");
+      setFacebookError(
+        facebookStatus?.facebook_access_message ||
+          "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook."
+      );
       return;
     }
 
@@ -246,7 +255,10 @@ export default function ChatbotSetupWizard({
 
   const handleActivatePage = async (pageId: string) => {
     if (!canManagePages) {
-      setFacebookError("Vous n'avez pas les droits requis pour activer une page Facebook sur cette organisation.");
+      setFacebookError(
+        facebookStatus?.facebook_access_message ||
+          "Seuls le proprietaire ou un admin de cet espace peuvent activer Facebook."
+      );
       return;
     }
     setFacebookBusyPageId(pageId);
@@ -428,16 +440,16 @@ export default function ChatbotSetupWizard({
           </Panel>
         ) : localStatus.step === "need_org" ? (
           <Panel>
-            <h2 className="text-[26px] font-semibold text-white">Selectionnez une organisation</h2>
+            <h2 className="text-[26px] font-semibold text-white">Creez ou choisissez votre espace</h2>
             <p className="mt-2 text-[14px] leading-7 text-white/42">
-              Le setup chatbot est rattache a une organisation active.
+              Le chatbot Facebook fonctionne uniquement dans un espace de travail actif.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
               <button
                 onClick={() => onRequestOrganizationSelection?.()}
                 className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#140b02] hover:bg-orange-400"
               >
-                Choisir une organisation
+                Choisir mon espace
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -446,8 +458,8 @@ export default function ChatbotSetupWizard({
           <Panel>
             <h2 className="text-[26px] font-semibold text-white">Etape 1 - Connexion page Facebook</h2>
             <p className="mt-2 text-[14px] leading-7 text-white/42">
-              Le bouton ouvre une fenêtre Meta : l’écran peut dire « continuer » ou « reconnecter » — c’est normal, c’est l’autorisation du compte.
-              Ensuite vos pages apparaissent ci-dessous : choisissez-en une et activez-la pour Messenger, puis passez à la configuration.
+              Cliquez sur le bouton, autorisez Facebook, puis revenez ici.
+              Vos pages apparaissent ensuite dans FLARE : choisissez-en une et activez-la pour demarrer le bot.
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
               <button
@@ -468,15 +480,13 @@ export default function ChatbotSetupWizard({
 
             {facebookOauthBlocked ? (
               <div className="mt-4 rounded-xl border border-orange-400/25 bg-orange-500/10 px-4 py-3 text-[13px] text-orange-50">
-                La connexion Facebook est temporairement indisponible.
-                <br />
-                Finalisez d&apos;abord la configuration Meta du serveur pour ouvrir l&apos;OAuth.
+                La connexion Facebook est temporairement indisponible. Reessayez dans quelques minutes.
               </div>
             ) : null}
 
             {!facebookOauthBlocked && directServiceWarning ? (
               <div className="mt-4 rounded-xl border border-orange-400/20 bg-orange-500/8 px-4 py-3 text-[13px] text-orange-50/90">
-                La connexion peut charger les pages, mais l&apos;activation finale restera incomplete tant que le service Messenger direct n&apos;est pas configure.
+                Vos pages peuvent etre importees, mais l&apos;activation finale restera incomplete tant que le service Messenger n&apos;est pas disponible.
               </div>
             ) : null}
 
@@ -712,7 +722,6 @@ export default function ChatbotSetupWizard({
     </div>
   );
 }
-
 function Panel({ children }: { children: React.ReactNode }) {
   return <section className="mt-5 rounded-[28px] border border-white/[0.06] bg-white/[0.03] p-5 md:p-7">{children}</section>;
 }
@@ -762,3 +771,4 @@ function PageRow({
     </div>
   );
 }
+

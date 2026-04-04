@@ -1273,6 +1273,10 @@ export interface OrganizationScope {
   current_user_role?: string | null;
   current_user_role_label?: string | null;
   can_edit_branding?: boolean;
+  can_manage_facebook?: boolean;
+  requires_workspace_for_chatbot?: boolean;
+  facebook_access_code?: string;
+  facebook_access_message?: string;
   connected_at?: string | null;
   expires_at?: string | null;
   session_ttl_hours?: number | null;
@@ -1302,6 +1306,9 @@ export interface OrganizationSummary {
   current_user_role?: string | null;
   current_user_role_label?: string | null;
   can_edit_branding?: boolean;
+  can_manage_facebook?: boolean;
+  facebook_access_code?: string;
+  facebook_access_message?: string;
   is_dynamic?: boolean;
   can_delete?: boolean;
 }
@@ -1312,6 +1319,9 @@ export interface OrganizationAccessResponse {
   organizations: OrganizationSummary[];
   has_shared_access: boolean;
   requires_connection_flow: boolean;
+  can_connect_facebook?: boolean;
+  facebook_access_code?: string;
+  facebook_access_message?: string;
   session_ttl_hours?: number;
 }
 

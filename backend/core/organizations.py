@@ -321,6 +321,7 @@ def serialize_member(member: Dict[str, Any]) -> Dict[str, str]:
 
 def serialize_organization(organization: Dict[str, Any], current_user_email: Optional[str] = None) -> Dict[str, Any]:
     current_user_role = get_user_role_in_organization(current_user_email, organization=organization)
+    can_manage_facebook = current_user_role in EDITABLE_ORGANIZATION_ROLES
     return {
         "slug": organization["slug"],
         "name": organization["name"],
@@ -333,7 +334,8 @@ def serialize_organization(organization: Dict[str, Any], current_user_email: Opt
         "members": [serialize_member(member) for member in organization.get("members", [])],
         "current_user_role": current_user_role,
         "current_user_role_label": get_user_role_label(current_user_role),
-        "can_edit_branding": current_user_role in EDITABLE_ORGANIZATION_ROLES,
+        "can_edit_branding": can_manage_facebook,
+        "can_manage_facebook": can_manage_facebook,
         "is_dynamic": bool(organization.get("is_dynamic")),
         "can_delete": bool(organization.get("is_dynamic")) and current_user_role == "owner",
     }

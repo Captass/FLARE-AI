@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
@@ -32,15 +32,17 @@ const ChatbotSetupWizard = dynamic(() => import("@/components/ChatbotSetupWizard
 interface ChatbotHomePageProps {
   token?: string | null;
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
+  currentScopeType?: "personal" | "organization";
+  currentUserRole?: string | null;
   onPush: (level: NavLevel) => void;
-  /** Nombre de conversations nécessitant une intervention humaine */
+  /** Nombre de conversations nÃ©cessitant une intervention humaine */
   pendingHumanCount?: number;
   pages?: FacebookMessengerPage[];
   selectedPageId?: string | null;
   onSelectPage?: (pageId: string) => void;
-  /** Remonte la liste des pages (après OAuth ou activation) vers page.tsx */
+  /** Remonte la liste des pages (aprÃ¨s OAuth ou activation) vers page.tsx */
   onPagesChanged?: (pages: FacebookMessengerPage[]) => void;
-  /** Statut du parcours d’installation (connexion → préférences) */
+  /** Statut du parcours dâ€™installation (connexion â†’ prÃ©fÃ©rences) */
   setupStatus?: ChatbotSetupStatus | null;
   onRefreshSetupStatus?: () => Promise<ChatbotSetupStatus | null>;
   onRequestOrganizationSelection?: () => void;
@@ -50,14 +52,14 @@ const ENTRIES = [
   {
     id: "chatbot-personnalisation" as NavLevel,
     label: "Personnalisation",
-    description: "Identité, ton, langue, entreprise et offres du bot",
+    description: "Identite, ton, langue, entreprise et offres du bot",
     icon: Brush,
     iconColor: "text-purple-400",
     iconBg: "bg-purple-500/12",
   },
   {
     id: "chatbot-parametres" as NavLevel,
-    label: "Paramètres",
+    label: "Parametres",
     description: "Catalogue, portfolio et connexion Facebook",
     icon: SlidersHorizontal,
     iconColor: "text-cyan-400",
@@ -66,7 +68,7 @@ const ENTRIES = [
   {
     id: "chatbot-dashboard" as NavLevel,
     label: "Tableau de bord",
-    description: "Stats, statut d'activité et vérification Facebook",
+    description: "Stats, statut d'activite et verification Facebook",
     icon: BarChart3,
     iconColor: "text-emerald-400",
     iconBg: "bg-emerald-500/12",
@@ -74,7 +76,7 @@ const ENTRIES = [
   {
     id: "chatbot-clients" as NavLevel,
     label: "Clients & Conversations",
-    description: "Suivi, notifications et contrôle par client",
+    description: "Suivi, notifications et controle par client",
     icon: Users,
     iconColor: "text-orange-400",
     iconBg: "bg-orange-500/12",
@@ -84,6 +86,8 @@ const ENTRIES = [
 export default function ChatbotHomePage({
   token,
   getFreshToken,
+  currentScopeType = "personal",
+  currentUserRole = null,
   onPush,
   pendingHumanCount = 0,
   pages = [],
@@ -166,14 +170,14 @@ export default function ChatbotHomePage({
           botReallyOn
             ? name
               ? directSyncPending
-                ? `"${name}" est activée. Bot ON : vous pouvez envoyer un message test à la page. La synchronisation des stats Messenger reste en attente.`
-                : `"${name}" est activée. Bot ON : vous pouvez envoyer un message test à la page.`
+                ? `"${name}" est activee. Bot ON : vous pouvez envoyer un message test a la page. La synchronisation des stats Messenger reste en attente.`
+                : `"${name}" est activee. Bot ON : vous pouvez envoyer un message test a la page.`
               : directSyncPending
-                ? "Page activée. Bot ON : vous pouvez envoyer un message test à la page. La synchronisation des stats Messenger reste en attente."
-                : "Page activée. Bot ON : vous pouvez envoyer un message test à la page."
+                ? "Page activee. Bot ON : vous pouvez envoyer un message test a la page. La synchronisation des stats Messenger reste en attente."
+                : "Page activee. Bot ON : vous pouvez envoyer un message test a la page."
             : name
-              ? `"${name}" reste OFF tant que la synchronisation technique n'est pas totalement terminée.`
-              : "La page reste OFF tant que la synchronisation technique n'est pas totalement terminée."
+              ? `"${name}" reste OFF tant que la synchronisation technique n'est pas totalement terminee.`
+              : "La page reste OFF tant que la synchronisation technique n'est pas totalement terminee."
         );
         window.setTimeout(() => setActivationNotice(null), 12000);
       } catch (e) {
@@ -181,7 +185,7 @@ export default function ChatbotHomePage({
         const msg =
           e instanceof Error
             ? e.message
-            : "Activation impossible. Ouvrez Paramètres et reconnectez Facebook si le problème continue.";
+            : "Activation impossible. Ouvrez Parametres et reconnectez Facebook si le probleme continue.";
         alert(msg);
       } finally {
         setFbBusyPageId(null);
@@ -202,7 +206,7 @@ export default function ChatbotHomePage({
         onPagesChanged?.(st.pages || []);
       } catch (e) {
         console.error(e);
-        const msg = e instanceof Error ? e.message : "Désactivation impossible.";
+        const msg = e instanceof Error ? e.message : "Desactivation impossible.";
         alert(msg);
       } finally {
         setFbBusyPageId(null);
@@ -236,6 +240,18 @@ export default function ChatbotHomePage({
   );
 
   const handleConnectMetaPages = useCallback(async () => {
+    if (currentScopeType !== "organization") {
+      alert("Creez ou choisissez d'abord votre espace de travail pour connecter Facebook.");
+      onRequestOrganizationSelection?.();
+      return;
+    }
+
+    const normalizedRole = String(currentUserRole || "").toLowerCase();
+    if (!canManageFb && normalizedRole && !["owner", "admin"].includes(normalizedRole)) {
+      alert("Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.");
+      return;
+    }
+
     const t = await resolveToken();
     if (!t) {
       alert("Session expiree. Reconnectez-vous a FLARE.");
@@ -253,14 +269,14 @@ export default function ChatbotHomePage({
         onRequestOrganizationSelection?.();
       }
       if (/403|forbidden|permission|owner|admin/i.test(msg)) {
-        alert("Seuls les roles Owner/Admin peuvent ouvrir Meta dans cet espace.");
+        alert("Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.");
         return;
       }
       alert(msg);
     } finally {
       setFbOauthBusy(false);
     }
-  }, [onPagesChanged, onRequestOrganizationSelection, resolveToken]);
+  }, [canManageFb, currentScopeType, currentUserRole, onPagesChanged, onRequestOrganizationSelection, resolveToken]);
 
   const handleSyncPagesList = useCallback(async () => {
     const t = await resolveToken();
@@ -272,12 +288,12 @@ export default function ChatbotHomePage({
       onPagesChanged?.(st.pages || []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
-      if (/expiré|Reconnectez|session|Reconnectez Facebook|actualiser la liste/i.test(msg)) {
+      if (/expir|reconnect|session|actualiser la liste/i.test(msg)) {
         alert(
-          `${msg}\n\nUtilisez le bouton « Ajouter des pages (Meta) » pour rouvrir Facebook et renouveler l’autorisation.`
+          `${msg}\n\nUtilisez le bouton "Ajouter (Meta)" pour rouvrir Facebook et renouveler l'autorisation.`
         );
       } else {
-        alert(msg || "Impossible d’actualiser la liste des pages.");
+        alert(msg || "Impossible d'actualiser la liste des pages.");
       }
     } finally {
       setPagesRefreshBusy(false);
@@ -342,8 +358,8 @@ export default function ChatbotHomePage({
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-400/90">Mise en route</p>
             <h2 className="mt-2 text-xl font-semibold text-fg/90">Configurez votre chatbot</h2>
             <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-              Connexion Facebook, page Messenger, identité et entreprise — tout au même endroit. Vous pourrez modifier
-              chaque détail ensuite dans les autres sections.
+              Connexion Facebook, page Messenger, identite et entreprise - tout au meme endroit. Vous pourrez modifier
+              chaque detail ensuite dans les autres sections.
             </p>
           </div>
           <ChatbotSetupWizard
@@ -363,7 +379,7 @@ export default function ChatbotHomePage({
               onClick={() => setSkipSetupWizard(true)}
               className="text-sm text-fg/45 hover:text-fg/70 underline underline-offset-4 transition-colors"
             >
-              Accéder à l’accueil du chatbot sans terminer
+              Acceder a l'accueil du chatbot sans terminer
             </button>
           </div>
         </div>
@@ -375,7 +391,7 @@ export default function ChatbotHomePage({
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[860px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
 
-        {/* ── Header & Page Selector ── */}
+        {/* â”€â”€ Header & Page Selector â”€â”€ */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -387,7 +403,7 @@ export default function ChatbotHomePage({
               Chatbot IA Facebook
             </h1>
             <p className="text-lg text-[var(--text-muted)] mb-6">
-              Sélectionnez la page Facebook que vous souhaitez configurer.
+              Selectionnez la page Facebook que vous souhaitez configurer.
             </p>
             
             {activationNotice ? (
@@ -417,11 +433,11 @@ export default function ChatbotHomePage({
 
         {!hasPageSelected && pages.length > 0 && (
            <div className="text-center p-4 text-orange-400/80 bg-orange-500/10 rounded-xl border border-orange-500/20">
-             Veuillez sélectionner une page ci-dessus pour configurer son Chatbot.
+             Veuillez selectionner une page ci-dessus pour configurer son chatbot.
            </div>
         )}
 
-        {/* ── Aperçu KPIs (Si page sélectionnée) ── */}
+        {/* â”€â”€ AperÃ§u KPIs (Si page sÃ©lectionnÃ©e) â”€â”€ */}
         {hasPageSelected && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -429,7 +445,7 @@ export default function ChatbotHomePage({
             transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
-            {/* Statut (aligné spec + données réelles overview) */}
+            {/* Statut (alignÃ© spec + donnÃ©es rÃ©elles overview) */}
             <motion.div
               whileHover={{ scale: 1.02 }}
               className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
@@ -471,7 +487,7 @@ export default function ChatbotHomePage({
               className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
             >
               <div>
-                <p className="text-sm font-medium text-[var(--text-muted)]">Messages traités ce mois</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">Messages traites ce mois</p>
                 <div className="mt-1 h-7 flex items-center">
                   {loadingKPIs ? (
                     <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse" />
@@ -491,7 +507,7 @@ export default function ChatbotHomePage({
               className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
             >
               <div>
-                <p className="text-sm font-medium text-[var(--text-muted)]">Contacts captés</p>
+                <p className="text-sm font-medium text-[var(--text-muted)]">Contacts captes</p>
                 <div className="mt-1 h-7 flex items-center">
                   {loadingKPIs ? (
                     <div className="h-6 w-16 bg-white/[0.06] rounded-md animate-pulse md:w-20" />
@@ -508,12 +524,12 @@ export default function ChatbotHomePage({
         )}
         {hasPageSelected && lastKpiUpdate && !loadingKPIs && (
           <p className="text-sm text-[var(--text-muted)] -mt-4">
-            Données synchronisées avec le serveur · actualisation automatique toutes les{" "}
+            Donnees synchronisees avec le serveur - actualisation automatique toutes les{" "}
             {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
           </p>
         )}
 
-        {/* ── Entry cards ── */}
+        {/* â”€â”€ Entry cards â”€â”€ */}
         <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 transition-opacity duration-300 ${hasPageSelected ? 'opacity-100' : 'opacity-40 pointer-events-none'}`} role="list" aria-label="Sections du Chatbot IA">
           {ENTRIES.map((entry, idx) => {
             const Icon = entry.icon;
@@ -551,3 +567,5 @@ export default function ChatbotHomePage({
     </div>
   );
 }
+
+

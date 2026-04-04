@@ -38,12 +38,36 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/organizations", tags=["organizations"])
 
 
+FACEBOOK_MANAGE_ROLES = {"owner", "admin"}
+
+
 class ConnectOrganizationRequest(BaseModel):
     organization_slug: str
 
 
 class CreateOrganizationRequest(BaseModel):
     name: str
+
+
+def _facebook_access_info(scope_type: str, current_user_role: Optional[str]) -> dict:
+    normalized_role = str(current_user_role or "").strip().lower()
+    if scope_type != "organization":
+        return {
+            "can_manage_facebook": False,
+            "facebook_access_code": "organization_required",
+            "facebook_access_message": "Selectionnez d'abord un espace de travail pour connecter Facebook.",
+        }
+    if normalized_role not in FACEBOOK_MANAGE_ROLES:
+        return {
+            "can_manage_facebook": False,
+            "facebook_access_code": "workspace_role_forbidden",
+            "facebook_access_message": "Seuls les owners/admins peuvent connecter et activer Facebook.",
+        }
+    return {
+        "can_manage_facebook": True,
+        "facebook_access_code": "ok",
+        "facebook_access_message": "",
+    }
 
 
 def _get_active_organization_setting(db: Session, raw_user_id: str) -> Optional[SystemSetting]:
@@ -76,6 +100,7 @@ def _build_session_metadata(connected_at: Optional[datetime]) -> dict:
 def _get_current_scope(raw_user_id: str, user_email: str, db: Session) -> dict:
     personal_subscription = get_user_subscription(raw_user_id)
     user_profile = load_user_profile(db, raw_user_id, user_email)
+    personal_facebook_access = _facebook_access_info("personal", None)
     personal_scope = {
         "type": "personal",
         "scope_id": raw_user_id,
@@ -90,6 +115,8 @@ def _get_current_scope(raw_user_id: str, user_email: str, db: Session) -> dict:
         "current_user_role": "owner",
         "current_user_role_label": "Proprietaire",
         "can_edit_branding": True,
+        "requires_workspace_for_chatbot": True,
+        **personal_facebook_access,
         **_build_session_metadata(None),
     }
 
@@ -116,6 +143,7 @@ def _get_current_scope(raw_user_id: str, user_email: str, db: Session) -> dict:
     organization_subscription = get_user_subscription(organization_scope_id(slug))
     branding = load_organization_branding(db, organization_scope_id(slug), organization)
     current_user_role = get_user_role_in_organization(user_email, organization=organization)
+    organization_facebook_access = _facebook_access_info("organization", current_user_role)
     return {
         "type": "organization",
         "scope_id": organization_scope_id(slug),
@@ -132,6 +160,8 @@ def _get_current_scope(raw_user_id: str, user_email: str, db: Session) -> dict:
         "current_user_role": current_user_role,
         "current_user_role_label": get_user_role_label(current_user_role),
         "can_edit_branding": user_can_edit_organization(user_email, organization=organization),
+        "requires_workspace_for_chatbot": False,
+        **organization_facebook_access,
         **_build_session_metadata(connected_at),
     }
 
@@ -172,6 +202,10 @@ def get_organization_access(
             organization_scope_id(organization_summary["slug"]),
             organization,
         )
+        organization_facebook_access = _facebook_access_info(
+            "organization",
+            organization_summary.get("current_user_role"),
+        )
         organizations.append(
             {
                 **organization_summary,
@@ -179,6 +213,7 @@ def get_organization_access(
                 "workspace_name": branding["workspace_name"],
                 "workspace_description": branding["workspace_description"],
                 "logo_url": branding["logo_url"],
+                **organization_facebook_access,
             }
         )
     current_scope = _get_current_scope(raw_user_id, user_email, db)
@@ -189,6 +224,9 @@ def get_organization_access(
         "organizations": organizations,
         "has_shared_access": bool(organizations),
         "requires_connection_flow": bool(organizations),
+        "can_connect_facebook": bool(current_scope.get("can_manage_facebook")),
+        "facebook_access_code": current_scope.get("facebook_access_code"),
+        "facebook_access_message": current_scope.get("facebook_access_message"),
         "session_ttl_hours": max(1, int(settings.ORGANIZATION_SESSION_HOURS)),
     }
 
@@ -244,6 +282,11 @@ def create_workspace_organization(
         raise HTTPException(status_code=400, detail="Le nom de l'espace est trop court.")
 
     organization = create_organization(workspace_name, user_email)
+    if get_user_role_in_organization(user_email, organization=organization) != "owner":
+        raise HTTPException(
+            status_code=500,
+            detail="Impossible de creer un espace avec le role owner. Reessayez.",
+        )
     setting = _get_active_organization_setting(db, raw_user_id)
     value = encode_active_organization(organization["slug"])
     if setting:

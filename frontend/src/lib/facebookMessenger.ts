@@ -27,11 +27,17 @@ export interface FacebookMessengerPage {
 export interface FacebookMessengerStatus {
   organization_slug: string;
   organization_name: string;
+  workspace_role?: string | null;
+  workspace_role_label?: string | null;
+  can_connect_facebook?: boolean;
+  facebook_access_code?: string;
+  facebook_access_message?: string;
   can_manage_pages: boolean;
   can_edit: boolean;
   oauth_configured: boolean;
   direct_service_configured: boolean;
   pages: FacebookMessengerPage[];
+  permission_warning_count?: number;
   has_active_page: boolean;
 }
 

@@ -5,6 +5,7 @@ from unittest.mock import patch
 
 from core.config import settings
 from core.organizations import (
+    create_organization,
     decode_active_organization,
     encode_active_organization,
     get_organization,
@@ -65,7 +66,22 @@ class OrganizationsTestCase(unittest.TestCase):
             self.assertEqual(serialized["current_user_role"], "viewer")
             self.assertEqual(serialized["current_user_role_label"], "Lecture")
             self.assertFalse(serialized["can_edit_branding"])
+            self.assertFalse(serialized["can_manage_facebook"])
             self.assertEqual(serialized["members"][0]["display_name"], "Owner User")
+
+    def test_create_organization_assigns_creator_as_owner(self) -> None:
+        with patch("core.organizations.list_dynamic_organizations", return_value=[]), patch(
+            "core.organizations._persist_dynamic_organizations"
+        ) as persist_dynamic:
+            organization = create_organization("Mon espace test", "owner@example.com")
+
+        self.assertEqual(organization["slug"], "mon-espace-test")
+        self.assertTrue(organization["is_dynamic"])
+        self.assertEqual(organization["members"][0]["email"], "owner@example.com")
+        self.assertEqual(organization["members"][0]["role"], "owner")
+        persisted_payload = persist_dynamic.call_args.args[0]
+        self.assertEqual(len(persisted_payload), 1)
+        self.assertEqual(persisted_payload[0]["members"][0]["role"], "owner")
 
     def test_active_organization_payload_roundtrip(self) -> None:
         connected_at = datetime(2026, 3, 28, 8, 30, 0)

@@ -20,6 +20,8 @@ from core.database import ChatbotPreferences, FacebookPageConnection, SessionLoc
 from core.encryption_service import encryption_service
 from core.organizations import (
     get_organization,
+    get_user_role_in_organization,
+    get_user_role_label,
     organization_scope_id,
     user_can_access_organization,
     user_can_edit_organization,
@@ -38,10 +40,32 @@ FACEBOOK_SUBSCRIBED_FIELDS = "messages,messaging_postbacks"
 FACEBOOK_REQUIRED_PAGE_TASKS = {"MANAGE", "MESSAGING"}
 STATE_TTL_MINUTES = 30
 DASHBOARD_ACCESS_HEADER = "X-FLARE-Dashboard-Key"
+FACEBOOK_MANAGE_ROLES = {"owner", "admin"}
 
 
 class FacebookPageActivationPayload(BaseModel):
     page_id: str
+
+
+def _facebook_access_context(scope_type: str, workspace_role: str | None) -> dict[str, Any]:
+    normalized_role = str(workspace_role or "").strip().lower()
+    if scope_type != "organization":
+        return {
+            "can_connect_facebook": False,
+            "access_code": "organization_required",
+            "access_message": "Selectionnez d'abord un espace de travail FLARE.",
+        }
+    if normalized_role not in FACEBOOK_MANAGE_ROLES:
+        return {
+            "can_connect_facebook": False,
+            "access_code": "workspace_role_forbidden",
+            "access_message": "Seuls le proprietaire ou un admin de cet espace peuvent connecter et activer Facebook.",
+        }
+    return {
+        "can_connect_facebook": True,
+        "access_code": "ok",
+        "access_message": "",
+    }
 
 
 def _utcnow() -> datetime:
@@ -195,16 +219,23 @@ def _organization_context_from_authorization(
     if not can_access:
         raise HTTPException(status_code=403, detail="Cette organisation n'est pas accessible pour cet utilisateur.")
 
+    workspace_role = get_user_role_in_organization(user_email, organization=organization)
     can_edit = user_can_edit_organization(user_email, organization_slug, organization)
-    if require_edit and not can_edit:
-        raise HTTPException(status_code=403, detail="Seuls les owners/admins peuvent connecter Facebook.")
+    access_context = _facebook_access_context("organization", workspace_role)
+    if require_edit and not access_context["can_connect_facebook"]:
+        raise HTTPException(status_code=403, detail="Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.")
 
     return {
         "organization_slug": organization_slug,
         "organization_scope_id": organization_scope_id(organization_slug),
         "organization": organization,
         "user_email": user_email,
-        "can_manage_pages": can_edit,
+        "workspace_role": workspace_role,
+        "workspace_role_label": get_user_role_label(workspace_role),
+        "facebook_access_code": access_context["access_code"],
+        "facebook_access_message": access_context["access_message"],
+        "can_connect_facebook": access_context["can_connect_facebook"],
+        "can_manage_pages": access_context["can_connect_facebook"],
         "can_edit": can_edit,
     }
 
@@ -222,6 +253,8 @@ def _user_safe_last_error(raw: str | None) -> str:
 
 def _serialize_connection(row: FacebookPageConnection) -> dict[str, Any]:
     tasks = row.page_tasks if isinstance(row.page_tasks, list) else []
+    metadata = row.metadata_json if isinstance(row.metadata_json, dict) else {}
+    has_required_page_tasks = bool(metadata.get("has_required_page_tasks", _page_has_required_tasks({"tasks": tasks})))
     return {
         "id": row.id,
         "page_id": row.page_id,
@@ -237,7 +270,10 @@ def _serialize_connection(row: FacebookPageConnection) -> dict[str, Any]:
         "connected_at": row.connected_at.isoformat() if row.connected_at else None,
         "last_synced_at": row.last_synced_at.isoformat() if row.last_synced_at else None,
         "last_error": _user_safe_last_error(row.last_error),
-        "metadata": {},
+        "metadata": {
+            "has_required_page_tasks": has_required_page_tasks,
+            "missing_required_tasks": [task for task in sorted(FACEBOOK_REQUIRED_PAGE_TASKS) if task not in {str(t).strip().upper() for t in tasks}],
+        },
     }
 
 
@@ -737,14 +773,25 @@ async def get_facebook_pages_status(
     except HTTPException:
         # Status endpoint must stay readable even if OAuth callback URL is not configured yet.
         backend_public = ""
+    serialized_pages = [_serialize_connection(row) for row in rows]
+    permission_warning_pages = [
+        page for page in serialized_pages
+        if not bool((page.get("metadata") or {}).get("has_required_page_tasks", True))
+    ]
     return {
         "organization_slug": context["organization_slug"],
         "organization_name": context["organization"]["name"],
+        "workspace_role": context["workspace_role"],
+        "workspace_role_label": context["workspace_role_label"],
+        "can_connect_facebook": context["can_connect_facebook"],
+        "facebook_access_code": context["facebook_access_code"],
+        "facebook_access_message": context["facebook_access_message"],
         "can_manage_pages": context["can_manage_pages"],
         "can_edit": context["can_edit"],
         "oauth_configured": bool(settings.META_APP_ID and settings.META_APP_SECRET and backend_public),
         "direct_service_configured": bool(settings.MESSENGER_DIRECT_DASHBOARD_KEY and settings.MESSENGER_DIRECT_URL),
-        "pages": [_serialize_connection(row) for row in rows],
+        "pages": serialized_pages,
+        "permission_warning_count": len(permission_warning_pages),
         "has_active_page": any(str(row.is_active).lower() == "true" for row in rows),
     }
 
@@ -873,6 +920,7 @@ async def start_facebook_auth(
     request: Request,
     frontend_origin: str | None = Query(default=None),
     force_reauth: bool = Query(default=False),
+    dashboard_access_key: str | None = Header(default=None, alias=DASHBOARD_ACCESS_HEADER),
     authorization: str | None = Header(None),
 ):
     context = _organization_context_from_authorization(authorization, require_edit=True)
@@ -882,7 +930,16 @@ async def start_facebook_auth(
     # Do not force a fresh Meta consent on every reconnect.
     # Some accounts can reuse an already-valid authorization, while a full
     # permission reset sends them back through Meta's strictest review gates.
-    if force_reauth:
+    support_key = str(settings.MESSENGER_DIRECT_DASHBOARD_KEY or "").strip()
+    allow_force_reauth = bool(
+        force_reauth
+        and support_key
+        and dashboard_access_key
+        and hmac.compare_digest(str(dashboard_access_key).strip(), support_key)
+    )
+    if force_reauth and not allow_force_reauth:
+        logger.warning("Ignoring force_reauth without valid support key (org=%s)", context["organization_slug"])
+    if allow_force_reauth:
         await _revoke_facebook_app_permissions(context["organization_slug"])
 
     state = _build_state(
@@ -995,6 +1052,26 @@ async def _activate_facebook_page_core(
     )
     if not connection:
         raise HTTPException(status_code=404, detail="Page Facebook introuvable.")
+
+    page_tasks = connection.page_tasks if isinstance(connection.page_tasks, list) else []
+    if not _page_has_required_tasks({"tasks": page_tasks}):
+        connection.status = "permissions_missing"
+        connection.is_active = "false"
+        connection.webhook_subscribed = "false"
+        connection.direct_service_synced = "false"
+        connection.last_error = (
+            "Permissions Facebook insuffisantes pour cette page. "
+            "Vous devez etre admin/proprietaire de la page pour activer Messenger."
+        )
+        connection.updated_at = _utcnow()
+        db.commit()
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Permissions Facebook insuffisantes sur cette page. "
+                "Assurez-vous d'etre admin/proprietaire de la page puis reconnectez Facebook."
+            ),
+        )
 
     active_elsewhere = (
         db.query(FacebookPageConnection)
