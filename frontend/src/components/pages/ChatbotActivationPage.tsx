@@ -33,6 +33,28 @@ import {
 } from "@/lib/api";
 
 // ---------------------------------------------------------------------------
+// Error parsing helper
+// ---------------------------------------------------------------------------
+
+/** Extrait le message lisible depuis une erreur API (qui peut etre du JSON brut). */
+function parseApiError(e: unknown, fallback = "Une erreur est survenue."): string {
+  if (!(e instanceof Error)) return fallback;
+  const raw = e.message.trim();
+  // try JSON parse to extract FastAPI { "detail": "..." }
+  if (raw.startsWith("{") || raw.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (typeof parsed?.detail === "string") return parsed.detail;
+      if (Array.isArray(parsed?.detail)) {
+        // pydantic validation errors array
+        return parsed.detail.map((d: { msg?: string }) => d.msg ?? "").filter(Boolean).join(", ") || fallback;
+      }
+    } catch { /* not json */ }
+  }
+  return raw || fallback;
+}
+
+// ---------------------------------------------------------------------------
 // Types & constants
 // ---------------------------------------------------------------------------
 
@@ -461,7 +483,24 @@ export default function ChatbotActivationPage({
       setAr(res.activation_request);
       setStep("payment");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Erreur lors de la creation");
+      const msg = parseApiError(e, "Erreur lors de la creation");
+      // If an AR already exists, load it and resume from the correct step
+      if (/deja en cours|already in progress|already exists/i.test(msg)) {
+        try {
+          const t = await resolveToken();
+          if (t) {
+            const existing = await getMyActivationRequest(t);
+            const existingAr = existing.activation_request;
+            if (existingAr) {
+              setAr(existingAr);
+              setSelectedPlanId(existingAr.selected_plan_id || selectedPlanId);
+              setStep(statusToStep(existingAr.status));
+              return;
+            }
+          }
+        } catch { /* silent fallback */ }
+      }
+      setError(msg);
     } finally {
       setBusy(false);
     }
@@ -495,9 +534,7 @@ export default function ChatbotActivationPage({
       setAr(refreshed.activation_request);
       setStep("awaiting");
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Erreur lors de la soumission du paiement"
-      );
+      setError(parseApiError(e, "Erreur lors de la soumission du paiement"));
     } finally {
       setBusy(false);
     }
@@ -517,9 +554,7 @@ export default function ChatbotActivationPage({
       setAr(res.activation_request);
       setStep("flare_admin");
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Erreur lors de la sauvegarde"
-      );
+      setError(parseApiError(e, "Erreur lors de la sauvegarde"));
     } finally {
       setBusy(false);
     }
@@ -538,9 +573,7 @@ export default function ChatbotActivationPage({
       setAr(res.activation_request);
       setStep("awaiting");
     } catch (e) {
-      setError(
-        e instanceof Error ? e.message : "Erreur lors de la confirmation"
-      );
+      setError(parseApiError(e, "Erreur lors de la confirmation"));
     } finally {
       setBusy(false);
     }
@@ -688,7 +721,7 @@ export default function ChatbotActivationPage({
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
                         if (isEnterprise) {
-                          window.open("mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI", "_blank");
+                          window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
                           return;
                         }
                         setSelectedPlanId(plan.id);

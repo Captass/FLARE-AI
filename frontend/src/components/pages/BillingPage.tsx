@@ -131,6 +131,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
 
   const handleActivate = (plan: Plan) => {
     if (plan.contact) {
+      // Use href redirect (not window.open which causes blank page in web apps)
       window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
       return;
     }
