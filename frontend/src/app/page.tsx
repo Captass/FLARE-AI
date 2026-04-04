@@ -315,6 +315,8 @@ export default function Home() {
 
   const [selectedMessengerConversationId, setSelectedMessengerConversationId] = useState<string | null>(null);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const sessionIdentity = user ? `${user.uid}:${user.email ?? ""}` : "anonymous";
+  const sessionIdentityRef = useRef(sessionIdentity);
   const [showFilesPanel, setShowFilesPanel] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
   const [isSpaceModalOpen, setIsSpaceModalOpen] = useState(false);
@@ -567,14 +569,17 @@ export default function Home() {
   const resolveAccessToken = useCallback(async (forceRefresh = false) => {
     if (getFreshToken) {
       const nextToken = await getFreshToken(forceRefresh);
-      if (nextToken) {
-        return nextToken;
-      }
+      return nextToken;
     }
     return token ?? null;
   }, [getFreshToken, token]);
 
+  useEffect(() => {
+    sessionIdentityRef.current = sessionIdentity;
+  }, [sessionIdentity]);
+
   const loadOrganizationState = useCallback(async () => {
+    const requestIdentity = sessionIdentityRef.current;
     const accessToken = await resolveAccessToken();
     if (!user || !accessToken) {
       setOrganizationAccess(null);
@@ -583,9 +588,22 @@ export default function Home() {
 
     try {
       const next = await getOrganizationAccess(accessToken);
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
+      const expectedEmail = (user.email || "").trim().toLowerCase();
+      const responseEmail = (next.user_email || "").trim().toLowerCase();
+      if (expectedEmail && responseEmail && expectedEmail !== responseEmail) {
+        console.warn("Ignoring organization payload for another user", { expectedEmail, responseEmail });
+        setOrganizationAccess(null);
+        return null;
+      }
       setOrganizationAccess(next);
       return next;
     } catch (err) {
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
       console.error("Erreur chargement organisation:", err);
       setOrganizationAccess(null);
       return null;
@@ -593,6 +611,7 @@ export default function Home() {
   }, [resolveAccessToken, user]);
 
   const loadWorkspaceIdentity = useCallback(async () => {
+    const requestIdentity = sessionIdentityRef.current;
     const accessToken = await resolveAccessToken();
     if (!user || !accessToken) {
       setWorkspaceIdentity(null);
@@ -601,6 +620,9 @@ export default function Home() {
 
     try {
       const next = await getWorkspaceIdentity(accessToken);
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
       setWorkspaceIdentity(next);
       if (next.user_profile.display_name) {
         setDisplayName(next.user_profile.display_name);
@@ -608,6 +630,9 @@ export default function Home() {
       }
       return next;
     } catch (err) {
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
       console.error("Erreur chargement identite:", err);
       setWorkspaceIdentity(null);
       return null;
@@ -615,6 +640,7 @@ export default function Home() {
   }, [resolveAccessToken, user]);
 
   const loadSetupStatus = useCallback(async () => {
+    const requestIdentity = sessionIdentityRef.current;
     const accessToken = await resolveAccessToken();
     if (!user || !accessToken) {
       setSetupStatus(null);
@@ -623,6 +649,9 @@ export default function Home() {
 
     try {
       const next = await getChatbotSetupStatus(accessToken);
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
       setSetupStatus(next);
       if (next?.all_pages) {
         const nextPages = next.all_pages as unknown as import("@/lib/facebookMessenger").FacebookMessengerPage[];
@@ -630,11 +659,19 @@ export default function Home() {
         setSelectedFacebookPageId((prev) =>
           resolvePreferredFacebookPageId(nextPages, prev, next.active_page_id)
         );
+      } else {
+        setFacebookPages([]);
+        setSelectedFacebookPageId(null);
       }
       return next;
     } catch (err) {
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
       console.error("Erreur chargement setup chatbot:", err);
       setSetupStatus(null);
+      setFacebookPages([]);
+      setSelectedFacebookPageId(null);
       return null;
     }
   }, [resolveAccessToken, user]);
@@ -665,55 +702,63 @@ export default function Home() {
 
   // Synchronisation avec le backend (création plan/clé GCP automatique pour les nouveaux)
   useEffect(() => {
-    if (user) {
-      let cancelled = false;
-      let pingInterval: ReturnType<typeof setInterval> | null = null;
-
-      const pingServer = async () => {
-        const accessToken = await resolveAccessToken();
-        if (!accessToken || cancelled) return;
-        fetch(`${getApiBaseUrl()}/api/users/ping`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${accessToken}` },
-        }).catch(() => {});
-      };
-
-      const bootstrapSession = async () => {
-        const accessToken = await resolveAccessToken();
-        if (!accessToken || cancelled) return;
-
-        syncUser(accessToken).catch((err) => console.error("Erreur sync user:", err));
-        loadOrganizationState().catch(() => null);
-        loadWorkspaceIdentity().catch(() => null);
-        loadSetupStatus().catch(() => null);
-        localStorage.setItem("flare-onboarding-v2.3.7-done", "1");
-
-        await pingServer();
-        pingInterval = setInterval(() => {
-          void pingServer();
-        }, 30000);
-      };
-
-      const handleVisibilityChange = () => {
-        if (document.visibilityState === "visible") {
-          void pingServer();
-        }
-      };
-
-      void bootstrapSession();
-      document.addEventListener("visibilitychange", handleVisibilityChange);
-
-      return () => {
-        cancelled = true;
-        if (pingInterval) clearInterval(pingInterval);
-        document.removeEventListener("visibilitychange", handleVisibilityChange);
-      };
-    }
-
+    // Clear workspace/chatbot state immediately when the authenticated identity changes
+    // so a new account never sees the previous account's organizations during reload.
     setOrganizationAccess(null);
     setShowOrganizationAccess(false);
     setWorkspaceIdentity(null);
     setSetupStatus(null);
+    setFacebookPages([]);
+    setSelectedFacebookPageId(null);
+  }, [sessionIdentity]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    let cancelled = false;
+    let pingInterval: ReturnType<typeof setInterval> | null = null;
+
+    const pingServer = async () => {
+      const accessToken = await resolveAccessToken();
+      if (!accessToken || cancelled) return;
+      fetch(`${getApiBaseUrl()}/api/users/ping`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${accessToken}` },
+      }).catch(() => {});
+    };
+
+    const bootstrapSession = async () => {
+      const accessToken = await resolveAccessToken(true);
+      if (!accessToken || cancelled) return;
+
+      syncUser(accessToken).catch((err) => console.error("Erreur sync user:", err));
+      loadOrganizationState().catch(() => null);
+      loadWorkspaceIdentity().catch(() => null);
+      loadSetupStatus().catch(() => null);
+      localStorage.setItem("flare-onboarding-v2.3.7-done", "1");
+
+      await pingServer();
+      pingInterval = setInterval(() => {
+        void pingServer();
+      }, 30000);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void pingServer();
+      }
+    };
+
+    void bootstrapSession();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      cancelled = true;
+      if (pingInterval) clearInterval(pingInterval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, resolveAccessToken, user]);
 
   useEffect(() => {
@@ -810,6 +855,11 @@ export default function Home() {
     void openOrganizationAccess("chatbot");
   }, [openOrganizationAccess]);
 
+  const closeOrganizationAccess = useCallback(() => {
+    setShowOrganizationAccess(false);
+    setPendingOrganizationTarget(null);
+  }, []);
+
   const handleWorkspaceIdentitySaved = useCallback(
     async (next: WorkspaceIdentity) => {
       setWorkspaceIdentity(next);
@@ -855,6 +905,7 @@ export default function Home() {
         setNavStack([targetView]);
       } catch (err) {
         console.error("Erreur connexion organisation:", err);
+        alert(err instanceof Error ? err.message : "Impossible d'ouvrir cet espace pour le moment.");
       } finally {
         setOrganizationLoading(false);
       }
@@ -905,6 +956,7 @@ export default function Home() {
       setNavStack(["home" as NavLevel]);
     } catch (err) {
       console.error("Erreur suppression organisation:", err);
+      alert(err instanceof Error ? err.message : "Suppression de l'espace impossible pour le moment.");
     } finally {
       setOrganizationLoading(false);
     }
@@ -941,6 +993,7 @@ export default function Home() {
       setNavStack(["home" as NavLevel]);
     } catch (err) {
       console.error("Erreur retour espace personnel:", err);
+      alert(err instanceof Error ? err.message : "Impossible de revenir a l'espace personnel.");
     } finally {
       setOrganizationLoading(false);
     }
@@ -1401,7 +1454,7 @@ export default function Home() {
         ) : activeView === "chatbot-parametres" ? (
           <motion.div key="chatbot-parametres" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotParametresPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} onPagesChanged={handlePagesChanged} /></motion.div>
         ) : activeView === "chatbot-dashboard" ? (
-           <motion.div key="chatbot-dashboard" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotDashboardPage token={token} getFreshToken={getFreshToken} selectedPageId={selectedFacebookPageId} /></motion.div>
+           <motion.div key="chatbot-dashboard" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotDashboardPage token={token} getFreshToken={getFreshToken} selectedPageId={selectedFacebookPageId} onPush={onPush} onSelectContact={setSelectedMessengerConversationId} /></motion.div>
         ) : activeView === "chatbot-clients" ? (
            <motion.div key="chatbot-clients" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotClientsPage token={token} getFreshToken={getFreshToken} onPush={onPush} onSelectContact={setSelectedMessengerConversationId} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbot-client-detail" ? (
@@ -1541,10 +1594,11 @@ export default function Home() {
       />
 
       <OrganizationAccessPanel
+        key={organizationAccess?.user_email || "no-user"}
         open={showOrganizationAccess}
         data={organizationAccess}
         loading={organizationLoading}
-        onClose={() => setShowOrganizationAccess(false)}
+        onClose={closeOrganizationAccess}
         onUsePersonal={handleUsePersonalScope}
         onConnectOrganization={handleConnectOrganizationScope}
         onCreateOrganization={handleCreateOrganizationScope}
