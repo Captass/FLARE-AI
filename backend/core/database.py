@@ -419,6 +419,156 @@ class ChatbotSalesConfig(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+# ── Activation assistee et paiement manuel ────────────────────────────────────
+
+ACTIVATION_REQUEST_STATUSES = [
+    "draft", "awaiting_payment", "payment_submitted", "payment_verified",
+    "awaiting_flare_page_admin_access", "queued_for_activation",
+    "activation_in_progress", "testing", "active",
+    "blocked", "rejected", "canceled",
+]
+
+ACTIVATION_TERMINAL_STATUSES = {"active", "rejected", "canceled"}
+
+PAYMENT_STATUSES = ["draft", "submitted", "verified", "rejected"]
+
+ORDER_STATUSES = ["detected", "contacted", "confirmed", "fulfilled", "canceled"]
+
+
+class ActivationRequest(Base):
+    """Demande d'activation assistee par organisation."""
+    __tablename__ = "activation_requests"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_slug = Column(String, index=True, nullable=False)
+    organization_scope_id = Column(String, index=True, nullable=False)
+    requester_user_id = Column(String, nullable=False)
+    selected_plan_id = Column(String, default="starter")
+    status = Column(String, default="draft")
+    payment_status = Column(String, default="pending")
+
+    # Contact
+    contact_full_name = Column(String, default="")
+    contact_email = Column(String, default="")
+    contact_phone = Column(String, default="")
+    contact_whatsapp = Column(String, default="")
+
+    # Entreprise
+    business_name = Column(String, default="")
+    business_sector = Column(String, default="")
+    business_city = Column(String, default="")
+    business_country = Column(String, default="Madagascar")
+    business_description = Column(Text, default="")
+
+    # Facebook
+    facebook_page_name = Column(String, default="")
+    facebook_page_url = Column(String, default="")
+    facebook_admin_email = Column(String, default="")
+
+    # Chatbot
+    primary_language = Column(String, default="fr")
+    bot_name = Column(String, default="L'assistant")
+    tone = Column(String, default="amical")
+    greeting_message = Column(Text, default="")
+
+    # Vente
+    offer_summary = Column(Text, default="")
+    opening_hours = Column(String, default="")
+    delivery_zones = Column(String, default="")
+
+    # Notes
+    notes_for_flare = Column(Text, default="")
+
+    # Acces page FLARE
+    flare_page_admin_confirmed = Column(String, default="false")
+    flare_page_admin_confirmed_at = Column(DateTime, nullable=True)
+
+    # Operateur
+    assigned_operator_email = Column(String, nullable=True)
+    internal_notes = Column(Text, default="")
+
+    # Timestamps
+    requested_at = Column(DateTime, default=datetime.utcnow)
+    payment_verified_at = Column(DateTime, nullable=True)
+    activation_started_at = Column(DateTime, nullable=True)
+    tested_at = Column(DateTime, nullable=True)
+    completed_at = Column(DateTime, nullable=True)
+    blocked_reason = Column(Text, nullable=True)
+
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ActivationRequestEvent(Base):
+    """Audit trail pour les demandes d'activation."""
+    __tablename__ = "activation_request_events"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    activation_request_id = Column(String, ForeignKey("activation_requests.id"), index=True, nullable=False)
+    actor_type = Column(String, default="system")  # client | admin | system
+    actor_id = Column(String, default="")
+    event_type = Column(String, nullable=False)
+    payload_json = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class ManualPaymentSubmission(Base):
+    """Preuve de paiement manuel."""
+    __tablename__ = "manual_payment_submissions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_slug = Column(String, index=True, nullable=False)
+    organization_scope_id = Column(String, index=True, nullable=False)
+    activation_request_id = Column(String, ForeignKey("activation_requests.id"), nullable=True)
+    selected_plan_id = Column(String, default="starter")
+    method_code = Column(String, nullable=False)
+    amount = Column(String, default="")
+    currency = Column(String, default="MGA")
+    payer_full_name = Column(String, default="")
+    payer_phone = Column(String, default="")
+    transaction_reference = Column(String, index=True, default="")
+    proof_file_url = Column(String, nullable=True)
+    proof_file_name = Column(String, nullable=True)
+    proof_file_size = Column(Integer, nullable=True)
+    notes = Column(Text, default="")
+    status = Column(String, default="draft")  # draft, submitted, verified, rejected
+    submitted_at = Column(DateTime, nullable=True)
+    verified_at = Column(DateTime, nullable=True)
+    verified_by = Column(String, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ChatbotOrder(Base):
+    """Commande issue du chatbot Messenger."""
+    __tablename__ = "chatbot_orders"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_slug = Column(String, index=True, nullable=False)
+    organization_scope_id = Column(String, index=True, nullable=False)
+    facebook_page_id = Column(String, nullable=True)
+    page_name = Column(String, default="")
+    contact_psid = Column(String, index=True, default="")
+    contact_name = Column(String, default="")
+    contact_phone = Column(String, default="")
+    contact_email = Column(String, default="")
+    source_conversation_id = Column(String, nullable=True)
+    source_message_id = Column(String, nullable=True)
+    product_summary = Column(Text, default="")
+    quantity_text = Column(String, default="")
+    amount_text = Column(String, default="")
+    delivery_address = Column(Text, default="")
+    customer_request_text = Column(Text, default="")
+    confidence = Column(Float, default=0.0)
+    source = Column(String, default="manual")  # signal | manual
+    status = Column(String, default="detected")  # detected, contacted, confirmed, fulfilled, canceled
+    needs_human_followup = Column(String, default="false")
+    assigned_to = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ── Feature flags par plan ────────────────────────────────────────────────────
 PLAN_FEATURES: dict[str, dict] = {
     "free": {

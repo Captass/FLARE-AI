@@ -39,6 +39,7 @@ export interface MessengerPriorityItem {
 }
 
 export interface MessengerMessageRow {
+  psid: string;
   time: string;
   customer: string;
   message: string;

@@ -14,6 +14,8 @@ export type NavLevel =
   | "chatbot-dashboard"
   | "chatbot-clients"
   | "chatbot-client-detail"
+  | "chatbot-orders"
+  | "chatbot-activation"
   | "assistant"
   | "guide"
   | "billing"
@@ -31,6 +33,8 @@ export const NAV_LABELS: Record<NavLevel, string> = {
   "chatbot-dashboard": "Tableau de bord",
   "chatbot-clients": "Clients & Conversations",
   "chatbot-client-detail": "Fiche client",
+  "chatbot-orders": "Commandes",
+  "chatbot-activation": "Activation",
   assistant: "Assistant IA",
   guide: "Guide",
   billing: "Abonnements",

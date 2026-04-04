@@ -19,9 +19,10 @@ import {
 
 import { useState, useEffect, useCallback } from "react";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
-import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
+import { getChatbotOverview, type ChatbotOverview, getMyActivationRequest, type ActivationRequest, getBillingFeatures } from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import type { ChatbotSetupStatus } from "@/lib/chatbotSetup";
+import { ShoppingBag } from "lucide-react";
 
 const ChatbotSetupWizard = dynamic(() => import("@/components/ChatbotSetupWizard"), {
   ssr: false,
@@ -38,14 +39,14 @@ interface ChatbotHomePageProps {
   currentScopeType?: "personal" | "organization";
   currentUserRole?: string | null;
   onPush: (level: NavLevel) => void;
-  /** Nombre de conversations nÃ©cessitant une intervention humaine */
+  /** Nombre de conversations necessitant une intervention humaine */
   pendingHumanCount?: number;
   pages?: FacebookMessengerPage[];
   selectedPageId?: string | null;
   onSelectPage?: (pageId: string) => void;
   /** Remonte la liste des pages (aprÃ¨s OAuth ou activation) vers page.tsx */
   onPagesChanged?: (pages: FacebookMessengerPage[]) => void;
-  /** Statut du parcours dâ€™installation (connexion â†’ prÃ©fÃ©rences) */
+  /** Statut du parcours d'installation (connexion -> preferences) */
   setupStatus?: ChatbotSetupStatus | null;
   onRefreshSetupStatus?: () => Promise<ChatbotSetupStatus | null>;
   onRequestOrganizationSelection?: () => void;
@@ -84,10 +85,98 @@ const ENTRIES = [
     iconColor: "text-orange-400",
     iconBg: "bg-orange-500/12",
   },
+  {
+    id: "chatbot-orders" as NavLevel,
+    label: "Commandes",
+    description: "Commandes recues via Messenger et suivi",
+    icon: ShoppingBag,
+    iconColor: "text-amber-400",
+    iconBg: "bg-amber-500/12",
+  },
 ];
 
 const META_BLOCKER_ALERT =
   "Facebook a bloque la connexion avant le retour vers FLARE. Si la popup affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de votre espace FLARE.";
+
+type ActivationBanner = {
+  label: string;
+  description: string;
+  color: "orange" | "blue" | "emerald" | "red" | "amber";
+  cta?: { label: string; navTarget: NavLevel };
+};
+
+function getActivationBanner(
+  scopeType: "personal" | "organization",
+  planId: string | null,
+  ar: ActivationRequest | null,
+): ActivationBanner | null {
+  if (scopeType !== "organization") {
+    return {
+      label: "Creez votre espace",
+      description: "Creez ou choisissez un espace de travail pour activer votre chatbot.",
+      color: "orange",
+    };
+  }
+  if (!ar) {
+    if (!planId || planId === "free") {
+      return {
+        label: "Choisissez votre offre",
+        description: "Selectionnez un plan pour demarrer l'activation de votre chatbot IA.",
+        color: "orange",
+        cta: { label: "Voir les offres", navTarget: "chatbot-activation" as NavLevel },
+      };
+    }
+    return null;
+  }
+  const s = ar.status;
+  if (s === "draft" || s === "awaiting_payment") {
+    return {
+      label: "Envoyez votre paiement",
+      description: "Effectuez le paiement et soumettez votre preuve pour continuer.",
+      color: "amber",
+      cta: { label: "Payer", navTarget: "chatbot-activation" as NavLevel },
+    };
+  }
+  if (s === "payment_submitted") {
+    return {
+      label: "Preuve recue, verification en cours",
+      description: "Notre equipe verifie votre paiement. Vous serez notifie des que c'est valide.",
+      color: "blue",
+    };
+  }
+  if (s === "payment_verified" || s === "awaiting_flare_page_admin_access") {
+    return {
+      label: "Ajoutez FLARE comme admin page",
+      description: "Ajoutez le compte FLARE comme administrateur de votre page Facebook pour finaliser l'activation.",
+      color: "amber",
+      cta: { label: "Confirmer l'acces", navTarget: "chatbot-activation" as NavLevel },
+    };
+  }
+  if (s === "queued_for_activation" || s === "activation_in_progress" || s === "testing") {
+    return {
+      label: "Activation en cours",
+      description: "Notre equipe configure votre chatbot. Vous serez notifie des qu'il est pret.",
+      color: "blue",
+    };
+  }
+  if (s === "blocked") {
+    return {
+      label: "Activation bloquee",
+      description: ar.blocked_reason || "L'activation a ete suspendue. Contactez l'equipe FLARE pour plus d'informations.",
+      color: "red",
+    };
+  }
+  if (s === "rejected") {
+    return {
+      label: "Paiement refuse",
+      description: ar.blocked_reason || "Votre paiement n'a pas pu etre valide. Vous pouvez renvoyer une preuve.",
+      color: "red",
+      cta: { label: "Renvoyer une preuve", navTarget: "chatbot-activation" as NavLevel },
+    };
+  }
+  // active or other terminal -- no banner
+  return null;
+}
 
 export default function ChatbotHomePage({
   token,
@@ -105,6 +194,8 @@ export default function ChatbotHomePage({
   onRequestOrganizationSelection,
 }: ChatbotHomePageProps) {
   const [skipSetupWizard, setSkipSetupWizard] = useState(false);
+  const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
+  const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
 
   useEffect(() => {
     if (setupStatus?.step === "complete") {
@@ -131,6 +222,26 @@ export default function ChatbotHomePage({
     if (getFreshToken) return await getFreshToken();
     return token ?? null;
   }, [getFreshToken, token]);
+
+  // Load activation request + plan on mount
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const t = await resolveToken();
+      if (!t || cancelled) return;
+      try {
+        const [ar, billing] = await Promise.allSettled([
+          getMyActivationRequest(t),
+          getBillingFeatures(t),
+        ]);
+        if (!cancelled) {
+          setActivationRequest(ar.status === "fulfilled" ? ar.value.activation_request : null);
+          setCurrentPlanId(billing.status === "fulfilled" ? (billing.value as any)?.plan_id ?? null : null);
+        }
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [resolveToken]);
 
   const syncFacebookPages = useCallback(async () => {
     const t = await resolveToken();
@@ -394,6 +505,9 @@ export default function ChatbotHomePage({
       overview?.active_page?.webhook_subscribed
     );
 
+  const isActivationActive = activationRequest?.status === "active";
+  const activationBanner = getActivationBanner(currentScopeType, currentPlanId, activationRequest);
+
   if (showSetupWizard && setupStatus) {
     return (
       <div className="flex-1 overflow-y-auto">
@@ -435,7 +549,7 @@ export default function ChatbotHomePage({
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-[860px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
 
-        {/* â”€â”€ Header & Page Selector â”€â”€ */}
+        {/* â"€â"€ Header & Page Selector â"€â"€ */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -447,9 +561,50 @@ export default function ChatbotHomePage({
               Chatbot IA Facebook
             </h1>
             <p className="text-lg text-[var(--text-muted)] mb-6">
-              Selectionnez la page Facebook que vous souhaitez configurer.
+              {isActivationActive
+                ? "Selectionnez la page Facebook que vous souhaitez configurer."
+                : "Activez votre chatbot IA en quelques etapes."}
             </p>
-            
+
+            {/* ── Activation status banner ── */}
+            {activationBanner && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={`mb-4 rounded-xl border px-5 py-4 ${
+                  activationBanner.color === "red"
+                    ? "border-red-500/30 bg-red-500/10"
+                    : activationBanner.color === "blue"
+                    ? "border-blue-500/30 bg-blue-500/10"
+                    : activationBanner.color === "emerald"
+                    ? "border-emerald-500/30 bg-emerald-500/10"
+                    : activationBanner.color === "amber"
+                    ? "border-amber-500/30 bg-amber-500/10"
+                    : "border-orange-500/30 bg-orange-500/10"
+                }`}
+              >
+                <p className={`text-sm font-semibold ${
+                  activationBanner.color === "red" ? "text-red-300" :
+                  activationBanner.color === "blue" ? "text-blue-300" :
+                  activationBanner.color === "emerald" ? "text-emerald-300" :
+                  activationBanner.color === "amber" ? "text-amber-300" :
+                  "text-orange-300"
+                }`}>
+                  {activationBanner.label}
+                </p>
+                <p className="mt-1 text-sm text-fg/60">{activationBanner.description}</p>
+                {activationBanner.cta && (
+                  <button
+                    type="button"
+                    onClick={() => onPush(activationBanner.cta!.navTarget)}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-fg/90 hover:bg-white/15 transition-colors"
+                  >
+                    {activationBanner.cta.label}
+                  </button>
+                )}
+              </motion.div>
+            )}
+
             {activationNotice ? (
               <div
                 role="status"
@@ -458,7 +613,10 @@ export default function ChatbotHomePage({
                 {activationNotice}
               </div>
             ) : null}
-            <PageSelector
+
+            {/* PageSelector visible only when activation is complete */}
+            {isActivationActive && (
+              <PageSelector
                 pages={pages}
                 selectedPageId={selectedPageId}
                 onSelect={(pid) => onSelectPage?.(pid)}
@@ -473,24 +631,25 @@ export default function ChatbotHomePage({
                 busyPageId={fbBusyPageId}
                 authDebug={facebookAuthDebug}
               />
+            )}
           </div>
         </motion.div>
 
-        {!hasPageSelected && pages.length > 0 && (
+        {isActivationActive && !hasPageSelected && pages.length > 0 && (
            <div className="text-center p-4 text-orange-400/80 bg-orange-500/10 rounded-xl border border-orange-500/20">
              Veuillez selectionner une page ci-dessus pour configurer son chatbot.
            </div>
         )}
 
-        {/* â”€â”€ AperÃ§u KPIs (Si page sÃ©lectionnÃ©e) â”€â”€ */}
-        {hasPageSelected && (
+        {/* -- Apercu KPIs (Si page selectionnee) -- */}
+        {isActivationActive && hasPageSelected && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
             className="grid grid-cols-1 md:grid-cols-3 gap-4"
           >
-            {/* Statut (alignÃ© spec + donnÃ©es rÃ©elles overview) */}
+            {/* Statut (aligne spec + donnees reelles overview) */}
             <motion.div
               whileHover={{ scale: 1.02 }}
               className="p-4 rounded-2xl border border-fg/[0.08] bg-[var(--bg-glass)] backdrop-blur-md shadow-[var(--shadow-card)] flex items-center justify-between"
@@ -567,15 +726,15 @@ export default function ChatbotHomePage({
             </motion.div>
           </motion.div>
         )}
-        {hasPageSelected && lastKpiUpdate && !loadingKPIs && (
+        {isActivationActive && hasPageSelected && lastKpiUpdate && !loadingKPIs && (
           <p className="text-sm text-[var(--text-muted)] -mt-4">
             Donnees synchronisees avec le serveur - actualisation automatique toutes les{" "}
             {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
           </p>
         )}
 
-        {/* â”€â”€ Entry cards â”€â”€ */}
-        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 transition-opacity duration-300 ${hasPageSelected ? 'opacity-100' : 'opacity-40 pointer-events-none'}`} role="list" aria-label="Sections du Chatbot IA">
+        {/* ── Entry cards (only when activation is active) ── */}
+        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 transition-opacity duration-300 ${!isActivationActive || !hasPageSelected ? 'opacity-40 pointer-events-none' : 'opacity-100'}`} role="list" aria-label="Sections du Chatbot IA">
           {ENTRIES.map((entry, idx) => {
             const Icon = entry.icon;
             const isClientsCard = entry.id === "chatbot-clients";

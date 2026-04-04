@@ -55,6 +55,8 @@ import ChatbotParametresPage from "@/components/pages/ChatbotParametresPage";
 import ChatbotDashboardPage from "@/components/pages/ChatbotDashboardPage";
 import ChatbotClientsPage from "@/components/pages/ChatbotClientsPage";
 import ChatbotClientDetailPage from "@/components/pages/ChatbotClientDetailPage";
+import ChatbotActivationPage from "@/components/pages/ChatbotActivationPage";
+import ChatbotOrdersPage from "@/components/pages/ChatbotOrdersPage";
 
 import {
   ChatMode,
@@ -1459,6 +1461,10 @@ export default function Home() {
            <motion.div key="chatbot-clients" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotClientsPage token={token} getFreshToken={getFreshToken} onPush={onPush} onSelectContact={setSelectedMessengerConversationId} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbot-client-detail" ? (
            <motion.div key="chatbot-client-detail" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotClientDetailPage token={token} getFreshToken={getFreshToken} contactId={selectedMessengerConversationId} selectedPageId={selectedFacebookPageId} /></motion.div>
+        ) : activeView === "chatbot-orders" ? (
+           <motion.div key="chatbot-orders" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotOrdersPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} /></motion.div>
+        ) : activeView === "chatbot-activation" ? (
+           <motion.div key="chatbot-activation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotActivationPage token={token} getFreshToken={getFreshToken} onPush={onPush} /></motion.div>
         ) : activeView === "settings" ? (
            <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onThemeToggle={handleThemeToggle} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
         ) : activeView === "billing" ? (

@@ -38,6 +38,7 @@ from routers.chatbot import router as chatbot_router
 from routers.organizations import router as organizations_router
 from routers.users import router as users_router
 from routers.content_studio import router as content_studio_router
+from routers.activation import router as activation_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -256,6 +257,7 @@ app.include_router(chatbot_router)
 app.include_router(organizations_router)
 app.include_router(users_router)
 app.include_router(content_studio_router)
+app.include_router(activation_router)
 
 
 def _active_model() -> str:

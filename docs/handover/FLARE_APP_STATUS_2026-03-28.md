@@ -46,6 +46,20 @@ Le wizard bloque maintenant le CTA Facebook si le backend ne declare pas l'OAuth
 L'utilisateur voit un message d'indisponibilite avant clic, au lieu d'une erreur serveur apres clic.
 `Continuer plus tard` quitte le wizard sans le marquer localement comme termine.
 
+## Update 2026-04-04 - lancement v1 activation assistee
+
+Specification complete de la version de lancement dans :
+`docs/specs/launch/v1_2026-04-04_assisted_activation/`
+
+Decisions cles :
+- pas de self-serve Meta public pour lundi
+- paiement manuel local uniquement (MVola ou autre methode configuree)
+- activation Facebook assistee par FLARE (le client ajoute le compte FLARE comme admin page)
+- tout nouvel espace demarre en plan `free` (correction critique)
+- commandes simples issues du chatbot avec dashboard
+- wording "Bot actif" / "Reprise manuelle" au lieu de "agent" / "human"
+- hub Operations admin avec Activations, Paiements, Commandes
+
 ## Update 2026-04-04 - workspace owner self-serve
 
 Le parcours de lancement a ete simplifie pour le mode solo :

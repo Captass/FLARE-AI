@@ -114,6 +114,12 @@ class Settings(BaseSettings):
     ORGANIZATION_REGISTRY_JSON: Optional[str] = None
     ORGANIZATION_SESSION_HOURS: int = 12
 
+    # Manual payments & assisted activation
+    MANUAL_PAYMENT_METHODS_JSON: Optional[str] = None
+    FLARE_FACEBOOK_OPERATOR_NAME: str = "FLARE AI"
+    FLARE_FACEBOOK_OPERATOR_CONTACT: str = ""
+    ACTIVATION_SLA_MINUTES: int = 15
+
     # SMTP
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_PORT: int = 587

@@ -1686,3 +1686,244 @@ export async function setContactBotStatus(psid: string, botEnabled: boolean, tok
   }
 }
 
+// ─── Assisted Activation & Manual Payments ──────────────────────────────────
+
+export interface PaymentMethod {
+  code: string;
+  label: string;
+  recipient_name: string;
+  recipient_number: string;
+  instructions: string;
+  currency: string;
+}
+
+export interface LaunchConfig {
+  payment_methods: PaymentMethod[];
+  flare_operator: { name: string; contact: string };
+  sla_minutes: number;
+  assistance_text: string;
+}
+
+export async function getAssistedLaunchConfig(token?: string | null): Promise<LaunchConfig> {
+  return apiRequest<LaunchConfig>("/api/chatbot/assisted-launch-config", {}, token);
+}
+
+export async function getManualPaymentMethods(token?: string | null): Promise<{ methods: PaymentMethod[] }> {
+  return apiRequest<{ methods: PaymentMethod[] }>("/api/billing/manual-methods", {}, token);
+}
+
+export interface ManualPaymentData {
+  activation_request_id?: string;
+  selected_plan_id: string;
+  method_code: string;
+  amount?: string;
+  currency?: string;
+  payer_full_name?: string;
+  payer_phone?: string;
+  transaction_reference?: string;
+  proof_file_url?: string;
+  proof_file_name?: string;
+  proof_file_size?: number;
+  notes?: string;
+}
+
+export async function submitManualPayment(data: ManualPaymentData, token?: string | null): Promise<{ id: string; status: string }> {
+  return apiRequest<{ id: string; status: string }>("/api/billing/manual-payments", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }, token);
+}
+
+export interface ManualPaymentSubmission {
+  id: string;
+  method_code: string;
+  amount: string;
+  currency: string;
+  transaction_reference: string;
+  status: string;
+  submitted_at: string | null;
+  verified_at: string | null;
+  rejection_reason: string | null;
+  proof_file_url: string | null;
+}
+
+export async function getMyManualPayments(token?: string | null): Promise<{ submissions: ManualPaymentSubmission[] }> {
+  return apiRequest<{ submissions: ManualPaymentSubmission[] }>("/api/billing/manual-payments/me", {}, token);
+}
+
+// ─── Activation Request ─────────────────────────────────────────────────────
+
+export interface ActivationRequest {
+  id: string;
+  organization_slug: string;
+  selected_plan_id: string;
+  status: string;
+  payment_status: string;
+  contact_full_name: string;
+  contact_email: string;
+  contact_phone: string;
+  contact_whatsapp: string;
+  business_name: string;
+  business_sector: string;
+  business_city: string;
+  business_country: string;
+  business_description: string;
+  facebook_page_name: string;
+  facebook_page_url: string;
+  facebook_admin_email: string;
+  primary_language: string;
+  bot_name: string;
+  tone: string;
+  greeting_message: string;
+  offer_summary: string;
+  opening_hours: string;
+  delivery_zones: string;
+  notes_for_flare: string;
+  flare_page_admin_confirmed: string;
+  flare_page_admin_confirmed_at: string | null;
+  assigned_operator_email: string | null;
+  blocked_reason: string | null;
+  requested_at: string | null;
+  payment_verified_at: string | null;
+  activation_started_at: string | null;
+  tested_at: string | null;
+  completed_at: string | null;
+  created_at: string | null;
+}
+
+export async function getMyActivationRequest(token?: string | null): Promise<{ activation_request: ActivationRequest | null }> {
+  return apiRequest<{ activation_request: ActivationRequest | null }>("/api/chatbot/activation-request", {}, token);
+}
+
+export async function createActivationRequest(data: Partial<ActivationRequest>, token?: string | null): Promise<{ activation_request: ActivationRequest }> {
+  return apiRequest<{ activation_request: ActivationRequest }>("/api/chatbot/activation-request", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }, token);
+}
+
+export async function updateActivationRequest(updates: Record<string, string>, token?: string | null): Promise<{ activation_request: ActivationRequest }> {
+  return apiRequest<{ activation_request: ActivationRequest }>("/api/chatbot/activation-request", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  }, token);
+}
+
+// ─── Chatbot Orders ─────────────────────────────────────────────────────────
+
+export interface ChatbotOrder {
+  id: string;
+  organization_slug: string;
+  facebook_page_id: string | null;
+  page_name: string;
+  contact_psid: string;
+  contact_name: string;
+  contact_phone: string;
+  contact_email: string;
+  product_summary: string;
+  quantity_text: string;
+  amount_text: string;
+  delivery_address: string;
+  customer_request_text: string;
+  confidence: number;
+  source: string;
+  status: string;
+  needs_human_followup: string;
+  assigned_to: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+export async function getChatbotOrders(token?: string | null): Promise<{ orders: ChatbotOrder[] }> {
+  return apiRequest<{ orders: ChatbotOrder[] }>("/api/chatbot/orders", {}, token);
+}
+
+export async function createChatbotOrder(data: Partial<ChatbotOrder>, token?: string | null): Promise<{ order: ChatbotOrder }> {
+  return apiRequest<{ order: ChatbotOrder }>("/api/chatbot/orders", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }, token);
+}
+
+export async function updateChatbotOrder(orderId: string, updates: { status?: string; assigned_to?: string; needs_human_followup?: string }, token?: string | null): Promise<{ order: ChatbotOrder }> {
+  return apiRequest<{ order: ChatbotOrder }>(`/api/chatbot/orders/${orderId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  }, token);
+}
+
+// ─── Admin: Activations ─────────────────────────────────────────────────────
+
+export async function getAdminActivations(token?: string | null): Promise<{ activations: ActivationRequest[] }> {
+  return apiRequest<{ activations: ActivationRequest[] }>("/api/admin/activations", {}, token);
+}
+
+export async function getAdminActivation(id: string, token?: string | null): Promise<ActivationRequest & { events?: any[]; payment?: any }> {
+  return apiRequest<ActivationRequest & { events?: any[]; payment?: any }>(`/api/admin/activations/${id}`, {}, token);
+}
+
+export async function adminAssignActivation(id: string, operatorEmail?: string, token?: string | null): Promise<{ status: string }> {
+  return apiRequest<{ status: string }>(`/api/admin/activations/${id}/assign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ operator_email: operatorEmail }),
+  }, token);
+}
+
+export async function adminSetActivationStatus(id: string, status: string, reason?: string, token?: string | null): Promise<{ status: string }> {
+  return apiRequest<{ status: string }>(`/api/admin/activations/${id}/set-status`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status, reason }),
+  }, token);
+}
+
+export async function adminAddActivationNote(id: string, note: string, token?: string | null): Promise<{ status: string }> {
+  return apiRequest<{ status: string }>(`/api/admin/activations/${id}/add-note`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ note }),
+  }, token);
+}
+
+// ─── Admin: Payments ────────────────────────────────────────────────────────
+
+export async function getAdminPayments(token?: string | null): Promise<{ payments: any[] }> {
+  return apiRequest<{ payments: any[] }>("/api/admin/payments", {}, token);
+}
+
+export async function adminVerifyPayment(id: string, token?: string | null): Promise<{ status: string }> {
+  return apiRequest<{ status: string }>(`/api/admin/payments/${id}/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  }, token);
+}
+
+export async function adminRejectPayment(id: string, reason: string, token?: string | null): Promise<{ status: string }> {
+  return apiRequest<{ status: string }>(`/api/admin/payments/${id}/reject`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reason }),
+  }, token);
+}
+
+// ─── Admin: Orders ──────────────────────────────────────────────────────────
+
+export async function getAdminOrders(token?: string | null): Promise<{ orders: ChatbotOrder[] }> {
+  return apiRequest<{ orders: ChatbotOrder[] }>("/api/admin/orders", {}, token);
+}
+
+export async function adminUpdateOrder(orderId: string, updates: { status?: string; assigned_to?: string }, token?: string | null): Promise<{ order: ChatbotOrder }> {
+  return apiRequest<{ order: ChatbotOrder }>(`/api/admin/orders/${orderId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  }, token);
+}
+

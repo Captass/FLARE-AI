@@ -7,14 +7,20 @@ import {
   MessageSquare, Globe, Microscope, ImageIcon, Video,
   Clock, TrendingUp, AlertCircle, BookOpen, ArrowUpDown,
   Wifi, WifiOff, UserPlus, Activity, ChevronLeft,
-  FileText, FileSpreadsheet,
+  FileText, FileSpreadsheet, ShoppingBag, CreditCard,
+  Rocket, CheckCircle2, XCircle, Eye, Send, StickyNote,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   getAdminUsageSummary, syncAdminUsers, getAdminUsageLedger, backfillAdminUsage,
   getAdminConnectedUsers, getAdminNewAccounts,
   type ConnectedUser, type ConnectedUsersResponse,
-  type NewAccount, type NewAccountsResponse
+  type NewAccount, type NewAccountsResponse,
+  getAdminActivations, getAdminActivation, adminAssignActivation,
+  adminSetActivationStatus, adminAddActivationNote,
+  getAdminPayments, adminVerifyPayment, adminRejectPayment,
+  getAdminOrders, adminUpdateOrder,
+  type ActivationRequest, type ChatbotOrder,
 } from "@/lib/api";
 
 interface AdminPanelProps {
@@ -68,7 +74,7 @@ interface LedgerEntry {
     timestamp: string;
 }
 
-type AdminTab = "menu" | "costs" | "connected" | "accounts";
+type AdminTab = "menu" | "costs" | "connected" | "accounts" | "activations" | "payments" | "orders";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -239,6 +245,39 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       iconColor: "text-blue-400",
       stat: `${stats.newToday}`,
       statLabel: "Aujourd'hui",
+    },
+    {
+      id: "activations" as AdminTab,
+      title: "Activations",
+      subtitle: "Demandes d'activation chatbot & suivi operateur",
+      icon: Rocket,
+      color: "from-orange-500/20 to-red-500/10",
+      borderColor: "border-orange-500/20",
+      iconColor: "text-orange-400",
+      stat: "-",
+      statLabel: "En attente",
+    },
+    {
+      id: "payments" as AdminTab,
+      title: "Paiements",
+      subtitle: "Verifier et valider les preuves de paiement",
+      icon: CreditCard,
+      color: "from-violet-500/20 to-purple-500/10",
+      borderColor: "border-violet-500/20",
+      iconColor: "text-violet-400",
+      stat: "-",
+      statLabel: "A verifier",
+    },
+    {
+      id: "orders" as AdminTab,
+      title: "Commandes",
+      subtitle: "Commandes Messenger de tous les clients",
+      icon: ShoppingBag,
+      color: "from-cyan-500/20 to-teal-500/10",
+      borderColor: "border-cyan-500/20",
+      iconColor: "text-cyan-400",
+      stat: "-",
+      statLabel: "Total",
     },
   ];
 
@@ -1077,7 +1116,533 @@ export default function AdminPanel({ token }: AdminPanelProps) {
       return <ConnectedUsersTab token={token} onBack={() => setActiveTab("menu")} />;
     case "accounts":
       return <NewAccountsTab token={token} onBack={() => setActiveTab("menu")} />;
+    case "activations":
+      return <AdminActivationsTab token={token} onBack={() => setActiveTab("menu")} />;
+    case "payments":
+      return <AdminPaymentsTab token={token} onBack={() => setActiveTab("menu")} />;
+    case "orders":
+      return <AdminOrdersTab token={token} onBack={() => setActiveTab("menu")} />;
     default:
       return <AdminMenu onNavigate={setActiveTab} stats={menuStats} />;
   }
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN ACTIVATIONS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+
+const ACTIVATION_STATUS_LABELS: Record<string, string> = {
+  draft: "Brouillon", awaiting_payment: "En attente paiement", payment_submitted: "Preuve soumise",
+  payment_verified: "Paiement verifie", awaiting_flare_page_admin_access: "Attente admin page",
+  queued_for_activation: "En file", activation_in_progress: "En cours", testing: "Test",
+  active: "Actif", blocked: "Bloque", rejected: "Refuse", canceled: "Annule",
+};
+
+const ACTIVATION_STATUS_COLORS: Record<string, string> = {
+  draft: "bg-zinc-500/20 text-zinc-300", awaiting_payment: "bg-amber-500/20 text-amber-300",
+  payment_submitted: "bg-blue-500/20 text-blue-300", payment_verified: "bg-emerald-500/20 text-emerald-300",
+  awaiting_flare_page_admin_access: "bg-amber-500/20 text-amber-300",
+  queued_for_activation: "bg-blue-500/20 text-blue-300", activation_in_progress: "bg-orange-500/20 text-orange-300",
+  testing: "bg-purple-500/20 text-purple-300", active: "bg-emerald-500/20 text-emerald-300",
+  blocked: "bg-red-500/20 text-red-300", rejected: "bg-red-500/20 text-red-300", canceled: "bg-zinc-500/20 text-zinc-400",
+};
+
+const VALID_NEXT_STATUSES: Record<string, string[]> = {
+  draft: ["awaiting_payment", "canceled"],
+  awaiting_payment: ["payment_submitted", "canceled"],
+  payment_submitted: ["payment_verified", "rejected"],
+  payment_verified: ["awaiting_flare_page_admin_access"],
+  awaiting_flare_page_admin_access: ["queued_for_activation", "blocked"],
+  queued_for_activation: ["activation_in_progress", "blocked"],
+  activation_in_progress: ["testing", "blocked"],
+  testing: ["active", "blocked"],
+  active: ["blocked"],
+  blocked: ["queued_for_activation", "canceled"],
+  rejected: ["awaiting_payment", "canceled"],
+};
+
+function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => void }) {
+  const [activations, setActivations] = useState<ActivationRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState("");
+  const [assignEmail, setAssignEmail] = useState("");
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
+  const load = useCallback(async () => {
+    try {
+      const res = await getAdminActivations(token);
+      setActivations(res.activations || []);
+    } catch { /* silent */ }
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = statusFilter === "all" ? activations : activations.filter(a => a.status === statusFilter);
+
+  const handleSetStatus = async (id: string, status: string) => {
+    setActionBusy(id);
+    try {
+      await adminSetActivationStatus(id, status, undefined, token);
+      await load();
+    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+    setActionBusy(null);
+  };
+
+  const handleAssign = async (id: string) => {
+    if (!assignEmail.trim()) return;
+    setActionBusy(id);
+    try {
+      await adminAssignActivation(id, assignEmail.trim(), token);
+      setAssignEmail("");
+      await load();
+    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+    setActionBusy(null);
+  };
+
+  const handleAddNote = async (id: string) => {
+    if (!noteText.trim()) return;
+    setActionBusy(id);
+    try {
+      await adminAddActivationNote(id, noteText.trim(), token);
+      setNoteText("");
+      await load();
+    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+    setActionBusy(null);
+  };
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
+      <div className="flex items-center gap-3 mb-8">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
+          <ChevronLeft size={20} className="text-[var(--text-muted)]" />
+        </button>
+        <Rocket size={24} className="text-orange-400" />
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">Activations</h2>
+        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
+          <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+
+      {/* Filter bar */}
+      <div className="flex flex-wrap gap-2 mb-6">
+        {["all", "payment_submitted", "payment_verified", "queued_for_activation", "activation_in_progress", "testing", "active", "blocked", "rejected"].map(s => (
+          <button key={s} onClick={() => setStatusFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "bg-orange-500/20 text-orange-300 border border-orange-500/30" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            {s === "all" ? "Toutes" : ACTIVATION_STATUS_LABELS[s] || s}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 rounded-2xl bg-[var(--bg-hover)] animate-pulse" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-[var(--text-muted)]">
+          <Rocket size={48} className="mx-auto mb-4 opacity-30" />
+          <p>Aucune activation {statusFilter !== "all" ? "avec ce statut" : ""}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(ar => {
+            const expanded = expandedId === ar.id;
+            const nextStatuses = VALID_NEXT_STATUSES[ar.status] || [];
+            return (
+              <motion.div key={ar.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] overflow-hidden">
+                <button onClick={() => setExpandedId(expanded ? null : ar.id)}
+                  className="w-full p-4 flex items-center gap-4 text-left hover:bg-[var(--bg-hover)] transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-semibold text-[var(--text-primary)] truncate">{ar.business_name || ar.organization_slug}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ACTIVATION_STATUS_COLORS[ar.status] || "bg-zinc-500/20 text-zinc-300"}`}>
+                        {ACTIVATION_STATUS_LABELS[ar.status] || ar.status}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-muted)]">
+                        {ar.selected_plan_id}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] mt-1 truncate">
+                      {ar.contact_full_name} &middot; {ar.contact_email || ar.contact_phone || "-"} &middot; {ar.requested_at ? new Date(ar.requested_at).toLocaleDateString("fr-FR") : "-"}
+                    </p>
+                  </div>
+                  {ar.assigned_operator_email && (
+                    <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">{ar.assigned_operator_email}</span>
+                  )}
+                  <ChevronDown size={16} className={`text-[var(--text-muted)] transition-transform ${expanded ? "rotate-180" : ""}`} />
+                </button>
+
+                <AnimatePresence>
+                  {expanded && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                      className="border-t border-[var(--border-glass)]">
+                      <div className="p-4 space-y-4">
+                        {/* Detail grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                          {[
+                            ["Contact", ar.contact_full_name],
+                            ["Email", ar.contact_email],
+                            ["Telephone", ar.contact_phone],
+                            ["WhatsApp", ar.contact_whatsapp],
+                            ["Entreprise", ar.business_name],
+                            ["Secteur", ar.business_sector],
+                            ["Ville", `${ar.business_city}, ${ar.business_country}`],
+                            ["Page Facebook", ar.facebook_page_name],
+                            ["URL Page", ar.facebook_page_url],
+                            ["Admin FB", ar.facebook_admin_email],
+                            ["Bot", ar.bot_name],
+                            ["Langue", ar.primary_language],
+                            ["Ton", ar.tone],
+                            ["Admin FLARE confirme", ar.flare_page_admin_confirmed === "true" ? "Oui" : "Non"],
+                            ["Raison blocage", ar.blocked_reason || "-"],
+                          ].filter(([, v]) => v && v !== "-").map(([label, val]) => (
+                            <div key={label as string} className="flex justify-between gap-2">
+                              <span className="text-[var(--text-muted)]">{label}</span>
+                              <span className="text-[var(--text-primary)] text-right truncate max-w-[60%]">{val}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Status actions */}
+                        {nextStatuses.length > 0 && (
+                          <div className="flex flex-wrap gap-2">
+                            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider self-center mr-2">Transition &rarr;</span>
+                            {nextStatuses.map(ns => (
+                              <button key={ns} onClick={() => handleSetStatus(ar.id, ns)}
+                                disabled={actionBusy === ar.id}
+                                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                                  ns === "active" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30" :
+                                  ns === "blocked" || ns === "rejected" || ns === "canceled" ? "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30" :
+                                  "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
+                                }`}>
+                                {ACTIVATION_STATUS_LABELS[ns] || ns}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Assign operator */}
+                        <div className="flex gap-2">
+                          <input value={assignEmail} onChange={e => setAssignEmail(e.target.value)} placeholder="Email operateur..."
+                            className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+                          <button onClick={() => handleAssign(ar.id)} disabled={actionBusy === ar.id || !assignEmail.trim()}
+                            className="px-3 py-2 rounded-lg text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 disabled:opacity-40">
+                            Assigner
+                          </button>
+                        </div>
+
+                        {/* Add note */}
+                        <div className="flex gap-2">
+                          <input value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Ajouter une note..."
+                            className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+                          <button onClick={() => handleAddNote(ar.id)} disabled={actionBusy === ar.id || !noteText.trim()}
+                            className="px-3 py-2 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-40">
+                            <StickyNote size={14} />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN PAYMENTS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+
+function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void }) {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+
+  const load = useCallback(async () => {
+    try {
+      const res = await getAdminPayments(token);
+      setPayments(res.payments || []);
+    } catch { /* silent */ }
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = filter === "all" ? payments : payments.filter((p: any) => p.status === filter);
+
+  const handleVerify = async (id: string) => {
+    setActionBusy(id);
+    try {
+      await adminVerifyPayment(id, token);
+      await load();
+    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+    setActionBusy(null);
+  };
+
+  const handleReject = async (id: string) => {
+    if (!rejectReason.trim()) { alert("Raison requise"); return; }
+    setActionBusy(id);
+    try {
+      await adminRejectPayment(id, rejectReason.trim(), token);
+      setRejectingId(null);
+      setRejectReason("");
+      await load();
+    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+    setActionBusy(null);
+  };
+
+  const paymentStatusColor = (s: string) => {
+    if (s === "submitted") return "bg-blue-500/20 text-blue-300";
+    if (s === "verified") return "bg-emerald-500/20 text-emerald-300";
+    if (s === "rejected") return "bg-red-500/20 text-red-300";
+    return "bg-zinc-500/20 text-zinc-300";
+  };
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
+      <div className="flex items-center gap-3 mb-8">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
+          <ChevronLeft size={20} className="text-[var(--text-muted)]" />
+        </button>
+        <CreditCard size={24} className="text-violet-400" />
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">Paiements</h2>
+        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
+          <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {["all", "submitted", "verified", "rejected"].map(s => (
+          <button key={s} onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            {s === "all" ? "Tous" : s === "submitted" ? "A verifier" : s === "verified" ? "Verifies" : "Refuses"}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--bg-hover)] animate-pulse" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-[var(--text-muted)]">
+          <CreditCard size={48} className="mx-auto mb-4 opacity-30" />
+          <p>Aucun paiement {filter !== "all" ? "avec ce statut" : ""}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map((pay: any) => (
+            <motion.div key={pay.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-semibold text-sm text-[var(--text-primary)]">{pay.payer_full_name || "Inconnu"}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${paymentStatusColor(pay.status)}`}>
+                      {pay.status === "submitted" ? "A verifier" : pay.status === "verified" ? "Verifie" : pay.status === "rejected" ? "Refuse" : pay.status}
+                    </span>
+                    <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full">{pay.method_code}</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    Ref: <span className="text-[var(--text-primary)] font-mono">{pay.transaction_reference || "-"}</span>
+                    {pay.amount ? ` \u00b7 ${pay.amount} ${pay.currency || ""}` : ""}
+                    {pay.payer_phone ? ` \u00b7 ${pay.payer_phone}` : ""}
+                  </p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                    Soumis : {pay.submitted_at ? new Date(pay.submitted_at).toLocaleString("fr-FR") : "-"}
+                    {pay.organization_scope_id ? ` \u00b7 ${pay.organization_scope_id}` : ""}
+                  </p>
+                  {pay.proof_file_url && (
+                    <a href={pay.proof_file_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300">
+                      <Eye size={12} /> Voir la preuve
+                    </a>
+                  )}
+                  {pay.rejection_reason && (
+                    <p className="text-xs text-red-400 mt-1">Raison : {pay.rejection_reason}</p>
+                  )}
+                </div>
+
+                {pay.status === "submitted" && (
+                  <div className="flex flex-col gap-2 flex-shrink-0">
+                    <button onClick={() => handleVerify(pay.id)} disabled={actionBusy === pay.id}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-40 flex items-center gap-1">
+                      <CheckCircle2 size={12} /> Valider
+                    </button>
+                    {rejectingId === pay.id ? (
+                      <div className="flex flex-col gap-1">
+                        <input value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Raison du refus..."
+                          className="bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] w-40" />
+                        <div className="flex gap-1">
+                          <button onClick={() => handleReject(pay.id)} disabled={actionBusy === pay.id}
+                            className="flex-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-40">
+                            Confirmer
+                          </button>
+                          <button onClick={() => { setRejectingId(null); setRejectReason(""); }}
+                            className="px-2 py-1 rounded-lg text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-hover)]">
+                            Annuler
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => setRejectingId(pay.id)}
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 flex items-center gap-1">
+                        <XCircle size={12} /> Refuser
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ADMIN ORDERS TAB
+// ══════════════════════════════════════════════════════════════════════════════
+
+function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }) {
+  const [orders, setOrders] = useState<ChatbotOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionBusy, setActionBusy] = useState<string | null>(null);
+  const [filter, setFilter] = useState<string>("all");
+
+  const load = useCallback(async () => {
+    try {
+      const res = await getAdminOrders(token);
+      setOrders(res.orders || []);
+    } catch { /* silent */ }
+    setLoading(false);
+  }, [token]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = filter === "all" ? orders : orders.filter(o => o.status === filter);
+
+  const handleUpdateStatus = async (id: string, status: string) => {
+    setActionBusy(id);
+    try {
+      await adminUpdateOrder(id, { status }, token);
+      await load();
+    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+    setActionBusy(null);
+  };
+
+  const orderStatusColor = (s: string) => {
+    const m: Record<string, string> = { new: "bg-blue-500/20 text-blue-300", confirmed: "bg-emerald-500/20 text-emerald-300", delivered: "bg-emerald-500/20 text-emerald-300", cancelled: "bg-red-500/20 text-red-300", needs_followup: "bg-amber-500/20 text-amber-300" };
+    return m[s] || "bg-zinc-500/20 text-zinc-300";
+  };
+  const orderStatusLabel = (s: string) => {
+    const m: Record<string, string> = { new: "Nouvelle", confirmed: "Confirmee", delivered: "Livree", cancelled: "Annulee", needs_followup: "A suivre" };
+    return m[s] || s;
+  };
+
+  return (
+    <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
+      <div className="flex items-center gap-3 mb-8">
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
+          <ChevronLeft size={20} className="text-[var(--text-muted)]" />
+        </button>
+        <ShoppingBag size={24} className="text-cyan-400" />
+        <h2 className="text-xl font-bold text-[var(--text-primary)]">Commandes (tous clients)</h2>
+        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
+          <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
+        </button>
+      </div>
+
+      <div className="flex flex-wrap gap-2 mb-6">
+        {["all", "new", "confirmed", "needs_followup", "delivered", "cancelled"].map(s => (
+          <button key={s} onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            {s === "all" ? "Toutes" : orderStatusLabel(s)}
+          </button>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--bg-hover)] animate-pulse" />)}</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-[var(--text-muted)]">
+          <ShoppingBag size={48} className="mx-auto mb-4 opacity-30" />
+          <p>Aucune commande {filter !== "all" ? "avec ce statut" : ""}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filtered.map(order => (
+            <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-semibold text-sm text-[var(--text-primary)]">{order.contact_name || "Contact inconnu"}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${orderStatusColor(order.status)}`}>
+                      {orderStatusLabel(order.status)}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${order.source === "signal" ? "bg-purple-500/20 text-purple-300" : "bg-zinc-500/20 text-zinc-300"}`}>
+                      {order.source === "signal" ? "Signal IA" : "Manuel"}
+                    </span>
+                    <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full">{order.page_name || order.organization_slug}</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-primary)] mt-1">{order.product_summary || "-"}</p>
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                    {order.quantity_text ? `Qte: ${order.quantity_text}` : ""}
+                    {order.amount_text ? ` \u00b7 ${order.amount_text}` : ""}
+                    {order.contact_phone ? ` \u00b7 ${order.contact_phone}` : ""}
+                    {order.delivery_address ? ` \u00b7 ${order.delivery_address}` : ""}
+                  </p>
+                  {order.customer_request_text && (
+                    <p className="text-[10px] text-[var(--text-muted)] mt-1 italic">"{order.customer_request_text}"</p>
+                  )}
+                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                    {order.created_at ? new Date(order.created_at).toLocaleString("fr-FR") : "-"}
+                    {order.source === "signal" && order.confidence > 0 ? ` \u00b7 Confiance: ${Math.round(order.confidence * 100)}%` : ""}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-1 flex-shrink-0">
+                  {["new", "needs_followup"].includes(order.status) && (
+                    <button onClick={() => handleUpdateStatus(order.id, "confirmed")} disabled={actionBusy === order.id}
+                      className="px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-40">
+                      Confirmer
+                    </button>
+                  )}
+                  {order.status === "confirmed" && (
+                    <button onClick={() => handleUpdateStatus(order.id, "delivered")} disabled={actionBusy === order.id}
+                      className="px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-40">
+                      Livree
+                    </button>
+                  )}
+                  {!["cancelled", "delivered"].includes(order.status) && (
+                    <>
+                      <button onClick={() => handleUpdateStatus(order.id, "needs_followup")} disabled={actionBusy === order.id}
+                        className="px-2 py-1 rounded-lg text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-40">
+                        A suivre
+                      </button>
+                      <button onClick={() => handleUpdateStatus(order.id, "cancelled")} disabled={actionBusy === order.id}
+                        className="px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-40">
+                        Annuler
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }

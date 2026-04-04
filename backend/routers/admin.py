@@ -139,8 +139,8 @@ async def sync_all_firebase_users(
                 # Vérifier si l'utilisateur existe déjà
                 sub = db.query(UserSubscription).filter(UserSubscription.user_id == uid).first()
                 if not sub:
-                    # Créer l'abonnement par défaut (Business pour Flare AI)
-                    create_user_subscription(user_id=uid, plan_id="business")
+                    # Créer l'abonnement par défaut (Free — le plan payant est activé après validation manuelle)
+                    create_user_subscription(user_id=uid, plan_id="free")
                     sub = db.query(UserSubscription).filter(UserSubscription.user_id == uid).first()
                     count_created += 1
                 

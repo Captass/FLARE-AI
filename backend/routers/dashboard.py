@@ -430,6 +430,12 @@ def _build_recent_messages(records: list[dict[str, Any]]) -> list[dict[str, Any]
     recent_messages = []
     for record in records:
         recent_messages.append({
+            "psid": _clean_text(
+                record.get("psid")
+                or record.get("sender_psid")
+                or record.get("customer_psid")
+                or record.get("sender_id")
+            ),
             "time": record.get("received_at", ""),
             "customer": _clean_text(record.get("customer_name")) or "Client",
             "message": _clean_text(record.get("customer_message")),
@@ -616,7 +622,37 @@ async def _fetch_messenger_dashboard_bundle(
     except ValueError as error:
         raise HTTPException(status_code=502, detail="Le JSON Messenger est invalide.") from error
 
-    return dashboard_state if isinstance(dashboard_state, dict) else {}, records if isinstance(records, list) else []
+    if not isinstance(dashboard_state, dict):
+        dashboard_state = {}
+
+    # Contract normalization:
+    # - Preferred shape: native JSON fields (summary/periodStats/priorityQueue/conversations/archiveStatus/lastUpdated)
+    # - Legacy fallback: HTML-only payload from direct service.
+    normalized_state: dict[str, Any] = dict(dashboard_state)
+    if (
+        not isinstance(normalized_state.get("summary"), list)
+        and isinstance(normalized_state.get("html"), str)
+    ):
+        parsed_html_state = _parse_messenger_dashboard_html(normalized_state.get("html", ""))
+        normalized_state.update(parsed_html_state)
+
+    summary = normalized_state.get("summary")
+    period_stats = normalized_state.get("periodStats")
+    priority_queue = normalized_state.get("priorityQueue")
+    conversations = normalized_state.get("conversations")
+
+    normalized_state["summary"] = summary if isinstance(summary, list) else []
+    normalized_state["periodStats"] = period_stats if isinstance(period_stats, list) else []
+    normalized_state["priorityQueue"] = priority_queue if isinstance(priority_queue, list) else []
+    normalized_state["conversations"] = conversations if isinstance(conversations, list) else []
+    normalized_state["archiveStatus"] = _clean_text(normalized_state.get("archiveStatus"))
+    normalized_state["lastUpdated"] = (
+        _clean_text(normalized_state.get("lastUpdated"))
+        or _clean_text(normalized_state.get("last_updated"))
+        or datetime.utcnow().isoformat()
+    )
+
+    return normalized_state, records if isinstance(records, list) else []
 
 
 def _build_messenger_totals(summary: list[dict[str, Any]], conversations: list[dict[str, Any]], records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -702,10 +738,11 @@ def _sanitize_public_messenger_payload(payload: dict[str, Any]) -> dict[str, Any
 
     sanitized_recent_messages: list[dict[str, Any]] = []
     for item in payload.get("recentMessages", []):
-        _, customer_label = alias_for(customer=item.get("customer"))
+        public_id, customer_label = alias_for(psid=item.get("psid"), customer=item.get("customer"))
         sanitized_recent_messages.append(
             {
                 **item,
+                "psid": public_id,
                 "customer": customer_label,
                 "message": _public_signal_summary(
                     status=item.get("status"),

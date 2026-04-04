@@ -1,6 +1,6 @@
 # FLARE AI - Documentation centrale
 
-Derniere mise a jour : 2 avril 2026
+Derniere mise a jour : 4 avril 2026
 
 Ce dossier `docs` est le point d'entree documentaire du projet.
 
@@ -30,6 +30,9 @@ Le but est simple :
 - chaque organisation peut afficher son propre nom, logo, offre et modules actifs
 - les droits suivent maintenant le role dans l'organisation : `Proprietaire`, `Admin`, `Membre`, `Lecture`
 - l'identite visuelle de l'espace actif se regle dans `Parametres > Identite`
+- pour le cockpit chatbot, seuls `Proprietaire` et `Admin` peuvent connecter Facebook, activer le bot, modifier la personnalisation et changer le mode bot/humain d'un contact
+- les KPI, conversations et messages du dashboard chatbot proviennent du service `messenger-direct` et peuvent etre restreints selon le role du compte
+- le dashboard chatbot embarque maintenant un graph temps reel anime, branche sur `periodStats` avec fallback sur l'activite recente quand les periodes sont encore peu remplies
 
 ## Lire dans cet ordre
 
@@ -111,6 +114,24 @@ Pour le chatbot Facebook FLARE AI et son cockpit dans FLARE AI :
 - le chatbot Facebook reste le premier espace metier a ouvrir pour piloter les ventes entrantes
 - les actions sensibles du chatbot restent plus strictes que les simples roles d'organisation
 - `Parametres > Identite` sert a verifier rapidement quel espace est charge, quel branding est actif et qui peut le modifier
+
+## Lancement v1 - 4 avril 2026
+
+Specification officielle de la version de lancement lundi :
+
+1. [README v1 launch](specs/launch/v1_2026-04-04_assisted_activation/README.md)
+2. [Architecture finale](specs/launch/v1_2026-04-04_assisted_activation/01_FINAL_ARCHITECTURE.md)
+3. [Tunnel client](specs/launch/v1_2026-04-04_assisted_activation/02_CLIENT_FLOW.md)
+4. [Workflow operateur](specs/launch/v1_2026-04-04_assisted_activation/03_OPERATOR_FLOW.md)
+5. [Paiement manuel](specs/launch/v1_2026-04-04_assisted_activation/04_MANUAL_PAYMENTS.md)
+6. [Configuration chatbot et handoff](specs/launch/v1_2026-04-04_assisted_activation/05_CHATBOT_SETUP_AND_HANDOFF.md)
+7. [Commandes et dashboard](specs/launch/v1_2026-04-04_assisted_activation/06_ORDERS_AND_DASHBOARD.md)
+8. [API et modeles](specs/launch/v1_2026-04-04_assisted_activation/07_API_DATA_MODELS.md)
+9. [Wording et etats](specs/launch/v1_2026-04-04_assisted_activation/08_UI_WORDING_AND_STATES.md)
+10. [Tests d'acceptance](specs/launch/v1_2026-04-04_assisted_activation/09_ACCEPTANCE_TESTS.md)
+11. [Roadmap v2 post-lundi](specs/launch/v1_2026-04-04_assisted_activation/10_POST_LAUNCH_V2_SELF_SERVE.md)
+
+**Regle** : ce dossier fait foi pour la version vendue lundi.
 
 ## Produit et besoins utilisateurs
 

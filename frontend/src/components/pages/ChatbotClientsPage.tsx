@@ -30,30 +30,40 @@ export default function ChatbotClientsPage({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterId>("all");
   const [toggling, setToggling] = useState<Set<string>>(new Set());
+  const [canSwitchMode, setCanSwitchMode] = useState(false);
+  const [accessMessage, setAccessMessage] = useState<string | null>(null);
 
   const resolveToken = useCallback(async () => {
     if (getFreshToken) return await getFreshToken();
     return token ?? null;
   }, [getFreshToken, token]);
 
-  const loadContacts = useCallback(async (isSilent = false) => {
-    const t = await resolveToken();
-    if (!t) return;
-    if (!isSilent) setLoading(true);
-    setError(null);
-    try {
-      const data = await loadMessengerDashboardData(t, selectedPageId);
-      if (data.conversations) {
-        setConversations(data.conversations);
+  const loadContacts = useCallback(
+    async (isSilent = false) => {
+      const t = await resolveToken();
+      if (!t) {
+        if (!isSilent) {
+          setError("Session expirée. Rechargez la page avant de consulter les conversations.");
+          setLoading(false);
+        }
+        return;
       }
-    } catch (err) {
-      if (!isSilent) setError("Impossible de charger les contacts.");
-    } finally {
-      if (!isSilent) setLoading(false);
-    }
-  }, [resolveToken, selectedPageId]);
+      if (!isSilent) setLoading(true);
+      setError(null);
+      try {
+        const data = await loadMessengerDashboardData(t, selectedPageId);
+        setConversations(data.conversations || []);
+        setCanSwitchMode(Boolean(data.access?.canSwitchMode));
+        setAccessMessage(data.access?.message || null);
+      } catch {
+        if (!isSilent) setError("Impossible de charger les contacts.");
+      } finally {
+        if (!isSilent) setLoading(false);
+      }
+    },
+    [resolveToken, selectedPageId]
+  );
 
-  // Polling every 15s
   useEffect(() => {
     void loadContacts();
     const interval = setInterval(() => void loadContacts(true), 15000);
@@ -61,24 +71,33 @@ export default function ChatbotClientsPage({
   }, [loadContacts]);
 
   const handleToggleMode = async (psid: string, currentMode: string) => {
-    const nextEnabled = currentMode === "human"; // si c'était humain, on active le bot (agent)
+    if (!canSwitchMode) {
+      setError(
+        accessMessage ||
+          "Seuls le proprietaire ou un admin de cet espace peuvent changer le mode bot/humain."
+      );
+      return;
+    }
+
+    const nextEnabled = currentMode === "human";
     setToggling((prev) => new Set(prev).add(psid));
     try {
       const t = await resolveToken();
       await setContactBotStatus(psid, nextEnabled, t, selectedPageId);
-      // Mettre à jour localement immédiatement pour être réactif
       setConversations((prev) =>
-        prev.map((c) =>
-          c.psid === psid ? { ...c, mode: nextEnabled ? "agent" : "human" } : c
+        prev.map((conversation) =>
+          conversation.psid === psid
+            ? { ...conversation, mode: nextEnabled ? "agent" : "human" }
+            : conversation
         )
       );
     } catch {
       alert("Erreur lors du changement de mode.");
     } finally {
       setToggling((prev) => {
-        const n = new Set(prev);
-        n.delete(psid);
-        return n;
+        const next = new Set(prev);
+        next.delete(psid);
+        return next;
       });
     }
   };
@@ -89,23 +108,28 @@ export default function ChatbotClientsPage({
   };
 
   const filteredConversations = useMemo(() => {
-    return conversations.filter((c) => {
+    return conversations.filter((conversation) => {
       if (filter === "all") return true;
-      if (filter === "leads") return c.status?.toLowerCase().includes("lead") || c.status?.toLowerCase().includes("hot");
-      if (filter === "human") return c.humanTakeover; // necessite attention (selon mapping)
-      if (filter === "paused") return c.mode === "human"; // Bot désactivé pour ce contact
+      if (filter === "leads") {
+        return (
+          conversation.status?.toLowerCase().includes("lead") ||
+          conversation.status?.toLowerCase().includes("hot")
+        );
+      }
+      if (filter === "human") return conversation.humanTakeover;
+      if (filter === "paused") return conversation.mode === "human";
       return true;
     });
   }, [conversations, filter]);
 
-  const needsHumanCount = conversations.filter((c) => c.humanTakeover).length; // Approximatif, dépend du mapping réel
+  const needsHumanCount = conversations.filter((conversation) => conversation.humanTakeover).length;
 
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex items-center gap-3 text-fg/40">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-base text-fg/50">Chargement des contacts…</span>
+          <span className="text-base text-fg/50">Chargement des contacts...</span>
         </div>
       </div>
     );
@@ -113,24 +137,17 @@ export default function ChatbotClientsPage({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[1100px] px-4 py-8 md:px-8 flex flex-col gap-6">
-
-        {/* ── Header ── */}
+      <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-6 px-4 py-8 md:px-8">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-fg/90">
-            Clients &amp; Conversations
-          </h1>
-          <p className="text-lg text-[var(--text-muted)]">
-            Suivi, contrôle du bot et historique par contact
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight text-fg/90">Clients &amp; Conversations</h1>
+          <p className="text-lg text-[var(--text-muted)]">Suivi, contrôle du bot et historique par contact</p>
         </motion.header>
 
-        {/* ── Alert Banner ── */}
         <AnimatePresence>
           {needsHumanCount > 0 && (
             <motion.div
@@ -139,7 +156,7 @@ export default function ChatbotClientsPage({
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between rounded-xl border border-orange-500/30 bg-orange-500/10 p-4 text-orange-400">
+              <div className="flex flex-col gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4 text-orange-400 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <AlertCircle size={20} className="shrink-0" />
                   <p className="text-sm font-medium">
@@ -162,20 +179,25 @@ export default function ChatbotClientsPage({
 
         {error && <p className="text-red-400">{error}</p>}
 
-        {/* ── Filters ── */}
+        {!canSwitchMode && accessMessage ? (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+            {accessMessage}
+          </div>
+        ) : null}
+
         <div className="flex flex-wrap items-center gap-2">
           {([
             { id: "all", label: "Tous" },
             { id: "leads", label: "Leads" },
             { id: "human", label: "Intervention requise" },
-            { id: "paused", label: "Bot désactivé" }
+            { id: "paused", label: "Bot désactivé" },
           ] as const).map(({ id, label }) => (
             <button
               key={id}
               onClick={() => setFilter(id)}
               className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
-                filter === id 
-                  ? "bg-orange-500 text-[#140b02] font-medium"
+                filter === id
+                  ? "bg-orange-500 font-medium text-[#140b02]"
                   : "bg-fg/[0.05] text-fg/50 hover:bg-fg/[0.08]"
               }`}
             >
@@ -184,80 +206,87 @@ export default function ChatbotClientsPage({
           ))}
         </div>
 
-        {/* ── List ── */}
-        <div className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] overflow-hidden">
+        <div className="overflow-hidden rounded-2xl border border-fg/[0.08] bg-fg/[0.02]">
           {filteredConversations.length === 0 ? (
             <div className="p-8 text-center text-fg/40">Aucun contact trouvé pour ce filtre.</div>
           ) : (
             <div className="divide-y divide-fg/[0.04]">
-              {filteredConversations.map((c) => {
-                const isHandling = toggling.has(c.psid);
-                const botEnabled = c.mode !== "human";
+              {filteredConversations.map((conversation) => {
+                const isHandling = toggling.has(conversation.psid);
+                const botEnabled = conversation.mode !== "human";
                 return (
-                  <div key={c.psid} className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4 hover:bg-fg/[0.02] transition-colors">
-                    
-                    {/* Profil info */}
-                    <div className="flex items-center gap-4 cursor-pointer flex-1" onClick={() => handleContactSelect(c.psid)}>
+                  <div
+                    key={conversation.psid}
+                    className="flex flex-col justify-between gap-4 p-5 transition-colors hover:bg-fg/[0.02] sm:flex-row sm:items-center"
+                  >
+                    <div
+                      className="flex flex-1 cursor-pointer items-center gap-4"
+                      onClick={() => handleContactSelect(conversation.psid)}
+                    >
                       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-fg/[0.05] text-fg/50">
-                        {c.customer ? c.customer.charAt(0).toUpperCase() : <User size={20} />}
+                        {conversation.customer ? conversation.customer.charAt(0).toUpperCase() : <User size={20} />}
                       </div>
-                      <div className="flex-1 min-w-0">
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="font-semibold text-fg/90 truncate">{c.customer || "Inconnu"}</p>
-                          {c.status && (
-                            <span className="shrink-0 rounded-md bg-fg/[0.05] px-2 py-0.5 text-sm font-medium uppercase tracking-wide text-fg/50 border border-fg/[0.08]">
-                              {c.status}
+                          <p className="truncate font-semibold text-fg/90">{conversation.customer || "Inconnu"}</p>
+                          {conversation.status ? (
+                            <span className="shrink-0 rounded-md border border-fg/[0.08] bg-fg/[0.05] px-2 py-0.5 text-sm font-medium uppercase tracking-wide text-fg/50">
+                              {conversation.status}
                             </span>
-                          )}
+                          ) : null}
                         </div>
-                        <p className="text-sm text-fg/50 truncate max-w-sm">
-                          {c.lastMessage || "Aucun message récent"}
+                        <p className="max-w-sm truncate text-sm text-fg/50">
+                          {conversation.lastMessage || "Aucun message récent"}
                         </p>
                       </div>
                     </div>
 
-                    {/* Actions */}
-                    <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto mt-2 sm:mt-0">
-                      
-                      {/* Toggle Bot */}
+                    <div className="mt-2 flex w-full items-center justify-between gap-6 sm:mt-0 sm:w-auto sm:justify-end">
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-fg/40 uppercase tracking-widest hidden sm:inline-block">
-                          {botEnabled ? "Bot Actif" : "Reprise Hub"}
+                        <span className="hidden text-sm font-medium uppercase tracking-widest text-fg/40 sm:inline-block">
+                          {botEnabled ? "Bot actif" : "Mode humain"}
                         </span>
                         <button
-                          onClick={() => void handleToggleMode(c.psid, c.mode)}
-                          disabled={isHandling}
+                          onClick={() => void handleToggleMode(conversation.psid, conversation.mode)}
+                          disabled={isHandling || !canSwitchMode}
                           className={`relative flex h-7 w-12 items-center rounded-full transition-colors ${
                             botEnabled ? "bg-emerald-500/20" : "bg-fg/10"
                           }`}
+                          title={
+                            canSwitchMode
+                              ? "Basculer le mode bot/humain"
+                              : "Action réservée au propriétaire ou à un admin"
+                          }
                         >
                           <motion.div
                             layout
                             className={`h-5 w-5 rounded-full shadow-sm ${
-                              botEnabled ? "bg-emerald-400 ml-[26px]" : "bg-fg/40 ml-1"
+                              botEnabled ? "ml-[26px] bg-emerald-400" : "ml-1 bg-fg/40"
                             }`}
                           />
-                          {isHandling && <Loader2 size={12} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-fg/50" />}
+                          {isHandling ? (
+                            <Loader2
+                              size={12}
+                              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-spin text-fg/50"
+                            />
+                          ) : null}
                         </button>
                       </div>
 
-                      {/* Detail btn */}
-                      <button 
-                         onClick={() => handleContactSelect(c.psid)}
-                         className="flex items-center gap-2 text-sm text-orange-400 hover:text-orange-300 font-medium"
+                      <button
+                        onClick={() => handleContactSelect(conversation.psid)}
+                        className="flex items-center gap-2 text-sm font-medium text-orange-400 hover:text-orange-300"
                       >
-                         Voir
-                         <ArrowRight size={16} />
+                        Voir
+                        <ArrowRight size={16} />
                       </button>
                     </div>
-
                   </div>
                 );
               })}
             </div>
           )}
         </div>
-
       </div>
     </div>
   );

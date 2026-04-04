@@ -5,6 +5,26 @@
 
 ---
 
+## v4.0.0 — 4 avril 2026 — "Lancement v1 — activation assistee, paiement manuel, commandes"
+
+### Resume
+Version de lancement stable avec activation Facebook assistee par FLARE, paiement manuel local, commandes issues du chatbot et dashboard operateur.
+
+### Changements majeurs
+- **Plan par defaut** : correction critique — tout nouvel espace demarre en `free`, plus en `business`
+- **Paiement manuel** : methodes configurables (MVola, etc.), preuve de paiement, validation admin
+- **Activation assistee** : formulaire client complet, workflow operateur, Facebook connecte par FLARE
+- **Commandes** : detection automatique et manuelle depuis Messenger, dashboard client et admin
+- **Dashboard** : widgets activation, paiement, commandes, mode bot/humain clarifie
+- **Wording** : suppression des promesses self-serve Meta, remplacement par activation assistee
+- **Admin** : hub Operations avec vues Activations, Paiements, Commandes
+- **Audit** : evenements journalises pour chaque action operateur
+
+### Specification
+- [docs/specs/launch/v1_2026-04-04_assisted_activation/](../specs/launch/v1_2026-04-04_assisted_activation/README.md)
+
+---
+
 ## v3.10.0 — 25 mars 2026 — "Audit prod chat & stabilisation"
 
 ### Résumé

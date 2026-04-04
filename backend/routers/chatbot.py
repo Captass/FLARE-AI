@@ -412,11 +412,21 @@ def get_chatbot_setup_status(
             "last_synced_at": p.last_synced_at.isoformat() if p.last_synced_at else None,
         }
 
+    visible_statuses = [
+        "active",
+        "pending",
+        "sync_error",
+        "reconnect_required",
+        "inactive",
+        "disconnected",
+        "permissions_missing",
+    ]
+
     all_pages = (
         db.query(FacebookPageConnection)
         .filter(
             FacebookPageConnection.organization_slug == context["organization_slug"],
-            FacebookPageConnection.status.in_(["active", "pending", "sync_error", "reconnect_required"]),
+            FacebookPageConnection.status.in_(visible_statuses),
         )
         .order_by(FacebookPageConnection.updated_at.desc())
         .all()
@@ -435,7 +445,7 @@ def get_chatbot_setup_status(
     }
 
 
-from routers.dashboard import _fetch_messenger_dashboard_bundle, _build_messenger_totals, _parse_messenger_dashboard_html
+from routers.dashboard import _fetch_messenger_dashboard_bundle, _build_messenger_totals
 
 @router.get("/chatbot/overview")
 async def get_chatbot_overview(
@@ -481,11 +491,21 @@ async def get_chatbot_overview(
     if not prefs:
         prefs = prefs_query.first()
 
+    visible_statuses = [
+        "active",
+        "pending",
+        "sync_error",
+        "reconnect_required",
+        "inactive",
+        "disconnected",
+        "permissions_missing",
+    ]
+
     all_pages = (
         db.query(FacebookPageConnection)
         .filter(
             FacebookPageConnection.organization_slug == org_slug,
-            FacebookPageConnection.status.in_(["active", "pending", "sync_error", "reconnect_required"]),
+            FacebookPageConnection.status.in_(visible_statuses),
         )
         .order_by(FacebookPageConnection.updated_at.desc())
         .all()
@@ -501,9 +521,11 @@ async def get_chatbot_overview(
     if has_connected_page:
         try:
             dashboard_state, records = await _fetch_messenger_dashboard_bundle(org_slug, active_page.page_id)
-            html = dashboard_state.get("html") or ""
-            parsed = _parse_messenger_dashboard_html(html)
-            totals = _build_messenger_totals(parsed.get("summary", []), parsed.get("conversations", []), records)
+            totals = _build_messenger_totals(
+                dashboard_state.get("summary", []),
+                dashboard_state.get("conversations", []),
+                records,
+            )
             pending_human_count = totals.get("needsAttentionContacts", 0)
         except Exception as e:
             # Silently fallback to 0 if direct service fails to reply
