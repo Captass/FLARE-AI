@@ -49,6 +49,7 @@ interface MessengerWorkspaceProps {
   onOpenConversation?: (psid: string) => void;
   onRequestAccess?: () => void;
   authToken?: string | null;
+  getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   selectedPageId?: string | null;
 }
 
@@ -1157,8 +1158,14 @@ export default function MessengerWorkspace({
   onOpenConversation,
   onRequestAccess,
   authToken,
+  getFreshToken,
   selectedPageId,
 }: MessengerWorkspaceProps) {
+  // Resout toujours un token frais si possible
+  const resolveToken = async (force = false): Promise<string | null> => {
+    if (getFreshToken) return await getFreshToken(force);
+    return authToken ?? null;
+  };
   const [data, setData] = useState<MessengerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1189,7 +1196,8 @@ export default function MessengerWorkspace({
     const hydrate = async (bg = false) => {
       try {
         bg ? setRefreshing(true) : setLoading(true);
-        if (authToken) {
+        const t = await resolveToken(bg);
+        if (t) {
           setFacebookLoading(true);
         } else {
           setFacebookLoading(false);
@@ -1200,9 +1208,9 @@ export default function MessengerWorkspace({
         }
 
         const [next, facebookResult] = await Promise.all([
-          loadMessengerDashboardData(authToken, selectedPageId),
-          authToken
-            ? loadFacebookMessengerStatus(authToken)
+          loadMessengerDashboardData(t, selectedPageId),
+          t
+            ? loadFacebookMessengerStatus(t)
                 .then((status) => ({ status, error: null as string | null }))
                 .catch((fbError) => ({
                   status: null,
@@ -1215,7 +1223,7 @@ export default function MessengerWorkspace({
         setError(null);
         setFacebookStatus(facebookResult.status);
         setFacebookError(facebookResult.error);
-        if (authToken) {
+        if (t) {
           setFacebookLastCheckedAt(new Date().toISOString());
         }
       } catch (e) {
@@ -1421,7 +1429,8 @@ export default function MessengerWorkspace({
 
   /* ─── Actions ─── */
   const refreshFacebookState = async (): Promise<FacebookMessengerStatus | null> => {
-    if (!authToken) {
+    const t = await resolveToken(true);
+    if (!t) {
       setFacebookStatus(null);
       setFacebookError(null);
       setFacebookLastCheckedAt(null);
@@ -1431,7 +1440,7 @@ export default function MessengerWorkspace({
 
     setFacebookLoading(true);
     try {
-      const next = await loadFacebookMessengerStatus(authToken);
+      const next = await loadFacebookMessengerStatus(t);
       setFacebookStatus(next);
       setFacebookError(null);
       return next;
@@ -1447,44 +1456,44 @@ export default function MessengerWorkspace({
   const handleRefresh = () => {
     if (refreshing) return;
     setRefreshing(true);
-    setFacebookLoading(Boolean(authToken));
-    Promise.all([
-      loadMessengerDashboardData(authToken, selectedPageId),
-      authToken
-        ? loadFacebookMessengerStatus(authToken)
-            .then((status) => ({ status, error: null as string | null }))
-            .catch((fbError) => ({
-              status: null,
-              error: fbError instanceof Error ? fbError.message : "Etat Facebook indisponible",
-            }))
-        : Promise.resolve({ status: null, error: null as string | null }),
-    ])
-      .then(([dashboard, facebook]) => {
-        setData(dashboard);
-        setError(null);
-        setFacebookStatus(facebook.status);
-        setFacebookError(facebook.error);
-        if (authToken) {
-          setFacebookLastCheckedAt(new Date().toISOString());
-        }
-      })
-      .catch(() => {
-        if (authToken) {
-          setFacebookLastCheckedAt(new Date().toISOString());
-        }
-      })
-      .finally(() => {
-        setRefreshing(false);
-        setFacebookLoading(false);
-      });
+    void resolveToken(true).then((t) => {
+      setFacebookLoading(Boolean(t));
+      Promise.all([
+        loadMessengerDashboardData(t, selectedPageId),
+        t
+          ? loadFacebookMessengerStatus(t)
+              .then((status) => ({ status, error: null as string | null }))
+              .catch((fbError) => ({
+                status: null,
+                error: fbError instanceof Error ? fbError.message : "Etat Facebook indisponible",
+              }))
+          : Promise.resolve({ status: null, error: null as string | null }),
+      ])
+        .then(([dashboard, facebook]) => {
+          setData(dashboard);
+          setError(null);
+          setFacebookStatus(facebook.status);
+          setFacebookError(facebook.error);
+          if (t) setFacebookLastCheckedAt(new Date().toISOString());
+        })
+        .catch(() => {
+          if (t) setFacebookLastCheckedAt(new Date().toISOString());
+        })
+        .finally(() => {
+          setRefreshing(false);
+          setFacebookLoading(false);
+        });
+    });
   };
 
   const handleSwitchMode = async (psid: string, mode: string) => {
-    if (!authToken || modeLoading) return;
+    if (modeLoading) return;
+    const t = await resolveToken();
+    if (!t) return;
     setModeLoading(psid);
     try {
-      await updateMessengerContactMode(psid, mode as "human" | "agent", authToken);
-      const next = await loadMessengerDashboardData(authToken, selectedPageId);
+      await updateMessengerContactMode(psid, mode as "human" | "agent", t);
+      const next = await loadMessengerDashboardData(t, selectedPageId);
       setData(next);
     } catch {}
     setModeLoading(null);
@@ -1495,7 +1504,8 @@ export default function MessengerWorkspace({
     if (exportLoading) return;
     setExportLoading(key);
     try {
-      await downloadMessengerExport(format, range, authToken);
+      const t = await resolveToken();
+      await downloadMessengerExport(format, range, t);
     } catch {}
     setExportLoading(null);
   };
@@ -1519,7 +1529,8 @@ export default function MessengerWorkspace({
   }, [prioritizedConversations, selectedConv]);
 
   const handleConnectFacebook = async () => {
-    if (!authToken) {
+    const t = await resolveToken(true);
+    if (!t) {
       setFacebookError("Connectez-vous et activez votre organisation avant de lancer Facebook.");
       onRequestAccess?.();
       return;
@@ -1534,7 +1545,7 @@ export default function MessengerWorkspace({
     setFacebookOauthOutcome(null);
     try {
       const previousPages = facebookStatus?.pages ?? [];
-      const authUrl = await getFacebookMessengerAuthorizationUrl(authToken, window.location.origin);
+      const authUrl = await getFacebookMessengerAuthorizationUrl(t, window.location.origin);
       if (!authUrl) {
         throw new Error("URL d'autorisation Facebook manquante.");
       }
@@ -1609,7 +1620,8 @@ export default function MessengerWorkspace({
   };
 
   const handleActivateFacebookPage = async (pageId: string) => {
-    if (!authToken) return;
+    const t = await resolveToken(true);
+    if (!t) return;
     if (facebookStatus && !(facebookStatus.can_manage_pages ?? facebookStatus.can_edit)) {
       setFacebookError("Vous n'avez pas les droits requis pour activer une page Facebook sur cette organisation.");
       return;
@@ -1619,12 +1631,12 @@ export default function MessengerWorkspace({
     setFacebookOauthOutcome(null);
     try {
       const previousPages = facebookStatus?.pages ?? [];
-      await activateFacebookMessengerPage(pageId, authToken);
+      await activateFacebookMessengerPage(pageId, t);
       const nextStatus = await refreshFacebookState();
       setFacebookOauthOutcome(
         summarizeFacebookActivationOutcome(previousPages, nextStatus, pageId)
       );
-      const next = await loadMessengerDashboardData(authToken, selectedPageId);
+      const next = await loadMessengerDashboardData(t, selectedPageId);
       setData(next);
     } catch (e) {
       setFacebookError(e instanceof Error ? e.message : "Activation Facebook impossible.");
@@ -1634,7 +1646,8 @@ export default function MessengerWorkspace({
   };
 
   const handleDisconnectFacebookPage = async (pageId: string) => {
-    if (!authToken) return;
+    const t = await resolveToken(true);
+    if (!t) return;
     if (facebookStatus && !(facebookStatus.can_manage_pages ?? facebookStatus.can_edit)) {
       setFacebookError("Vous n'avez pas les droits requis pour deconnecter une page Facebook sur cette organisation.");
       return;
@@ -1643,9 +1656,9 @@ export default function MessengerWorkspace({
     setFacebookError(null);
     setFacebookOauthOutcome(null);
     try {
-      await disconnectFacebookMessengerPage(pageId, authToken);
+      await disconnectFacebookMessengerPage(pageId, t);
       await refreshFacebookState();
-      const next = await loadMessengerDashboardData(authToken, selectedPageId);
+      const next = await loadMessengerDashboardData(t, selectedPageId);
       setData(next);
     } catch (e) {
       setFacebookError(e instanceof Error ? e.message : "Deconnexion Facebook impossible.");

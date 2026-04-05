@@ -6,8 +6,9 @@ import type { ChatbotPreferences, ChatbotHandoffMode } from "@/lib/api";
 import { KeywordInput, SectionCard, SelectField, TextareaField } from "@/components/chatbot/ChatbotUi";
 
 const HANDOFF_MODE_OPTIONS: Array<{ value: ChatbotHandoffMode; label: string }> = [
-  { value: "auto", label: "Auto — le bot detente les signaux et propose un humain" },
+  { value: "auto", label: "Auto — le bot detecte les signaux et propose un humain" },
   { value: "manual", label: "Manuel — uniquement sur les mots-cles definis" },
+  { value: "disabled", label: "Desactive — le bot ne transfere jamais" },
 ];
 
 interface ChatbotHandoffTabProps {
