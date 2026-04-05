@@ -811,7 +811,7 @@ export async function resetUserPreferences(authToken?: string | null): Promise<s
 
 export type ChatbotTone = "professionnel" | "amical" | "decontracte" | "formel";
 export type ChatbotPrimaryRole = "vendeur" | "support_client" | "informateur" | "mixte";
-export type ChatbotHandoffMode = "auto" | "manual";
+export type ChatbotHandoffMode = "auto" | "manual" | "disabled";
 export type ChatbotSetupStep = "need_org" | "connect_page" | "configure" | "complete";
 
 export interface ChatbotPreferences {

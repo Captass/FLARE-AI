@@ -114,14 +114,37 @@ async def process_webhook_event(payload: dict) -> None:
                         )
 
             elif "message" in event and "attachments" in event.get("message", {}):
-                for attachment in event["message"].get("attachments", []):
-                    if attachment.get("type") == "audio":
-                        logger.info("Message vocal recu de %s sur page=%s", sender_id, page_id or "?")
+                attachments = event["message"].get("attachments", [])
+                att_types = [a.get("type", "unknown") for a in attachments]
+                logger.info("Attachment(s) recu de %s sur page=%s: %s", sender_id, page_id or "?", att_types)
+
+                if "audio" in att_types:
+                    send_text_message(
+                        sender_id,
+                        "J'ai bien recu ton message vocal. Pour l'instant, merci d'utiliser les messages texte. Comment puis-je t'aider ?",
+                        page_id=page_id,
+                    )
+                elif any(t in att_types for t in ("image", "video", "file")):
+                    # Traiter comme un message texte avec contexte
+                    try:
+                        await cm_agent.handle_message(
+                            psid=sender_id,
+                            message_text="[Le client a envoye une image/fichier. Reponds en accusant reception et demande comment tu peux l'aider.]",
+                            page_id=page_id,
+                            auto_reply=True,
+                        )
+                    except Exception as exc:
+                        logger.error("Erreur traitement attachment %s: %s", sender_id, exc)
+                elif "fallback" not in att_types:
+                    # Stickers ou types inconnus — accuser reception
+                    try:
                         send_text_message(
                             sender_id,
-                            "J'ai bien recu ton message vocal. Pour l'instant, merci d'utiliser les messages texte. Comment puis-je t'aider ?",
+                            "Merci pour ton message ! Comment puis-je t'aider ?",
                             page_id=page_id,
                         )
+                    except Exception:
+                        pass
 
 
 def parse_webhook_body(body: bytes) -> dict:

@@ -110,9 +110,10 @@ def build_dynamic_prompt(
 
     # Handoff keywords -> instruction dans le prompt
     handoff_section = ""
+    handoff_mode = str(prefs.handoff_mode or "auto").strip().lower()
     try:
         kws = _json.loads(prefs.handoff_keywords or "[]")
-        if isinstance(kws, list) and kws:
+        if isinstance(kws, list) and kws and handoff_mode != "disabled":
             kw_list = ", ".join(f'"{k}"' for k in kws[:10])
             handoff_msg = prefs.handoff_message or "Je vous mets en contact avec un membre de notre equipe. Merci de patienter."
             handoff_section = (
@@ -195,8 +196,13 @@ Quand un nouveau client te contacte pour la premiere fois : {prefs.greeting_mess
 def _check_handoff_trigger(message_text: str, prefs: Optional[ChatbotPreferences]) -> Optional[str]:
     """
     Retourne le message de handoff si un keyword est detecte, sinon None.
+    Respecte le handoff_mode : disabled = jamais, manual = mots-cles, auto = mots-cles + detection LLM.
     """
     if not prefs:
+        return None
+    # Si le mode handoff est desactive, ne jamais transferer
+    mode = str(prefs.handoff_mode or "auto").strip().lower()
+    if mode == "disabled":
         return None
     try:
         kws = _json.loads(prefs.handoff_keywords or "[]")
