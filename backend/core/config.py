@@ -161,15 +161,6 @@ AI_PRICING = {
         "input": 0.25 / 1_000_000,
         "output": 1.50 / 1_000_000,
     },
-    # Legacy models (encore utilisés dans certains workers)
-    "gemini-2.5-flash": {
-        "input": 0.15 / 1_000_000,
-        "output": 0.60 / 1_000_000,
-    },
-    "gemini-2.5-flash-lite": {
-        "input": 0.075 / 1_000_000,
-        "output": 0.30 / 1_000_000,
-    },
     "gemini-2.5-flash-8b": {
         "input": 0.0375 / 1_000_000,
         "output": 0.15 / 1_000_000,

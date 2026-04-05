@@ -8,7 +8,7 @@ import {
   type ChatbotPreferences,
   getChatbotPreferences,
   updateChatbotPreferences,
-} from "@/lib/chatbotSetup";
+} from "@/lib/api";
 import KnowledgePanel from "./KnowledgePanel";
 import ChatbotPreferencesForm from "./ChatbotPreferencesForm";
 import IdentitySettingsSection from "./IdentitySettingsSection";

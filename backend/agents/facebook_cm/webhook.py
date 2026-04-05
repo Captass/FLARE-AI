@@ -143,8 +143,8 @@ async def process_webhook_event(payload: dict) -> None:
                             "Merci pour ton message ! Comment puis-je t'aider ?",
                             page_id=page_id,
                         )
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        logger.warning("Erreur envoi accuse reception sticker %s sur page=%s: %s", sender_id, page_id or "?", exc)
 
 
 def parse_webhook_body(body: bytes) -> dict:

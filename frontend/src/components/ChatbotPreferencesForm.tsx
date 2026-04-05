@@ -3,7 +3,7 @@
 import { BriefcaseBusiness, HeartHandshake, MessageCircleHeart, ShieldCheck, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import type { ChatbotPreferences, ChatbotTone } from "@/lib/chatbotSetup";
+import type { ChatbotPreferences, ChatbotTone } from "@/lib/api";
 
 interface ChatbotPreferencesFormProps {
   value: ChatbotPreferences;

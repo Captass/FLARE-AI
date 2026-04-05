@@ -26,7 +26,7 @@ import {
 import { formatRelativeTime } from "@/components/chatbot/chatbotWorkspaceUtils";
 import { LANGUAGE_OPTIONS, PRIMARY_ROLE_OPTIONS, TONE_OPTIONS } from "@/components/chatbot/chatbotWorkspaceUtils";
 import FacebookVerificationBanner from "@/components/chatbot/FacebookVerificationBanner";
-import type { ChatbotSetupStatus } from "@/lib/chatbotSetup";
+import type { ChatbotSetupStatus } from "@/lib/api";
 
 interface ChatbotSetupWizardProps {
   setupStatus: ChatbotSetupStatus;

@@ -13,7 +13,6 @@ from core.llm_factory import get_llm
 from core.memory import SessionMemory
 from .tools import (
     get_user_profile,
-    send_quick_replies,
     send_text_message,
 )
 from sqlalchemy import or_

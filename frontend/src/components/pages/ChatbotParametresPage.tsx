@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-import type { NavLevel } from "@/components/NavBreadcrumb";
+
 import PageSelector from "@/components/PageSelector";
 import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
 import {
@@ -19,10 +19,7 @@ import {
 interface ChatbotParametresPageProps {
   token?: string | null;
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
-  onPush: (level: NavLevel) => void;
-  onRequestAccess?: () => void;
   onRequestOrganizationSelection?: () => void;
-  onRequestUpgrade?: () => void;
   selectedPageId?: string | null;
   onSelectPage?: (pageId: string) => void;
   onPagesChanged?: (pages: import("@/lib/facebookMessenger").FacebookMessengerPage[]) => void;

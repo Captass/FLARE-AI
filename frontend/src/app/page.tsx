@@ -76,7 +76,7 @@ import {
   trackClientEvent,
   toRenderableMediaUrl,
 } from "@/lib/api";
-import { getChatbotSetupStatus, type ChatbotSetupStatus } from "@/lib/chatbotSetup";
+import { getChatbotSetupStatus, type ChatbotSetupStatus } from "@/lib/api";
 
 export type ActiveView =
   | "chat"
@@ -1455,7 +1455,7 @@ export default function Home() {
             }
           /></motion.div>
         ) : activeView === "chatbot-parametres" ? (
-          <motion.div key="chatbot-parametres" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotParametresPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} onPagesChanged={handlePagesChanged} /></motion.div>
+          <motion.div key="chatbot-parametres" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotParametresPage token={token} getFreshToken={getFreshToken} selectedPageId={selectedFacebookPageId} onSelectPage={setSelectedFacebookPageId} onPagesChanged={handlePagesChanged} /></motion.div>
         ) : activeView === "chatbot-dashboard" ? (
            <motion.div key="chatbot-dashboard" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotDashboardPage token={token} getFreshToken={getFreshToken} selectedPageId={selectedFacebookPageId} onPush={onPush} onSelectContact={setSelectedMessengerConversationId} /></motion.div>
         ) : activeView === "chatbot-clients" ? (

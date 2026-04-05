@@ -3,9 +3,6 @@
 import { getApiBaseUrl } from "@/lib/api";
 import { auth } from "@/lib/firebase";
 
-export type ChatbotTone = "professionnel" | "amical" | "decontracte" | "formel";
-export type ChatbotSetupStep = "need_org" | "connect_page" | "configure" | "complete";
-
 export interface FacebookMessengerPage {
   id: string;
   page_id: string;
@@ -39,31 +36,6 @@ export interface FacebookMessengerStatus {
   pages: FacebookMessengerPage[];
   permission_warning_count?: number;
   has_active_page: boolean;
-}
-
-export interface ChatbotPreferences {
-  organization_slug?: string;
-  bot_name: string;
-  tone: ChatbotTone;
-  language: string;
-  greeting_message: string;
-  company_description: string;
-  products_summary: string;
-  special_instructions: string;
-  has_preferences?: boolean;
-  created_at?: string | null;
-  updated_at?: string | null;
-}
-
-export interface ChatbotSetupStatus {
-  step: ChatbotSetupStep;
-  has_connected_page: boolean;
-  has_preferences: boolean;
-  has_identity: boolean;
-  has_business_profile: boolean;
-  configure_stage: "identity" | "company" | null;
-  active_page_name: string | null;
-  active_page_id: string | null;
 }
 
 export const META_PUBLIC_ACCESS_BLOCKED_MESSAGE =

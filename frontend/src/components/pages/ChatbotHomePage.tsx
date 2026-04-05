@@ -20,7 +20,7 @@ import { useState, useEffect, useCallback } from "react";
 import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/messengerDirect";
 import { getChatbotOverview, type ChatbotOverview, getMyActivationRequest, type ActivationRequest, getBillingFeatures } from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
-import type { ChatbotSetupStatus } from "@/lib/chatbotSetup";
+import type { ChatbotSetupStatus } from "@/lib/api";
 import { ShoppingBag, CheckCircle2, Circle } from "lucide-react";
 
 interface ChatbotHomePageProps {

@@ -216,18 +216,3 @@ def verify_webhook_signature(payload: bytes, signature: str) -> bool:
         hashlib.sha256,
     ).hexdigest()
     return hmac.compare_digest(expected, signature)
-
-
-# Le catalogue est desormais charge depuis la base de donnees (ChatbotCatalogueItem)
-# directement dans agent.py via _load_page_context().
-# Ces fonctions sont conservees pour compatibilite eventuelle mais ne doivent plus
-# etre utilisees pour presenter des offres aux clients.
-
-def get_catalog_item(pack_name: str) -> Optional[dict]:
-    """Obsolete — utiliser le catalogue BDD via _load_page_context()."""
-    return None
-
-
-def get_full_catalog() -> dict:
-    """Obsolete — utiliser le catalogue BDD via _load_page_context()."""
-    return {}
