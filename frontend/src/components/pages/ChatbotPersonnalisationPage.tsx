@@ -8,6 +8,7 @@ import type { NavLevel } from "@/components/NavBreadcrumb";
 import ChatbotIdentityTab from "@/components/chatbot/ChatbotIdentityTab";
 import ChatbotBusinessTab from "@/components/chatbot/ChatbotBusinessTab";
 import ChatbotCatalogueTab from "@/components/chatbot/ChatbotCatalogueTab";
+import ChatbotHandoffTab from "@/components/chatbot/ChatbotHandoffTab";
 import {
   DEFAULT_CHATBOT_PREFERENCES,
   type ChatbotPreferences,
@@ -260,6 +261,14 @@ export default function ChatbotPersonnalisationPage({
             }}
             onSave={() => void handleSaveCatalogue()}
             onDelete={(id) => void handleDeleteCatalogue(id)}
+          />
+
+          <ChatbotHandoffTab
+            preferences={preferences}
+            onChange={setPreferences}
+            canEdit={canEdit}
+            saving={savingSection === "handoff"}
+            onSave={() => void onSavePreferences("handoff")}
           />
         </motion.div>
       </div>

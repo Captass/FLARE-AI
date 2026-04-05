@@ -22,8 +22,8 @@ export default function ChatbotBusinessTab({
 }: ChatbotBusinessTabProps) {
   return (
     <SectionCard
-      title="Entreprise et offres"
-      description="Donnez au bot le contexte de votre entreprise et votre catalogue de produits / services."
+      title="Informations entreprise"
+      description="Donnez au bot le contexte de votre entreprise, vos coordonnees et vos limites."
       action={
         <button
           onClick={onSave}
@@ -35,46 +35,115 @@ export default function ChatbotBusinessTab({
         </button>
       }
     >
+      {/* Identite entreprise */}
       <div className="grid gap-4 lg:grid-cols-2">
         <InputField
           label="Nom de l'entreprise"
           value={preferences.business_name}
           onChange={(business_name) => onChange({ ...preferences, business_name })}
-          placeholder="Ex: Mon entreprise"
+          placeholder="Ex: Mon Entreprise"
           disabled={!canEdit}
         />
         <InputField
-          label="Secteur d'activité"
+          label="Secteur d'activite"
           value={preferences.business_sector}
           onChange={(business_sector) => onChange({ ...preferences, business_sector })}
-          placeholder="Ex: Production vidéo, restauration, e-commerce..."
+          placeholder="Ex: Production video, restauration, e-commerce..."
           disabled={!canEdit}
         />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4">
         <TextareaField
           label="Description de l'entreprise"
           value={preferences.company_description}
           onChange={(company_description) => onChange({ ...preferences, company_description })}
-          placeholder="Expliquez en quelques lignes ce que vous faites, pour qui, et ce qui vous différencie."
-          rows={5}
+          placeholder="Expliquez en quelques lignes ce que vous faites, pour qui, et ce qui vous differencie."
+          rows={4}
           disabled={!canEdit}
         />
       </div>
 
-      <div className="mt-5">
+      {/* Coordonnees */}
+      <div className="mt-6 border-t border-white/[0.04] pt-6">
+        <p className="mb-4 text-[11px] font-semibold uppercase tracking-[0.16em] text-white/30">Coordonnees</p>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <InputField
+            label="Telephone"
+            value={preferences.phone}
+            onChange={(phone) => onChange({ ...preferences, phone })}
+            placeholder="Ex: +261 34 00 000 00"
+            type="tel"
+            disabled={!canEdit}
+          />
+          <InputField
+            label="Email de contact"
+            value={preferences.contact_email}
+            onChange={(contact_email) => onChange({ ...preferences, contact_email })}
+            placeholder="Ex: contact@monentreprise.com"
+            type="email"
+            disabled={!canEdit}
+          />
+          <InputField
+            label="Site web"
+            value={preferences.website_url}
+            onChange={(website_url) => onChange({ ...preferences, website_url })}
+            placeholder="Ex: https://monentreprise.com"
+            type="url"
+            disabled={!canEdit}
+          />
+          <InputField
+            label="Adresse"
+            value={preferences.business_address}
+            onChange={(business_address) => onChange({ ...preferences, business_address })}
+            placeholder="Ex: 12 Rue du Commerce, Antananarivo"
+            disabled={!canEdit}
+          />
+        </div>
+      </div>
+
+      {/* Horaires */}
+      <div className="mt-6 border-t border-white/[0.04] pt-6">
         <TextareaField
-          label="Produits, services et prix"
-          value={preferences.products_summary}
-          onChange={(products_summary) => onChange({ ...preferences, products_summary })}
-          placeholder={"Ex:\n- Pack Essentiel : 500 €/mois — 3 posts/semaine, 1 réseau\n- Pack Pro : 1 200 €/mois — 5 posts, 2 réseaux, Meta Ads\n- Production Vidéo : à partir de 800 € — clip, spot, corporate\n\nIndiquez les noms, descriptions et prix de vos offres."}
-          rows={10}
+          label="Horaires d'ouverture"
+          value={preferences.business_hours}
+          onChange={(business_hours) => onChange({ ...preferences, business_hours })}
+          placeholder={"Ex:\nLundi - Vendredi : 8h00 - 17h00\nSamedi : 9h00 - 12h00\nDimanche : Ferme"}
+          rows={4}
           disabled={!canEdit}
         />
         <p className="mt-2 text-[12px] leading-6 text-white/30">
-          Le bot utilise ce bloc pour répondre aux questions sur vos offres, vos prix et vos services.
-          Plus c&apos;est détaillé, plus les réponses seront précises.
+          Le bot communiquera ces horaires quand un client demande si vous etes ouverts.
+        </p>
+      </div>
+
+      {/* Sujets interdits */}
+      <div className="mt-6 border-t border-white/[0.04] pt-6">
+        <TextareaField
+          label="Sujets a eviter / mentions interdites"
+          value={preferences.forbidden_topics_or_claims}
+          onChange={(forbidden_topics_or_claims) => onChange({ ...preferences, forbidden_topics_or_claims })}
+          placeholder={"Ex:\n- Ne pas mentionner les concurrents\n- Ne pas promettre de delais de livraison\n- Ne pas donner le prix des prestations sur mesure\n- Ne pas discuter de politique"}
+          rows={4}
+          disabled={!canEdit}
+        />
+        <p className="mt-2 text-[12px] leading-6 text-white/30">
+          Le bot evitera strictement ces sujets et redirections.
+        </p>
+      </div>
+
+      {/* Produits / services texte libre */}
+      <div className="mt-6 border-t border-white/[0.04] pt-6">
+        <TextareaField
+          label="Produits, services et prix (texte libre)"
+          value={preferences.products_summary}
+          onChange={(products_summary) => onChange({ ...preferences, products_summary })}
+          placeholder={"Ex:\n- Pack Essentiel : 30 000 Ar/mois — 3 posts/semaine\n- Pack Pro : 60 000 Ar/mois — 5 posts, 2 reseaux\n- Production Video : a partir de 80 000 Ar\n\nCe bloc complete le catalogue structure ci-dessous."}
+          rows={6}
+          disabled={!canEdit}
+        />
+        <p className="mt-2 text-[12px] leading-6 text-white/30">
+          Complement textuel au catalogue. Utilisez ce champ pour des offres complexes ou des notes contextuelles.
         </p>
       </div>
     </SectionCard>

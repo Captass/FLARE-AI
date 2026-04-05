@@ -64,7 +64,15 @@ def build_dynamic_prompt(
     lang_code = str(prefs.language or "fr").strip().lower()
     lang_label_map = {"fr": "francais", "mg": "malgache", "en": "anglais"}
     lang_label = lang_label_map.get(lang_code, lang_code)
-    if lang_code == "mg":
+    if lang_code == "auto":
+        language_instruction = (
+            "Detecte et adapte-toi automatiquement a la langue du client. "
+            "Si le client ecrit en francais, reponds en francais. "
+            "Si le client ecrit en malgache, reponds en malgache. "
+            "Si le client ecrit en anglais, reponds en anglais. "
+            "Evite de melanger les langues dans un meme message."
+        )
+    elif lang_code == "mg":
         language_instruction = (
             "Reponds principalement en malgache. "
             "Si le client ecrit en francais, reponds en francais. "
@@ -115,6 +123,14 @@ def build_dynamic_prompt(
             )
     except Exception:
         pass
+
+    # Sujets interdits
+    forbidden_text = str(prefs.forbidden_topics_or_claims or "").strip()
+    forbidden_section = (
+        f"\n## Sujets interdits\nNe parle JAMAIS de ces sujets et ne fais jamais ces affirmations :\n{forbidden_text}"
+        if forbidden_text
+        else ""
+    )
 
     # Heures d'ouverture
     hours_section = f"\n## Horaires\n{prefs.business_hours}" if prefs.business_hours else ""
@@ -168,7 +184,7 @@ Quand un nouveau client te contacte pour la premiere fois : {prefs.greeting_mess
 - Si une question depasse tes connaissances, dis-le et oriente vers le contact
 - Si un produit a une image, tu peux envoyer l'URL directement dans le message
 - INTERDIT : inventer des prix, des delais, des noms de personnes ou des garanties non confirmees
-
+{forbidden_section}
 {user_context}"""
 
 
