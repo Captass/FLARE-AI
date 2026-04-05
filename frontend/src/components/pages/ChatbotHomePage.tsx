@@ -212,8 +212,8 @@ export default function ChatbotHomePage({
   // En mode activation assistee v1, on ne montre le setup wizard QUE si
   // l'activation est terminee (status=active) et le setup chatbot pas fini.
   // Sinon on montre le tunnel d'activation.
-  const showSetupWizard =
-    Boolean(canAccessChatbot && setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
+  // Setup wizard desactive — l'utilisateur accede directement au hub
+  const showSetupWizard = false;
 
   const hasPageSelected = Boolean(selectedPageId && pages.some((page) => page.page_id === selectedPageId));
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
