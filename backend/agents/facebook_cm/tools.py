@@ -213,43 +213,16 @@ def verify_webhook_signature(payload: bytes, signature: str) -> bool:
     return hmac.compare_digest(expected, signature)
 
 
-CATALOGUE = {
-    "pack_essentiel": {
-        "nom": "Pack Essentiel",
-        "prix": "500EUR/mois",
-        "description": "Community management basique : 3 posts/semaine sur 1 reseau social, rapport mensuel.",
-        "inclus": ["Creation de contenu", "Publication", "Moderation", "Rapport mensuel"],
-    },
-    "pack_pro": {
-        "nom": "Pack Pro",
-        "prix": "1 200EUR/mois",
-        "description": "CM complet sur 2 reseaux + publicite Meta Ads avec budget inclus.",
-        "inclus": ["5 posts/semaine", "2 reseaux sociaux", "Meta Ads (budget 300EUR)", "Rapport hebdomadaire", "Stories quotidiennes"],
-    },
-    "pack_premium": {
-        "nom": "Pack Premium",
-        "prix": "2 500EUR/mois",
-        "description": "Solution complete : CM, production video, publicite avancee, 3 reseaux.",
-        "inclus": ["Illimite posts", "3 reseaux", "Production video (2 videos/mois)", "Meta + Google Ads", "Suivi quotidien", "Rapport personnalise"],
-    },
-    "production_video": {
-        "nom": "Production Video",
-        "prix": "Sur devis (a partir de 800EUR)",
-        "description": "Clip, spot publicitaire, video corporate, motion design.",
-        "inclus": ["Tournage", "Montage", "Color grading", "Musique", "Sous-titres"],
-    },
-    "identite_visuelle": {
-        "nom": "Identite Visuelle",
-        "prix": "Sur devis (a partir de 1 500EUR)",
-        "description": "Logo, charte graphique, templates reseaux sociaux.",
-        "inclus": ["Logo vectoriel", "Palette couleurs", "Typographie", "Charte graphique PDF", "10 templates RS"],
-    },
-}
-
+# Le catalogue est desormais charge depuis la base de donnees (ChatbotCatalogueItem)
+# directement dans agent.py via _load_page_context().
+# Ces fonctions sont conservees pour compatibilite eventuelle mais ne doivent plus
+# etre utilisees pour presenter des offres aux clients.
 
 def get_catalog_item(pack_name: str) -> Optional[dict]:
-    return CATALOGUE.get(pack_name)
+    """Obsolete — utiliser le catalogue BDD via _load_page_context()."""
+    return None
 
 
 def get_full_catalog() -> dict:
-    return CATALOGUE
+    """Obsolete — utiliser le catalogue BDD via _load_page_context()."""
+    return {}
