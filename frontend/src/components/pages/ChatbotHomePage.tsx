@@ -199,6 +199,9 @@ export default function ChatbotHomePage({
   const [activationLoading, setActivationLoading] = useState(true);
 
   const isActivationActive = activationRequest?.status === "active";
+  // L'acces aux fonctionnalites chatbot est ouvert des qu'on est dans une organisation
+  // L'activation tunnel reste informative mais ne bloque plus l'UI
+  const canAccessChatbot = currentScopeType === "organization";
 
   useEffect(() => {
     if (setupStatus?.step === "complete") {
@@ -210,7 +213,7 @@ export default function ChatbotHomePage({
   // l'activation est terminee (status=active) et le setup chatbot pas fini.
   // Sinon on montre le tunnel d'activation.
   const showSetupWizard =
-    Boolean(isActivationActive && setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
+    Boolean(canAccessChatbot && setupStatus && setupStatus.step !== "complete" && !skipSetupWizard);
 
   const hasPageSelected = Boolean(selectedPageId && pages.some((page) => page.page_id === selectedPageId));
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
@@ -572,9 +575,9 @@ export default function ChatbotHomePage({
               Chatbot IA Facebook
             </h1>
             <p className="text-lg text-[var(--text-muted)] mb-6">
-              {isActivationActive
-                ? "Selectionnez la page Facebook que vous souhaitez configurer."
-                : "Activez votre chatbot IA en quelques etapes."}
+              {canAccessChatbot
+                ? "Connectez et configurez votre page Facebook Messenger."
+                : "Creez un espace de travail pour commencer."}
             </p>
 
             {/* ── Activation status banner ── */}
@@ -625,8 +628,8 @@ export default function ChatbotHomePage({
               </div>
             ) : null}
 
-            {/* PageSelector visible only when activation is complete */}
-            {isActivationActive && (
+            {/* PageSelector visible for any organization member */}
+            {canAccessChatbot && (
               <PageSelector
                 pages={pages}
                 selectedPageId={selectedPageId}
@@ -646,14 +649,14 @@ export default function ChatbotHomePage({
           </div>
         </motion.div>
 
-        {isActivationActive && !hasPageSelected && pages.length > 0 && (
+        {canAccessChatbot && !hasPageSelected && pages.length > 0 && (
            <div className="text-center p-4 text-orange-400/80 bg-orange-500/10 rounded-xl border border-orange-500/20">
              Veuillez selectionner une page ci-dessus pour configurer son chatbot.
            </div>
         )}
 
         {/* -- Apercu KPIs (Si page selectionnee) -- */}
-        {isActivationActive && hasPageSelected && (
+        {canAccessChatbot && hasPageSelected && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -737,7 +740,7 @@ export default function ChatbotHomePage({
             </motion.div>
           </motion.div>
         )}
-        {isActivationActive && hasPageSelected && lastKpiUpdate && !loadingKPIs && (
+        {canAccessChatbot && hasPageSelected && lastKpiUpdate && !loadingKPIs && (
           <p className="text-sm text-[var(--text-muted)] -mt-4">
             Donnees synchronisees avec le serveur - actualisation automatique toutes les{" "}
             {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
@@ -745,7 +748,7 @@ export default function ChatbotHomePage({
         )}
 
         {/* ── Entry cards (only when activation is active) ── */}
-        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 transition-opacity duration-300 ${!isActivationActive || !hasPageSelected ? 'opacity-40 pointer-events-none' : 'opacity-100'}`} role="list" aria-label="Sections du Chatbot IA">
+        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 transition-opacity duration-300 ${!canAccessChatbot ? 'opacity-40 pointer-events-none' : 'opacity-100'}`} role="list" aria-label="Sections du Chatbot IA">
           {ENTRIES.map((entry, idx) => {
             const Icon = entry.icon;
             const isClientsCard = entry.id === "chatbot-clients";
