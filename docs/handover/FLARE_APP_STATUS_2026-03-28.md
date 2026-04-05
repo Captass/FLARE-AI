@@ -46,6 +46,19 @@ Le wizard bloque maintenant le CTA Facebook si le backend ne declare pas l'OAuth
 L'utilisateur voit un message d'indisponibilite avant clic, au lieu d'une erreur serveur apres clic.
 `Continuer plus tard` quitte le wizard sans le marquer localement comme termine.
 
+## Update 2026-04-05 (session 2) - correctifs UX tunnel activation
+
+Tests live supplementaires :
+
+- **Methodes de paiement** : le backend renvoyait `[]` quand `MANUAL_PAYMENT_METHODS_JSON` absent. Correction : 2 methodes par defaut (MVola + Orange Money) avec le numero `034 02 107 31`. Configurable via l'env var sur Render quand les numeros definitifs sont connus.
+- **Erreurs API brutes** : ajout de `parseApiError()` — les erreurs FastAPI JSON `{"detail":"..."}` sont maintenant extraites et affichees proprement.
+- **Reprise AR existant** : si l'utilisateur clique "Choisir" alors qu'une demande est deja en cours, le tunnel la charge et reprend a la bonne etape au lieu d'afficher une erreur.
+- **Enterprise mailto** : `window.open` remplace par `window.location.href` pour eviter la page noire.
+- **Banniere clignotante** : protegee par `activationLoading` — ne s'affiche qu'apres le fetch initial.
+- **Page Abonnements** : grille des 4 plans ajoutee (Starter/Pro/Business/Entreprise) avec CTA vers le tunnel d'activation.
+
+Decision produit : Stripe non disponible pour Madagascar. Methode manuelle MVola + Orange Money conservee pour le lancement. API Marchand MVola envisageable a moyen terme.
+
 ## Update 2026-04-05 - correctifs et documentation v1
 
 Tests live sur `flareai.ramsflare.com` ont revele trois problemes corriges dans la session :

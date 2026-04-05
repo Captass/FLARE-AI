@@ -5,6 +5,27 @@
 
 ---
 
+## v4.0.3 — 5 avril 2026 — "Correctifs UX tunnel activation — methodes de paiement, erreurs API, enterprise"
+
+### Resume
+Correctifs de la session de tests live : methodes de paiement manquantes, erreurs JSON brutes, mailto enterprise, banniere clignotante, et grille des offres dans Abonnements.
+
+### Changements
+- **Methodes de paiement par defaut** : backend retourne MVola + Orange Money (034 02 107 31) quand `MANUAL_PAYMENT_METHODS_JSON` n'est pas configure, au lieu de `[]`
+- **Erreurs API lisibles** : ajout de `parseApiError()` dans `ChatbotActivationPage` qui extrait le champ `detail` du JSON FastAPI -- plus de `{"detail":"..."}` brut affiche
+- **Reprise automatique** : si une AR existe deja et que le backend renvoie "deja en cours", le tunnel charge l'AR existant et saute a la bonne etape au lieu d'afficher une erreur
+- **Enterprise mailto** : `window.open("mailto:...", "_blank")` remplace par `window.location.href` -- plus de page noire
+- **Banniere clignotante** : ajout de `activationLoading` dans `ChatbotHomePage` pour ne pas afficher la banniere avant le fetch initial
+- **Grille des offres dans Abonnements** : `BillingPage` affiche maintenant les 4 plans avec CTA vers le tunnel d'activation
+
+### Commits
+- `fix: stop activation banner flicker, add plans grid to billing page`
+- `fix: parse API JSON errors, auto-resume existing AR, fix enterprise mailto`
+- `fix: add default payment methods (MVola, Orange Money) when env var not set`
+- `fix: update payment numbers to 034 02 107 31, remove card placeholder`
+
+---
+
 ## v4.0.1 — 5 avril 2026 — "Correctifs lancement v1 — activation flow, admin sidebar, prix"
 
 ### Resume
