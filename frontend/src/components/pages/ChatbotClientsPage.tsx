@@ -243,14 +243,18 @@ export default function ChatbotClientsPage({
 
                     <div className="mt-2 flex w-full items-center justify-between gap-6 sm:mt-0 sm:w-auto sm:justify-end">
                       <div className="flex items-center gap-3">
-                        <span className="hidden text-sm font-medium uppercase tracking-widest text-fg/40 sm:inline-block">
-                          {botEnabled ? "Bot actif" : "Mode humain"}
+                        <span className={`hidden text-xs font-semibold uppercase tracking-widest sm:inline-block ${
+                          botEnabled ? "text-emerald-400/70" : "text-red-400/70"
+                        }`}>
+                          {botEnabled ? "Bot ON" : "Bot OFF"}
                         </span>
                         <button
                           onClick={() => void handleToggleMode(conversation.psid, conversation.mode)}
                           disabled={isHandling || !canSwitchMode}
-                          className={`relative flex h-7 w-12 items-center rounded-full transition-colors ${
-                            botEnabled ? "bg-emerald-500/20" : "bg-fg/10"
+                          className={`relative flex h-7 w-12 items-center rounded-full border transition-colors ${
+                            botEnabled
+                              ? "border-emerald-500/30 bg-emerald-500/20"
+                              : "border-red-500/20 bg-red-500/10"
                           }`}
                           title={
                             canSwitchMode
@@ -260,8 +264,9 @@ export default function ChatbotClientsPage({
                         >
                           <motion.div
                             layout
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={`h-5 w-5 rounded-full shadow-sm ${
-                              botEnabled ? "ml-[26px] bg-emerald-400" : "ml-1 bg-fg/40"
+                              botEnabled ? "ml-[26px] bg-emerald-400" : "ml-1 bg-red-400"
                             }`}
                           />
                           {isHandling ? (

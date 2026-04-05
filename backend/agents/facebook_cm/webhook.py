@@ -4,10 +4,10 @@ Traite les evenements entrants de l'API Meta Graph.
 """
 import json
 import logging
-from typing import Any
+from typing import Any, Optional
 
 from .agent import get_cm_agent
-from .tools import send_text_message
+from .tools import send_text_message, _load_page_connection
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,16 @@ def _resolve_page_id(entry: dict[str, Any], event: dict[str, Any]) -> str:
         or entry.get("id")
         or ""
     ).strip()
+
+
+def _is_page_bot_active(page_id: str) -> bool:
+    """Verifie si le bot est actif sur cette page (is_active == 'true')."""
+    if not page_id:
+        return False
+    connection = _load_page_connection(page_id)
+    if not connection:
+        return False
+    return str(getattr(connection, "is_active", "false")).lower() == "true"
 
 
 async def process_webhook_event(payload: dict) -> None:
@@ -32,6 +42,21 @@ async def process_webhook_event(payload: dict) -> None:
             sender_id = event.get("sender", {}).get("id")
             page_id = _resolve_page_id(entry, event)
             if not sender_id:
+                continue
+
+            # Ignorer les echo messages (messages envoyes par le bot/la page eux-memes)
+            if event.get("message", {}).get("is_echo"):
+                continue
+            # Ignorer si le sender est la page (reponse du bot renvoyee)
+            if sender_id == page_id:
+                continue
+
+            # Verifier que le bot est actif sur cette page
+            if page_id and not _is_page_bot_active(page_id):
+                logger.info(
+                    "Message ignore — bot desactive sur page=%s (sender=%s)",
+                    page_id, sender_id,
+                )
                 continue
 
             if "message" in event and "text" in event["message"]:

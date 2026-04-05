@@ -151,7 +151,7 @@ export default function PageSelector({
       ) : null}
 
       <div className="rounded-lg border border-fg/[0.06] bg-fg/[0.015] p-3 text-xs leading-relaxed text-fg/50">
-        <strong className="text-fg/65">Choisir dans FLARE :</strong> cliquez sur une carte pour configurer la personnalisation. <strong className="text-fg/65">Messenger :</strong> utilisez le bouton <strong className="text-emerald-400">Activer</strong> ou <strong className="text-amber-500">Désactiver</strong> pour brancher / débrancher le bot sur une page spécifique.
+        <strong className="text-fg/65">Choisir dans FLARE :</strong> cliquez sur une carte pour configurer la personnalisation. <strong className="text-fg/65">Messenger :</strong> utilisez le toggle <strong className="text-emerald-400">ON</strong> / <strong className="text-red-400">OFF</strong> pour activer ou desactiver le bot sur cette page.
       </div>
 
       <div className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-xs leading-relaxed text-orange-100/90">
@@ -252,41 +252,50 @@ export default function PageSelector({
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-2 sm:pl-2">
+              <div className="flex shrink-0 items-center gap-3 sm:pl-2">
                 {isSelected ? (
-                  <span className="mr-2 hidden text-xs font-semibold uppercase tracking-wide text-orange-400/90 sm:inline sm:text-sm">
+                  <span className="mr-1 hidden text-xs font-semibold uppercase tracking-wide text-orange-400/90 sm:inline">
                     Sélection FLARE
                   </span>
                 ) : null}
 
-                {showActivate && !isBotOn ? (
-                  <button
-                    type="button"
-                    disabled={isBusy || !canManagePages}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onActivatePage?.(page.page_id);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/35 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-400 transition-colors hover:bg-emerald-500/25 disabled:opacity-50"
-                  >
-                    {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Power className="h-4 w-4" />}
-                    Activer
-                  </button>
-                ) : null}
-
-                {showDeactivate && isPartiallyActive ? (
-                  <button
-                    type="button"
-                    disabled={isBusy || !canManagePages}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onDeactivatePage?.(page.page_id);
-                    }}
-                    className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-500 transition-colors hover:bg-amber-500/20 disabled:opacity-50"
-                  >
-                    {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <PowerOff className="h-4 w-4" />}
-                    Désactiver
-                  </button>
+                {/* Toggle ON/OFF du bot */}
+                {(showActivate || showDeactivate) && canManagePages ? (
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold uppercase tracking-widest ${isBotOn ? "text-emerald-400/80" : "text-red-400/70"}`}>
+                      {isBotOn ? "ON" : "OFF"}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={isBusy || !canManagePages}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (isBotOn) {
+                          onDeactivatePage?.(page.page_id);
+                        } else {
+                          onActivatePage?.(page.page_id);
+                        }
+                      }}
+                      className={`relative flex h-8 w-14 items-center rounded-full border transition-all ${
+                        isBotOn
+                          ? "border-emerald-500/30 bg-emerald-500/20"
+                          : "border-red-500/20 bg-red-500/10"
+                      } ${isBusy ? "opacity-60" : "cursor-pointer hover:opacity-90"}`}
+                      title={isBotOn ? "Désactiver le bot sur cette page" : "Activer le bot sur cette page"}
+                    >
+                      {isBusy ? (
+                        <Loader2 className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 animate-spin text-fg/50" />
+                      ) : (
+                        <motion.div
+                          layout
+                          transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          className={`h-6 w-6 rounded-full shadow-md ${
+                            isBotOn ? "ml-[26px] bg-emerald-400" : "ml-1 bg-red-400"
+                          }`}
+                        />
+                      )}
+                    </button>
+                  </div>
                 ) : null}
 
                 {showRemove && canManagePages && !isPartiallyActive ? (
