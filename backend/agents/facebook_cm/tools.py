@@ -67,6 +67,11 @@ def _resolve_page_access_token(
         return decrypted
 
     if resolved_page_id:
+        logger.warning(
+            "[Facebook CM] Aucun token d'acces pour page_id=%s (connexion absente ou token non decrypte). "
+            "Le message ne pourra pas etre envoye.",
+            resolved_page_id,
+        )
         return ""
 
     return str(settings.META_ACCESS_TOKEN or "").strip()

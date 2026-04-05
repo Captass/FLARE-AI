@@ -1,6 +1,5 @@
 ﻿"use client";
 
-import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { Brush, SlidersHorizontal, BarChart3, Users, Loader2, MessageSquare, Bot } from "lucide-react";
 import PlatformCard, { NotifBadge } from "@/components/PlatformCard";
@@ -22,16 +21,7 @@ import { loadMessengerDashboardData, type MessengerDashboardData } from "@/lib/m
 import { getChatbotOverview, type ChatbotOverview, getMyActivationRequest, type ActivationRequest, getBillingFeatures } from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import type { ChatbotSetupStatus } from "@/lib/chatbotSetup";
-import { ShoppingBag } from "lucide-react";
-
-const ChatbotSetupWizard = dynamic(() => import("@/components/ChatbotSetupWizard"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex justify-center py-16">
-      <Loader2 className="h-8 w-8 animate-spin text-orange-400/80" aria-hidden />
-    </div>
-  ),
-});
+import { ShoppingBag, CheckCircle2, Circle } from "lucide-react";
 
 interface ChatbotHomePageProps {
   token?: string | null;
@@ -193,27 +183,13 @@ export default function ChatbotHomePage({
   onRefreshSetupStatus,
   onRequestOrganizationSelection,
 }: ChatbotHomePageProps) {
-  const [skipSetupWizard, setSkipSetupWizard] = useState(false);
   const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [activationLoading, setActivationLoading] = useState(true);
 
-  const isActivationActive = activationRequest?.status === "active";
   // L'acces aux fonctionnalites chatbot est ouvert des qu'on est dans une organisation
   // L'activation tunnel reste informative mais ne bloque plus l'UI
   const canAccessChatbot = currentScopeType === "organization";
-
-  useEffect(() => {
-    if (setupStatus?.step === "complete") {
-      setSkipSetupWizard(false);
-    }
-  }, [setupStatus?.step]);
-
-  // En mode activation assistee v1, on ne montre le setup wizard QUE si
-  // l'activation est terminee (status=active) et le setup chatbot pas fini.
-  // Sinon on montre le tunnel d'activation.
-  // Setup wizard desactive — l'utilisateur accede directement au hub
-  const showSetupWizard = false;
 
   const hasPageSelected = Boolean(selectedPageId && pages.some((page) => page.page_id === selectedPageId));
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
@@ -522,42 +498,37 @@ export default function ChatbotHomePage({
 
   const activationBanner = getActivationBanner(currentScopeType, currentPlanId, activationRequest);
 
-  if (showSetupWizard && setupStatus) {
-    return (
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto w-full max-w-3xl px-4 py-6 md:px-8 md:py-10 flex flex-col gap-6">
-          <div className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] px-4 py-4 md:px-6 md:py-5">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-400/90">Mise en route</p>
-            <h2 className="mt-2 text-xl font-semibold text-fg/90">Configurez votre chatbot</h2>
-            <p className="mt-2 text-sm text-[var(--text-muted)] leading-relaxed">
-              Connexion Facebook, page Messenger, identite et entreprise - tout au meme endroit. Vous pourrez modifier
-              chaque detail ensuite dans les autres sections.
-            </p>
-          </div>
-          <ChatbotSetupWizard
-            setupStatus={setupStatus}
-            token={token}
-            getFreshToken={getFreshToken}
-            onComplete={async () => {
-              await onRefreshSetupStatus?.(); 
-            }}
-            onSkip={() => setSkipSetupWizard(true)}
-            onRequestOrganizationSelection={onRequestOrganizationSelection}
-            onRefreshSetupStatus={onRefreshSetupStatus}
-          />
-          <div className="flex justify-center pb-8">
-            <button
-              type="button"
-              onClick={() => setSkipSetupWizard(true)}
-              className="text-sm text-fg/45 hover:text-fg/70 underline underline-offset-4 transition-colors"
-            >
-              Acceder au chatbot sans terminer le setup
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Etapes du guide d'onboarding
+  const hasAnyPage = pages.length > 0;
+  const hasActivePage = pages.some((p) => p.is_active && p.webhook_subscribed);
+  const onboardingSteps = [
+    {
+      label: "Connectez votre compte Facebook",
+      done: hasAnyPage,
+      action: !hasAnyPage ? () => void handleConnectMetaPages() : undefined,
+      actionLabel: "Ouvrir Meta",
+    },
+    {
+      label: "Choisissez et activez votre page",
+      done: hasActivePage,
+      action: undefined,
+      actionLabel: undefined,
+    },
+    {
+      label: "Configurez les preferences du bot",
+      done: hasActivePage && Boolean(setupStatus?.has_preferences),
+      action: hasActivePage ? () => onPush("chatbot-personnalisation" as NavLevel) : undefined,
+      actionLabel: "Personnaliser",
+    },
+    {
+      label: "Testez votre chatbot sur Messenger",
+      done: false,
+      action: undefined,
+      actionLabel: undefined,
+    },
+  ];
+  const completedSteps = onboardingSteps.filter((s) => s.done).length;
+  const showOnboarding = canAccessChatbot && !hasActivePage;
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -627,6 +598,44 @@ export default function ChatbotHomePage({
                 {activationNotice}
               </div>
             ) : null}
+
+            {/* Guide d'onboarding - visible tant qu'aucune page n'est activee */}
+            {showOnboarding && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <Bot size={18} className="text-orange-400" />
+                  <p className="text-sm font-semibold text-fg/80">Mise en route — {completedSteps}/{onboardingSteps.length} etapes</p>
+                </div>
+                <div className="flex flex-col gap-3">
+                  {onboardingSteps.map((step, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      {step.done ? (
+                        <CheckCircle2 size={18} className="shrink-0 text-emerald-400" />
+                      ) : (
+                        <Circle size={18} className="shrink-0 text-fg/20" />
+                      )}
+                      <span className={`text-sm flex-1 ${step.done ? "text-fg/50 line-through" : "text-fg/80"}`}>
+                        {i + 1}. {step.label}
+                      </span>
+                      {!step.done && step.action && (
+                        <button
+                          type="button"
+                          onClick={step.action}
+                          disabled={fbOauthBusy}
+                          className="shrink-0 rounded-full bg-orange-500/15 px-3 py-1 text-xs font-semibold text-orange-300 ring-1 ring-orange-500/20 hover:bg-orange-500/25 transition-colors"
+                        >
+                          {step.actionLabel}
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
 
             {/* PageSelector visible for any organization member */}
             {canAccessChatbot && (

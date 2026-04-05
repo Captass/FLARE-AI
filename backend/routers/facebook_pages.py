@@ -1139,6 +1139,12 @@ async def _activate_facebook_page_core(
 
     page_access_token = encryption_service.decrypt(connection.page_access_token_encrypted or "")
     if not page_access_token:
+        logger.error(
+            "Activation page=%s org=%s : token de page indisponible (encrypted=%s)",
+            resolved_page_id,
+            organization_slug,
+            "present" if connection.page_access_token_encrypted else "vide",
+        )
         connection.status = "reconnect_required"
         connection.is_active = "false"
         connection.webhook_subscribed = "false"

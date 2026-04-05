@@ -4,10 +4,13 @@ AgrÃ¨ge les stats de tous les modules en un seul endpoint.
 """
 import asyncio
 import hashlib
+import logging
 import re
 from collections import Counter, defaultdict
 from datetime import datetime, timedelta
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 import httpx
 from bs4 import BeautifulSoup
@@ -1002,7 +1005,12 @@ async def update_messenger_contact_mode(
         )
 
     if response.status_code >= 400:
-        raise HTTPException(status_code=502, detail="Le changement de mode Messenger a echoue.")
+        try:
+            err_detail = response.json().get("detail", response.text[:200])
+        except Exception:
+            err_detail = response.text[:200] if response.text else "Erreur inconnue"
+        logger.error("contact-mode failed psid=%s mode=%s status=%s detail=%s", psid, mode, response.status_code, err_detail)
+        raise HTTPException(status_code=502, detail=f"Le changement de mode Messenger a echoue : {err_detail}")
 
     return {"status": "ok", "psid": psid, "mode": mode}
 

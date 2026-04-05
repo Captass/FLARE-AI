@@ -168,18 +168,8 @@ async function readErrorMessage(response: Response, fallback: string): Promise<s
   return fallback;
 }
 
-export function getDefaultChatbotPreferences(): ChatbotPreferences {
-  return {
-    bot_name: "L'assistant",
-    tone: "amical",
-    language: "fr",
-    greeting_message: "",
-    company_description: "",
-    products_summary: "",
-    special_instructions: "",
-    has_preferences: false,
-  };
-}
+// Les fonctions chatbot preferences/setup sont desormais dans api.ts
+// (getChatbotPreferences, updateChatbotPreferences, DEFAULT_CHATBOT_PREFERENCES)
 
 export async function loadFacebookMessengerStatus(token?: string | null): Promise<FacebookMessengerStatus> {
   const response = await facebookRequestWithTokenRetry(`${getApiBaseUrl()}/api/facebook/status`, {
@@ -362,64 +352,3 @@ export async function disconnectFacebookMessengerPage(
   return payload.page as FacebookMessengerPage;
 }
 
-export async function loadChatbotPreferences(token?: string | null): Promise<ChatbotPreferences> {
-  const response = await fetch(`${getApiBaseUrl()}/api/chatbot-preferences`, {
-    cache: "no-store",
-    headers: buildAuthHeaders(token),
-  });
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "Impossible de charger les preferences du chatbot."));
-  }
-
-  const payload = await response.json();
-  return {
-    ...getDefaultChatbotPreferences(),
-    ...payload,
-  } as ChatbotPreferences;
-}
-
-export async function updateChatbotPreferences(
-  preferences: ChatbotPreferences,
-  token: string
-): Promise<ChatbotPreferences> {
-  const response = await fetch(`${getApiBaseUrl()}/api/chatbot-preferences`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      ...(buildAuthHeaders(token) || {}),
-    },
-    body: JSON.stringify({
-      bot_name: preferences.bot_name,
-      tone: preferences.tone,
-      language: preferences.language,
-      greeting_message: preferences.greeting_message,
-      company_description: preferences.company_description,
-      products_summary: preferences.products_summary,
-      special_instructions: preferences.special_instructions,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "Impossible d'enregistrer les preferences du chatbot."));
-  }
-
-  const payload = await response.json();
-  return {
-    ...getDefaultChatbotPreferences(),
-    ...payload,
-  } as ChatbotPreferences;
-}
-
-export async function loadChatbotSetupStatus(token: string): Promise<ChatbotSetupStatus> {
-  const response = await fetch(`${getApiBaseUrl()}/api/chatbot/setup-status`, {
-    cache: "no-store",
-    headers: buildAuthHeaders(token),
-  });
-
-  if (!response.ok) {
-    throw new Error(await readErrorMessage(response, "Impossible de charger le statut de setup du chatbot."));
-  }
-
-  return response.json();
-}
