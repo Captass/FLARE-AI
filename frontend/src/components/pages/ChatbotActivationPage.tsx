@@ -54,6 +54,10 @@ function parseApiError(e: unknown, fallback = "Une erreur est survenue."): strin
   return raw || fallback;
 }
 
+function isMissingOrganizationScopeError(message: string): boolean {
+  return /organisation|espace|scope|selectionnez d'abord/i.test(message);
+}
+
 // ---------------------------------------------------------------------------
 // Types & constants
 // ---------------------------------------------------------------------------
@@ -62,6 +66,8 @@ interface ChatbotActivationPageProps {
   token?: string | null;
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   onPush: (level: NavLevel) => void;
+  currentScopeType?: "personal" | "organization";
+  onRequestOrganizationSelection?: () => void;
 }
 
 type WizardStep =
@@ -273,6 +279,37 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+function OrganizationScopeRequiredPanel({
+  onSelectWorkspace,
+}: {
+  onSelectWorkspace?: () => void;
+}) {
+  return (
+    <div className="flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-2xl px-4 py-10 md:px-8 md:py-14">
+        <div className={`${glass} p-6 md:p-8 text-center flex flex-col items-center gap-4`}>
+          <div className="h-12 w-12 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center">
+            <Building2 size={22} />
+          </div>
+          <h2 className="text-xl font-semibold text-fg/90">Choisissez d&apos;abord votre espace de travail</h2>
+          <p className="max-w-lg text-sm text-fg/60 leading-relaxed">
+            L&apos;activation du chatbot et le paiement sont rattaches a une organisation.
+            Ouvrez le selecteur d&apos;espace puis choisissez une organisation active.
+          </p>
+          <button
+            type="button"
+            onClick={() => onSelectWorkspace?.()}
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors"
+          >
+            Choisir mon espace
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -281,6 +318,8 @@ export default function ChatbotActivationPage({
   token,
   getFreshToken,
   onPush,
+  currentScopeType = "personal",
+  onRequestOrganizationSelection,
 }: ChatbotActivationPageProps) {
   // ---- state ----
   const [step, setStep] = useState<WizardStep>("choose_plan");
@@ -345,6 +384,10 @@ export default function ChatbotActivationPage({
 
     void (async () => {
       setLoading(true);
+      if (currentScopeType !== "organization") {
+        setLoading(false);
+        return;
+      }
       const t = await resolveToken();
       if (!t || cancelled) {
         setLoading(false);
@@ -429,11 +472,11 @@ export default function ChatbotActivationPage({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [resolveToken]);
+  }, [currentScopeType, resolveToken]);
 
   // ---- polling (awaiting step) ----
   useEffect(() => {
-    if (step !== "awaiting") {
+    if (currentScopeType !== "organization" || step !== "awaiting") {
       if (pollRef.current) {
         clearInterval(pollRef.current);
         pollRef.current = null;
@@ -467,10 +510,15 @@ export default function ChatbotActivationPage({
         pollRef.current = null;
       }
     };
-  }, [step, resolveToken]);
+  }, [currentScopeType, step, resolveToken]);
 
   // ---- actions ----
   const handleChoosePlan = async () => {
+    if (currentScopeType !== "organization") {
+      setError("Selectionnez d'abord une organisation active.");
+      onRequestOrganizationSelection?.();
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -484,6 +532,11 @@ export default function ChatbotActivationPage({
       setStep("payment");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la creation");
+      if (isMissingOrganizationScopeError(msg)) {
+        setError("Selectionnez d'abord une organisation active.");
+        onRequestOrganizationSelection?.();
+        return;
+      }
       // If an AR already exists, load it and resume from the correct step
       if (/deja en cours|already in progress|already exists/i.test(msg)) {
         try {
@@ -507,6 +560,11 @@ export default function ChatbotActivationPage({
   };
 
   const handleSubmitPayment = async () => {
+    if (currentScopeType !== "organization") {
+      setError("Selectionnez d'abord une organisation active.");
+      onRequestOrganizationSelection?.();
+      return;
+    }
     if (!txRef.trim()) {
       setError("Veuillez indiquer la reference de transaction.");
       return;
@@ -534,13 +592,24 @@ export default function ChatbotActivationPage({
       setAr(refreshed.activation_request);
       setStep("awaiting");
     } catch (e) {
-      setError(parseApiError(e, "Erreur lors de la soumission du paiement"));
+      const msg = parseApiError(e, "Erreur lors de la soumission du paiement");
+      if (isMissingOrganizationScopeError(msg)) {
+        setError("Selectionnez d'abord une organisation active.");
+        onRequestOrganizationSelection?.();
+        return;
+      }
+      setError(msg);
     } finally {
       setBusy(false);
     }
   };
 
   const handleSaveConfig = async () => {
+    if (currentScopeType !== "organization") {
+      setError("Selectionnez d'abord une organisation active.");
+      onRequestOrganizationSelection?.();
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -554,13 +623,24 @@ export default function ChatbotActivationPage({
       setAr(res.activation_request);
       setStep("flare_admin");
     } catch (e) {
-      setError(parseApiError(e, "Erreur lors de la sauvegarde"));
+      const msg = parseApiError(e, "Erreur lors de la sauvegarde");
+      if (isMissingOrganizationScopeError(msg)) {
+        setError("Selectionnez d'abord une organisation active.");
+        onRequestOrganizationSelection?.();
+        return;
+      }
+      setError(msg);
     } finally {
       setBusy(false);
     }
   };
 
   const handleConfirmAdmin = async () => {
+    if (currentScopeType !== "organization") {
+      setError("Selectionnez d'abord une organisation active.");
+      onRequestOrganizationSelection?.();
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
@@ -573,7 +653,13 @@ export default function ChatbotActivationPage({
       setAr(res.activation_request);
       setStep("awaiting");
     } catch (e) {
-      setError(parseApiError(e, "Erreur lors de la confirmation"));
+      const msg = parseApiError(e, "Erreur lors de la confirmation");
+      if (isMissingOrganizationScopeError(msg)) {
+        setError("Selectionnez d'abord une organisation active.");
+        onRequestOrganizationSelection?.();
+        return;
+      }
+      setError(msg);
     } finally {
       setBusy(false);
     }
@@ -649,6 +735,14 @@ export default function ChatbotActivationPage({
       <div className="flex-1 flex items-center justify-center py-24">
         <Loader2 className="h-8 w-8 animate-spin text-orange-400/80" />
       </div>
+    );
+  }
+
+  if (currentScopeType !== "organization") {
+    return (
+      <OrganizationScopeRequiredPanel
+        onSelectWorkspace={onRequestOrganizationSelection}
+      />
     );
   }
 
