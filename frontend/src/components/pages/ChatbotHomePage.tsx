@@ -616,7 +616,7 @@ export default function ChatbotHomePage({
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5"
               >
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   <Bot size={18} className="text-orange-400" />
                   <p className="text-sm font-semibold text-[var(--text-primary)]">Mise en route - {completedSteps}/{onboardingSteps.length} etapes</p>
                 </div>
@@ -685,7 +685,7 @@ export default function ChatbotHomePage({
             {/* Statut (aligne spec + donnees reelles overview) */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] shadow-[var(--shadow-card)] flex items-center justify-between"
+                className="flex items-center justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--text-muted)]">Statut chatbot</p>
@@ -721,7 +721,7 @@ export default function ChatbotHomePage({
             {/* Messages */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] shadow-[var(--shadow-card)] flex items-center justify-between"
+                className="flex items-center justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--text-muted)]">Messages traites</p>
@@ -741,7 +741,7 @@ export default function ChatbotHomePage({
             {/* Contacts */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-              className="p-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] shadow-[var(--shadow-card)] flex items-center justify-between"
+                className="flex items-center justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--text-muted)]">Contacts captes</p>

@@ -42,7 +42,7 @@ function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="flex-1 min-w-0 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-4 shadow-[var(--shadow-card)]"
+      className="flex-1 min-w-0 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-4"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1 min-w-0">
@@ -100,7 +100,7 @@ function QuickCard({
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
       onClick={onClick}
-      className="flex-1 min-w-0 flex flex-col items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-5 text-left shadow-[var(--shadow-card)] transition-all duration-250 cursor-pointer group hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)]"
+      className="flex-1 min-w-0 cursor-pointer group flex flex-col items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-5 text-left transition-all duration-250 hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)]"
       aria-label={title}
     >
       <div
@@ -266,7 +266,7 @@ export default function HomePage({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-[0.12em] mb-4"
+            className="mb-4 text-sm font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]"
           >
             Acces rapide
           </motion.h2>

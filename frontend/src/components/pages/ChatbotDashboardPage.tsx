@@ -216,7 +216,7 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
+              className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -238,7 +238,7 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
                 whileHover={{ scale: 1.02 }}
-                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -256,7 +256,7 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.02 }}
-                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -274,7 +274,7 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
                 whileHover={{ scale: 1.02 }}
-                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -317,11 +317,11 @@ export default function ChatbotDashboardPage({
                       key={`${message.customer}-${message.time}-${index}`}
                       className="flex items-center justify-between p-4 transition-colors hover:bg-[var(--surface-subtle)]"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="min-w-0 flex items-center gap-4">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/12 font-bold uppercase text-orange-500">
                           {(message.customer || "C").charAt(0)}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                           <p className="font-medium text-[var(--text-primary)]">{message.customer || "Client"}</p>
                           <p className="max-w-[300px] truncate text-sm text-[var(--text-secondary)] md:max-w-[450px]">
                             {message.message || "Message"}

@@ -64,7 +64,7 @@ function StatCard({
     <div className="flex flex-col gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
       <div className="flex items-center gap-1.5">
         <Icon size={11} className="text-[var(--text-muted)]" />
-        <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">{label}</span>
+        <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">{label}</span>
       </div>
       <span className="text-[22px] font-semibold leading-none tracking-tight text-[var(--text-primary)] tabular-nums">
         {value.toLocaleString("fr-FR")}
@@ -396,7 +396,7 @@ export default function DashboardPanel({
             ) : (
               <FlareMark tone="auto" className="w-5" />
             )}
-            <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
               {currentScopeLabel || brandName || "FLARE AI"}
             </p>
           </div>
@@ -443,7 +443,7 @@ export default function DashboardPanel({
 
         <section>
           <div className="mb-3 flex items-center justify-between px-0.5">
-            <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Chatbot</p>
+            <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Chatbot</p>
             {!organizationConnectionRequired && token && (
               <button
                 onClick={() => setRefreshKey((k) => k + 1)}
@@ -468,7 +468,7 @@ export default function DashboardPanel({
             <div className="mb-3 flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1.5">
                 <TrendingUp size={11} className="text-[var(--text-muted)]" />
-                <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Activite</p>
+                <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Activite</p>
               </div>
               <div className="flex items-center gap-0.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] p-0.5">
                 {PERIOD_OPTIONS.map((opt) => (
@@ -495,7 +495,7 @@ export default function DashboardPanel({
         )}
 
         <section>
-          <p className="mb-3 px-0.5 text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Acces rapide</p>
+          <p className="mb-3 px-0.5 text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Acces rapide</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3">
             {QUICK_ACTIONS.map((action, i) => {
               const Icon = action.icon;
@@ -529,7 +529,7 @@ export default function DashboardPanel({
         {!organizationConnectionRequired && (
           <section>
             <div className="mb-3 flex items-center justify-between px-0.5">
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Modules</p>
+              <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Modules</p>
               <button
                 onClick={() => onNavigate?.("automationHub")}
                 className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
