@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Zap,
   Bot,
@@ -13,6 +13,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronRight,
+  ChevronUp,
   ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -20,38 +21,21 @@ import { User } from "firebase/auth";
 import FlareMark from "@/components/FlareMark";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface NewSidebarProps {
-  /** Niveau actif dans la pile de navigation */
   activeView: NavLevel;
-  /** Callback navigation */
   onNavigate: (level: NavLevel) => void;
-  /** Utilisateur Firebase */
   user?: User | null;
-  /** Callback déconnexion */
   onLogout?: () => void;
-  /** Nom affiché de l'utilisateur */
   displayName?: string;
-  /** URL avatar utilisateur */
   avatarUrl?: string;
-  /** Nom de la marque (ex: "FLARE AI") */
   brandName?: string;
-  /** URL logo de la marque */
   logoUrl?: string;
-  /** Sidebar ouverte sur mobile (drawer) */
   open?: boolean;
-  /** Fermer le drawer mobile */
   onClose?: () => void;
-  /** Langue de l'interface */
   lang?: "fr" | "en";
-  /** Token utilisateur (non utilisé dans la sidebar mais accepté pour compat) */
   token?: string | null;
-  /** Email de l'utilisateur (pour vérifier accès admin) */
   userEmail?: string | null;
 }
-
-// ─── Navigation items ─────────────────────────────────────────────────────────
 
 type NavItem = {
   id: NavLevel;
@@ -83,12 +67,10 @@ const ADMIN_EMAILS = ["cptskevin@gmail.com"];
 
 const SETTINGS_ITEM: NavItem = {
   id: "settings",
-  labelFr: "Paramètres",
+  labelFr: "Parametres",
   labelEn: "Settings",
   icon: Settings,
 };
-
-// ─── NavButton ────────────────────────────────────────────────────────────────
 
 function NavButton({
   item,
@@ -111,54 +93,34 @@ function NavButton({
       id={`nav-btn-${item.id}`}
       onClick={onClick}
       title={!expanded ? label : undefined}
-      className={`
-        group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5
-        transition-all duration-150 text-left
-        ${isActive
-          ? "bg-[var(--bg-active)] text-orange-400 font-medium"
-          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]"
-        }
-      `}
+      className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150 ${
+        isActive
+          ? "bg-[var(--bg-active)] text-orange-500 font-medium"
+          : "text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+      }`}
     >
-      {/* Active indicator */}
       {isActive && (
         <motion.div
           layoutId="sidebar-active-indicator"
-          className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-orange-400"
+          className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r-full bg-orange-500"
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
         />
       )}
 
-      <Icon
-        size={15}
-        strokeWidth={isActive ? 2 : 1.5}
-        className="shrink-0"
-      />
+      <Icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
 
-      {expanded && (
-        <span className="flex-1 truncate text-[13px] tracking-[-0.01em]">
-          {label}
-        </span>
-      )}
+      {expanded && <span className="flex-1 truncate text-[13px] tracking-[-0.01em]">{label}</span>}
 
-      {/* Expanded state: show chevron for main items on hover */}
       {expanded && !isActive && (
-        <ChevronRight
-          size={12}
-          className="shrink-0 opacity-0 group-hover:opacity-70 transition-opacity"
-        />
+        <ChevronRight size={12} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-70" />
       )}
     </button>
   );
 }
 
-// ─── SectionDivider ───────────────────────────────────────────────────────────
-
 function SectionDivider() {
   return <div className="mx-3 my-2 h-px bg-[var(--divider)]" />;
 }
-
-// ─── Avatar initials ──────────────────────────────────────────────────────────
 
 function UserAvatar({
   avatarUrl,
@@ -179,7 +141,7 @@ function UserAvatar({
         alt={displayName || "Avatar"}
         width={size}
         height={size}
-        className="rounded-full object-cover shrink-0"
+        className="shrink-0 rounded-full object-cover"
         style={{ width: size, height: size }}
       />
     );
@@ -187,16 +149,13 @@ function UserAvatar({
 
   return (
     <div
-      className="flex shrink-0 items-center justify-center rounded-full
-                 bg-orange-500/20 text-orange-400 font-semibold"
+      className="flex shrink-0 items-center justify-center rounded-full bg-orange-500/18 font-semibold text-orange-500"
       style={{ width: size, height: size, fontSize: size * 0.44 }}
     >
       {initial}
     </div>
   );
 }
-
-// ─── Main NewSidebar ──────────────────────────────────────────────────────────
 
 export default function NewSidebar({
   activeView,
@@ -212,34 +171,61 @@ export default function NewSidebar({
   userEmail,
 }: NewSidebarProps) {
   const [expanded, setExpanded] = useState(true);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const sidebarWidth = expanded ? "w-[240px]" : "w-[64px]";
 
   const isAdmin = Boolean(userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()));
-
-  // Detect which top-level section is "active" based on current nav level
   const activeMainItem = (["chatbot", "facebook", "google", "chatbot-personnalisation", "chatbot-parametres", "chatbot-dashboard", "chatbot-clients", "chatbot-client-detail", "chatbot-orders", "chatbot-activation"] as NavLevel[]).includes(activeView)
     ? "chatbot"
     : (["automations", "prospection", "content", "followup", "agents", "automationHub"] as string[]).includes(activeView as string)
-    ? "automations"
-    : activeView === "assistant"
-    ? "assistant"
-    : activeView === ("admin" as NavLevel)
-    ? "admin"
-    : null;
+      ? "automations"
+      : activeView === "assistant"
+        ? "assistant"
+        : activeView === ("admin" as NavLevel)
+          ? "admin"
+          : null;
 
   const navigate = (level: NavLevel) => {
+    setProfileMenuOpen(false);
     onNavigate(level);
     onClose?.();
   };
 
-  const collapseLabel = lang === "en" ? "Collapse" : "Réduire";
+  const collapseLabel = lang === "en" ? "Collapse" : "Reduire";
   const expandLabel = lang === "en" ? "Expand" : "Agrandir";
   const closeLabel = lang === "en" ? "Close menu" : "Fermer le menu";
-  const logoutLabel = lang === "en" ? "Log out" : "Se déconnecter";
+  const logoutLabel = lang === "en" ? "Log out" : "Se deconnecter";
+  const profileActionsLabel = lang === "en" ? "Profile actions" : "Actions du profil";
+  const settingsLabel = lang === "en" ? "Settings" : "Reglages";
+
+  useEffect(() => {
+    if (!profileMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!profileMenuRef.current?.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [profileMenuOpen]);
 
   return (
     <>
-      {/* Mobile overlay */}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -255,53 +241,42 @@ export default function NewSidebar({
         )}
       </AnimatePresence>
 
-      {/* Sidebar */}
       <aside
-        className={`
-          fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col
-          border-r border-[var(--border-default)] bg-[var(--surface-base)]
-          transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
-          md:relative md:translate-x-0
-          ${open ? "translate-x-0" : "-translate-x-full"}
-        `}
+        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col border-r border-[var(--border-default)] bg-[var(--surface-base)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between px-3 pt-4 pb-3">
-          <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center justify-between px-3 pb-3 pt-4">
+          <div className="flex min-w-0 items-center gap-2.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
               <FlareMark tone="auto" className="w-[16px]" />
             </div>
             {expanded && (
-              <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-[0.15em] truncate">
+              <span className="truncate text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--text-muted)]">
                 {brandName || "FLARE AI"}
               </span>
             )}
           </div>
 
-          {/* Desktop collapse toggle */}
           <button
-            onClick={() => setExpanded((p) => !p)}
-            className="hidden md:flex h-7 w-7 items-center justify-center rounded-lg
-                       text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] transition-all"
+            onClick={() => setExpanded((current) => !current)}
+            className="hidden h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] md:flex"
             title={expanded ? collapseLabel : expandLabel}
             aria-label={expanded ? collapseLabel : expandLabel}
           >
             {expanded ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
           </button>
 
-          {/* Mobile close */}
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg
-                       text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
+            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
             aria-label={closeLabel}
           >
             <X size={14} />
           </button>
         </div>
 
-        {/* ── Main nav ── */}
-        <div className="flex flex-1 flex-col min-h-0 overflow-y-auto px-2 pt-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pt-1">
           <nav className="space-y-0.5" aria-label="Navigation principale">
             {MAIN_ITEMS.map((item) => (
               <NavButton
@@ -330,7 +305,6 @@ export default function NewSidebar({
             ))}
           </nav>
 
-          {/* Admin (visible uniquement pour les admins) */}
           {isAdmin && (
             <>
               <SectionDivider />
@@ -346,13 +320,8 @@ export default function NewSidebar({
             </>
           )}
 
-          {/* Spacer */}
-          <div className="flex-1" />
-
           <SectionDivider />
-
-          {/* Settings */}
-          <nav className="space-y-0.5 pb-1" aria-label="Paramètres">
+          <nav className="space-y-0.5 pb-1" aria-label="Parametres">
             <NavButton
               item={SETTINGS_ITEM}
               isActive={activeView === "settings"}
@@ -361,13 +330,20 @@ export default function NewSidebar({
               onClick={() => navigate("settings")}
             />
           </nav>
+
+          <div className="flex-1" />
         </div>
 
-        {/* ── User footer ── */}
-        <div className="px-2 pb-3">
+        <div ref={profileMenuRef} className="relative px-2 pb-3">
           <SectionDivider />
-          <div
-            className={`flex items-center gap-2.5 rounded-xl px-2.5 py-2.5 ${
+
+          <button
+            type="button"
+            onClick={() => setProfileMenuOpen((current) => !current)}
+            title={profileActionsLabel}
+            aria-label={profileActionsLabel}
+            aria-expanded={profileMenuOpen}
+            className={`flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition-all hover:border-[var(--border-default)] hover:bg-[var(--surface-subtle)] ${
               expanded ? "" : "justify-center"
             }`}
           >
@@ -375,30 +351,59 @@ export default function NewSidebar({
 
             {expanded && (
               <>
-                <div className="flex-1 min-w-0">
-                  <p className="truncate text-[12px] font-medium text-[var(--text-primary)] leading-tight">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12px] font-medium leading-tight text-[var(--text-primary)]">
                     {displayName || user?.email?.split("@")[0] || (lang === "en" ? "User" : "Utilisateur")}
                   </p>
                   {user?.email && (
-                    <p className="truncate text-[10px] text-[var(--text-secondary)] leading-tight mt-0.5">
+                    <p className="mt-0.5 truncate text-[10px] leading-tight text-[var(--text-secondary)]">
                       {user.email}
                     </p>
                   )}
                 </div>
 
-                <button
-                  onClick={onLogout}
-                  title={logoutLabel}
-                  aria-label={logoutLabel}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg
-                             text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10
-                             transition-all duration-150"
-                >
-                  <LogOut size={13} />
-                </button>
+                <ChevronUp
+                  size={14}
+                  className={`shrink-0 text-[var(--text-muted)] transition-transform ${profileMenuOpen ? "rotate-0" : "rotate-180"}`}
+                />
               </>
             )}
-          </div>
+          </button>
+
+          <AnimatePresence>
+            {profileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                transition={{ duration: 0.16 }}
+                className={`absolute bottom-[72px] z-[140] min-w-[220px] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-2 shadow-[var(--shadow-card)] ${
+                  expanded ? "left-2 right-2" : "left-[72px]"
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => navigate("settings")}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                >
+                  <Settings size={15} className="shrink-0" />
+                  <span>{settingsLabel}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    onLogout?.();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                >
+                  <LogOut size={15} className="shrink-0" />
+                  <span>{logoutLabel}</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </aside>
     </>

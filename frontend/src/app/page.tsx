@@ -1373,9 +1373,9 @@ export default function Home() {
           {/* Droite : Actions SystÃƒÂ¨me & Account */}
           <div className="flex items-center justify-end gap-1.5 md:gap-6">
              {/* Indicateur Online/Offline */}
-             <div className="hidden lg:flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${backendOnline === null ? 'bg-[rgb(210,110,31)] animate-pulse' : backendOnline ? 'bg-[rgb(31,57,122)] shadow-[0_0_8px_rgba(31,57,122,0.28)]' : 'bg-red-500'}`} />
-                <span className="text-[9px] font-bold text-[var(--text-muted)] tracking-[0.1em] uppercase">
+             <div className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5">
+                <div className={`h-2 w-2 rounded-full ${backendOnline === null ? 'bg-orange-500 animate-pulse' : backendOnline ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.35)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.28)]'}`} />
+                <span className={`text-[9px] font-bold tracking-[0.1em] uppercase ${backendOnline === null ? 'text-orange-500' : backendOnline ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                    {backendOnline === null ? '...' : backendOnline ? 'Online' : 'Offline'}
                 </span>
              </div>
