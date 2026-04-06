@@ -40,7 +40,6 @@ interface SettingsPageProps {
   displayName: string;
   avatarUrl?: string;
   theme?: "dark" | "light";
-  onThemeToggle?: () => void;
   onLogout?: () => void;
   onIdentitySaved?: (next: WorkspaceIdentity) => void;
   lang?: Lang;
@@ -52,7 +51,7 @@ interface SettingsPageProps {
 const T = {
   fr: {
     title: "Paramètres",
-    subtitle: "Gérez votre compte, apparence et préférences",
+    subtitle: "Gérez votre compte, votre espace et vos préférences",
     profile: "Mon Profil",
     displayName: "Nom affiché",
     displayNameHint: "Visible dans toute l'application",
@@ -95,7 +94,7 @@ const T = {
   },
   en: {
     title: "Settings",
-    subtitle: "Manage your account, appearance and preferences",
+    subtitle: "Manage your account, workspace and preferences",
     profile: "My Profile",
     displayName: "Display name",
     displayNameHint: "Visible across the whole application",
@@ -156,14 +155,14 @@ function SectionCard({
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay, ease: [0.16, 1, 0.3, 1], duration: 0.35 }}
-      className="rounded-2xl backdrop-blur-md bg-fg/[0.03] border border-fg/[0.07]
+      className="rounded-2xl bg-[var(--surface-base)] border border-[var(--border-default)]
                  shadow-[var(--shadow-card)] overflow-hidden"
     >
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-fg/[0.05]">
+      <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border-default)]">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10">
           <Icon size={15} className="text-orange-400" />
         </div>
-        <h2 className="text-sm font-semibold text-fg/60 uppercase tracking-[0.1em]">{title}</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.1em] text-[var(--text-secondary)]">{title}</h2>
       </div>
       <div className="px-6 py-5 space-y-5">{children}</div>
     </motion.section>
@@ -182,8 +181,8 @@ function FieldRow({
   return (
     <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
       <div className="sm:w-40 shrink-0 pt-0.5">
-        <span className="text-sm font-medium text-fg/50">{label}</span>
-        {hint && <p className="text-xs text-fg/25 mt-0.5 leading-tight">{hint}</p>}
+        <span className="text-sm font-medium text-[var(--text-primary)]">{label}</span>
+        {hint && <p className="mt-0.5 text-xs leading-tight text-[var(--text-secondary)]">{hint}</p>}
       </div>
       <div className="flex-1 min-w-0">{children}</div>
     </div>
@@ -211,9 +210,9 @@ function TextInput({
       disabled={disabled}
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-fg/[0.08] bg-fg/[0.04]
-                 px-4 py-2.5 text-sm text-fg/80 placeholder:text-fg/20
-                 focus:outline-none focus:border-orange-500/40 focus:bg-fg/[0.06]
+      className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)]
+                 px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
+                 focus:outline-none focus:border-orange-500/40 focus:bg-[var(--surface-raised)]
                  disabled:opacity-40 disabled:cursor-not-allowed
                  transition-all duration-150"
     />
@@ -278,7 +277,7 @@ function Toggle({
       className={`relative h-6 w-11 rounded-full border transition-all duration-200
         ${enabled
           ? "bg-orange-500/30 border-orange-500/40"
-          : "bg-fg/[0.06] border-fg/[0.12]"}`}
+          : "bg-[var(--surface-subtle)] border-[var(--border-default)]"}`}
     >
       <span
         className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--icon-active)] shadow transition-transform duration-200
@@ -346,8 +345,8 @@ function AvatarUploader({
         />
       </div>
       <div>
-        <p className="text-sm font-semibold text-fg/80">{displayName || "—"}</p>
-        <p className="text-xs text-fg/35 mt-1">{hint}</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)]">{displayName || "—"}</p>
+        <p className="mt-1 text-xs text-[var(--text-secondary)]">{hint}</p>
         <p className="text-xs text-orange-400/80 mt-1">{changeLabel}</p>
       </div>
     </div>
@@ -363,8 +362,7 @@ export default function SettingsPage({
   workspaceIdentity,
   displayName: initialDisplayName,
   avatarUrl: initialAvatarUrl,
-  theme = "dark",
-  onThemeToggle,
+  theme = "light",
   onLogout,
   onIdentitySaved,
   lang: langProp,
@@ -574,8 +572,8 @@ export default function SettingsPage({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-3xl font-bold tracking-tight text-fg/90">{tx.title}</h1>
-          <p className="text-base text-fg/40 mt-1">{tx.subtitle}</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">{tx.title}</h1>
+          <p className="mt-1 text-base text-[var(--text-secondary)]">{tx.subtitle}</p>
         </motion.header>
 
         {/* ── Profil ── */}
@@ -588,7 +586,7 @@ export default function SettingsPage({
             onFileSelected={handleAvatarFileSelected}
           />
 
-          <div className="h-px bg-fg/[0.05]" />
+          <div className="h-px bg-[var(--divider)]" />
 
           <FieldRow label={tx.displayName} hint={tx.displayNameHint}>
             <TextInput
@@ -640,8 +638,8 @@ export default function SettingsPage({
                 className={`flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-medium
                             border transition-all duration-200 w-fit
                             ${pwdResetSent
-                              ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                              : "bg-fg/[0.04] border-fg/[0.08] text-fg/50 hover:text-orange-400 hover:border-orange-500/30 hover:bg-orange-500/[0.06]"
+                              ? "bg-navy-500/10 border-navy-500/30 text-navy-400"
+                              : "bg-[var(--surface-subtle)] border-[var(--border-default)] text-[var(--text-primary)] hover:text-orange-500 hover:border-orange-500/30 hover:bg-orange-500/10"
                             }
                             disabled:opacity-50 disabled:cursor-not-allowed`}
               >
@@ -687,9 +685,9 @@ export default function SettingsPage({
                     onChange={(e) => setOrgDesc(e.target.value)}
                     rows={3}
                     placeholder="Une description courte de votre organisation…"
-                    className="w-full rounded-xl border border-fg/[0.08] bg-fg/[0.04]
-                               px-4 py-2.5 text-sm text-fg/80 placeholder:text-fg/20
-                               focus:outline-none focus:border-orange-500/40 focus:bg-fg/[0.06]
+                    className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)]
+                               px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
+                               focus:outline-none focus:border-orange-500/40 focus:bg-[var(--surface-raised)]
                                resize-none transition-all duration-150"
                   />
                 </FieldRow>
@@ -698,14 +696,14 @@ export default function SettingsPage({
                   <div className="flex items-center gap-4">
                     <div
                       className="relative group cursor-pointer h-16 w-16 rounded-xl overflow-hidden
-                                 border border-fg/[0.08] bg-fg/[0.04] flex items-center justify-center"
+                                 border border-[var(--border-default)] bg-[var(--surface-subtle)] flex items-center justify-center"
                       onClick={() => orgLogoInputRef.current?.click()}
                     >
                       {orgLogoPreview ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={orgLogoPreview} alt="Logo org" className="h-full w-full object-cover" />
                       ) : (
-                        <Building2 size={22} className="text-fg/20" />
+                        <Building2 size={22} className="text-[var(--text-muted)]" />
                       )}
                       <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <Camera size={16} className="text-white" />
@@ -721,7 +719,7 @@ export default function SettingsPage({
                         if (f) { handleOrgLogoFileSelected(f); e.target.value = ""; }
                       }}
                     />
-                    <p className="text-xs text-fg/30">{tx.orgLogoHint}</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{tx.orgLogoHint}</p>
                   </div>
                 </FieldRow>
 
@@ -750,84 +748,43 @@ export default function SettingsPage({
                   />
                 </FieldRow>
                 <FieldRow label={tx.roleLabel}>
-                  <p className="text-sm text-fg/40 py-2.5">
+                  <p className="text-sm text-[var(--text-secondary)] py-2.5">
                     {workspaceIdentity.organization_role_label || "Membre"}
                   </p>
                 </FieldRow>
-                <p className="text-xs text-fg/25 mt-1">{tx.orgReadonly}</p>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">{tx.orgReadonly}</p>
               </>
             )}
           </SectionCard>
         )}
 
         {/* ── Apparence (Dark/Light) ── */}
+        {/* Appearance (info only) */}
         <SectionCard icon={Palette} title={tx.appearance} delay={0.2}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10">
               {theme === "dark" ? (
                 <Moon size={18} className="text-orange-400" />
               ) : (
                 <Sun size={18} className="text-orange-400" />
               )}
-              <div>
-                <p className="text-sm font-medium text-fg/75">
-                  {theme === "dark" ? tx.dark : tx.light}
-                </p>
-                <p className="text-xs text-fg/35 mt-0.5">
-                  {theme === "dark" ? tx.darkDesc : tx.lightDesc}
-                </p>
-              </div>
             </div>
-            <Toggle
-              enabled={theme === "dark"}
-              onToggle={onThemeToggle ?? (() => {})}
-              label="Basculer le mode d'affichage"
-            />
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              id="settings-theme-dark"
-              onClick={() => theme === "light" && onThemeToggle?.()}
-              className={`flex-1 flex flex-col items-center gap-2 rounded-xl border p-3 transition-all
-                ${theme === "dark"
-                  ? "border-orange-500/40 bg-orange-500/10"
-                  : "border-fg/[0.06] bg-fg/[0.02] hover:border-fg/[0.10]"}`}
-            >
-              <Moon size={16} className={theme === "dark" ? "text-orange-400" : "text-fg/30"} />
-              <span className={`text-xs font-medium ${theme === "dark" ? "text-orange-400" : "text-fg/30"}`}>
-                {tx.dark}
-              </span>
-              {theme === "dark" && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500/30">
-                  <Check size={10} className="text-orange-400" />
-                </span>
-              )}
-            </button>
-            <button
-              id="settings-theme-light"
-              onClick={() => theme === "dark" && onThemeToggle?.()}
-              className={`flex-1 flex flex-col items-center gap-2 rounded-xl border p-3 transition-all
-                ${theme === "light"
-                  ? "border-orange-500/40 bg-orange-500/10"
-                  : "border-fg/[0.06] bg-fg/[0.02] hover:border-fg/[0.10]"}`}
-            >
-              <Sun size={16} className={theme === "light" ? "text-orange-400" : "text-fg/30"} />
-              <span className={`text-xs font-medium ${theme === "light" ? "text-orange-400" : "text-fg/30"}`}>
-                {tx.light}
-              </span>
-              {theme === "light" && (
-                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500/30">
-                  <Check size={10} className="text-orange-400" />
-                </span>
-              )}
-            </button>
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                {theme === "dark" ? tx.dark : tx.light}
+              </p>
+              <p className="mt-1 text-xs text-[var(--text-secondary)]">
+                {theme === "dark" ? tx.darkDesc : tx.lightDesc}
+              </p>
+              <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">
+                Le changement de th�me se fait maintenant depuis le header principal, en haut � droite, pour rester accessible sur tout le produit.
+              </p>
+            </div>
           </div>
         </SectionCard>
-
         {/* ── Langue ── */}
         <SectionCard icon={Globe} title={tx.language} delay={0.25}>
-          <p className="text-xs text-fg/30 -mt-1 mb-1">{tx.langHint}</p>
+          <p className="text-xs text-[var(--text-secondary)] -mt-1 mb-1">{tx.langHint}</p>
           <div className="flex gap-3">
             <button
               id="settings-lang-fr"
@@ -835,10 +792,10 @@ export default function SettingsPage({
               className={`flex-1 flex items-center gap-3 rounded-xl border px-4 py-3 transition-all
                 ${lang === "fr"
                   ? "border-orange-500/40 bg-orange-500/10"
-                  : "border-fg/[0.06] bg-fg/[0.02] hover:border-fg/[0.10]"}`}
+                  : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-strong)]"}`}
             >
               <span className="text-xl">🇫🇷</span>
-              <span className={`text-sm font-medium ${lang === "fr" ? "text-orange-400" : "text-fg/40"}`}>
+              <span className={`text-sm font-medium ${lang === "fr" ? "text-orange-400" : "text-[var(--text-secondary)]"}`}>
                 {tx.langFr}
               </span>
               {lang === "fr" && <Check size={14} className="ml-auto text-orange-400" />}
@@ -849,10 +806,10 @@ export default function SettingsPage({
               className={`flex-1 flex items-center gap-3 rounded-xl border px-4 py-3 transition-all
                 ${lang === "en"
                   ? "border-orange-500/40 bg-orange-500/10"
-                  : "border-fg/[0.06] bg-fg/[0.02] hover:border-fg/[0.10]"}`}
+                  : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-strong)]"}`}
             >
               <span className="text-xl">🇬🇧</span>
-              <span className={`text-sm font-medium ${lang === "en" ? "text-orange-400" : "text-fg/40"}`}>
+              <span className={`text-sm font-medium ${lang === "en" ? "text-orange-400" : "text-[var(--text-secondary)]"}`}>
                 {tx.langEn}
               </span>
               {lang === "en" && <Check size={14} className="ml-auto text-orange-400" />}
@@ -884,3 +841,5 @@ export default function SettingsPage({
     </div>
   );
 }
+
+

@@ -12,7 +12,7 @@ import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 import { SkeletonPanel } from "@/components/SkeletonLoader";
 import FlareMark from "@/components/FlareMark";
 
-// Code splitting : panels secondaires chargés à la demande
+// Code splitting : panels secondaires chargÃƒÂ©s ÃƒÂ  la demande
 const MemoryPanel = dynamic(() => import("@/components/MemoryPanel"), { ssr: false, loading: () => <SkeletonPanel /> });
 const DashboardPanel = dynamic(() => import("@/components/DashboardPanel"), { ssr: false, loading: () => <SkeletonPanel /> });
 const ChatbotSetupWizard = dynamic(() => import("@/components/ChatbotSetupWizard"), { ssr: false, loading: () => <SkeletonPanel /> });
@@ -27,7 +27,7 @@ const FilesPanel = dynamic(() => import("@/components/FilesPanel"), { ssr: false
 import AdminPanel from "@/components/AdminPanel";
 import OrganizationAccessPanel from "@/components/OrganizationAccessPanel";
 import ArtifactViewer, { Artifact } from "@/components/ArtifactViewer";
-// Lazy-load modals — jamais nécessaires au premier rendu
+// Lazy-load modals Ã¢â‚¬â€ jamais nÃƒÂ©cessaires au premier rendu
 const SettingsModal = dynamic(() => import("@/components/SettingsModal"), { ssr: false });
 const SpaceModal = dynamic(() => import("@/components/SpaceModal"), { ssr: false });
 const SpaceManagerModal = dynamic(() => import("@/components/SpaceManagerModal"), { ssr: false });
@@ -57,6 +57,8 @@ import ChatbotClientsPage from "@/components/pages/ChatbotClientsPage";
 import ChatbotClientDetailPage from "@/components/pages/ChatbotClientDetailPage";
 import ChatbotActivationPage from "@/components/pages/ChatbotActivationPage";
 import ChatbotOrdersPage from "@/components/pages/ChatbotOrdersPage";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import { useThemePreference } from "@/hooks/useThemePreference";
 
 import {
   ChatMode,
@@ -339,20 +341,7 @@ export default function Home() {
   const [setupStatus, setSetupStatus] = useState<ChatbotSetupStatus | null>(null);
   const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string | null>(null);
   const [facebookPages, setFacebookPages] = useState<FacebookMessengerPage[]>([]);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-
-  // Apply theme to document root
-  useEffect(() => {
-    const savedTheme = localStorage.getItem('flare-theme') as 'dark' | 'light' | null;
-    if (savedTheme) setTheme(savedTheme);
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('light', theme === 'light');
-    localStorage.setItem('flare-theme', theme);
-  }, [theme]);
-
-  const handleThemeToggle = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const { theme, toggleTheme: handleThemeToggle } = useThemePreference();
 
   const [lang, setLang] = useState<'fr' | 'en'>('fr');
 
@@ -384,7 +373,7 @@ export default function Home() {
     };
   }, []);
 
-  // ── Force Cache Clear (v2.7.0) ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Force Cache Clear (v2.7.0) Ã¢â€â‚¬Ã¢â€â‚¬
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const currentVersion = "3.7.0";
@@ -396,7 +385,7 @@ export default function Home() {
               registration.unregister();
             }
             localStorage.setItem("flare-app-version", currentVersion);
-            // On attend un peu que les SW soient désenregistrés avant de reload
+            // On attend un peu que les SW soient dÃƒÂ©senregistrÃƒÂ©s avant de reload
           });
         } else {
           localStorage.setItem("flare-app-version", currentVersion);
@@ -408,7 +397,7 @@ export default function Home() {
       return () => window.removeEventListener('open-sidebar-tour', handleOpenSidebar);
     }
   }, []);
-  // Texte + pièce jointe à restaurer dans l'input après annulation d'un message
+  // Texte + piÃƒÂ¨ce jointe ÃƒÂ  restaurer dans l'input aprÃƒÂ¨s annulation d'un message
   const [pendingRestore, setPendingRestore] = useState("");
   const [pendingRestoreAttachment, setPendingRestoreAttachment] = useState<FileAttachment | null>(null);
   const lastSentAttachmentRef = useRef<FileAttachment | null>(null);
@@ -418,14 +407,21 @@ export default function Home() {
 
   // Compteur pour forcer le refresh du KnowledgePanel quand l'agent sauvegarde
   const [knowledgeRefreshToken, setKnowledgeRefreshToken] = useState(0);
-  // Toast notification quand la base de connaissances est mise à jour par l'agent
+  // Toast notification quand la base de connaissances est mise ÃƒÂ  jour par l'agent
   const [knowledgeToast, setKnowledgeToast] = useState<string[] | null>(null);
+  const [appNotice, setAppNotice] = useState<{ tone: "error" | "info"; message: string } | null>(null);
 
   const handleKnowledgeSaved = useCallback((titles: string[]) => {
     setKnowledgeRefreshToken((t) => t + 1);
     setKnowledgeToast(titles);
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     toastTimerRef.current = setTimeout(() => setKnowledgeToast(null), 4000);
+  }, []);
+
+  const pushAppNotice = useCallback((message: string, tone: "error" | "info" = "error") => {
+    setAppNotice({ tone, message });
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setAppNotice(null), 4500);
   }, []);
 
   const { conversations, loading, refresh, rename, remove } =
@@ -501,7 +497,7 @@ export default function Home() {
     return versions.reverse();
   }, [messages, activeArtifact]);
 
-  // Wrapper d'envoi : capture la pièce jointe pour restauration éventuelle + sauvegarde dans le tracker
+  // Wrapper d'envoi : capture la piÃƒÂ¨ce jointe pour restauration ÃƒÂ©ventuelle + sauvegarde dans le tracker
   const handleSend = useCallback((text: string, attachment?: FileAttachment, deepResearch?: boolean, quality?: string, mode?: ChatMode) => {
     lastSentAttachmentRef.current = attachment ?? null;
     if (attachment) {
@@ -702,7 +698,7 @@ export default function Home() {
     return () => clearInterval(healthInterval);
   }, [refresh]);
 
-  // Synchronisation avec le backend (création plan/clé GCP automatique pour les nouveaux)
+  // Synchronisation avec le backend (crÃƒÂ©ation plan/clÃƒÂ© GCP automatique pour les nouveaux)
   useEffect(() => {
     // Clear workspace/chatbot state immediately when the authenticated identity changes
     // so a new account never sees the previous account's organizations during reload.
@@ -771,7 +767,7 @@ export default function Home() {
     }
     setAuthMode("signup");
     setShowAuth(true);
-    logout().catch((err) => console.error("Erreur lors de la déconnexion utilisateur non vérifié:", err));
+    logout().catch((err) => console.error("Erreur lors de la dÃƒÂ©connexion utilisateur non vÃƒÂ©rifiÃƒÂ©:", err));
   }, [user, logout]);
 
   // Cleanup toast timer
@@ -798,7 +794,7 @@ export default function Home() {
     if (token && initialPrompt && activeView === "assistant") {
       // Small delay to ensure ChatWindow is ready
       setTimeout(() => {
-        // Envoi automatique ou pré-remplissage via un event ou state
+        // Envoi automatique ou prÃƒÂ©-remplissage via un event ou state
         window.dispatchEvent(new CustomEvent('initial-prompt', { detail: initialPrompt }));
         setInitialPrompt(null);
       }, 500);
@@ -846,7 +842,7 @@ export default function Home() {
     if (!organizationAccess) {
       const next = await loadOrganizationState().catch(() => null);
       if (!next) {
-        alert("Impossible de charger les espaces. Rechargez la page puis reessayez.");
+        pushAppNotice("Impossible de charger les espaces. Rechargez la page puis reessayez.");
         return;
       }
     }
@@ -878,7 +874,7 @@ export default function Home() {
     async (organizationSlug: string) => {
       const accessToken = await resolveAccessToken(true);
       if (!accessToken) {
-        alert("Session invalide. Reconnectez-vous puis reessayez.");
+        pushAppNotice("Session invalide. Reconnectez-vous puis reessayez.");
         return;
       }
 
@@ -907,7 +903,7 @@ export default function Home() {
         setNavStack([targetView]);
       } catch (err) {
         console.error("Erreur connexion organisation:", err);
-        alert(err instanceof Error ? err.message : "Impossible d'ouvrir cet espace pour le moment.");
+        pushAppNotice(err instanceof Error ? err.message : "Impossible d'ouvrir cet espace pour le moment.");
       } finally {
         setOrganizationLoading(false);
       }
@@ -918,7 +914,7 @@ export default function Home() {
   const handleCreateOrganizationScope = useCallback(async (name: string) => {
     const accessToken = await resolveAccessToken(true);
     if (!accessToken) {
-      alert("Session invalide. Reconnectez-vous puis reessayez.");
+      pushAppNotice("Session invalide. Reconnectez-vous puis reessayez.");
       return false;
     }
 
@@ -941,7 +937,7 @@ export default function Home() {
         err instanceof Error
           ? err.message
           : "Creation de l'espace impossible pour le moment.";
-      alert(message);
+      pushAppNotice(message);
       return false;
     } finally {
       setOrganizationLoading(false);
@@ -958,7 +954,7 @@ export default function Home() {
       setNavStack(["home" as NavLevel]);
     } catch (err) {
       console.error("Erreur suppression organisation:", err);
-      alert(err instanceof Error ? err.message : "Suppression de l'espace impossible pour le moment.");
+      pushAppNotice(err instanceof Error ? err.message : "Suppression de l'espace impossible pour le moment.");
     } finally {
       setOrganizationLoading(false);
     }
@@ -995,7 +991,7 @@ export default function Home() {
       setNavStack(["home" as NavLevel]);
     } catch (err) {
       console.error("Erreur retour espace personnel:", err);
-      alert(err instanceof Error ? err.message : "Impossible de revenir a l'espace personnel.");
+      pushAppNotice(err instanceof Error ? err.message : "Impossible de revenir a l'espace personnel.");
     } finally {
       setOrganizationLoading(false);
     }
@@ -1080,17 +1076,17 @@ export default function Home() {
   }, [activeView, user]);
 
 
-  // ── Landing page publique, connexion, puis application ──
+  // Ã¢â€â‚¬Ã¢â€â‚¬ Landing page publique, connexion, puis application Ã¢â€â‚¬Ã¢â€â‚¬
   if (!user && !showAuth && authLoading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-[#020305] px-6">
-        <div className="flex items-center gap-4 text-white/70">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-white/10 bg-white/[0.04]">
-            <FlareMark tone="dark" className="w-6 animate-pulse" priority />
+      <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--background)] px-6">
+        <div className="flex items-center gap-4 text-[var(--text-secondary)]">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-[var(--border-default)] bg-[var(--surface-base)]">
+            <FlareMark tone="auto" className="w-6 animate-pulse" priority />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium uppercase tracking-[0.35em] text-white">RAM&apos;S FLARE</p>
-            <p className="text-xs text-white/45">Chargement</p>
+            <p className="text-sm font-medium uppercase tracking-[0.35em] text-[var(--text-primary)]">RAM&apos;S FLARE</p>
+            <p className="text-xs text-[var(--text-muted)]">Chargement</p>
           </div>
         </div>
       </div>
@@ -1236,40 +1232,63 @@ export default function Home() {
           activeView === "leads" ||
           activeView === "conversations" ||
           activeView === "expenses" ||
-          activeView === "chatbotFiles" ||
-          activeView === "automationHub" ||
+          activeView === "chatbotFiles"
+        ? "chatbot"
+        : activeView === "automationHub" ||
           activeView === "prospection" ||
           activeView === "content" ||
           activeView === "followup" ||
-          activeView === "agents"
-        ? "chatbot"
+          activeView === "agents" ||
+          activeView === "automations"
+        ? "automations"
         : (activeView as NavLevel);
 
-  // Variables supprimées — la navigation assistant est maintenant dans la sidebar uniquement
+  // Variables supprimÃƒÂ©es Ã¢â‚¬â€ la navigation assistant est maintenant dans la sidebar uniquement
 
   return (
     <>
-      <div className={`h-[100dvh] w-full flex flex-row bg-[var(--background)] overflow-hidden font-sans selection:bg-white/10 selection:text-white relative z-0 transition-all duration-500 ${(isSpaceModalOpen || isSpaceManagerOpen || isSettingsModalOpen) ? 'blur-md scale-[0.98] grayscale-[0.2]' : ''}`}>
+      <div className={`h-[100dvh] w-full flex flex-row bg-[var(--background)] overflow-hidden font-sans selection:bg-[rgba(28,60,168,0.16)] selection:text-[var(--text-primary)] relative z-0 transition-all duration-500 ${(isSpaceModalOpen || isSpaceManagerOpen || isSettingsModalOpen) ? 'blur-sm scale-[0.995]' : ''}`}>
           {/* Background futuriste sobre */}
           <div className="absolute inset-0 bg-[var(--background)] -z-20"></div>
 
-          {/* Toast — Base de connaissances mise à jour */}
+          {/* Toast Ã¢â‚¬â€ Base de connaissances mise ÃƒÂ  jour */}
+          {appNotice && (
+            <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex w-[calc(100vw-24px)] max-w-[460px] items-center gap-3 rounded-2xl border px-4 py-3 shadow-[var(--shadow-card)] animate-msg-pop md:w-auto ${
+              appNotice.tone === "error"
+                ? "border-red-500/20 bg-[var(--surface-base)] text-red-300"
+                : "border-[var(--border-default)] bg-[var(--surface-base)] text-[var(--text-primary)]"
+            }`}>
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+                appNotice.tone === "error" ? "bg-red-500/12 text-red-300" : "bg-[var(--surface-subtle)] text-[var(--text-primary)]"
+              }`}>
+                <AlertCircle size={15} />
+              </div>
+              <p className="min-w-0 flex-1 text-[13px] leading-relaxed">{appNotice.message}</p>
+              <button
+                onClick={() => setAppNotice(null)}
+                className="shrink-0 rounded-lg p-1.5 text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+              >
+                <X size={13} />
+              </button>
+            </div>
+          )}
+
           {knowledgeToast && (
-            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 md:px-5 py-3 rounded-2xl bg-[var(--bg-modal)] backdrop-blur-xl border border-[var(--border-subtle)] shadow-[var(--shadow-card)] animate-msg-pop w-[calc(100vw-24px)] max-w-[420px] md:w-auto">
-              <div className="w-8 h-8 rounded-xl bg-[var(--bg-active)] flex items-center justify-center shrink-0 border border-[var(--border-glass)]">
+            <div className="fixed top-16 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-4 md:px-5 py-3 rounded-2xl bg-[var(--surface-base)] border border-[var(--border-default)] shadow-[var(--shadow-card)] animate-msg-pop w-[calc(100vw-24px)] max-w-[420px] md:w-auto">
+              <div className="w-8 h-8 rounded-xl bg-[var(--surface-subtle)] flex items-center justify-center shrink-0 border border-[var(--border-default)]">
                 <BookOpen size={15} className="text-[var(--text-muted)]" />
               </div>
               <div className="min-w-0">
                 <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Base de connaissances</p>
                 <p className="text-[13px] text-[var(--text-primary)] font-light truncate max-w-[320px]">
                   {knowledgeToast.length === 1
-                    ? `"${knowledgeToast[0]}" sauvegardé`
-                    : `${knowledgeToast.length} documents sauvegardés`}
+                    ? `"${knowledgeToast[0]}" sauvegardÃƒÂ©`
+                    : `${knowledgeToast.length} documents sauvegardÃƒÂ©s`}
                 </p>
               </div>
               <button
                 onClick={() => setKnowledgeToast(null)}
-                className="ml-2 p-1.5 rounded-lg text-navy-400 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+                className="ml-2 p-1.5 rounded-lg text-navy-400 hover:text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition-colors shrink-0"
               >
                 <X size={13} />
               </button>
@@ -1278,13 +1297,13 @@ export default function Home() {
 
         {/* PWA Install Banner */}
         {showInstallBanner && deferredPrompt && (
-          <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 rounded-2xl bg-[var(--bg-modal)] backdrop-blur-xl border border-[var(--border-subtle)] shadow-[var(--shadow-card)] animate-msg-pop max-w-md w-[calc(100vw-24px)] md:w-[90vw]">
-            <div className="w-10 h-10 rounded-xl bg-[var(--bg-active)] flex items-center justify-center shrink-0 border border-[var(--border-glass)]">
+          <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 rounded-2xl bg-[var(--surface-base)] border border-[var(--border-default)] shadow-[var(--shadow-card)] animate-msg-pop max-w-md w-[calc(100vw-24px)] md:w-[90vw]">
+            <div className="w-10 h-10 rounded-xl bg-[var(--surface-subtle)] flex items-center justify-center shrink-0 border border-[var(--border-default)]">
               <Download size={18} className="text-[var(--text-muted)]" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-[13px] font-medium text-[var(--text-primary)]">Installer RAM&apos;S FLARE</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Accès rapide depuis votre écran d&apos;accueil</p>
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">AccÃƒÂ¨s rapide depuis votre ÃƒÂ©cran d&apos;accueil</p>
             </div>
             <button
               onClick={async () => {
@@ -1316,6 +1335,9 @@ export default function Home() {
           user={user}
           token={token}
           onLogout={logoutWithScopeReset}
+          displayName={resolvedUserDisplayName}
+          avatarUrl={resolvedUserAvatarUrl}
+          brandName={resolvedBrandName}
           logoUrl={resolvedBrandLogoUrl}
           lang={lang}
           userEmail={user?.email ?? null}
@@ -1324,7 +1346,7 @@ export default function Home() {
       {/* Zone principale 3D Glass */}
       <main className="relative z-10 flex min-w-0 flex-1 flex-col bg-transparent">
         {/* Header Gemini Type */}
-        <div className="z-20 flex w-full items-center justify-between gap-3 border-b border-[var(--border-glass)] bg-[var(--bg-glass-dark)] px-3 py-2 md:px-5">
+        <div className="z-20 flex w-full items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 md:px-5">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">
              <button
                id="tour-sidebar"
@@ -1352,17 +1374,17 @@ export default function Home() {
           </div>
 
 
-          {/* Droite : Actions Système & Account */}
+          {/* Droite : Actions SystÃƒÂ¨me & Account */}
           <div className="flex items-center justify-end gap-1.5 md:gap-6">
              {/* Indicateur Online/Offline */}
-             <div className="hidden lg:flex items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-3 py-1.5">
-                <div className={`w-1.5 h-1.5 rounded-full ${backendOnline === null ? 'bg-yellow-500 animate-pulse' : backendOnline ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-red-500'}`} />
+             <div className="hidden lg:flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${backendOnline === null ? 'bg-[rgb(210,110,31)] animate-pulse' : backendOnline ? 'bg-[rgb(31,57,122)] shadow-[0_0_8px_rgba(31,57,122,0.28)]' : 'bg-red-500'}`} />
                 <span className="text-[9px] font-bold text-[var(--text-muted)] tracking-[0.1em] uppercase">
                    {backendOnline === null ? '...' : backendOnline ? 'Online' : 'Offline'}
                 </span>
              </div>
 
-              <div className={`flex items-center gap-1.5 md:gap-3 ${activeView !== "home" ? "md:border-l md:border-white/[0.04] md:pl-4" : ""}`}>
+              <div className={`flex items-center gap-1.5 md:gap-3 ${activeView !== "home" ? "md:border-l md:border-[var(--border-muted)] md:pl-4" : ""}`}>
                   {activeView === "assistant" && (
                     <button
                       onClick={() => setShowFilesPanel(!showFilesPanel)}
@@ -1375,30 +1397,38 @@ export default function Home() {
 
                  {/* Org switcher */}
                  <div className="flex items-center gap-2">
+                 {user ? (
+                   <ThemeToggle
+                     theme={theme}
+                     onToggle={handleThemeToggle}
+                     className="inline-flex"
+                     compact
+                   />
+                 ) : null}
                  {user && organizationAccess ? (
                    <button
                       onClick={() => { void openOrganizationAccess(); }}
-                     className="hidden md:flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-left transition-colors hover:border-white/[0.08] hover:bg-white/[0.04]"
+                     className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-2 text-left transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)] md:gap-3 md:px-3"
                      title="Choisir l'espace"
                    >
-                     <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03]">
+                     <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
                        {resolvedBrandLogoUrl ? (
                          <img src={resolvedBrandLogoUrl} alt={resolvedBrandName} className="h-full w-full object-cover" />
                        ) : (
-                         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-white">
+                         <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]">
                            {resolvedBrandName.slice(0, 1)}
                          </span>
                        )}
                      </div>
-                     <div className="min-w-0">
+                     <div className={`min-w-0 ${activeView === "home" ? "" : "max-w-[120px] md:max-w-[160px]"}`}>
                        <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
                          {organizationAccess.current_scope.type === "organization" ? "Organisation" : "Personnel"}
                        </p>
-                       <p className="mt-1 max-w-[160px] truncate text-sm font-medium text-white">
+                       <p className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
                          {resolvedWorkspaceName}
                        </p>
                      </div>
-                     <ChevronDown size={16} className="text-[var(--text-muted)]" />
+                     <ChevronDown size={16} className="hidden text-[var(--text-muted)] md:block" />
                    </button>
                  ) : null}
                  {!user && (
@@ -1407,7 +1437,7 @@ export default function Home() {
                        Se connecter
                      </button>
                      <button onClick={() => handleStart("signup")} className="ui-btn ui-btn-primary !min-h-0 !px-3 !py-2 text-xs">
-                       Créer un compte
+                       CrÃƒÂ©er un compte
                      </button>
                    </>
                  )}
@@ -1467,7 +1497,7 @@ export default function Home() {
         ) : activeView === "chatbot-activation" ? (
            <motion.div key="chatbot-activation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotActivationPage token={token} getFreshToken={getFreshToken} onPush={onPush} currentScopeType={organizationAccess?.current_scope.type ?? "personal"} onRequestOrganizationSelection={openChatbotOrganizationAccess} /></motion.div>
         ) : activeView === "settings" ? (
-           <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onThemeToggle={handleThemeToggle} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
+           <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
         ) : activeView === "billing" ? (
            <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BillingPage token={token} getFreshToken={getFreshToken} onPush={onPush} /></motion.div>
         ) : activeView === "guide" ? (
@@ -1558,7 +1588,7 @@ export default function Home() {
             <AdminPanel token={token} />
           </motion.div>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-white/50">
+          <div className="flex-1 flex items-center justify-center text-[var(--text-secondary)]">
             Vue introuvable
           </div>
         )}
@@ -1590,6 +1620,7 @@ export default function Home() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         token={token}
+        theme={theme}
         workspaceIdentity={workspaceIdentity}
         userEmail={user?.email || ""}
         fallbackDisplayName={resolvedUserDisplayName}
@@ -1614,3 +1645,10 @@ export default function Home() {
     </>
   );
 }
+
+
+
+
+
+
+

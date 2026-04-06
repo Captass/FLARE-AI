@@ -61,8 +61,9 @@ type NavItem = {
 };
 
 const MAIN_ITEMS: NavItem[] = [
-  { id: "automations", labelFr: "Automatisations", labelEn: "Automations", icon: Zap },
+  { id: "chatbot", labelFr: "Chatbot Facebook", labelEn: "Facebook Chatbot", icon: MessageCircle },
   { id: "assistant", labelFr: "Assistant IA", labelEn: "AI Assistant", icon: Bot },
+  { id: "automations", labelFr: "Automatisations", labelEn: "Automations", icon: Zap },
 ];
 
 const SECONDARY_ITEMS: NavItem[] = [
@@ -115,7 +116,7 @@ function NavButton({
         transition-all duration-150 text-left
         ${isActive
           ? "bg-[var(--bg-active)] text-orange-400 font-medium"
-          : "text-fg/35 hover:text-fg/70 hover:bg-[var(--bg-hover)]"
+          : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]"
         }
       `}
     >
@@ -144,7 +145,7 @@ function NavButton({
       {expanded && !isActive && (
         <ChevronRight
           size={12}
-          className="shrink-0 opacity-0 group-hover:opacity-40 transition-opacity"
+          className="shrink-0 opacity-0 group-hover:opacity-70 transition-opacity"
         />
       )}
     </button>
@@ -154,7 +155,7 @@ function NavButton({
 // ─── SectionDivider ───────────────────────────────────────────────────────────
 
 function SectionDivider() {
-  return <div className="mx-3 my-2 h-px bg-fg/[0.05]" />;
+  return <div className="mx-3 my-2 h-px bg-[var(--divider)]" />;
 }
 
 // ─── Avatar initials ──────────────────────────────────────────────────────────
@@ -216,10 +217,9 @@ export default function NewSidebar({
   const isAdmin = Boolean(userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()));
 
   // Detect which top-level section is "active" based on current nav level
-  const activeMainItem = (["automations", "facebook", "google", "chatbot",
-    "chatbot-personnalisation", "chatbot-parametres", "chatbot-dashboard",
-    "chatbot-clients", "chatbot-client-detail", "chatbot-orders",
-    "chatbot-activation"] as NavLevel[]).includes(activeView)
+  const activeMainItem = (["chatbot", "facebook", "google", "chatbot-personnalisation", "chatbot-parametres", "chatbot-dashboard", "chatbot-clients", "chatbot-client-detail", "chatbot-orders", "chatbot-activation"] as NavLevel[]).includes(activeView)
+    ? "chatbot"
+    : (["automations", "prospection", "content", "followup", "agents", "automationHub"] as string[]).includes(activeView as string)
     ? "automations"
     : activeView === "assistant"
     ? "assistant"
@@ -259,7 +259,7 @@ export default function NewSidebar({
       <aside
         className={`
           fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col
-          border-r border-fg/[0.04] bg-[var(--bg-sidebar)]
+          border-r border-[var(--border-default)] bg-[var(--surface-base)]
           transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]
           md:relative md:translate-x-0
           ${open ? "translate-x-0" : "-translate-x-full"}
@@ -268,11 +268,11 @@ export default function NewSidebar({
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-3 pt-4 pb-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fg/[0.04]">
-              <FlareMark tone="dark" className="w-[16px]" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
+              <FlareMark tone="auto" className="w-[16px]" />
             </div>
             {expanded && (
-              <span className="text-[11px] font-medium text-fg/45 uppercase tracking-[0.15em] truncate">
+              <span className="text-[11px] font-medium text-[var(--text-muted)] uppercase tracking-[0.15em] truncate">
                 {brandName || "FLARE AI"}
               </span>
             )}
@@ -282,7 +282,7 @@ export default function NewSidebar({
           <button
             onClick={() => setExpanded((p) => !p)}
             className="hidden md:flex h-7 w-7 items-center justify-center rounded-lg
-                       text-fg/20 hover:text-fg/50 hover:bg-[var(--bg-hover)] transition-all"
+                       text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-subtle)] transition-all"
             title={expanded ? collapseLabel : expandLabel}
             aria-label={expanded ? collapseLabel : expandLabel}
           >
@@ -293,7 +293,7 @@ export default function NewSidebar({
           <button
             onClick={onClose}
             className="flex h-7 w-7 items-center justify-center rounded-lg
-                       text-fg/20 hover:text-fg/50 md:hidden"
+                       text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
             aria-label={closeLabel}
           >
             <X size={14} />
@@ -376,11 +376,11 @@ export default function NewSidebar({
             {expanded && (
               <>
                 <div className="flex-1 min-w-0">
-                  <p className="truncate text-[12px] font-medium text-fg/70 leading-tight">
+                  <p className="truncate text-[12px] font-medium text-[var(--text-primary)] leading-tight">
                     {displayName || user?.email?.split("@")[0] || (lang === "en" ? "User" : "Utilisateur")}
                   </p>
                   {user?.email && (
-                    <p className="truncate text-[10px] text-fg/25 leading-tight mt-0.5">
+                    <p className="truncate text-[10px] text-[var(--text-secondary)] leading-tight mt-0.5">
                       {user.email}
                     </p>
                   )}
@@ -391,7 +391,7 @@ export default function NewSidebar({
                   title={logoutLabel}
                   aria-label={logoutLabel}
                   className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg
-                             text-fg/20 hover:text-red-400 hover:bg-red-500/10
+                             text-[var(--text-muted)] hover:text-red-400 hover:bg-red-500/10
                              transition-all duration-150"
                 >
                   <LogOut size={13} />
@@ -404,3 +404,4 @@ export default function NewSidebar({
     </>
   );
 }
+

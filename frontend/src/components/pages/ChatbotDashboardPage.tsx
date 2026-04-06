@@ -144,8 +144,8 @@ export default function ChatbotDashboardPage({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-fg/90">Tableau de bord</h1>
-          <p className="text-lg text-[var(--text-muted)]">Apercu en temps reel de votre assistant</p>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">Tableau de bord</h1>
+          <p className="text-lg text-[var(--text-muted)]">Apercu en temps reel de votre chatbot et de vos conversations</p>
         </motion.header>
 
         {error ? (
@@ -155,7 +155,7 @@ export default function ChatbotDashboardPage({
         ) : null}
 
         {!loading && dashData?.access?.scope !== "operator" && dashData?.access?.message ? (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-sm text-amber-100/90">
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/8 px-4 py-3 text-sm text-orange-500">
             {dashData.access.message}
           </div>
         ) : null}
@@ -174,17 +174,17 @@ export default function ChatbotDashboardPage({
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex items-center justify-between rounded-2xl border border-orange-500/20 bg-orange-500/5 px-5 py-4"
+            className="flex items-center justify-between rounded-2xl border border-orange-500/20 bg-orange-500/8 px-5 py-4"
           >
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/20 text-orange-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500/15 text-orange-500">
                 <AlertTriangle size={20} />
               </div>
               <div>
-                <p className="font-semibold text-fg/90">
+                <p className="font-semibold text-[var(--text-primary)]">
                   {hasImportedPages ? "Pages importees, aucune active" : "Aucune page Facebook connectee"}
                 </p>
-                <p className="text-sm text-fg/50">
+                <p className="text-sm text-[var(--text-secondary)]">
                   {hasImportedPages
                     ? "Activez une page dans Parametres pour lancer le chatbot."
                     : "Allez dans Parametres pour associer une page."}
@@ -216,16 +216,16 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
+              className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--text-muted)]">Statut chatbot</p>
-                    <p className="mt-2 text-2xl font-bold text-fg/90">{isLive ? "Actif" : "Inactif"}</p>
+                    <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{isLive ? "Actif" : "Inactif"}</p>
                   </div>
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                      isLive ? "bg-emerald-500/10 text-emerald-400" : "bg-fg/[0.05] text-fg/30"
+                      isLive ? "bg-navy-500/10 text-navy-400" : "bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
                     }`}
                   >
                     <Bot size={20} />
@@ -238,14 +238,14 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
                 whileHover={{ scale: 1.02 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--text-muted)]">Messages traites</p>
-                    <p className="mt-2 text-2xl font-bold text-fg/90">{messagesHandled}</p>
+                    <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{messagesHandled}</p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy-500/10 text-navy-400">
                     <MessageSquare size={20} />
                   </div>
                 </div>
@@ -256,14 +256,14 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
                 whileHover={{ scale: 1.02 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--text-muted)]">Contacts suivis</p>
-                    <p className="mt-2 text-2xl font-bold text-fg/90">{trackedContacts}</p>
+                    <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{trackedContacts}</p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500">
                     <Users size={20} />
                   </div>
                 </div>
@@ -274,14 +274,14 @@ export default function ChatbotDashboardPage({
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
                 whileHover={{ scale: 1.02 }}
-                className="rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[var(--shadow-card)]"
               >
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-sm font-medium text-[var(--text-muted)]">A reprendre</p>
-                    <p className="mt-2 text-2xl font-bold text-fg/90">{pendingHuman}</p>
+                    <p className="mt-2 text-2xl font-bold text-[var(--text-primary)]">{pendingHuman}</p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-400">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500">
                     <AlertTriangle size={20} />
                   </div>
                 </div>
@@ -298,14 +298,14 @@ export default function ChatbotDashboardPage({
           transition={{ delay: 0.2 }}
           className="flex flex-col gap-4"
         >
-          <h2 className="text-lg font-semibold text-fg/90">Activite recente</h2>
-          <div className="overflow-hidden rounded-2xl border border-fg/[0.08] bg-fg/[0.02]">
+          <h2 className="text-lg font-semibold text-[var(--text-primary)]">Activite recente</h2>
+          <div className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)]">
             {loading ? (
-              <div className="p-8 text-center text-fg/40">Chargement des conversations...</div>
+              <div className="p-8 text-center text-[var(--text-secondary)]">Chargement des conversations...</div>
             ) : recentMessages.length === 0 ? (
-              <div className="p-8 text-center text-fg/40">Aucune conversation recente.</div>
+              <div className="p-8 text-center text-[var(--text-secondary)]">Aucune conversation recente.</div>
             ) : (
-              <div className="divide-y divide-fg/[0.04]">
+              <div className="divide-y divide-[var(--divider)]">
                 {recentMessages.map((message, index) => {
                   const contactId = message.psid || null;
                   const canOpenDetail = Boolean(contactId && onSelectContact);
@@ -315,15 +315,15 @@ export default function ChatbotDashboardPage({
                   return (
                     <div
                       key={`${message.customer}-${message.time}-${index}`}
-                      className="flex items-center justify-between p-4 transition-colors hover:bg-fg/[0.02]"
+                      className="flex items-center justify-between p-4 transition-colors hover:bg-[var(--surface-subtle)]"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/20 font-bold uppercase text-orange-500">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/12 font-bold uppercase text-orange-500">
                           {(message.customer || "C").charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-fg/90">{message.customer || "Client"}</p>
-                          <p className="max-w-[300px] truncate text-sm text-fg/50 md:max-w-[450px]">
+                          <p className="font-medium text-[var(--text-primary)]">{message.customer || "Client"}</p>
+                          <p className="max-w-[300px] truncate text-sm text-[var(--text-secondary)] md:max-w-[450px]">
                             {message.message || "Message"}
                           </p>
                         </div>
@@ -332,8 +332,8 @@ export default function ChatbotDashboardPage({
                         <span
                           className={`rounded-full border px-2 py-1 text-sm ${
                             message.mode === "agent"
-                              ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                              : "border-orange-500/20 bg-orange-500/10 text-orange-400"
+                              ? "border-navy-500/20 bg-navy-500/10 text-navy-400"
+                              : "border-orange-500/20 bg-orange-500/10 text-orange-500"
                           }`}
                         >
                           {message.mode === "agent" ? "Bot" : "Humain"}
@@ -350,7 +350,7 @@ export default function ChatbotDashboardPage({
                             onPush?.("chatbot-clients");
                           }}
                           title={canOpenDetail ? "Ouvrir la fiche client" : canOpenList ? "Ouvrir les conversations" : "Fiche client indisponible"}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-fg/[0.05] text-fg/50 transition-colors hover:bg-fg/[0.1] hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
+                          className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--surface-subtle)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <ArrowRight size={14} />
                         </button>
@@ -366,3 +366,8 @@ export default function ChatbotDashboardPage({
     </div>
   );
 }
+
+
+
+
+

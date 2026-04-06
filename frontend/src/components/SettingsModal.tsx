@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { X, Settings2, Save, RotateCcw, Info, Sparkles, Monitor, Moon, Sun, Smartphone, Check, Crown, Zap, TrendingUp, BookOpen, Loader2, Brain, FileText, Lightbulb, Layers, Bot } from "lucide-react";
@@ -18,6 +18,7 @@ interface SettingsModalProps {
   isOpen: boolean;
   onClose: () => void;
   token?: string | null;
+  theme?: "dark" | "light";
   onStartTour?: () => void;
   workspaceIdentity?: WorkspaceIdentity | null;
   userEmail?: string | null;
@@ -101,6 +102,7 @@ export default function SettingsModal({
   isOpen,
   onClose,
   token,
+  theme = "light",
   onStartTour,
   workspaceIdentity,
   userEmail,
@@ -116,7 +118,6 @@ export default function SettingsModal({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [viewMode, setViewMode] = useState<"pc" | "mobile">("pc");
   const [activeSection, setActiveSection] = useState<"identity" | "interface" | "agent" | "chatbot" | "plan" | "about">("identity");
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
@@ -125,6 +126,7 @@ export default function SettingsModal({
   const [viewingFullGuide, setViewingFullGuide] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [billingFeedback, setBillingFeedback] = useState<string | null>(null);
   const [chatbotPreferences, setChatbotPreferences] = useState<ChatbotPreferences>(DEFAULT_CHATBOT_PREFERENCES);
   const [chatbotLoading, setChatbotLoading] = useState(false);
   const [chatbotSaving, setChatbotSaving] = useState(false);
@@ -133,6 +135,7 @@ export default function SettingsModal({
 
   const handleCheckout = async (planId: string) => {
     setCheckoutLoading(true);
+    setBillingFeedback(null);
     try {
       const session = await createCheckoutSession(planId, token);
       if (session.url) {
@@ -142,13 +145,15 @@ export default function SettingsModal({
       }
     } catch (error) { 
       console.error("Erreur de checkout Stripe:", error);
-      alert("Une erreur est survenue lors de la redirection vers le paiement. Veuillez réessayer.");
+      setBillingFeedback("Une erreur est survenue lors de la redirection vers le paiement. Veuillez réessayer.");
+    } finally {
       setCheckoutLoading(false);
     }
   };
 
   const handlePortalSession = async () => {
     setPortalLoading(true);
+    setBillingFeedback(null);
     try {
       const session = await createCustomerPortalSession(token);
       if (session.url) {
@@ -158,18 +163,14 @@ export default function SettingsModal({
       }
     } catch (error) {
       console.error("Erreur portail client Stripe:", error);
-      alert("Une erreur est survenue lors de l'accès à votre portail de facturation. Veuillez réessayer.");
+      setBillingFeedback("Une erreur est survenue lors de l'accès à votre portail de facturation. Veuillez réessayer.");
+    } finally {
       setPortalLoading(false);
     }
   };
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem("flare-theme") as "dark" | "light";
     const savedView = localStorage.getItem("flare-view") as "pc" | "mobile";
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === "light") document.documentElement.classList.add("light");
-    }
     if (savedView) setViewMode(savedView);
   }, []);
 
@@ -236,17 +237,6 @@ export default function SettingsModal({
   const canEditChatbot = Boolean(workspaceIdentity?.can_edit_organization);
 
   if (!isOpen) return null;
-
-  const toggleTheme = () => {
-    const newTheme = theme === "dark" ? "light" : "dark";
-    setTheme(newTheme);
-    localStorage.setItem("flare-theme", newTheme);
-    if (newTheme === "light") {
-      document.documentElement.classList.add("light");
-    } else {
-      document.documentElement.classList.remove("light");
-    }
-  };
 
   const toggleViewMode = () => {
     const newView = viewMode === "pc" ? "mobile" : "pc";
@@ -364,23 +354,23 @@ export default function SettingsModal({
                 <h3 className="text-[10px] font-bold tracking-[0.2em] uppercase text-orange-500/50 mb-5 font-[family-name:var(--font-outfit)]">Apparence</h3>
                 
                 <div className="space-y-4">
-                  {/* Theme Toggle */}
+                  {/* Theme state */}
                   <div className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)] flex items-center justify-between group hover:border-[var(--border-subtle)] transition-all">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-[var(--bg-hover)] flex items-center justify-center">
-                        {theme === "dark" ? <Moon size={18} className="text-blue-400" /> : <Sun size={18} className="text-amber-400" />}
+                        {theme === "dark" ? <Moon size={18} className="text-orange-400" /> : <Sun size={18} className="text-orange-400" />}
                       </div>
                       <div>
-                        <p className="text-[14px] text-[var(--text-primary)] font-medium">Thème Visuel</p>
+                        <p className="text-[14px] text-[var(--text-primary)] font-medium">Thème visuel</p>
                         <p className="text-[12px] text-[var(--text-muted)] font-light mt-0.5">{theme === "dark" ? "Mode sombre activé" : "Mode clair activé"}</p>
+                        <p className="text-[12px] text-[var(--text-muted)] font-light mt-1">
+                          Le thème se change désormais depuis le header principal, à droite, pour rester disponible partout.
+                        </p>
                       </div>
                     </div>
-                    <button 
-                      onClick={toggleTheme}
-                      className={`relative w-14 h-7 rounded-full transition-all duration-300 ${theme === "light" ? "bg-orange-500 shadow-[0_0_12px_rgba(249,115,22,0.3)]" : "bg-[var(--bg-hover)] border border-[var(--border-glass)]"}`}
-                    >
-                      <div className={`absolute top-1 w-5 h-5 rounded-full bg-white shadow-md transition-all duration-300 ${theme === "light" ? "left-8" : "left-1"}`} />
-                    </button>
+                    <div className="rounded-full border border-[var(--border-glass)] bg-[var(--bg-hover)] px-3 py-1 text-[11px] font-medium text-[var(--text-primary)]">
+                      {theme === "dark" ? "Sombre" : "Clair"}
+                    </div>
                   </div>
 
                   </div>
@@ -479,11 +469,11 @@ export default function SettingsModal({
 
                       {/* Ton Input */}
                       <div>
-                        <label className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 mb-2"><Sparkles size={14} className="text-blue-500" /> Ton & Style de réponse</label>
+                        <label className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 mb-2"><Sparkles size={14} className="text-[var(--accent-navy)]" /> Ton & Style de réponse</label>
                         <textarea
                           value={guidedPrefs.tone}
                           onChange={(e) => setGuidedPrefs(p => ({...p, tone: e.target.value}))}
-                          className="w-full h-24 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl p-4 text-[var(--text-primary)] text-[13px] outline-none focus:border-blue-500/50 transition-all resize-none custom-scrollbar"
+                          className="w-full h-24 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl p-4 text-[var(--text-primary)] text-[13px] outline-none focus:border-[var(--accent-navy)]/50 transition-all resize-none custom-scrollbar"
                           placeholder="Ex. : Réponds de façon professionnelle, claire et directe, sans trop d'emojis."
                         />
                       </div>
@@ -491,22 +481,22 @@ export default function SettingsModal({
 
                     {/* Format Input */}
                     <div>
-                      <label className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 mb-2"><FileText size={14} className="text-green-500" /> Format & Structure souhaités</label>
+                      <label className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 mb-2"><FileText size={14} className="text-orange-500" /> Format & Structure souhaités</label>
                       <textarea
                         value={guidedPrefs.format}
                         onChange={(e) => setGuidedPrefs(p => ({...p, format: e.target.value}))}
-                        className="w-full h-24 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl p-4 text-[var(--text-primary)] text-[13px] outline-none focus:border-green-500/50 transition-all resize-none custom-scrollbar"
+                        className="w-full h-24 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl p-4 text-[var(--text-primary)] text-[13px] outline-none focus:border-orange-500/50 transition-all resize-none custom-scrollbar"
                         placeholder="Ex. : Quand je demande un résumé, utilise des listes simples. Si tu écris du code, ajoute des commentaires utiles."
                       />
                     </div>
                     
                     {/* Détails/Autre Input */}
                     <div>
-                      <label className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 mb-2"><Lightbulb size={14} className="text-yellow-500" /> Autres instructions spécifiques</label>
+                      <label className="text-[12px] font-bold text-[var(--text-primary)] flex items-center gap-1.5 mb-2"><Lightbulb size={14} className="text-[var(--accent-navy)]" /> Autres instructions spécifiques</label>
                       <textarea
                         value={guidedPrefs.other}
                         onChange={(e) => setGuidedPrefs(p => ({...p, other: e.target.value}))}
-                        className="w-full h-28 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl p-4 text-[var(--text-primary)] text-[13px] outline-none focus:border-yellow-500/50 transition-all resize-none custom-scrollbar"
+                        className="w-full h-28 bg-[var(--bg-input)] border border-[var(--border-subtle)] rounded-xl p-4 text-[var(--text-primary)] text-[13px] outline-none focus:border-[var(--accent-navy)]/50 transition-all resize-none custom-scrollbar"
                         placeholder="Ex. : Ne me propose jamais de solutions payantes sauf si je te le demande."
                       />
                     </div>
@@ -547,7 +537,7 @@ export default function SettingsModal({
               </div>
 
               {!isOrganizationScope ? (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
+                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-6">
                   <h4 className="text-[16px] font-semibold text-[var(--text-primary)]">
                     Ouvrez d&apos;abord une organisation
                   </h4>
@@ -593,7 +583,7 @@ export default function SettingsModal({
                   </div>
 
                   {!canEditChatbot && (
-                    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-[13px] leading-6 text-amber-100/90">
+                    <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-4 text-[13px] leading-6 text-orange-100/95">
                       Seuls le proprietaire ou un admin peuvent enregistrer ces reglages.
                     </div>
                   )}
@@ -610,13 +600,18 @@ export default function SettingsModal({
           {/* â”€â”€ Plan Section â”€â”€ */}
           {activeSection === "plan" && (
             <div className="max-w-2xl animate-fade-in-up space-y-6">
+              {billingFeedback ? (
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-[13px] leading-6 text-red-200">
+                  {billingFeedback}
+                </div>
+              ) : null}
 
               {/* Plan & Billing Section */}
               {userPlan && (
                 <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)] flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${userPlan.plan === 'business' ? 'bg-purple-500/20' : 'bg-orange-500/20'}`}>
-                      <Crown size={24} className={`${userPlan.plan === 'business' ? 'text-purple-400' : 'text-orange-400'}`} />
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${userPlan.plan === 'business' ? 'bg-[var(--accent-navy)]/15' : 'bg-orange-500/20'}`}>
+                      <Crown size={24} className={`${userPlan.plan === 'business' ? 'text-[var(--accent-navy)] dark:text-[rgb(183,203,255)]' : 'text-orange-400'}`} />
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[var(--text-primary)]">Plan {userPlan.plan_name}</p>

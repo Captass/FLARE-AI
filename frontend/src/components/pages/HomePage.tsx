@@ -1,8 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Zap, Bot, CheckCircle2, AlertTriangle, MessageSquare, Users } from "lucide-react";
+import { MessageCircle, Bot, CheckCircle2, AlertTriangle, MessageSquare, Users } from "lucide-react";
 import { getChatbotOverview, getDashboardStats, type ChatbotOverview, type DashboardStats } from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { SkeletonCard } from "@/components/SkeletonLoader";
@@ -21,14 +21,14 @@ function KpiCard({
   label,
   value,
   icon: Icon,
-  status,
+  accent = "navy",
   loading,
   delay,
 }: {
   label: string;
   value: string | number;
-  icon: typeof Zap;
-  status?: "ok" | "warn";
+  icon: typeof MessageCircle;
+  accent?: "navy" | "orange";
   loading?: boolean;
   delay: number;
 }) {
@@ -42,37 +42,33 @@ function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="flex-1 min-w-0 rounded-2xl backdrop-blur-md
-                 bg-[var(--bg-glass)] border border-[var(--border-glass)]
-                 shadow-[var(--shadow-card)] px-5 py-4"
+      className="flex-1 min-w-0 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-4 shadow-[var(--shadow-card)]"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-sm text-white/40 font-medium leading-tight">{label}</span>
-          <span className="text-2xl font-bold text-white/90 leading-tight tracking-tight">
+          <span className="text-sm text-[var(--text-secondary)] font-medium leading-tight">{label}</span>
+          <span className="text-2xl font-bold text-[var(--text-primary)] leading-tight tracking-tight">
             {value}
           </span>
         </div>
         <div
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl
-            ${status === "ok"
-              ? "bg-emerald-500/10 text-emerald-400"
-              : status === "warn"
-              ? "bg-orange-500/10 text-orange-400"
-              : "bg-white/[0.05] text-white/40"
-            }`}
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
+            accent === "orange"
+              ? "bg-orange-500/12 text-orange-500"
+              : "bg-navy-500/12 text-navy-400"
+          }`}
         >
           <Icon size={17} />
         </div>
       </div>
-      {status === "ok" && (
-        <div className="mt-3 flex items-center gap-1.5 text-sm text-emerald-400/80 font-medium">
+      {value === "Actif" && (
+        <div className="mt-3 flex items-center gap-1.5 text-sm text-navy-500 font-medium">
           <CheckCircle2 size={13} />
           <span>Actif</span>
         </div>
       )}
-      {status === "warn" && (
-        <div className="mt-3 flex items-center gap-1.5 text-sm text-orange-400/80 font-medium">
+      {value === "Inactif" && (
+        <div className="mt-3 flex items-center gap-1.5 text-sm text-orange-500 font-medium">
           <AlertTriangle size={13} />
           <span>Action requise</span>
         </div>
@@ -89,7 +85,7 @@ function QuickCard({
   onClick,
   delay,
 }: {
-  icon: typeof Zap;
+  icon: typeof MessageCircle;
   iconColor: string;
   title: string;
   description: string;
@@ -104,12 +100,7 @@ function QuickCard({
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
       onClick={onClick}
-      className="flex-1 min-w-0 flex flex-col items-start gap-4 rounded-2xl
-                 backdrop-blur-md bg-[var(--bg-glass)] border border-[var(--border-glass)]
-                 shadow-[var(--shadow-card)] px-6 py-6 text-left
-                 hover:bg-white/[0.07] hover:border-white/[0.14]
-                 hover:shadow-[0_16px_48px_rgba(0,0,0,0.32)]
-                 transition-all duration-250 cursor-pointer group"
+      className="flex-1 min-w-0 flex flex-col items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-5 text-left shadow-[var(--shadow-card)] transition-all duration-250 cursor-pointer group hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)]"
       aria-label={title}
     >
       <div
@@ -119,8 +110,8 @@ function QuickCard({
         <Icon size={22} strokeWidth={1.8} />
       </div>
       <div className="space-y-1.5">
-        <h3 className="text-xl font-semibold text-white/90 tracking-tight">{title}</h3>
-        <p className="text-sm text-white/40 leading-relaxed max-w-[22rem]">{description}</p>
+        <h3 className="text-lg font-semibold text-[var(--text-primary)] tracking-tight">{title}</h3>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-[22rem]">{description}</p>
       </div>
     </motion.button>
   );
@@ -204,7 +195,7 @@ export default function HomePage({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-1"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-white/90">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
             Bonjour, {displayName || "vous"}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">
@@ -218,17 +209,17 @@ export default function HomePage({
         {/* KPI row */}
         <section aria-label="Indicateurs cles">
           {!isOrganizationScope && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-[#ff7a1a]/20 bg-[#ff7a1a]/[0.05] px-4 py-3">
+            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3">
               <div>
-                <p className="text-sm font-medium text-white/80">Aucun espace de travail actif</p>
-                <p className="mt-1 text-xs text-white/40">
+                <p className="text-sm font-medium text-[var(--text-primary)]">Aucun espace de travail actif</p>
+                <p className="mt-1 text-xs text-[var(--text-secondary)]">
                   Creez votre espace pour connecter Facebook et lancer le chatbot.
                 </p>
               </div>
               {onCreateWorkspace && (
                 <button
                   onClick={onCreateWorkspace}
-                  className="shrink-0 rounded-lg bg-[#ff7a1a] px-3 py-2 text-xs font-medium text-white"
+                  className="shrink-0 rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-[rgb(24,11,2)]"
                 >
                   Creer mon espace
                 </button>
@@ -236,7 +227,7 @@ export default function HomePage({
             </div>
           )}
           {lastKpiUpdate && (
-            <p className="text-sm text-white/35 mb-3">
+            <p className="text-sm text-[var(--text-secondary)] mb-3">
               Indicateurs synchronises avec le serveur - actualisation automatique toutes les{" "}
               {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
             </p>
@@ -246,7 +237,7 @@ export default function HomePage({
               label="Statut chatbot"
               value={loadingKpi ? "..." : isActive ? "Actif" : overview ? "Inactif" : "--"}
               icon={Bot}
-              status={loadingKpi ? undefined : isActive ? "ok" : overview ? "warn" : undefined}
+              accent={isActive ? "navy" : "orange"}
               loading={loadingKpi}
               delay={0.05}
             />
@@ -254,6 +245,7 @@ export default function HomePage({
               label="Messages traites ce mois"
               value={loadingKpi ? "..." : String(messagesCount)}
               icon={MessageSquare}
+              accent="navy"
               loading={loadingKpi}
               delay={0.1}
             />
@@ -261,6 +253,7 @@ export default function HomePage({
               label="Contacts / leads captes"
               value={loadingKpi ? "..." : String(contactsCount)}
               icon={Users}
+              accent="orange"
               loading={loadingKpi}
               delay={0.15}
             />
@@ -273,26 +266,34 @@ export default function HomePage({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-sm font-medium text-white/25 uppercase tracking-[0.12em] mb-4"
+            className="text-sm font-medium text-[var(--text-muted)] uppercase tracking-[0.12em] mb-4"
           >
             Acces rapide
           </motion.h2>
           <div className="flex flex-col sm:flex-row gap-4">
             <QuickCard
-              icon={Zap}
-              iconColor="bg-orange-500/15 text-orange-400"
-              title="Automatisations"
-              description="Gerez votre chatbot Facebook, suivez vos clients et pilotez vos automatisations."
-              onClick={() => onPush("automations")}
+              icon={MessageCircle}
+              iconColor="bg-orange-500/15 text-orange-500"
+              title="Chatbot Facebook"
+              description="Ouvrez le module métier principal pour piloter la page, les messages et les clients."
+              onClick={() => onPush("chatbot")}
               delay={0.22}
             />
             <QuickCard
               icon={Bot}
-              iconColor="bg-blue-500/15 text-blue-400"
+              iconColor="bg-navy-500/15 text-navy-400"
               title="Assistant IA"
               description="Posez des questions, preparez du contenu et travaillez avec votre assistant intelligent."
               onClick={() => onPush("assistant")}
               delay={0.28}
+            />
+            <QuickCard
+              icon={MessageSquare}
+              iconColor="bg-[rgba(28,60,168,0.10)] text-navy-500"
+              title="Automatisations"
+              description="Consultez les autres modules et automatismes disponibles dans votre espace."
+              onClick={() => onPush("automations")}
+              delay={0.34}
             />
           </div>
         </section>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Instrument_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import GlobalBackground from "@/components/GlobalBackground";
+import { getThemeInitScript } from "@/lib/theme";
 
 const instrumentSans = Instrument_Sans({ 
   subsets: ["latin"],
@@ -75,9 +76,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className="h-full">
+    <html lang="fr" className="h-full light" data-theme="light" suppressHydrationWarning>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: getThemeInitScript(),
+          }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

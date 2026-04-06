@@ -32,6 +32,7 @@ export default function ChatbotClientsPage({
   const [toggling, setToggling] = useState<Set<string>>(new Set());
   const [canSwitchMode, setCanSwitchMode] = useState(false);
   const [accessMessage, setAccessMessage] = useState<string | null>(null);
+  const [flashMessage, setFlashMessage] = useState<string | null>(null);
 
   const resolveToken = useCallback(async () => {
     if (getFreshToken) return await getFreshToken();
@@ -92,7 +93,7 @@ export default function ChatbotClientsPage({
         )
       );
     } catch {
-      alert("Erreur lors du changement de mode.");
+      setFlashMessage("Erreur lors du changement de mode.");
     } finally {
       setToggling((prev) => {
         const next = new Set(prev);
@@ -178,9 +179,14 @@ export default function ChatbotClientsPage({
         </AnimatePresence>
 
         {error && <p className="text-red-400">{error}</p>}
+        {flashMessage ? (
+          <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+            {flashMessage}
+          </div>
+        ) : null}
 
         {!canSwitchMode && accessMessage ? (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+          <div className="rounded-xl border border-orange-500/25 bg-orange-500/10 px-4 py-3 text-sm text-orange-400">
             {accessMessage}
           </div>
         ) : null}
@@ -244,7 +250,7 @@ export default function ChatbotClientsPage({
                     <div className="mt-2 flex w-full items-center justify-between gap-6 sm:mt-0 sm:w-auto sm:justify-end">
                       <div className="flex items-center gap-3">
                         <span className={`hidden text-xs font-semibold uppercase tracking-widest sm:inline-block ${
-                          botEnabled ? "text-emerald-400/70" : "text-red-400/70"
+                          botEnabled ? "text-navy-400" : "text-red-400/70"
                         }`}>
                           {botEnabled ? "Bot ON" : "Bot OFF"}
                         </span>
@@ -253,7 +259,7 @@ export default function ChatbotClientsPage({
                           disabled={isHandling || !canSwitchMode}
                           className={`relative flex h-7 w-12 items-center rounded-full border transition-colors ${
                             botEnabled
-                              ? "border-emerald-500/30 bg-emerald-500/20"
+                              ? "border-navy-500/30 bg-navy-500/20"
                               : "border-red-500/20 bg-red-500/10"
                           }`}
                           title={
@@ -266,7 +272,7 @@ export default function ChatbotClientsPage({
                             layout
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={`h-5 w-5 rounded-full shadow-sm ${
-                              botEnabled ? "ml-[26px] bg-emerald-400" : "ml-1 bg-red-400"
+                               botEnabled ? "ml-[26px] bg-navy-400" : "ml-1 bg-red-400"
                             }`}
                           />
                           {isHandling ? (
