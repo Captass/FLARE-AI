@@ -1,12 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
-import Sidebar from "@/components/Sidebar";
-import ChatWindow from "@/components/ChatWindow";
-import MessageInput from "@/components/MessageInput";
 import LoginScreen from "@/components/LoginScreen";
 import dynamic from "next/dynamic";
-import PageSelector from "@/components/PageSelector";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 
 import { SkeletonPanel } from "@/components/SkeletonLoader";
@@ -34,7 +30,7 @@ const SpaceManagerModal = dynamic(() => import("@/components/SpaceManagerModal")
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useFolders } from "@/hooks/useFolders";
-import { BookOpen, Sparkles, X, FolderOpen, ChevronDown, Settings, LogOut, Menu, ArrowLeft, ChevronUp, Download, Crown, AlertCircle, RotateCcw, Zap, Brain } from "lucide-react";
+import { BookOpen, X, FolderOpen, ChevronDown, Menu, Download, AlertCircle } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 

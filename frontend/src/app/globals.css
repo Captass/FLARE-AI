@@ -15,7 +15,7 @@
   --dot-grid: #131314;
   --zinc-900: rgb(12, 12, 15);
   --zinc-950: rgb(1, 1, 2);
-  --text-muted: rgb(140, 140, 155);
+  --text-muted: rgb(255, 255, 255);
   --text-primary: rgb(255, 255, 255);
   --bg-card: rgba(255, 255, 255, 0.025);
   --bg-card-hover: rgba(255, 255, 255, 0.05);
@@ -24,7 +24,7 @@
   --bg-hover: rgba(255, 255, 255, 0.04);
   --bg-modal: rgba(8, 8, 10, 0.98);
   --bg-overlay: rgba(0, 0, 0, 0.8);
-  --icon-muted: rgb(140, 140, 155);
+  --icon-muted: rgb(255, 255, 255);
   --icon-active: rgb(255, 255, 255);
   --shadow-card: 0 10px 28px rgba(0, 0, 0, 0.28);
   --scrollbar-thumb: rgba(255, 255, 255, 0.12);
@@ -40,10 +40,10 @@
   --brand-blue-soft: 139, 170, 236;
   --brand-blue-strong: 63, 94, 170;
   /* Semantic text tokens */
-  --text-secondary: rgba(255, 255, 255, 0.72);
-  --text-tertiary: rgba(255, 255, 255, 0.50);
-  --text-quaternary: rgba(255, 255, 255, 0.36);
-  --text-placeholder: rgba(255, 255, 255, 0.30);
+  --text-secondary: rgb(255, 255, 255);
+  --text-tertiary: rgb(255, 255, 255);
+  --text-quaternary: rgb(255, 255, 255);
+  --text-placeholder: rgb(255, 255, 255);
   /* Semantic surface tokens */
   --surface-subtle: rgba(255, 255, 255, 0.04);
   --surface-raised: rgba(255, 255, 255, 0.06);
@@ -57,8 +57,8 @@
 }
 
 html.light {
-  --fg: 15 15 20;
-  --foreground-rgb: 15, 15, 20;
+  --fg: 0 0 0;
+  --foreground-rgb: 0, 0, 0;
   --background: 250, 250, 252;
   --bg-sidebar: rgb(244, 244, 248);
   --bg-glass: rgba(255, 255, 255, 0.95);
@@ -69,8 +69,8 @@ html.light {
   --dot-grid: #fafafc;
   --zinc-900: rgb(235, 235, 242);
   --zinc-950: rgb(220, 220, 232);
-  --text-muted: rgb(90, 90, 110);
-  --text-primary: rgb(15, 15, 20);
+  --text-muted: rgb(0, 0, 0);
+  --text-primary: rgb(0, 0, 0);
   --bg-card: rgba(255, 255, 255, 0.85);
   --bg-card-hover: rgba(255, 255, 255, 1);
   --bg-active: rgba(15, 15, 20, 0.07);
@@ -78,13 +78,13 @@ html.light {
   --bg-hover: rgba(15, 15, 20, 0.04);
   --bg-modal: rgb(255, 255, 255);
   --bg-overlay: rgba(15, 15, 20, 0.08);
-  --icon-muted: rgb(90, 90, 110);
-  --icon-active: rgb(15, 15, 20);
+  --icon-muted: rgb(0, 0, 0);
+  --icon-active: rgb(0, 0, 0);
   --shadow-card: 0 8px 30px -4px rgba(15, 15, 20, 0.12), 0 0 0 1px rgba(15, 15, 20, 0.05);
   --scrollbar-thumb: #d0d0dc;
   --scrollbar-hover: #a0a0b8;
   --indicator-active: rgba(15, 15, 20, 0.45);
-  --accent: rgba(15, 15, 20, 0.9);
+  --accent: rgb(0, 0, 0);
   --accent-soft: rgba(32, 76, 201, 0.1);
   --accent-strong: rgba(28, 60, 168, 0.92);
   --surface-elevated: rgba(255, 255, 255, 0.95);
@@ -94,10 +94,10 @@ html.light {
   --brand-blue-soft: 52, 84, 158;
   --brand-blue-strong: 31, 57, 122;
   /* Semantic text tokens */
-  --text-secondary: rgba(15, 15, 20, 0.65);
-  --text-tertiary: rgba(15, 15, 20, 0.50);
-  --text-quaternary: rgba(15, 15, 20, 0.38);
-  --text-placeholder: rgba(15, 15, 20, 0.32);
+  --text-secondary: rgb(0, 0, 0);
+  --text-tertiary: rgb(0, 0, 0);
+  --text-quaternary: rgb(0, 0, 0);
+  --text-placeholder: rgb(0, 0, 0);
   /* Semantic surface tokens */
   --surface-subtle: rgba(15, 15, 20, 0.04);
   --surface-raised: rgba(15, 15, 20, 0.06);
@@ -108,6 +108,40 @@ html.light {
   --border-faint: rgba(15, 15, 20, 0.06);
   /* Divider */
   --divide-default: rgba(15, 15, 20, 0.08);
+}
+
+html.light body,
+html.light body * {
+  color: rgb(0, 0, 0);
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder,
+html.light [class*="placeholder:"]::placeholder {
+  color: rgb(0, 0, 0) !important;
+  opacity: 1 !important;
+}
+
+html.light [class*="text-"],
+html.light [class*="text_"] {
+  color: rgb(0, 0, 0) !important;
+}
+
+html.dark body,
+html.dark body * {
+  color: rgb(255, 255, 255);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder,
+html.dark [class*="placeholder:"]::placeholder {
+  color: rgb(255, 255, 255) !important;
+  opacity: 1 !important;
+}
+
+html.dark [class*="text-"],
+html.dark [class*="text_"] {
+  color: rgb(255, 255, 255) !important;
 }
 
 * {

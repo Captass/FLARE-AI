@@ -193,7 +193,7 @@ export default function ChatbotParametresPage({
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
-        <div className="flex items-center gap-3 text-white/40">
+        <div className="flex items-center gap-3 text-[var(--text-primary)]">
           <Loader2 size={18} className="animate-spin" />
           <span className="text-sm">Chargement des paramètres...</span>
         </div>
@@ -206,12 +206,12 @@ export default function ChatbotParametresPage({
     return (
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex max-w-xl flex-col items-center gap-4 text-center">
-          <p className="text-red-400">{error}</p>
+          <p className="text-[var(--text-primary)]">{error}</p>
           {needsWorkspaceSelection && onRequestOrganizationSelection ? (
             <button
               type="button"
               onClick={onRequestOrganizationSelection}
-              className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-4 py-2 text-sm font-medium text-orange-300 hover:bg-orange-500/20"
+              className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface-subtle)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)]"
             >
               Choisir un espace de travail
             </button>
@@ -234,10 +234,10 @@ export default function ChatbotParametresPage({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-white/90">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
             Paramètres
             {selectedPageName ? (
-              <span className="mt-1 block text-xl font-semibold text-cyan-400/95">— {selectedPageName}</span>
+              <span className="mt-1 block text-xl font-semibold text-[var(--text-primary)]">— {selectedPageName}</span>
             ) : null}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">Gérez votre connexion Facebook.</p>
@@ -247,7 +247,7 @@ export default function ChatbotParametresPage({
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200/90 shadow-sm"
+            className="rounded-xl border border-[var(--border-strong)] bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-sm"
           >
             {facebookError}
           </motion.div>
@@ -282,3 +282,4 @@ export default function ChatbotParametresPage({
     </div>
   );
 }
+
