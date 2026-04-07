@@ -48,6 +48,7 @@ export default function ChatbotPersonnalisationPage({
   const [feedback, setFeedback] = useState<{ tone: "success" | "error" | "warning"; message: string } | null>(null);
   const [catalogueDraft, setCatalogueDraft] = useState<CatalogueItemInput>(EMPTY_CATALOGUE_INPUT);
   const [editingCatalogueId, setEditingCatalogueId] = useState<string | null>(null);
+  const [pendingDeleteCatalogueId, setPendingDeleteCatalogueId] = useState<string | null>(null);
 
   const resolveAccessToken = useCallback(async () => {
     if (getFreshToken) return await getFreshToken();
@@ -137,8 +138,6 @@ export default function ChatbotPersonnalisationPage({
   };
 
   const handleDeleteCatalogue = async (id: string) => {
-    if (!confirm("Supprimer ce produit / service ?")) return;
-
     const accessToken = await resolveAccessToken();
     if (!accessToken) return;
 
@@ -147,6 +146,7 @@ export default function ChatbotPersonnalisationPage({
       const nextCat = await getCatalogue(accessToken, selectedPageId);
       setCatalogue(nextCat);
       setFeedback({ tone: "success", message: "Le produit a ete supprime du catalogue." });
+      setPendingDeleteCatalogueId(null);
     } catch (err) {
       setFeedback({
         tone: "error",
@@ -224,6 +224,26 @@ export default function ChatbotPersonnalisationPage({
           </div>
         ) : null}
 
+        {pendingDeleteCatalogueId ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-[var(--text-primary)]">
+            <span>Confirmer la suppression de ce produit du catalogue ?</span>
+            <button
+              type="button"
+              onClick={() => void handleDeleteCatalogue(pendingDeleteCatalogueId)}
+              className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-white"
+            >
+              Supprimer
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDeleteCatalogueId(null)}
+              className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-primary)]"
+            >
+              Annuler
+            </button>
+          </div>
+        ) : null}
+
         {!selectedPageId ? (
           <div
             role="status"
@@ -289,7 +309,10 @@ export default function ChatbotPersonnalisationPage({
               setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
             }}
             onSave={() => void handleSaveCatalogue()}
-            onDelete={(id) => void handleDeleteCatalogue(id)}
+            onDelete={(id) => {
+              setPendingDeleteCatalogueId(id);
+              setFeedback({ tone: "warning", message: "Suppression en attente de confirmation." });
+            }}
           />
 
           <ChatbotHandoffTab

@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 
-
 import PageSelector from "@/components/PageSelector";
 import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
 import {
@@ -56,7 +55,7 @@ export default function ChatbotParametresPage({
     async (isRefresh = false) => {
       const accessToken = await resolveAccessToken(isRefresh);
       if (!accessToken) {
-        setError("Session expirée. Veuillez recharger.");
+        setError("Session expiree. Veuillez recharger.");
         setLoading(false);
         return;
       }
@@ -76,7 +75,7 @@ export default function ChatbotParametresPage({
           const message =
             facebookResult.reason instanceof Error
               ? facebookResult.reason.message
-              : "État Facebook Messenger indisponible.";
+              : "Etat Facebook Messenger indisponible.";
           setFacebookError((prev) => prev ?? message);
         }
       } catch (loadError) {
@@ -147,7 +146,7 @@ export default function ChatbotParametresPage({
       await deactivateFacebookMessengerPage(pageId, accessToken);
       await loadData(true);
     } catch (deactivateError) {
-      setFacebookError(deactivateError instanceof Error ? deactivateError.message : "Erreur désactivation");
+      setFacebookError(deactivateError instanceof Error ? deactivateError.message : "Erreur desactivation");
     } finally {
       setFacebookBusyPageId(null);
     }
@@ -180,8 +179,8 @@ export default function ChatbotParametresPage({
       await loadData(true);
     } catch (syncError) {
       const message = syncError instanceof Error ? syncError.message : "";
-      if (/expiré|Reconnectez|session|Facebook|actualiser/i.test(message)) {
-        setFacebookError(`${message} Utilisez le bouton \"Ouvrir Meta\" pour renouveler l'autorisation.`);
+      if (/expire|Reconnectez|session|Facebook|actualiser/i.test(message)) {
+        setFacebookError(`${message} Utilisez le bouton "Ouvrir Meta" pour renouveler l'autorisation.`);
       } else {
         setFacebookError(message || "Impossible d'actualiser la liste des pages.");
       }
@@ -195,7 +194,7 @@ export default function ChatbotParametresPage({
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex items-center gap-3 text-[var(--text-primary)]">
           <Loader2 size={18} className="animate-spin" />
-          <span className="text-sm">Chargement des paramètres...</span>
+          <span className="text-sm">Chargement des parametres...</span>
         </div>
       </div>
     );
@@ -235,12 +234,12 @@ export default function ChatbotParametresPage({
           className="space-y-2"
         >
           <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-            Paramètres
+            Parametres
             {selectedPageName ? (
-              <span className="mt-1 block text-xl font-semibold text-[var(--text-primary)]">— {selectedPageName}</span>
+              <span className="mt-1 block text-xl font-semibold text-[var(--text-primary)]">- {selectedPageName}</span>
             ) : null}
           </h1>
-          <p className="text-lg text-[var(--text-muted)]">Gérez votre connexion Facebook.</p>
+          <p className="text-lg text-[var(--text-muted)]">Gerez votre connexion Facebook.</p>
         </motion.header>
 
         {facebookError ? (
@@ -282,4 +281,3 @@ export default function ChatbotParametresPage({
     </div>
   );
 }
-
