@@ -6,9 +6,9 @@ import type { ChatbotPreferences, ChatbotHandoffMode } from "@/lib/api";
 import { KeywordInput, SectionCard, SelectField, TextareaField } from "@/components/chatbot/ChatbotUi";
 
 const HANDOFF_MODE_OPTIONS: Array<{ value: ChatbotHandoffMode; label: string }> = [
-  { value: "auto", label: "Auto — le bot detecte les signaux et propose un humain" },
-  { value: "manual", label: "Manuel — uniquement sur les mots-cles definis" },
-  { value: "disabled", label: "Desactive — le bot ne transfere jamais" },
+  { value: "auto", label: "Auto - le bot detecte les signaux et propose un humain" },
+  { value: "manual", label: "Manuel - uniquement sur les mots-cles definis" },
+  { value: "disabled", label: "Desactive - le bot ne transfere jamais" },
 ];
 
 interface ChatbotHandoffTabProps {
@@ -26,6 +26,8 @@ export default function ChatbotHandoffTab({
   saving,
   onSave,
 }: ChatbotHandoffTabProps) {
+  const isLocked = !canEdit || saving;
+
   return (
     <SectionCard
       title="Transfert et disponibilite"
@@ -33,7 +35,7 @@ export default function ChatbotHandoffTab({
       action={
         <button
           onClick={onSave}
-          disabled={saving || !canEdit}
+          disabled={isLocked}
           className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#140b02] disabled:opacity-60"
         >
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
@@ -41,38 +43,35 @@ export default function ChatbotHandoffTab({
         </button>
       }
     >
-      {/* Mode handoff */}
       <div className="max-w-lg">
         <SelectField
           label="Mode de transfert"
           value={preferences.handoff_mode}
-          onChange={(v) => onChange({ ...preferences, handoff_mode: v as ChatbotHandoffMode })}
+          onChange={(value) => onChange({ ...preferences, handoff_mode: value as ChatbotHandoffMode })}
           options={HANDOFF_MODE_OPTIONS}
-          disabled={!canEdit}
+          disabled={isLocked}
         />
-        <p className="mt-2 text-[12px] leading-6 text-white/30">
+        <p className="mt-2 text-[12px] leading-6 text-[var(--text-secondary)]">
           En mode &quot;Auto&quot;, le bot propose un transfert quand il detecte une situation complexe
           (reclamation, devis sur mesure, urgence). En mode &quot;Manuel&quot;, il ne transfere que si
           les mots-cles ci-dessous sont detectes.
         </p>
       </div>
 
-      {/* Mots-cles de transfert */}
       <div className="mt-6">
         <KeywordInput
           label="Mots-cles de transfert (entrez et appuyez sur Entree)"
           values={preferences.handoff_keywords}
           onChange={(handoff_keywords) => onChange({ ...preferences, handoff_keywords })}
           placeholder="Ex: parler humain, agent, probleme, remboursement..."
-          disabled={!canEdit}
+          disabled={isLocked}
         />
-        <p className="mt-2 text-[12px] leading-6 text-white/30">
+        <p className="mt-2 text-[12px] leading-6 text-[var(--text-secondary)]">
           Si un client utilise l&apos;un de ces mots ou expressions, le bot envoie immediatement le message
           de transfert ci-dessous et ne repond plus.
         </p>
       </div>
 
-      {/* Message de transfert */}
       <div className="mt-6">
         <TextareaField
           label="Message de transfert vers un humain"
@@ -80,21 +79,20 @@ export default function ChatbotHandoffTab({
           onChange={(handoff_message) => onChange({ ...preferences, handoff_message })}
           placeholder="Je vous mets en contact avec un membre de notre equipe. Merci de patienter, nous revenons vers vous dans les plus brefs delais."
           rows={3}
-          disabled={!canEdit}
+          disabled={isLocked}
         />
       </div>
 
-      {/* Message hors horaires */}
-      <div className="mt-6 border-t border-white/[0.04] pt-6">
+      <div className="mt-6 border-t border-[var(--divide-default)] pt-6">
         <TextareaField
           label="Message hors horaires"
           value={preferences.off_hours_message}
           onChange={(off_hours_message) => onChange({ ...preferences, off_hours_message })}
           placeholder="Nous sommes actuellement fermes. Nous reviendrons vers vous pendant nos horaires d'ouverture. Merci de votre patience !"
           rows={3}
-          disabled={!canEdit}
+          disabled={isLocked}
         />
-        <p className="mt-2 text-[12px] leading-6 text-white/30">
+        <p className="mt-2 text-[12px] leading-6 text-[var(--text-secondary)]">
           Ce message est affiche en dehors de vos horaires d&apos;ouverture (si configures ci-dessus).
           Si laisse vide, le bot repond normalement 24h/24.
         </p>
