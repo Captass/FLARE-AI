@@ -1193,8 +1193,8 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
   const [activations, setActivations] = useState<ActivationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [noteText, setNoteText] = useState("");
-  const [assignEmail, setAssignEmail] = useState("");
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [assignEmailDrafts, setAssignEmailDrafts] = useState<Record<string, string>>({});
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [feedback, setFeedback] = useState<{ tone: "error" | "success" | "warning"; message: string } | null>(null);
@@ -1224,11 +1224,15 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
   };
 
   const handleAssign = async (id: string) => {
-    if (!assignEmail.trim()) return;
+    const assignEmail = (assignEmailDrafts[id] || "").trim();
+    if (!assignEmail) {
+      setFeedback({ tone: "warning", message: "Renseignez un email operateur." });
+      return;
+    }
     setActionBusy(id);
     try {
-      await adminAssignActivation(id, assignEmail.trim(), token);
-      setAssignEmail("");
+      await adminAssignActivation(id, assignEmail, token);
+      setAssignEmailDrafts((current) => ({ ...current, [id]: "" }));
       await load();
       setFeedback({ tone: "success", message: "Operateur assigne." });
     } catch (e) {
@@ -1238,11 +1242,15 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
   };
 
   const handleAddNote = async (id: string) => {
-    if (!noteText.trim()) return;
+    const noteText = (noteDrafts[id] || "").trim();
+    if (!noteText) {
+      setFeedback({ tone: "warning", message: "Ajoutez une note avant de sauvegarder." });
+      return;
+    }
     setActionBusy(id);
     try {
-      await adminAddActivationNote(id, noteText.trim(), token);
-      setNoteText("");
+      await adminAddActivationNote(id, noteText, token);
+      setNoteDrafts((current) => ({ ...current, [id]: "" }));
       await load();
       setFeedback({ tone: "success", message: "Note ajoutee a l'activation." });
     } catch (e) {
@@ -1433,9 +1441,9 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
 
                         {/* Assign operator */}
                         <div className="flex gap-2">
-                          <input value={assignEmail} onChange={e => setAssignEmail(e.target.value)} placeholder="Email operateur..."
+                          <input value={assignEmailDrafts[ar.id] || ""} onChange={e => setAssignEmailDrafts((current) => ({ ...current, [ar.id]: e.target.value }))} placeholder="Email operateur..."
                             className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
-                          <button onClick={() => handleAssign(ar.id)} disabled={actionBusy === ar.id || !assignEmail.trim()}
+                          <button onClick={() => handleAssign(ar.id)} disabled={actionBusy === ar.id || !(assignEmailDrafts[ar.id] || "").trim()}
                             className="rounded-lg border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] px-3 py-2 text-xs font-medium text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-40">
                             Assigner
                           </button>
@@ -1443,9 +1451,9 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
 
                         {/* Add note */}
                         <div className="flex gap-2">
-                          <input value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Ajouter une note..."
+                          <input value={noteDrafts[ar.id] || ""} onChange={e => setNoteDrafts((current) => ({ ...current, [ar.id]: e.target.value }))} placeholder="Ajouter une note..."
                             className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
-                          <button onClick={() => handleAddNote(ar.id)} disabled={actionBusy === ar.id || !noteText.trim()}
+                          <button onClick={() => handleAddNote(ar.id)} disabled={actionBusy === ar.id || !(noteDrafts[ar.id] || "").trim()}
                             className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-40">
                             <StickyNote size={14} />
                           </button>
@@ -1472,7 +1480,7 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
   const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
-  const [rejectReason, setRejectReason] = useState("");
+  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({});
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
   const [feedback, setFeedback] = useState<{ tone: "error" | "success" | "warning"; message: string } | null>(null);
@@ -1502,15 +1510,16 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
   };
 
   const handleReject = async (id: string) => {
-    if (!rejectReason.trim()) {
+    const rejectReason = (rejectReasons[id] || "").trim();
+    if (!rejectReason) {
       setFeedback({ tone: "warning", message: "Renseignez une raison de refus." });
       return;
     }
     setActionBusy(id);
     try {
-      await adminRejectPayment(id, rejectReason.trim(), token);
+      await adminRejectPayment(id, rejectReason, token);
       setRejectingId(null);
-      setRejectReason("");
+      setRejectReasons((current) => ({ ...current, [id]: "" }));
       await load();
       setFeedback({ tone: "success", message: "Paiement refuse." });
     } catch (e) {
@@ -1676,14 +1685,14 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
                     </button>
                     {rejectingId === pay.id ? (
                       <div className="flex flex-col gap-1">
-                        <input value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Raison du refus..."
+                        <input value={rejectReasons[pay.id] || ""} onChange={e => setRejectReasons((current) => ({ ...current, [pay.id]: e.target.value }))} placeholder="Raison du refus..."
                           className="bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] w-40" />
                         <div className="flex gap-1">
                           <button onClick={() => handleReject(pay.id)} disabled={actionBusy === pay.id}
                             className="flex-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-40">
                             Confirmer
                           </button>
-                          <button onClick={() => { setRejectingId(null); setRejectReason(""); }}
+                          <button onClick={() => { setRejectingId(null); setRejectReasons((current) => ({ ...current, [pay.id]: "" })); }}
                             className="px-2 py-1 rounded-lg text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-hover)]">
                             Annuler
                           </button>
