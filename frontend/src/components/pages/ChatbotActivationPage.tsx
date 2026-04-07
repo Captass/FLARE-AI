@@ -238,7 +238,7 @@ function StepIndicator({
                   ? "bg-orange-500 ring-4 ring-orange-500/20"
                   : isDone
                   ? "bg-orange-400"
-                  : "bg-white/10"
+                  : "bg-[var(--surface-raised)]"
               }`}
             />
             <span
@@ -246,8 +246,8 @@ function StepIndicator({
                 isCurrent
                   ? "text-orange-400"
                   : isDone
-                  ? "text-fg/50"
-                  : "text-fg/25"
+                  ? "text-[var(--text-secondary)]"
+                  : "text-[var(--text-muted)]"
               }`}
             >
               {STEP_LABELS[step]}
@@ -271,7 +271,7 @@ function CopyButton({ text }: { text: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center gap-1 rounded-md bg-white/5 px-2 py-1 text-xs text-fg/60 hover:bg-white/10 hover:text-fg/80 transition-colors"
+      className="inline-flex items-center gap-1 rounded-md border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2 py-1 text-xs text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-raised)]"
     >
       {copied ? <Check size={12} /> : <Copy size={12} />}
       {copied ? "Copie" : "Copier"}
@@ -291,15 +291,15 @@ function OrganizationScopeRequiredPanel({
           <div className="h-12 w-12 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center">
             <Building2 size={22} />
           </div>
-          <h2 className="text-xl font-semibold text-fg/90">Choisissez d&apos;abord votre espace de travail</h2>
-          <p className="max-w-lg text-sm text-fg/60 leading-relaxed">
+          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Choisissez d&apos;abord votre espace de travail</h2>
+          <p className="max-w-lg text-sm leading-relaxed text-[var(--text-secondary)]">
             L&apos;activation du chatbot et le paiement sont rattaches a une organisation.
             Ouvrez le selecteur d&apos;espace puis choisissez une organisation active.
           </p>
           <button
             type="button"
             onClick={() => onSelectWorkspace?.()}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600"
           >
             Choisir mon espace
             <ArrowRight size={16} />
@@ -827,7 +827,7 @@ export default function ChatbotActivationPage({
                       }`}
                     >
                       {plan.popular && (
-                        <span className="absolute -top-2.5 right-3 rounded-full bg-orange-500 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                    <span className="absolute -top-2.5 right-3 rounded-full bg-orange-500 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">
                           Populaire
                         </span>
                       )}
@@ -874,7 +874,7 @@ export default function ChatbotActivationPage({
                   type="button"
                   disabled={busy}
                   onClick={handleChoosePlan}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
                 >
                   {busy ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -1034,7 +1034,7 @@ export default function ChatbotActivationPage({
                   type="button"
                   disabled={busy || !txRef.trim()}
                   onClick={handleSubmitPayment}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
                 >
                   {busy ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -1264,7 +1264,7 @@ export default function ChatbotActivationPage({
                   type="button"
                   disabled={busy}
                   onClick={handleSaveConfig}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
                 >
                   {busy ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -1369,7 +1369,7 @@ export default function ChatbotActivationPage({
                   type="button"
                   disabled={busy || !adminConfirmed}
                   onClick={handleConfirmAdmin}
-                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
                 >
                   {busy ? (
                     <Loader2 size={16} className="animate-spin" />
@@ -1585,7 +1585,7 @@ function AwaitingStatus({
         <button
           type="button"
           onClick={onGoToChatbot}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+      className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600"
         >
           Acceder au chatbot
           <ArrowRight size={16} />
@@ -1611,7 +1611,7 @@ function AwaitingStatus({
         <button
           type="button"
           onClick={onGoToPayment}
-          className="inline-flex items-center gap-2 rounded-xl bg-orange-500 hover:bg-orange-600 px-6 py-2.5 text-sm font-semibold text-white transition-colors"
+      className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600"
         >
           <ArrowLeft size={16} />
           Renvoyer une preuve

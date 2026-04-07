@@ -46,8 +46,8 @@ const PLANS: Plan[] = [
     name: "Starter",
     price: "30 000 Ar",
     priceNote: "/mois",
-    color: "border-white/[0.08] bg-white/[0.02]",
-    accent: "text-white/70",
+    color: "border-[var(--border-default)] bg-[var(--surface-base)]",
+    accent: "text-[var(--text-primary)]",
     features: [
       "1 page Facebook",
       "Chatbot IA 24h/24",
@@ -61,8 +61,8 @@ const PLANS: Plan[] = [
     name: "Pro",
     price: "60 000 Ar",
     priceNote: "/mois",
-    color: "border-orange-500/30 bg-orange-500/[0.06]",
-    accent: "text-orange-400",
+    color: "border-orange-500/25 bg-orange-500/[0.08]",
+    accent: "text-orange-500",
     popular: true,
     features: [
       "1 page Facebook",
@@ -79,8 +79,8 @@ const PLANS: Plan[] = [
     name: "Business",
     price: "120 000 Ar",
     priceNote: "/mois",
-    color: "border-purple-500/25 bg-purple-500/[0.04]",
-    accent: "text-purple-400",
+    color: "border-[rgba(var(--brand-blue-strong),0.28)] bg-[rgba(var(--brand-blue-soft),0.12)]",
+    accent: "text-[rgb(var(--brand-blue-strong))]",
     features: [
       "Multi-pages Facebook",
       "Chatbot IA 24h/24",
@@ -95,8 +95,8 @@ const PLANS: Plan[] = [
     id: "enterprise",
     name: "Entreprise",
     price: "Sur devis",
-    color: "border-white/[0.06] bg-white/[0.01]",
-    accent: "text-white/50",
+    color: "border-[var(--border-default)] bg-[var(--surface-subtle)]",
+    accent: "text-[var(--text-secondary)]",
     contact: true,
     features: [
       "Solution sur mesure",
@@ -149,7 +149,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-white/90">Abonnements</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">Abonnements</h1>
           <p className="text-lg text-[var(--text-muted)]">Votre plan actuel et les offres disponibles</p>
         </motion.header>
 
@@ -172,13 +172,13 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                     <Crown size={20} className="text-orange-400" />
                   </div>
                   <div>
-                    <p className="text-sm text-white/40 font-medium">Plan actuel</p>
-                    <p className="text-2xl font-bold text-white/90 tracking-tight">{planLabel}</p>
+                    <p className="text-sm font-medium text-[var(--text-secondary)]">Plan actuel</p>
+                    <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{planLabel}</p>
                   </div>
                 </div>
 
                 {expiresAt && (
-                  <div className="flex items-center gap-2 text-sm text-white/35">
+                  <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
                     <Calendar size={13} />
                     <span>Expire le {expiresAt}</span>
                   </div>
@@ -201,7 +201,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                       {(!currentPlanId || currentPlanId === "free") ? "Choisir un plan" : "Changer de plan"}
                     </span>
                     {billing?.features?.upgrade_to && (
-                      <span className="text-sm text-white/35">
+                        <span className="text-sm text-[var(--text-secondary)]">
                         Passer au plan {billing.features.upgrade_to}
                       </span>
                     )}
@@ -222,7 +222,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                      border border-[var(--border-glass)] shadow-[var(--shadow-card)]
                      px-6 py-6 flex flex-col gap-2"
         >
-          <p className="text-sm font-medium text-white/30 uppercase tracking-[0.1em] mb-4">
+          <p className="mb-4 text-sm font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
             Modules inclus dans votre plan
           </p>
           {loading ? (
@@ -232,14 +232,14 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
               const features = billing?.features as PlanFeatures | undefined;
               const active = features?.[mod.key as keyof PlanFeatures] ?? false;
               return (
-                <div key={mod.key} className="flex items-center justify-between py-2.5 border-b border-white/[0.04] last:border-0">
-                  <span className={`text-base ${active ? "text-white/75" : "text-white/25"}`}>
+                <div key={mod.key} className="flex items-center justify-between border-b border-[var(--divide-default)] py-2.5 last:border-0">
+                  <span className={`text-base ${active ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}`}>
                     {mod.label}
                   </span>
                   {active ? (
-                    <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+                    <CheckCircle2 size={16} className="shrink-0 text-orange-500" />
                   ) : (
-                    <Lock size={14} className="text-white/20 shrink-0" />
+                    <Lock size={14} className="shrink-0 text-[var(--text-muted)]" />
                   )}
                 </div>
               );
@@ -253,7 +253,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="text-sm font-medium text-white/30 uppercase tracking-[0.1em] mb-5">
+          <p className="mb-5 text-sm font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
             Toutes les offres
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -268,7 +268,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                 >
                   {/* Popular badge */}
                   {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-orange-500 px-3 py-0.5 text-[11px] font-semibold text-white shadow-md">
+                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-orange-500 px-3 py-0.5 text-[11px] font-semibold text-black shadow-md">
                       <Sparkles size={10} />
                       Recommande
                     </span>
@@ -276,7 +276,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
 
                   {/* Current badge */}
                   {isCurrent && (
-                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-3 py-0.5 text-[11px] font-semibold text-white shadow-md">
+                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-[rgb(var(--brand-blue-strong))] px-3 py-0.5 text-[11px] font-semibold text-white shadow-md">
                       <CheckCircle2 size={10} />
                       Plan actuel
                     </span>
@@ -285,10 +285,10 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                   {/* Name & price */}
                   <div>
                     <p className={`text-base font-bold ${plan.accent}`}>{plan.name}</p>
-                    <p className="mt-1 text-2xl font-bold text-white/90 tracking-tight">
+                    <p className="mt-1 text-2xl font-bold tracking-tight text-[var(--text-primary)]">
                       {plan.price}
                       {plan.priceNote && (
-                        <span className="text-sm font-normal text-white/35">{plan.priceNote}</span>
+                        <span className="text-sm font-normal text-[var(--text-secondary)]">{plan.priceNote}</span>
                       )}
                     </p>
                   </div>
@@ -296,8 +296,8 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                   {/* Features */}
                   <ul className="flex flex-col gap-2 flex-1">
                     {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-white/60">
-                        <CheckCircle2 size={13} className="shrink-0 mt-0.5 text-white/25" />
+                      <li key={f} className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                        <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-orange-500" />
                         {f}
                       </li>
                     ))}
@@ -305,15 +305,15 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
 
                   {/* CTA */}
                   {isCurrent ? (
-                    <div className="mt-auto pt-2 text-center text-sm text-emerald-400/80 font-medium">
+                    <div className="mt-auto pt-2 text-center text-sm font-medium text-[rgb(var(--brand-blue-strong))]">
                       Plan actif
                     </div>
                   ) : plan.contact ? (
                     <a
                       href="mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI"
-                      className="mt-auto flex items-center justify-center gap-2 rounded-xl border border-white/10
-                                 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white/60
-                                 hover:bg-white/[0.08] hover:text-white/80 transition-all duration-150"
+                      className="mt-auto flex items-center justify-center gap-2 rounded-xl border border-[var(--border-default)]
+                                 bg-[var(--surface-subtle)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)]
+                                 hover:bg-[var(--surface-raised)] transition-all duration-150"
                     >
                       <MessageSquare size={13} />
                       Nous contacter
@@ -324,8 +324,8 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                       onClick={() => handleActivate(plan)}
                       className={`mt-auto flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${
                         plan.popular
-                          ? "bg-orange-500 text-white hover:bg-orange-400 shadow-md"
-                          : "border border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/[0.08] hover:text-white/90"
+                          ? "bg-orange-500 text-black hover:bg-orange-400 shadow-md"
+                          : "border border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-primary)] hover:bg-[var(--surface-raised)]"
                       }`}
                     >
                       Choisir ce plan

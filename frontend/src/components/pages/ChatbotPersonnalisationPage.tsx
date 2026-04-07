@@ -45,6 +45,7 @@ export default function ChatbotPersonnalisationPage({
   const [catalogue, setCatalogue] = useState<CatalogueItem[]>([]);
 
   const [savingSection, setSavingSection] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error" | "warning"; message: string } | null>(null);
   const [catalogueDraft, setCatalogueDraft] = useState<CatalogueItemInput>(EMPTY_CATALOGUE_INPUT);
   const [editingCatalogueId, setEditingCatalogueId] = useState<string | null>(null);
 
@@ -65,6 +66,7 @@ export default function ChatbotPersonnalisationPage({
     try {
       setLoading(true);
       setError(null);
+      setFeedback(null);
 
       const [nextPrefs, nextCat] = await Promise.all([
         getChatbotPreferences(accessToken, selectedPageId),
@@ -91,9 +93,13 @@ export default function ChatbotPersonnalisationPage({
     try {
       const saved = await updateChatbotPreferences(preferences, accessToken, selectedPageId);
       setPreferences(saved);
+      setFeedback({ tone: "success", message: "Les reglages ont ete enregistres." });
     } catch (err) {
       console.error(err);
-      alert("Erreur lors de l'enregistrement de la configuration.");
+      setFeedback({
+        tone: "error",
+        message: err instanceof Error ? err.message : "Erreur lors de l'enregistrement de la configuration.",
+      });
     } finally {
       setSavingSection(null);
     }
@@ -101,7 +107,7 @@ export default function ChatbotPersonnalisationPage({
 
   const handleSaveCatalogue = async () => {
     if (!catalogueDraft.name?.trim()) {
-      alert("Le nom du produit est requis.");
+      setFeedback({ tone: "warning", message: "Le nom du produit est requis." });
       return;
     }
 
@@ -119,8 +125,12 @@ export default function ChatbotPersonnalisationPage({
       setCatalogue(nextCat);
       setEditingCatalogueId(null);
       setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+      setFeedback({ tone: "success", message: "Le catalogue a ete mis a jour." });
     } catch (err) {
-      alert("Erreur catalog: " + (err instanceof Error ? err.message : String(err)));
+      setFeedback({
+        tone: "error",
+        message: "Erreur catalogue: " + (err instanceof Error ? err.message : String(err)),
+      });
     } finally {
       setSavingSection(null);
     }
@@ -136,15 +146,19 @@ export default function ChatbotPersonnalisationPage({
       await deleteCatalogueItem(id, accessToken);
       const nextCat = await getCatalogue(accessToken, selectedPageId);
       setCatalogue(nextCat);
+      setFeedback({ tone: "success", message: "Le produit a ete supprime du catalogue." });
     } catch (err) {
-      alert("Erreur suppression catalogue: " + (err instanceof Error ? err.message : String(err)));
+      setFeedback({
+        tone: "error",
+        message: "Erreur suppression catalogue: " + (err instanceof Error ? err.message : String(err)),
+      });
     }
   };
 
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center py-20">
-        <div className="flex items-center gap-3 text-white/40">
+        <div className="flex items-center gap-3 text-[var(--text-secondary)]">
           <Loader2 size={18} className="animate-spin" />
           <span className="text-sm">Chargement de la personnalisation...</span>
         </div>
@@ -186,28 +200,43 @@ export default function ChatbotPersonnalisationPage({
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-white/90">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
             Personnalisation
             {selectedPageName ? (
-              <span className="mt-1 block text-xl font-semibold text-orange-400/95">- {selectedPageName}</span>
+              <span className="mt-1 block text-xl font-semibold text-orange-500">- {selectedPageName}</span>
             ) : null}
           </h1>
           <p className="text-lg text-[var(--text-muted)]">Configurez l&apos;identite du bot et vos offres / produits</p>
         </motion.header>
 
+        {feedback ? (
+          <div
+            role="status"
+            className={`rounded-xl border px-4 py-3 text-sm leading-relaxed ${
+              feedback.tone === "success"
+                ? "border-orange-500/25 bg-orange-500/10 text-[var(--text-primary)]"
+                : feedback.tone === "warning"
+                  ? "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-primary)]"
+                  : "border-red-500/25 bg-red-500/10 text-[var(--text-primary)]"
+            }`}
+          >
+            {feedback.message}
+          </div>
+        ) : null}
+
         {!selectedPageId ? (
           <div
             role="status"
-            className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm leading-relaxed text-amber-100/90"
+            className="rounded-xl border border-orange-500/25 bg-orange-500/10 px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)]"
           >
             Aucune page n&apos;est selectionnee dans l&apos;accueil Chatbot. Les reglages affiches sont les{" "}
-            <strong className="text-amber-50">reglages par defaut</strong>. Pour configurer une page precise,
+            <strong className="text-[var(--text-primary)]">reglages par defaut</strong>. Pour configurer une page precise,
             retournez au hub et selectionnez une page.
           </div>
         ) : (
-          <div className="rounded-xl border border-fg/[0.08] bg-fg/[0.03] px-4 py-3 text-sm leading-relaxed text-fg/70">
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-sm leading-relaxed text-[var(--text-secondary)]">
             Ces reglages sont enregistres pour{" "}
-            <strong className="text-fg/90">{selectedPageName || `la page ${selectedPageId}`}</strong>.
+            <strong className="text-[var(--text-primary)]">{selectedPageName || `la page ${selectedPageId}`}</strong>.
           </div>
         )}
 

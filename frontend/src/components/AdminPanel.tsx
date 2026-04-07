@@ -80,13 +80,13 @@ type AdminTab = "menu" | "costs" | "connected" | "accounts" | "activations" | "p
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const ACTION_META: Record<string, { icon: typeof MessageSquare; label: string; color: string; emoji: string }> = {
-  message:       { icon: MessageSquare,  label: "Messages",      color: "text-blue-400",    emoji: "💬" },
-  research:      { icon: Globe,          label: "Recherche",     color: "text-cyan-400",    emoji: "🔍" },
+  message:       { icon: MessageSquare,  label: "Messages",      color: "text-[rgb(var(--brand-blue-strong))]",    emoji: "💬" },
+  research:      { icon: Globe,          label: "Recherche",     color: "text-[rgb(var(--brand-blue-strong))]",    emoji: "🔍" },
   deep_research: { icon: Microscope,     label: "Deep Research", color: "text-[var(--text-primary)]",   emoji: "🧪" },
-  image_gen:     { icon: ImageIcon,      label: "Image Gen",     color: "text-[var(--text-muted)]",    emoji: "🎨" },
-  video_gen:     { icon: Video,          label: "Vidéo Gen",     color: "text-[var(--text-muted)]", emoji: "🎬" },
-  doc_gen:       { icon: FileText,       label: "Documents",     color: "text-indigo-400",  emoji: "📝" },
-  sheet_gen:     { icon: FileSpreadsheet, label: "Tableurs",     color: "text-emerald-400", emoji: "📊" },
+  image_gen:     { icon: ImageIcon,      label: "Image Gen",     color: "text-orange-500",    emoji: "🎨" },
+  video_gen:     { icon: Video,          label: "Vidéo Gen",     color: "text-orange-500", emoji: "🎬" },
+  doc_gen:       { icon: FileText,       label: "Documents",     color: "text-[rgb(var(--brand-blue-strong))]",  emoji: "📝" },
+  sheet_gen:     { icon: FileSpreadsheet, label: "Tableurs",     color: "text-orange-500", emoji: "📊" },
 };
 
 function formatCost(val: any): string {
@@ -143,8 +143,8 @@ function formatDate(iso: string | null): string {
 function DataSubGrid({ actions, tokens, cost, accent = "text-[var(--text-primary)]" }: any) {
   return (
     <div className="grid grid-cols-3 gap-1 h-full items-center">
-      <div className="text-center font-[family-name:var(--font-outfit)] text-[10px] text-zinc-500">{actions || 0}</div>
-      <div className="text-right font-[family-name:var(--font-outfit)] text-[10px] text-zinc-500">{formatTokens(tokens)}</div>
+      <div className="text-center font-[family-name:var(--font-outfit)] text-[10px] text-[var(--text-muted)]">{actions || 0}</div>
+      <div className="text-right font-[family-name:var(--font-outfit)] text-[10px] text-[var(--text-muted)]">{formatTokens(tokens)}</div>
       <div className={`text-right font-[family-name:var(--font-outfit)] text-[10px] font-bold ${accent}`}>{formatCost(cost)}</div>
     </div>
   );
@@ -154,10 +154,10 @@ function ActionRow({ label, icon: Icon, emoji, g3, flash, total_cost }: any) {
   return (
     <div className="grid grid-cols-12 gap-0 py-2 border-b border-[var(--border-glass)] items-center last:border-0 hover:bg-[var(--bg-hover)] transition-colors -mx-4 px-4">
       <div className="col-span-3 flex items-center gap-2.5">
-        <div className="w-5 h-5 rounded-md bg-zinc-800/50 flex items-center justify-center border border-[var(--border-glass)]">
+        <div className="flex h-5 w-5 items-center justify-center rounded-md border border-[var(--border-glass)] bg-[var(--surface-subtle)]">
           <span className="text-[12px]">{emoji}</span>
         </div>
-        <span className="text-[11px] text-zinc-400 font-medium">{label}</span>
+        <span className="text-[11px] font-medium text-[var(--text-secondary)]">{label}</span>
       </div>
 
       <div className="col-span-3 h-full px-2">
@@ -165,11 +165,11 @@ function ActionRow({ label, icon: Icon, emoji, g3, flash, total_cost }: any) {
       </div>
 
       <div className="col-span-3 h-full px-2 border-l border-[var(--border-glass)]">
-        <DataSubGrid actions={flash?.actions} tokens={flash?.tokens} cost={flash?.cost} accent="text-emerald-400/80" />
+        <DataSubGrid actions={flash?.actions} tokens={flash?.tokens} cost={flash?.cost} accent="text-[rgb(var(--brand-blue-strong))]" />
       </div>
 
       <div className="col-span-3 text-right pr-4">
-        <span className="text-[11px] font-bold text-zinc-300 font-[family-name:var(--font-outfit)] tracking-tighter">{formatCost(total_cost || 0)}</span>
+        <span className="text-[11px] font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)] tracking-tighter">{formatCost(total_cost || 0)}</span>
       </div>
     </div>
   );
@@ -186,18 +186,18 @@ const LedgerTable = ({ ledger, loading }: { ledger: LedgerEntry[], loading: bool
                 <thead>
                     <tr className="bg-[var(--bg-hover)]">
                         {['Date', 'Utilisateur', 'Action', 'Modèle', 'Tokens', 'Coût'].map(h => (
-                             <th key={h} className="px-4 py-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest first:pl-6 last:pr-6">{h}</th>
+                             <th key={h} className="px-4 py-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest first:pl-6 last:pr-6">{h}</th>
                         ))}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--border-glass)]">
                     {ledger.map(entry => (
                         <tr key={entry.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                            <td className="px-4 py-3 text-xs text-zinc-400 whitespace-nowrap first:pl-6 last:pr-6">{timeAgo(entry.timestamp)}</td>
-                            <td className="px-4 py-3 text-xs text-zinc-300 whitespace-nowrap truncate max-w-[200px]">{entry.user_email}</td>
-                            <td className="px-4 py-3 text-xs text-zinc-400 whitespace-nowrap">{entry.action}</td>
-                            <td className="px-4 py-3 text-xs text-zinc-500 whitespace-nowrap truncate max-w-[150px]">{entry.model}</td>
-                            <td className="px-4 py-3 text-xs text-zinc-400 font-[family-name:var(--font-outfit)] text-right">{formatTokens(entry.tokens)}</td>
+                            <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap first:pl-6 last:pr-6">{timeAgo(entry.timestamp)}</td>
+                            <td className="px-4 py-3 text-xs text-[var(--text-primary)] whitespace-nowrap truncate max-w-[200px]">{entry.user_email}</td>
+                            <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap">{entry.action}</td>
+                            <td className="px-4 py-3 text-xs text-[var(--text-muted)] whitespace-nowrap truncate max-w-[150px]">{entry.model}</td>
+                            <td className="px-4 py-3 text-xs text-[var(--text-secondary)] font-[family-name:var(--font-outfit)] text-right">{formatTokens(entry.tokens)}</td>
                              <td className="px-4 py-3 text-xs text-[var(--text-primary)] font-[family-name:var(--font-outfit)] font-bold text-right">{formatCost(entry.cost)}</td>
                         </tr>
                     ))}
@@ -219,9 +219,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Cost Intelligence",
       subtitle: "Consommation tokens & coûts par utilisateur",
       icon: DollarSign,
-      color: "from-amber-500/20 to-orange-500/10",
-      borderColor: "border-amber-500/20",
-      iconColor: "text-amber-400",
+      color: "from-orange-500/14 to-orange-500/6",
+      borderColor: "border-orange-500/20",
+      iconColor: "text-orange-500",
       stat: formatCost(stats.totalCost),
       statLabel: "Coût total",
     },
@@ -230,9 +230,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Utilisateurs Connectés",
       subtitle: "Activité en temps réel & sessions actives",
       icon: Wifi,
-      color: "from-emerald-500/20 to-green-500/10",
-      borderColor: "border-emerald-500/20",
-      iconColor: "text-emerald-400",
+      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
+      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
+      iconColor: "text-[rgb(var(--brand-blue-strong))]",
       stat: `${stats.onlineCount}`,
       statLabel: "En ligne",
     },
@@ -241,9 +241,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Nouveaux Comptes",
       subtitle: "Inscriptions & croissance utilisateurs",
       icon: UserPlus,
-      color: "from-blue-500/20 to-indigo-500/10",
-      borderColor: "border-blue-500/20",
-      iconColor: "text-blue-400",
+      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
+      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
+      iconColor: "text-[rgb(var(--brand-blue-strong))]",
       stat: `${stats.newToday}`,
       statLabel: "Aujourd'hui",
     },
@@ -263,9 +263,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Paiements",
       subtitle: "Verifier et valider les preuves de paiement",
       icon: CreditCard,
-      color: "from-violet-500/20 to-purple-500/10",
-      borderColor: "border-violet-500/20",
-      iconColor: "text-violet-400",
+      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
+      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
+      iconColor: "text-[rgb(var(--brand-blue-strong))]",
       stat: "-",
       statLabel: "A verifier",
     },
@@ -274,9 +274,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Commandes",
       subtitle: "Commandes Messenger de tous les clients",
       icon: ShoppingBag,
-      color: "from-cyan-500/20 to-teal-500/10",
-      borderColor: "border-cyan-500/20",
-      iconColor: "text-cyan-400",
+      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
+      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
+      iconColor: "text-[rgb(var(--brand-blue-strong))]",
       stat: "-",
       statLabel: "Total",
     },
@@ -285,9 +285,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Signalements",
       subtitle: "Problemes et retours envoyes par les utilisateurs",
       icon: AlertCircle,
-      color: "from-orange-500/18 to-amber-500/10",
+      color: "from-orange-500/14 to-orange-500/6",
       borderColor: "border-orange-500/20",
-      iconColor: "text-orange-400",
+      iconColor: "text-orange-500",
       stat: "-",
       statLabel: "A traiter",
     },
@@ -302,8 +302,8 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Administration</h1>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <p className="text-[11px] text-zinc-500 font-[family-name:var(--font-outfit)] uppercase tracking-widest">FLARE AI — Admin Engine v3.6.0</p>
+            <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+            <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">FLARE AI — Admin Engine</p>
           </div>
         </div>
       </div>
@@ -312,9 +312,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {[
           { label: "Utilisateurs", val: stats.totalUsers, icon: Users, color: "text-[var(--text-primary)]" },
-          { label: "En ligne", val: stats.onlineCount, icon: Wifi, color: "text-emerald-400" },
-          { label: "Nouveaux (24h)", val: stats.newToday, icon: UserPlus, color: "text-blue-400" },
-          { label: "Coût Total", val: formatCost(stats.totalCost), icon: DollarSign, color: "text-amber-400" },
+          { label: "En ligne", val: stats.onlineCount, icon: Wifi, color: "text-[rgb(var(--brand-blue-strong))]" },
+          { label: "Nouveaux (24h)", val: stats.newToday, icon: UserPlus, color: "text-[rgb(var(--brand-blue-strong))]" },
+          { label: "Coût Total", val: formatCost(stats.totalCost), icon: DollarSign, color: "text-orange-500" },
         ].map((kpi, i) => (
           <motion.div
             key={i}
@@ -324,7 +324,7 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
             className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)] hover:bg-[var(--bg-hover)] transition-all"
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{kpi.label}</span>
+              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{kpi.label}</span>
               <kpi.icon size={16} className="text-[var(--text-muted)]" />
             </div>
             <p className={`text-2xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)] tracking-tight`}>{kpi.val}</p>
@@ -347,13 +347,13 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
               <card.icon size={28} />
             </div>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{card.title}</h3>
-            <p className="text-[12px] text-zinc-400 mb-6 leading-relaxed">{card.subtitle}</p>
+            <p className="mb-6 text-[12px] leading-relaxed text-[var(--text-secondary)]">{card.subtitle}</p>
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{card.stat}</p>
-                <p className="text-[10px] text-zinc-500 uppercase tracking-widest">{card.statLabel}</p>
+                <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">{card.statLabel}</p>
               </div>
-              <ChevronRight size={20} className="text-zinc-600 group-hover:text-[var(--text-primary)] group-hover:translate-x-1 transition-all" />
+              <ChevronRight size={20} className="text-[var(--text-muted)] group-hover:text-[var(--text-primary)] group-hover:translate-x-1 transition-all" />
             </div>
           </motion.button>
         ))}
@@ -1154,12 +1154,18 @@ const ACTIVATION_STATUS_LABELS: Record<string, string> = {
 };
 
 const ACTIVATION_STATUS_COLORS: Record<string, string> = {
-  draft: "bg-zinc-500/20 text-zinc-300", awaiting_payment: "bg-amber-500/20 text-amber-300",
-  payment_submitted: "bg-blue-500/20 text-blue-300", payment_verified: "bg-emerald-500/20 text-emerald-300",
-  awaiting_flare_page_admin_access: "bg-amber-500/20 text-amber-300",
-  queued_for_activation: "bg-blue-500/20 text-blue-300", activation_in_progress: "bg-orange-500/20 text-orange-300",
-  testing: "bg-purple-500/20 text-purple-300", active: "bg-emerald-500/20 text-emerald-300",
-  blocked: "bg-red-500/20 text-red-300", rejected: "bg-red-500/20 text-red-300", canceled: "bg-zinc-500/20 text-zinc-400",
+  draft: "bg-[var(--surface-subtle)] text-[var(--text-primary)]",
+  awaiting_payment: "bg-orange-500/10 text-orange-500",
+  payment_submitted: "bg-orange-500/10 text-orange-500",
+  payment_verified: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  awaiting_flare_page_admin_access: "bg-orange-500/10 text-orange-500",
+  queued_for_activation: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  activation_in_progress: "bg-orange-500/10 text-orange-500",
+  testing: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  active: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  blocked: "bg-red-500/10 text-red-500",
+  rejected: "bg-red-500/10 text-red-500",
+  canceled: "bg-[var(--surface-subtle)] text-[var(--text-primary)]",
 };
 
 const VALID_NEXT_STATUSES: Record<string, string[]> = {
@@ -1184,6 +1190,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
   const [assignEmail, setAssignEmail] = useState("");
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [feedback, setFeedback] = useState<{ tone: "error" | "success" | "warning"; message: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -1202,7 +1209,10 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
     try {
       await adminSetActivationStatus(id, status, undefined, token);
       await load();
-    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+      setFeedback({ tone: "success", message: "Le statut d'activation a ete mis a jour." });
+    } catch (e) {
+      setFeedback({ tone: "error", message: e instanceof Error ? e.message : "Erreur" });
+    }
     setActionBusy(null);
   };
 
@@ -1213,7 +1223,10 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
       await adminAssignActivation(id, assignEmail.trim(), token);
       setAssignEmail("");
       await load();
-    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+      setFeedback({ tone: "success", message: "Operateur assigne." });
+    } catch (e) {
+      setFeedback({ tone: "error", message: e instanceof Error ? e.message : "Erreur" });
+    }
     setActionBusy(null);
   };
 
@@ -1224,7 +1237,10 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
       await adminAddActivationNote(id, noteText.trim(), token);
       setNoteText("");
       await load();
-    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+      setFeedback({ tone: "success", message: "Note ajoutee a l'activation." });
+    } catch (e) {
+      setFeedback({ tone: "error", message: e instanceof Error ? e.message : "Erreur" });
+    }
     setActionBusy(null);
   };
 
@@ -1241,11 +1257,23 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
         </button>
       </div>
 
+      {feedback ? (
+        <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+          feedback.tone === "success"
+            ? "border-orange-500/25 bg-orange-500/10 text-[var(--text-primary)]"
+            : feedback.tone === "warning"
+              ? "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-primary)]"
+              : "border-red-500/25 bg-red-500/10 text-[var(--text-primary)]"
+        }`}>
+          {feedback.message}
+        </div>
+      ) : null}
+
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "payment_submitted", "payment_verified", "queued_for_activation", "activation_in_progress", "testing", "active", "blocked", "rejected"].map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "bg-orange-500/20 text-orange-300 border border-orange-500/30" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "border border-orange-500/30 bg-orange-500/10 text-orange-500" : "border border-transparent bg-[var(--bg-hover)] text-[var(--text-muted)] hover:border-[var(--border-glass)]"}`}>
             {s === "all" ? "Toutes" : ACTIVATION_STATUS_LABELS[s] || s}
           </button>
         ))}
@@ -1271,7 +1299,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-[var(--text-primary)] truncate">{ar.business_name || ar.organization_slug}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ACTIVATION_STATUS_COLORS[ar.status] || "bg-zinc-500/20 text-zinc-300"}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ACTIVATION_STATUS_COLORS[ar.status] || "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
                         {ACTIVATION_STATUS_LABELS[ar.status] || ar.status}
                       </span>
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-muted)]">
@@ -1283,7 +1311,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                     </p>
                   </div>
                   {ar.assigned_operator_email && (
-                    <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-full">{ar.assigned_operator_email}</span>
+                    <span className="rounded-full bg-[rgba(var(--brand-blue-soft),0.12)] px-2 py-0.5 text-[10px] text-[rgb(var(--brand-blue-strong))]">{ar.assigned_operator_email}</span>
                   )}
                   <ChevronDown size={16} className={`text-[var(--text-muted)] transition-transform ${expanded ? "rotate-180" : ""}`} />
                 </button>
@@ -1386,9 +1414,9 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                               <button key={ns} onClick={() => handleSetStatus(ar.id, ns)}
                                 disabled={actionBusy === ar.id}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                  ns === "active" ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30" :
-                                  ns === "blocked" || ns === "rejected" || ns === "canceled" ? "bg-red-500/20 text-red-300 border-red-500/30 hover:bg-red-500/30" :
-                                  "bg-blue-500/20 text-blue-300 border-blue-500/30 hover:bg-blue-500/30"
+                                  ns === "active" ? "border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)]" :
+                                  ns === "blocked" || ns === "rejected" || ns === "canceled" ? "border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20" :
+                                  "border-orange-500/30 bg-orange-500/10 text-orange-500 hover:bg-orange-500/20"
                                 }`}>
                                 {ACTIVATION_STATUS_LABELS[ns] || ns}
                               </button>
@@ -1401,7 +1429,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                           <input value={assignEmail} onChange={e => setAssignEmail(e.target.value)} placeholder="Email operateur..."
                             className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
                           <button onClick={() => handleAssign(ar.id)} disabled={actionBusy === ar.id || !assignEmail.trim()}
-                            className="px-3 py-2 rounded-lg text-xs font-medium bg-purple-500/20 text-purple-300 border border-purple-500/30 hover:bg-purple-500/30 disabled:opacity-40">
+                            className="rounded-lg border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] px-3 py-2 text-xs font-medium text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-40">
                             Assigner
                           </button>
                         </div>
@@ -1411,7 +1439,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                           <input value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Ajouter une note..."
                             className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
                           <button onClick={() => handleAddNote(ar.id)} disabled={actionBusy === ar.id || !noteText.trim()}
-                            className="px-3 py-2 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-40">
+                            className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-40">
                             <StickyNote size={14} />
                           </button>
                         </div>
@@ -1440,6 +1468,7 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
   const [rejectReason, setRejectReason] = useState("");
   const [rejectingId, setRejectingId] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [feedback, setFeedback] = useState<{ tone: "error" | "success" | "warning"; message: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -1458,27 +1487,36 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
     try {
       await adminVerifyPayment(id, token);
       await load();
-    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+      setFeedback({ tone: "success", message: "Paiement verifie." });
+    } catch (e) {
+      setFeedback({ tone: "error", message: e instanceof Error ? e.message : "Erreur" });
+    }
     setActionBusy(null);
   };
 
   const handleReject = async (id: string) => {
-    if (!rejectReason.trim()) { alert("Raison requise"); return; }
+    if (!rejectReason.trim()) {
+      setFeedback({ tone: "warning", message: "Renseignez une raison de refus." });
+      return;
+    }
     setActionBusy(id);
     try {
       await adminRejectPayment(id, rejectReason.trim(), token);
       setRejectingId(null);
       setRejectReason("");
       await load();
-    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+      setFeedback({ tone: "success", message: "Paiement refuse." });
+    } catch (e) {
+      setFeedback({ tone: "error", message: e instanceof Error ? e.message : "Erreur" });
+    }
     setActionBusy(null);
   };
 
   const paymentStatusColor = (s: string) => {
-    if (s === "submitted") return "bg-blue-500/20 text-blue-300";
-    if (s === "verified") return "bg-emerald-500/20 text-emerald-300";
-    if (s === "rejected") return "bg-red-500/20 text-red-300";
-    return "bg-zinc-500/20 text-zinc-300";
+    if (s === "submitted") return "bg-orange-500/10 text-orange-500";
+    if (s === "verified") return "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]";
+    if (s === "rejected") return "bg-red-500/10 text-red-500";
+    return "bg-[var(--surface-subtle)] text-[var(--text-primary)]";
   };
 
   return (
@@ -1487,17 +1525,29 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
         <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
           <ChevronLeft size={20} className="text-[var(--text-muted)]" />
         </button>
-        <CreditCard size={24} className="text-violet-400" />
+        <CreditCard size={24} className="text-[rgb(var(--brand-blue-strong))]" />
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Paiements</h2>
         <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
           <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
+      {feedback ? (
+        <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+          feedback.tone === "success"
+            ? "border-orange-500/25 bg-orange-500/10 text-[var(--text-primary)]"
+            : feedback.tone === "warning"
+              ? "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-primary)]"
+              : "border-red-500/25 bg-red-500/10 text-[var(--text-primary)]"
+        }`}>
+          {feedback.message}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "submitted", "verified", "rejected"].map(s => (
           <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "bg-violet-500/20 text-violet-300 border border-violet-500/30" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
             {s === "all" ? "Tous" : s === "submitted" ? "A verifier" : s === "verified" ? "Verifies" : "Refuses"}
           </button>
         ))}
