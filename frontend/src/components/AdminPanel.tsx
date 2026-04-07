@@ -399,9 +399,9 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
   }, [autoRefresh, refresh]);
 
   const statusConfig = {
-    online: { label: "En ligne", color: "bg-emerald-500", textColor: "text-emerald-400", ring: "ring-emerald-500/20" },
-    recent: { label: "Récent", color: "bg-amber-500", textColor: "text-amber-400", ring: "ring-amber-500/20" },
-    away: { label: "Absent", color: "bg-zinc-600", textColor: "text-zinc-500", ring: "ring-zinc-500/20" },
+    online: { label: "En ligne", color: "bg-orange-500", textColor: "text-orange-500", ring: "ring-orange-500/20" },
+    recent: { label: "Récent", color: "bg-[rgb(var(--brand-blue-strong))]", textColor: "text-[rgb(var(--brand-blue-strong))]", ring: "ring-[rgba(var(--brand-blue-strong),0.20)]" },
+    away: { label: "Absent", color: "bg-[var(--border-default)]", textColor: "text-[var(--text-muted)]", ring: "ring-[var(--border-default)]" },
   };
 
   return (
@@ -409,17 +409,17 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] text-zinc-400 hover:text-[var(--text-primary)] transition-all">
+          <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
             <ChevronLeft size={20} />
           </button>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-            <Wifi size={24} className="text-emerald-400" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+            <Wifi size={24} className="text-orange-500" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Utilisateurs Connectés</h1>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <p className="text-[11px] text-zinc-500 font-[family-name:var(--font-outfit)] uppercase tracking-widest">Temps réel — rafraîchi toutes les 15s</p>
+              <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+              <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">Temps reel — rafraichi toutes les 15s</p>
             </div>
           </div>
         </div>
@@ -427,15 +427,15 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-              autoRefresh ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-zinc-500"
+              autoRefresh ? "border-orange-500/20 bg-orange-500/10 text-orange-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-[var(--text-muted)]"
             }`}
           >
-            <div className={`w-1.5 h-1.5 rounded-full ${autoRefresh ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
+            <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-orange-500 animate-pulse" : "bg-[var(--border-default)]"}`} />
             <span className="text-[10px] font-[family-name:var(--font-outfit)] uppercase tracking-widest">
               {autoRefresh ? `Live (${nextRefresh}s)` : "Pausé"}
             </span>
           </button>
-          <button onClick={refresh} disabled={loading} className="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50">
+          <button onClick={refresh} disabled={loading} className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-orange-600 disabled:opacity-50">
             <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
             Refresh
           </button>
@@ -445,15 +445,15 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { label: "En ligne", val: data?.online_count ?? 0, color: "text-emerald-400", dot: "bg-emerald-500" },
-          { label: "Récemment actifs", val: data?.recent_count ?? 0, color: "text-amber-400", dot: "bg-amber-500" },
-          { label: "Actifs (24h)", val: data?.total_active_24h ?? 0, color: "text-blue-400", dot: "bg-blue-500" },
+          { label: "En ligne", val: data?.online_count ?? 0, color: "text-orange-500", dot: "bg-orange-500" },
+          { label: "Récemment actifs", val: data?.recent_count ?? 0, color: "text-[rgb(var(--brand-blue-strong))]", dot: "bg-[rgb(var(--brand-blue-strong))]" },
+          { label: "Actifs (24h)", val: data?.total_active_24h ?? 0, color: "text-[rgb(var(--brand-blue-strong))]", dot: "bg-[rgb(var(--brand-blue-strong))]" },
         ].map((kpi, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)]">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-2 h-2 rounded-full ${kpi.dot} animate-pulse`} />
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{kpi.label}</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
             </div>
             <p className={`text-3xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)]`}>{kpi.val}</p>
           </motion.div>
@@ -467,18 +467,18 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
         </div>
 
         <div className="grid grid-cols-12 gap-0 bg-[var(--bg-hover)] px-6 py-2 border-b border-[var(--border-glass)]">
-          <div className="col-span-4 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Utilisateur</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-center">Statut</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-center">Dernière action</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-right">Tokens (24h)</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-right">Coût (24h)</div>
+          <div className="col-span-4 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Utilisateur</div>
+          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Statut</div>
+          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Derniere action</div>
+          <div className="col-span-2 text-right text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Tokens (24h)</div>
+          <div className="col-span-2 text-right text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Cout (24h)</div>
         </div>
 
         <div className="divide-y divide-[var(--border-glass)]">
           {(!data?.users || data.users.length === 0) ? (
             <div className="p-16 text-center">
-              <WifiOff size={32} className="text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-600 text-xs">Aucun utilisateur actif dans les dernières 24h</p>
+              <WifiOff size={32} className="mx-auto mb-3 text-[var(--text-muted)]" />
+              <p className="text-xs text-[var(--text-secondary)]">Aucun utilisateur actif dans les dernieres 24h</p>
             </div>
           ) : data.users.map((user, idx) => {
             const sc = statusConfig[user.status];
@@ -494,22 +494,22 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{user.email}</p>
-                    <p className="text-[10px] text-zinc-600 truncate font-[family-name:var(--font-outfit)] tracking-tighter">UID: {user.user_id} · {timeAgo(user.last_seen)}</p>
+                    <p className="text-[10px] font-[family-name:var(--font-outfit)] tracking-tighter text-[var(--text-muted)]">UID: {user.user_id} · {timeAgo(user.last_seen)}</p>
                   </div>
                 </div>
                 <div className="col-span-2 flex justify-center">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${sc.textColor} bg-black/30 border border-[var(--border-glass)]`}>
+                  <span className={`rounded-full border border-[var(--border-glass)] bg-[var(--surface-subtle)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${sc.textColor}`}>
                     {sc.label}
                   </span>
                 </div>
                 <div className="col-span-2 text-center">
-                  <span className="text-[11px] text-zinc-400">{user.last_action || "—"}</span>
+                  <span className="text-[11px] text-[var(--text-secondary)]">{user.last_action || "—"}</span>
                 </div>
                 <div className="col-span-2 text-right">
                   <span className="text-[12px] font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{formatTokens(user.tokens_today)}</span>
                 </div>
                 <div className="col-span-2 text-right">
-                  <span className="text-[12px] font-bold text-amber-400 font-[family-name:var(--font-outfit)]">{formatCost(user.cost_today)}</span>
+                  <span className="text-[12px] font-bold font-[family-name:var(--font-outfit)] text-orange-500">{formatCost(user.cost_today)}</span>
                 </div>
               </motion.div>
             );
@@ -562,25 +562,25 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] text-zinc-400 hover:text-[var(--text-primary)] transition-all">
+          <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
             <ChevronLeft size={20} />
           </button>
-          <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-            <UserPlus size={24} className="text-blue-400" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(var(--brand-blue-strong),0.20)] bg-[rgba(var(--brand-blue-soft),0.12)]">
+            <UserPlus size={24} className="text-[rgb(var(--brand-blue-strong))]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Nouveaux Comptes</h1>
-            <p className="text-[11px] text-zinc-500 font-[family-name:var(--font-outfit)] uppercase tracking-widest">Inscriptions & croissance</p>
+            <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">Inscriptions & croissance</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-              autoRefresh ? "bg-blue-500/10 border-blue-500/20 text-blue-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-zinc-500"
+              autoRefresh ? "border-[rgba(var(--brand-blue-strong),0.20)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-[var(--text-muted)]"
             }`}
           >
-            <div className={`w-1.5 h-1.5 rounded-full ${autoRefresh ? "bg-blue-500 animate-pulse" : "bg-zinc-600"}`} />
+            <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-[rgb(var(--brand-blue-strong))] animate-pulse" : "bg-[var(--border-default)]"}`} />
             <span className="text-[10px] font-[family-name:var(--font-outfit)] uppercase tracking-widest">
               {autoRefresh ? `Live (${nextRefresh}s)` : "Pausé"}
             </span>
@@ -594,13 +594,13 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
             ].map((opt) => (
               <button key={opt.val} onClick={() => setDays(opt.val)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                  days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-zinc-500 hover:text-[var(--text-primary)]"
+                  days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                 }`}>
                 {opt.label}
               </button>
             ))}
           </div>
-          <button onClick={refresh} disabled={loading} className="px-4 py-2 rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-950 text-xs font-bold hover:opacity-90 transition-all flex items-center gap-2 disabled:opacity-50">
+          <button onClick={refresh} disabled={loading} className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-orange-600 disabled:opacity-50">
             <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
             Refresh
           </button>
@@ -610,13 +610,13 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
       {/* KPIs */}
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
-          { label: "Aujourd'hui", val: data?.new_today ?? 0, color: "text-emerald-400" },
-          { label: "Cette semaine", val: data?.new_this_week ?? 0, color: "text-blue-400" },
+          { label: "Aujourd'hui", val: data?.new_today ?? 0, color: "text-orange-500" },
+          { label: "Cette semaine", val: data?.new_this_week ?? 0, color: "text-[rgb(var(--brand-blue-strong))]" },
           { label: `${days} derniers jours`, val: data?.total ?? 0, color: "text-[var(--text-primary)]" },
         ].map((kpi, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
             className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)]">
-            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{kpi.label}</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
             <p className={`text-3xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)] mt-2`}>{kpi.val}</p>
           </motion.div>
         ))}
@@ -629,33 +629,33 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
         </div>
 
         <div className="grid grid-cols-12 gap-0 bg-[var(--bg-hover)] px-6 py-2 border-b border-[var(--border-glass)]">
-          <div className="col-span-4 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Email</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-center">Plan</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-center">Inscrit le</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-center">Activité</div>
-          <div className="col-span-2 text-[9px] font-bold text-zinc-500 uppercase tracking-widest text-right">Coût total</div>
+          <div className="col-span-4 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Email</div>
+          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Plan</div>
+          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Inscrit le</div>
+          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Activite</div>
+          <div className="col-span-2 text-right text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Cout total</div>
         </div>
 
         <div className="divide-y divide-[var(--border-glass)]">
           {(!data?.accounts || data.accounts.length === 0) ? (
             <div className="p-16 text-center">
-              <UserPlus size={32} className="text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-600 text-xs">Aucun nouveau compte sur cette période</p>
+              <UserPlus size={32} className="mx-auto mb-3 text-[var(--text-muted)]" />
+              <p className="text-xs text-[var(--text-secondary)]">Aucun nouveau compte sur cette periode</p>
             </div>
           ) : data.accounts.map((acc, idx) => {
-            const planColor = acc.plan === "business" ? "text-amber-400 bg-amber-500/10 border-amber-500/20"
-              : acc.plan === "pro" ? "text-blue-400 bg-blue-500/10 border-blue-500/20"
-              : "text-zinc-400 bg-zinc-500/10 border-zinc-500/20";
+            const planColor = acc.plan === "business" ? "text-orange-500 bg-orange-500/10 border-orange-500/20"
+              : acc.plan === "pro" ? "text-[rgb(var(--brand-blue-strong))] bg-[rgba(var(--brand-blue-soft),0.12)] border-[rgba(var(--brand-blue-strong),0.20)]"
+              : "text-[var(--text-primary)] bg-[var(--surface-subtle)] border-[var(--border-default)]";
             return (
               <motion.div key={acc.user_id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.03 }}
                 className="grid grid-cols-12 gap-0 px-6 py-4 items-center hover:bg-[var(--bg-hover)] transition-colors">
                 <div className="col-span-4 flex items-center gap-3 min-w-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500/10 to-indigo-500/20 border border-[var(--border-glass)] flex items-center justify-center text-blue-400 font-bold text-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-glass)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))] text-sm font-bold">
                     {(acc.email || "?").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{acc.email}</p>
-                    <p className="text-[10px] text-zinc-600 truncate font-[family-name:var(--font-outfit)] tracking-tighter">UID: {acc.user_id}</p>
+                    <p className="text-[10px] font-[family-name:var(--font-outfit)] tracking-tighter text-[var(--text-muted)]">UID: {acc.user_id}</p>
                   </div>
                 </div>
                 <div className="col-span-2 flex justify-center">
@@ -664,13 +664,13 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
                   </span>
                 </div>
                 <div className="col-span-2 text-center">
-                  <span className="text-[11px] text-zinc-400">{formatDate(acc.created_at)}</span>
+                  <span className="text-[11px] text-[var(--text-secondary)]">{formatDate(acc.created_at)}</span>
                 </div>
                 <div className="col-span-2 text-center">
                   {acc.is_active ? (
-                    <span className="text-[11px] text-emerald-400 font-medium">{acc.total_actions} actions</span>
+                    <span className="text-[11px] font-medium text-orange-500">{acc.total_actions} actions</span>
                   ) : (
-                    <span className="text-[11px] text-zinc-600 italic">Inactif</span>
+                    <span className="text-[11px] italic text-[var(--text-muted)]">Inactif</span>
                   )}
                 </div>
                 <div className="col-span-2 text-right">
@@ -703,6 +703,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
   const [ledgerLoading, setLedgerLoading] = useState(false);
   const [sort, setSort] = useState({ key: "cost", asc: false });
   const [visibleUsers, setVisibleUsers] = useState(20);
+  const [feedback, setFeedback] = useState<{ tone: "error" | "success"; message: string } | null>(null);
 
   const [backfillDone, setBackfillDone] = useState(false);
 
@@ -760,10 +761,10 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
     setLoading(true);
     try {
       const res = await syncAdminUsers(token);
-      alert((res as any).message || res.status || "Synchronisation Firebase terminée.");
+      setFeedback({ tone: "success", message: (res as any).message || res.status || "Synchronisation Firebase terminee." });
       refresh();
     } catch (e) {
-      alert("Erreur lors de la synchronisation Firebase.");
+      setFeedback({ tone: "error", message: "Erreur lors de la synchronisation Firebase." });
     } finally {
       setLoading(false);
     }
@@ -808,7 +809,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
       <div className="flex-1 flex items-center justify-center bg-[var(--background)]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[var(--border-glass)] border-t-[var(--text-primary)] rounded-full animate-spin" />
-          <div className="text-zinc-500 text-xs font-[family-name:var(--font-outfit)] tracking-widest uppercase">Chargement Cost Intelligence...</div>
+          <div className="text-xs font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">Chargement Cost Intelligence...</div>
         </div>
       </div>
     );
@@ -820,10 +821,10 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         <div className="max-w-md">
           <AlertCircle size={48} className="text-red-500 mx-auto mb-6" />
           <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Erreur de Sync</h2>
-          <p className="text-zinc-400 text-sm mb-6">{error}</p>
+          <p className="mb-6 text-sm text-[var(--text-secondary)]">{error}</p>
           <div className="flex flex-col gap-3">
-            <button onClick={refresh} className="px-6 py-3 rounded-xl bg-[var(--text-primary)] text-[var(--background)] font-bold text-sm">Réessayer</button>
-            <button onClick={onBack} className="px-6 py-3 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-glass)] text-zinc-400 font-bold text-xs">Retour au menu</button>
+            <button onClick={refresh} className="rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-black">Reessayer</button>
+            <button onClick={onBack} className="rounded-xl border border-[var(--border-glass)] bg-[var(--bg-hover)] px-6 py-3 text-xs font-bold text-[var(--text-primary)]">Retour au menu</button>
           </div>
         </div>
       </div>
@@ -847,17 +848,17 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] text-zinc-400 hover:text-[var(--text-primary)] transition-all">
+            <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
               <ChevronLeft size={20} />
             </button>
-            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-              <DollarSign size={24} className="text-amber-400" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
+              <DollarSign size={24} className="text-orange-500" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Cost Intelligence</h1>
               <div className="flex items-center gap-2 mt-0.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <p className="text-[11px] text-zinc-500 font-[family-name:var(--font-outfit)] uppercase tracking-widest">FLARE AI — Admin Engine v3.6.0</p>
+                <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">FLARE AI — Admin Engine</p>
               </div>
             </div>
           </div>
@@ -865,9 +866,9 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
           <div className="flex items-center gap-3">
             <button onClick={() => setAutoRefresh(!autoRefresh)}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-                autoRefresh ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-zinc-500"
+                autoRefresh ? "border-orange-500/20 bg-orange-500/10 text-orange-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-[var(--text-muted)]"
               }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${autoRefresh ? "bg-emerald-500 animate-pulse" : "bg-zinc-600"}`} />
+              <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-orange-500 animate-pulse" : "bg-[var(--border-default)]"}`} />
               <span className="text-[10px] font-[family-name:var(--font-outfit)] uppercase tracking-widest">
                 {autoRefresh ? `Live (${nextRefresh}s)` : "Static"}
               </span>
@@ -876,24 +877,24 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
               {[{ label: "1J", val: 1 }, { label: "7J", val: 7 }, { label: "30J", val: 30 }, { label: "ALL", val: 0 }].map((opt) => (
                 <button key={opt.val} onClick={() => setDays(opt.val)}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                    days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-zinc-500 hover:text-[var(--text-primary)]"
+                    days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                   }`}>
                   {opt.label}
                 </button>
               ))}
             </div>
             <button onClick={triggerSync} disabled={loading}
-              className="px-3 py-2 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-glass)] text-zinc-400 text-xs font-bold hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)] transition-all flex items-center gap-2 disabled:opacity-50">
+              className="flex items-center gap-2 rounded-xl border border-[rgba(var(--brand-blue-strong),0.20)] bg-[rgba(var(--brand-blue-soft),0.12)] px-3 py-2 text-xs font-bold text-[rgb(var(--brand-blue-strong))] transition-all hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-50">
               <Users size={14} />
               Sync Firebase
             </button>
             <button onClick={showLedger} disabled={ledgerLoading}
-              className="px-3 py-2 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-glass)] text-zinc-400 text-xs font-bold hover:text-[var(--text-primary)] hover:border-[var(--border-subtle)] transition-all flex items-center gap-2 disabled:opacity-50">
+              className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-bold text-[var(--text-primary)] transition-all hover:bg-[var(--surface-raised)] disabled:opacity-50">
               <BookOpen size={14} />
               {ledger ? "Masquer Journal" : "Journal"}
             </button>
             <button onClick={refresh} disabled={loading}
-              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] text-[var(--bg-card)] dark:text-[var(--background)] text-xs font-bold hover:opacity-90 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50">
+              className="flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-black transition-all hover:bg-orange-600 disabled:opacity-50">
               <RefreshCcw size={14} className={loading ? "animate-spin" : ""} />
               {loading ? "Sync..." : "Refresh"}
             </button>
@@ -901,17 +902,23 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         </div>
 
         {/* Global KPIs */}
+        {feedback ? (
+          <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${feedback.tone === "success" ? "border-orange-500/25 bg-orange-500/10 text-[var(--text-primary)]" : "border-red-500/25 bg-red-500/10 text-[var(--text-primary)]"}`}>
+            {feedback.message}
+          </div>
+        ) : null}
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
           {[
             { label: "Utilisateurs", val: data?.total_users ?? 0, sub: "Comptes actifs", icon: Users, color: "text-[var(--text-primary)]" },
             { label: "Gemini 3 Pro", val: formatCost(totalG3), sub: "Coût Raisonnement", icon: Brain, color: "text-[var(--text-primary)]" },
-            { label: "GEMINI 3 FLASH", val: formatCost(totalFlash), sub: "Coût Vitesse", icon: Zap, color: "text-emerald-400" },
+            { label: "GEMINI 3 FLASH", val: formatCost(totalFlash), sub: "Coût Vitesse", icon: Zap, color: "text-[rgb(var(--brand-blue-strong))]" },
             { label: "Total Google Cloud", val: formatCost(data?.total_cost ?? 0), sub: `${formatTokens(totalTokens)} tokens`, icon: DollarSign, color: "text-[var(--text-primary)]" }
           ].map((kpi, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
               className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)] hover:bg-[var(--bg-hover)] transition-all cursor-default">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{kpi.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
                 <kpi.icon size={16} className="text-[var(--text-muted)]" />
               </div>
               <p className={`text-2xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)] tracking-tight`}>{kpi.val}</p>
@@ -922,12 +929,12 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {[
-            { label: "Messages", val: totalMessages, icon: MessageSquare, color: "text-blue-400" },
-            { label: "Recherches", val: totalResearch, icon: Globe, color: "text-cyan-400" },
-            { label: "Images", val: totalImages, icon: ImageIcon, color: "text-pink-400" },
-            { label: "Vidéos", val: totalVideos, icon: Video, color: "text-emerald-400" },
-            { label: "Documents", val: totalDocs, icon: FileText, color: "text-indigo-400" },
-            { label: "Tableurs", val: totalSheets, icon: FileSpreadsheet, color: "text-green-400" },
+            { label: "Messages", val: totalMessages, icon: MessageSquare, color: "text-orange-500" },
+            { label: "Recherches", val: totalResearch, icon: Globe, color: "text-[rgb(var(--brand-blue-strong))]" },
+            { label: "Images", val: totalImages, icon: ImageIcon, color: "text-orange-500" },
+            { label: "Vidéos", val: totalVideos, icon: Video, color: "text-[rgb(var(--brand-blue-strong))]" },
+            { label: "Documents", val: totalDocs, icon: FileText, color: "text-[rgb(var(--brand-blue-strong))]" },
+            { label: "Tableurs", val: totalSheets, icon: FileSpreadsheet, color: "text-orange-500" },
           ].map((kpi, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i + 4) * 0.05 }}
               className="p-4 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)] flex items-center gap-4">
@@ -935,7 +942,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
                 <kpi.icon size={24} />
               </div>
               <div>
-                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{kpi.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
                 <p className="text-2xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)] tracking-tight">{kpi.val}</p>
               </div>
             </motion.div>
@@ -946,10 +953,10 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         <div className="bg-[var(--bg-card)] border border-[var(--border-glass)] rounded-[32px] overflow-hidden backdrop-blur-3xl shadow-2xl">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="relative">
-              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder={`Rechercher parmi ${sortedUsers.length} utilisateurs...`}
-                className="bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-xl pl-10 pr-4 py-2.5 text-sm text-[var(--text-primary)] placeholder-zinc-500 focus:outline-none focus:border-[var(--border-subtle)] transition-all w-80" />
+                className="w-80 rounded-xl border border-[var(--border-glass)] bg-[var(--bg-hover)] py-2.5 pl-10 pr-4 text-sm text-[var(--text-primary)] transition-all placeholder:text-[var(--text-muted)] focus:border-[var(--border-subtle)] focus:outline-none" />
             </div>
             <div className="flex items-center gap-2">
               <button onClick={() => setSort({ ...sort, asc: !sort.asc })} className="p-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-glass)] text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-all">
@@ -964,7 +971,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
                 ].map(opt => (
                   <button key={opt.key} onClick={() => setSort({ ...sort, key: opt.key })}
                     className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      sort.key === opt.key ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-md" : "text-zinc-400 hover:text-[var(--text-primary)]"
+                      sort.key === opt.key ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-md" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                     }`}>
                     {opt.label}
                   </button>
@@ -1709,6 +1716,7 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
   const [loading, setLoading] = useState(true);
   const [actionBusy, setActionBusy] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("all");
+  const [feedback, setFeedback] = useState<{ tone: "error" | "success"; message: string } | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -1727,13 +1735,16 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
     try {
       await adminUpdateOrder(id, { status }, token);
       await load();
-    } catch (e) { alert(e instanceof Error ? e.message : "Erreur"); }
+      setFeedback({ tone: "success", message: "Le statut de commande a ete mis a jour." });
+    } catch (e) {
+      setFeedback({ tone: "error", message: e instanceof Error ? e.message : "Erreur" });
+    }
     setActionBusy(null);
   };
 
   const orderStatusColor = (s: string) => {
-    const m: Record<string, string> = { new: "bg-blue-500/20 text-blue-300", confirmed: "bg-emerald-500/20 text-emerald-300", delivered: "bg-emerald-500/20 text-emerald-300", cancelled: "bg-red-500/20 text-red-300", needs_followup: "bg-amber-500/20 text-amber-300" };
-    return m[s] || "bg-zinc-500/20 text-zinc-300";
+    const m: Record<string, string> = { new: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]", confirmed: "bg-orange-500/10 text-orange-500", delivered: "bg-orange-500/10 text-orange-500", cancelled: "bg-red-500/10 text-red-500", needs_followup: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" };
+    return m[s] || "bg-[var(--surface-subtle)] text-[var(--text-primary)]";
   };
   const orderStatusLabel = (s: string) => {
     const m: Record<string, string> = { new: "Nouvelle", confirmed: "Confirmee", delivered: "Livree", cancelled: "Annulee", needs_followup: "A suivre" };
@@ -1746,17 +1757,23 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
         <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
           <ChevronLeft size={20} className="text-[var(--text-muted)]" />
         </button>
-        <ShoppingBag size={24} className="text-cyan-400" />
+        <ShoppingBag size={24} className="text-[rgb(var(--brand-blue-strong))]" />
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Commandes (tous clients)</h2>
         <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
           <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
+      {feedback ? (
+        <div className={`mb-4 rounded-xl border px-4 py-3 text-sm ${feedback.tone === "success" ? "border-orange-500/25 bg-orange-500/10 text-[var(--text-primary)]" : "border-red-500/25 bg-red-500/10 text-[var(--text-primary)]"}`}>
+          {feedback.message}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "new", "confirmed", "needs_followup", "delivered", "cancelled"].map(s => (
           <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
             {s === "all" ? "Toutes" : orderStatusLabel(s)}
           </button>
         ))}
@@ -1781,7 +1798,7 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${orderStatusColor(order.status)}`}>
                       {orderStatusLabel(order.status)}
                     </span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${order.source === "signal" ? "bg-purple-500/20 text-purple-300" : "bg-zinc-500/20 text-zinc-300"}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${order.source === "signal" ? "bg-orange-500/10 text-orange-500" : "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
                       {order.source === "signal" ? "Signal IA" : "Manuel"}
                     </span>
                     <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full">{order.page_name || order.organization_slug}</span>
@@ -1805,20 +1822,20 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
                 <div className="flex flex-col gap-1 flex-shrink-0">
                   {["new", "needs_followup"].includes(order.status) && (
                     <button onClick={() => handleUpdateStatus(order.id, "confirmed")} disabled={actionBusy === order.id}
-                      className="px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-40">
+                      className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-2 py-1 text-[10px] font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-40">
                       Confirmer
                     </button>
                   )}
                   {order.status === "confirmed" && (
                     <button onClick={() => handleUpdateStatus(order.id, "delivered")} disabled={actionBusy === order.id}
-                      className="px-2 py-1 rounded-lg text-[10px] font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-40">
+                      className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-2 py-1 text-[10px] font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-40">
                       Livree
                     </button>
                   )}
                   {!["cancelled", "delivered"].includes(order.status) && (
                     <>
                       <button onClick={() => handleUpdateStatus(order.id, "needs_followup")} disabled={actionBusy === order.id}
-                        className="px-2 py-1 rounded-lg text-[10px] font-medium bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 disabled:opacity-40">
+                        className="rounded-lg border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] px-2 py-1 text-[10px] font-medium text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-40">
                         A suivre
                       </button>
                       <button onClick={() => handleUpdateStatus(order.id, "cancelled")} disabled={actionBusy === order.id}
