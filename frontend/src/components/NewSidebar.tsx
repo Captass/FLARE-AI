@@ -14,6 +14,7 @@ import {
   PanelLeftOpen,
   ChevronRight,
   ChevronUp,
+  AlertCircle,
   ShieldCheck,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,6 +25,7 @@ import type { NavLevel } from "@/components/NavBreadcrumb";
 interface NewSidebarProps {
   activeView: NavLevel;
   onNavigate: (level: NavLevel) => void;
+  onOpenReport?: () => void;
   user?: User | null;
   onLogout?: () => void;
   displayName?: string;
@@ -160,6 +162,7 @@ function UserAvatar({
 export default function NewSidebar({
   activeView,
   onNavigate,
+  onOpenReport,
   user,
   onLogout,
   displayName,
@@ -381,19 +384,31 @@ export default function NewSidebar({
                   expanded ? "left-2 right-2" : "left-[72px]"
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => navigate("settings")}
+                  <button
+                    type="button"
+                    onClick={() => navigate("settings")}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
                 >
                   <Settings size={15} className="shrink-0" />
                   <span>{settingsLabel}</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileMenuOpen(false);
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
+                      onOpenReport?.();
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                  >
+                    <AlertCircle size={15} className="shrink-0" />
+                    <span>Signalement</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setProfileMenuOpen(false);
                     onLogout?.();
                   }}
                   className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"

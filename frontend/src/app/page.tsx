@@ -54,6 +54,7 @@ import ChatbotClientDetailPage from "@/components/pages/ChatbotClientDetailPage"
 import ChatbotActivationPage from "@/components/pages/ChatbotActivationPage";
 import ChatbotOrdersPage from "@/components/pages/ChatbotOrdersPage";
 import ThemeToggle from "@/components/ui/ThemeToggle";
+import SignalementModal from "@/components/SignalementModal";
 import { useThemePreference } from "@/hooks/useThemePreference";
 
 import {
@@ -323,6 +324,7 @@ export default function Home() {
   const [isSpaceManagerOpen, setIsSpaceManagerOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -1326,6 +1328,7 @@ export default function Home() {
         <NewSidebar
           activeView={sidebarActiveView}
           onNavigate={(v) => { navigateWithAccess(v); setSidebarOpen(false); }}
+          onOpenReport={() => setIsReportModalOpen(true)}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           user={user}
@@ -1337,6 +1340,15 @@ export default function Home() {
           logoUrl={resolvedBrandLogoUrl}
           lang={lang}
           userEmail={user?.email ?? null}
+        />
+
+        <SignalementModal
+          open={isReportModalOpen}
+          token={token}
+          currentView={activeView}
+          currentViewLabel={resolvedViewTitle}
+          getFreshToken={getFreshToken}
+          onClose={() => setIsReportModalOpen(false)}
         />
 
       {/* Zone principale 3D Glass */}

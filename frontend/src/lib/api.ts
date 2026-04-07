@@ -1755,10 +1755,11 @@ export async function getMyManualPayments(token?: string | null): Promise<{ subm
 // ─── Activation Request ─────────────────────────────────────────────────────
 
 export interface ActivationRequest {
-  id: string;
-  organization_slug: string;
-  selected_plan_id: string;
-  status: string;
+    id: string;
+    organization_slug: string;
+    organization_scope_id: string;
+    selected_plan_id: string;
+    status: string;
   payment_status: string;
   contact_full_name: string;
   contact_email: string;
@@ -1927,3 +1928,90 @@ export async function adminUpdateOrder(orderId: string, updates: { status?: stri
   }, token);
 }
 
+export interface UserReport {
+  id: string;
+  organization_slug?: string | null;
+  organization_scope_id?: string | null;
+  user_id: string;
+  user_email: string;
+  category: string;
+  severity: string;
+  subject: string;
+  title?: string;
+  message: string;
+  description?: string;
+  page_context: string;
+  current_view?: string;
+  preferred_contact: string;
+  expected_behavior?: string;
+  contact_email?: string;
+  contact_phone?: string;
+  status: string;
+  admin_note?: string;
+  admin_notes?: string;
+  resolved_at?: string | null;
+  resolved_by?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface CreateUserReportPayload {
+  category: string;
+  severity: string;
+  subject?: string;
+  title?: string;
+  message?: string;
+  description?: string;
+  page_context?: string;
+  current_view?: string;
+  preferred_contact?: string;
+  expected_behavior?: string;
+  contact_detail?: string;
+  contact_email?: string;
+  contact_phone?: string;
+}
+
+export async function createUserReport(payload: CreateUserReportPayload, token?: string | null): Promise<{ report: UserReport }> {
+  const normalizedPayload = {
+    category: payload.category,
+    severity: payload.severity,
+    subject: (payload.subject ?? payload.title ?? "").trim(),
+    message: (payload.message ?? payload.description ?? "").trim(),
+    page_context: (payload.page_context ?? payload.current_view ?? "").trim(),
+    preferred_contact: (payload.preferred_contact
+      ?? (payload.contact_phone?.trim() ? "phone" : "email")).trim(),
+    expected_behavior: payload.expected_behavior?.trim() || "",
+    contact_email: payload.contact_email?.trim() || "",
+    contact_phone: payload.contact_phone?.trim() || "",
+    contact_detail: (payload.contact_detail
+      ?? payload.contact_phone
+      ?? payload.contact_email
+      ?? "").trim(),
+  };
+
+  return apiRequest<{ report: UserReport }>("/api/reports", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(normalizedPayload),
+  }, token);
+}
+
+export async function getMyReports(token?: string | null): Promise<{ reports: UserReport[] }> {
+  return apiRequest<{ reports: UserReport[] }>("/api/reports/me", {}, token);
+}
+
+export async function getAdminReports(token?: string | null): Promise<{ reports: UserReport[] }> {
+  return apiRequest<{ reports: UserReport[] }>("/api/admin/reports", {}, token);
+}
+
+export async function adminUpdateReport(
+  reportId: string,
+  updates: { status?: string; admin_note?: string },
+  token?: string | null
+): Promise<{ report: UserReport }> {
+  return apiRequest<{ report: UserReport }>(`/api/admin/reports/${reportId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  }, token);
+}

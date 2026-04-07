@@ -434,6 +434,8 @@ PAYMENT_STATUSES = ["draft", "submitted", "verified", "rejected"]
 
 ORDER_STATUSES = ["detected", "contacted", "confirmed", "fulfilled", "canceled"]
 
+REPORT_STATUSES = ["new", "in_review", "resolved", "dismissed"]
+
 
 class ActivationRequest(Base):
     """Demande d'activation assistee par organisation."""
@@ -540,6 +542,32 @@ class ManualPaymentSubmission(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
+class UserReport(Base):
+    """Signalement utilisateur remonte vers l'admin."""
+    __tablename__ = "user_reports"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    organization_slug = Column(String, index=True, nullable=False)
+    organization_scope_id = Column(String, index=True, nullable=False)
+    reporter_user_id = Column(String, nullable=False)
+    reporter_email = Column(String, default="")
+    current_view = Column(String, default="")
+    category = Column(String, default="other")
+    severity = Column(String, default="normal")
+    title = Column(String, default="")
+    description = Column(Text, default="")
+    expected_behavior = Column(Text, default="")
+    contact_email = Column(String, default="")
+    contact_phone = Column(String, default="")
+    screenshot_url = Column(String, nullable=True)
+    status = Column(String, default="new")
+    admin_notes = Column(Text, nullable=True)
+    resolved_by = Column(String, nullable=True)
+    resolved_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class ChatbotOrder(Base):
     """Commande issue du chatbot Messenger."""
     __tablename__ = "chatbot_orders"
@@ -567,6 +595,7 @@ class ChatbotOrder(Base):
     assigned_to = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 
 
 # ── Feature flags par plan ────────────────────────────────────────────────────
@@ -1322,6 +1351,8 @@ def upgrade_user_plan(user_id: str, new_plan_id: str) -> bool:
         return True
     finally:
         db.close()
+
+
 
 
 

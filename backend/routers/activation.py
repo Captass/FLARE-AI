@@ -19,6 +19,8 @@ from core.database import (
     ChatbotOrder,
     ChatbotPreferences,
     ManualPaymentSubmission,
+    REPORT_STATUSES,
+    UserReport,
     UserSubscription,
     get_db,
 )
@@ -76,6 +78,31 @@ def _add_event(db: Session, request_id: str, event_type: str, actor_type: str, a
         actor_id=actor_id,
         payload_json=payload or {},
     ))
+
+
+def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, Any]]:
+    if not ar:
+        return None
+    return {
+        "id": ar.id,
+        "organization_scope_id": ar.organization_scope_id,
+        "selected_plan_id": ar.selected_plan_id,
+        "status": ar.status,
+        "payment_status": ar.payment_status,
+        "contact_full_name": ar.contact_full_name,
+        "contact_email": ar.contact_email,
+        "contact_phone": ar.contact_phone,
+        "contact_whatsapp": ar.contact_whatsapp,
+        "business_name": ar.business_name,
+        "business_sector": ar.business_sector,
+        "facebook_page_name": ar.facebook_page_name,
+        "facebook_page_url": ar.facebook_page_url,
+        "facebook_admin_email": ar.facebook_admin_email,
+        "bot_name": ar.bot_name,
+        "primary_language": ar.primary_language,
+        "notes_for_flare": ar.notes_for_flare,
+        "assigned_operator_email": ar.assigned_operator_email,
+    }
 
 
 DEFAULT_PAYMENT_METHODS: List[Dict[str, Any]] = [
@@ -454,12 +481,18 @@ def admin_list_payments(
     submissions = db.query(ManualPaymentSubmission).order_by(
         ManualPaymentSubmission.created_at.desc()
     ).limit(200).all()
+    activation_ids = [s.activation_request_id for s in submissions if s.activation_request_id]
+    activation_map: Dict[str, ActivationRequest] = {}
+    if activation_ids:
+        activations = db.query(ActivationRequest).filter(ActivationRequest.id.in_(activation_ids)).all()
+        activation_map = {a.id: a for a in activations}
 
     return {
         "payments": [
             {
                 "id": s.id,
                 "organization_slug": s.organization_slug,
+                "organization_scope_id": s.organization_scope_id,
                 "activation_request_id": s.activation_request_id,
                 "selected_plan_id": s.selected_plan_id,
                 "method_code": s.method_code,
@@ -476,6 +509,7 @@ def admin_list_payments(
                 "verified_by": s.verified_by,
                 "rejection_reason": s.rejection_reason,
                 "created_at": s.created_at.isoformat() if s.created_at else None,
+                "activation_summary": _activation_summary(activation_map.get(s.activation_request_id)) if s.activation_request_id else None,
             }
             for s in submissions
         ]
@@ -492,9 +526,13 @@ def admin_get_payment(
     s = db.query(ManualPaymentSubmission).filter(ManualPaymentSubmission.id == payment_id).first()
     if not s:
         raise HTTPException(status_code=404, detail="Paiement introuvable.")
+    activation = None
+    if s.activation_request_id:
+        activation = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
     return {
         "id": s.id,
         "organization_slug": s.organization_slug,
+        "organization_scope_id": s.organization_scope_id,
         "activation_request_id": s.activation_request_id,
         "selected_plan_id": s.selected_plan_id,
         "method_code": s.method_code,
@@ -512,6 +550,7 @@ def admin_get_payment(
         "verified_at": s.verified_at.isoformat() if s.verified_at else None,
         "verified_by": s.verified_by,
         "rejection_reason": s.rejection_reason,
+        "activation_summary": _activation_summary(activation),
     }
 
 
@@ -787,6 +826,123 @@ def admin_add_note(
     db.commit()
 
     return {"status": "ok"}
+class UserReportPayload(BaseModel):
+    category: str = "other"
+    severity: str = "medium"
+    subject: str = ""
+    title: str = ""
+    message: str = ""
+    description: str = ""
+    page_context: str = ""
+    current_view: str = ""
+    preferred_contact: str = "email"
+    expected_behavior: str = ""
+    contact_detail: str = ""
+    contact_email: str = ""
+    contact_phone: str = ""
+
+
+@router.post("/api/reports")
+def create_user_report(
+    req: UserReportPayload,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    scoped_user_id = get_user_id_from_header(authorization)
+    user_id, user_email = get_user_identity(authorization)
+
+    if scoped_user_id == "anonymous":
+        raise HTTPException(status_code=401, detail="Authentification requise.")
+
+    org_slug = scoped_user_id.split(":", 1)[1].strip().lower() if scoped_user_id.startswith("org:") else "personal"
+    preferred_contact = (req.preferred_contact or ("phone" if req.contact_phone.strip() else "email")).strip().lower()
+    normalized_title = (req.subject or req.title or "").strip()
+    normalized_description = (req.message or req.description or "").strip()
+    normalized_view = (req.page_context or req.current_view or "").strip()
+    normalized_contact_email = (req.contact_email or "").strip()
+    normalized_contact_phone = (req.contact_phone or req.contact_detail or "").strip()
+
+    report = UserReport(
+        organization_slug=org_slug,
+        organization_scope_id=scoped_user_id,
+        reporter_user_id=user_id,
+        reporter_email=user_email,
+        current_view=normalized_view,
+        category=(req.category or "other").strip().lower(),
+        severity=(req.severity or "medium").strip().lower(),
+        title=normalized_title,
+        description=normalized_description,
+        expected_behavior=req.expected_behavior.strip(),
+        contact_email=(normalized_contact_email or user_email) if preferred_contact == "email" else "",
+        contact_phone=normalized_contact_phone if preferred_contact in {"phone", "whatsapp"} else "",
+        status="new",
+    )
+    db.add(report)
+    db.commit()
+    db.refresh(report)
+
+    logger.info(f"[reports] Report created: {report.id} by {user_email} ({scoped_user_id})")
+    return {"report": _serialize_report(report)}
+
+
+@router.get("/api/reports/me")
+def get_my_reports(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    _, user_email = get_user_identity(authorization)
+    reports = db.query(UserReport).filter(
+        UserReport.reporter_email == user_email,
+    ).order_by(UserReport.created_at.desc()).limit(100).all()
+    return {"reports": [_serialize_report(report) for report in reports]}
+
+
+class AdminUpdateReportRequest(BaseModel):
+    status: Optional[str] = None
+    admin_note: Optional[str] = None
+
+
+@router.get("/api/admin/reports")
+def admin_list_reports(
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    _check_admin(authorization)
+    reports = db.query(UserReport).order_by(UserReport.created_at.desc()).limit(200).all()
+    return {"reports": [_serialize_report(report) for report in reports]}
+
+
+@router.patch("/api/admin/reports/{report_id}")
+def admin_update_report(
+    report_id: str,
+    req: AdminUpdateReportRequest,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    _, admin_email = _check_admin(authorization)
+
+    report = db.query(UserReport).filter(UserReport.id == report_id).first()
+    if not report:
+        raise HTTPException(status_code=404, detail="Signalement introuvable.")
+
+    if req.status:
+        next_status = req.status.strip().lower()
+        if next_status not in REPORT_STATUSES:
+            raise HTTPException(status_code=400, detail="Statut de signalement invalide.")
+        report.status = next_status
+        if next_status in {"resolved", "dismissed"}:
+            report.resolved_at = datetime.utcnow()
+            report.resolved_by = admin_email
+        else:
+            report.resolved_at = None
+            report.resolved_by = None
+
+    if req.admin_note is not None:
+        report.admin_notes = req.admin_note.strip()
+
+    db.commit()
+    db.refresh(report)
+    return {"report": _serialize_report(report)}
 
 
 # ── Chatbot orders (client) ──────────────────────────────────────────────────
@@ -953,6 +1109,10 @@ def admin_update_order(
     return {"order": _serialize_order(order)}
 
 
+
+
+
+
 # ── Serializers ───────────────────────────────────────────────────────────────
 
 
@@ -960,6 +1120,7 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
     return {
         "id": ar.id,
         "organization_slug": ar.organization_slug,
+        "organization_scope_id": ar.organization_scope_id,
         "requester_user_id": ar.requester_user_id,
         "selected_plan_id": ar.selected_plan_id,
         "status": ar.status,
@@ -999,6 +1160,39 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
     }
 
 
+def _serialize_report(report: UserReport) -> Dict[str, Any]:
+    preferred_contact = "email" if report.contact_email else ("phone" if report.contact_phone else "email")
+    return {
+        "id": report.id,
+        "organization_slug": report.organization_slug,
+        "organization_scope_id": report.organization_scope_id,
+        "reporter_user_id": report.reporter_user_id,
+        "reporter_email": report.reporter_email,
+        "user_id": report.reporter_user_id,
+        "user_email": report.reporter_email,
+        "current_view": report.current_view,
+        "page_context": report.current_view,
+        "category": report.category,
+        "severity": report.severity,
+        "title": report.title,
+        "subject": report.title,
+        "description": report.description,
+        "message": report.description,
+        "expected_behavior": report.expected_behavior,
+        "contact_email": report.contact_email,
+        "contact_phone": report.contact_phone,
+        "preferred_contact": preferred_contact,
+        "screenshot_url": report.screenshot_url,
+        "status": report.status,
+        "admin_notes": report.admin_notes,
+        "admin_note": report.admin_notes,
+        "resolved_by": report.resolved_by,
+        "resolved_at": report.resolved_at.isoformat() if report.resolved_at else None,
+        "created_at": report.created_at.isoformat() if report.created_at else None,
+        "updated_at": report.updated_at.isoformat() if report.updated_at else None,
+    }
+
+
 def _serialize_order(o: ChatbotOrder) -> Dict[str, Any]:
     return {
         "id": o.id,
@@ -1023,3 +1217,7 @@ def _serialize_order(o: ChatbotOrder) -> Dict[str, Any]:
         "created_at": o.created_at.isoformat() if o.created_at else None,
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,
     }
+
+
+
+

@@ -22,6 +22,7 @@ import {
   getAdminOrders, adminUpdateOrder,
   type ActivationRequest, type ChatbotOrder,
 } from "@/lib/api";
+import AdminReportsTab from "@/components/AdminReportsTab";
 
 interface AdminPanelProps {
   token?: string | null;
@@ -74,7 +75,7 @@ interface LedgerEntry {
     timestamp: string;
 }
 
-type AdminTab = "menu" | "costs" | "connected" | "accounts" | "activations" | "payments" | "orders";
+type AdminTab = "menu" | "costs" | "connected" | "accounts" | "activations" | "payments" | "orders" | "reports";
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -278,6 +279,17 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       iconColor: "text-cyan-400",
       stat: "-",
       statLabel: "Total",
+    },
+    {
+      id: "reports" as AdminTab,
+      title: "Signalements",
+      subtitle: "Problemes et retours envoyes par les utilisateurs",
+      icon: AlertCircle,
+      color: "from-orange-500/18 to-amber-500/10",
+      borderColor: "border-orange-500/20",
+      iconColor: "text-orange-400",
+      stat: "-",
+      statLabel: "A traiter",
     },
   ];
 
@@ -1122,6 +1134,8 @@ export default function AdminPanel({ token }: AdminPanelProps) {
       return <AdminPaymentsTab token={token} onBack={() => setActiveTab("menu")} />;
     case "orders":
       return <AdminOrdersTab token={token} onBack={() => setActiveTab("menu")} />;
+    case "reports":
+      return <AdminReportsTab token={token} onBack={() => setActiveTab("menu")} />;
     default:
       return <AdminMenu onNavigate={setActiveTab} stats={menuStats} />;
   }
@@ -1305,6 +1319,65 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                           ))}
                         </div>
 
+                        <div className="flex flex-wrap gap-2">
+                          {ar.contact_email ? (
+                            <a
+                              href={`mailto:${ar.contact_email}`}
+                              className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                            >
+                              Email client
+                            </a>
+                          ) : null}
+                          {ar.contact_phone ? (
+                            <a
+                              href={`tel:${ar.contact_phone}`}
+                              className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                            >
+                              Appeler
+                            </a>
+                          ) : null}
+                          {(ar.contact_whatsapp || ar.contact_phone) ? (
+                            <a
+                              href={`https://wa.me/${String(ar.contact_whatsapp || ar.contact_phone).replace(/[^0-9]/g, "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                            >
+                              WhatsApp
+                            </a>
+                          ) : null}
+                          {ar.facebook_page_url ? (
+                            <a
+                              href={ar.facebook_page_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                            >
+                              Ouvrir la page Facebook
+                            </a>
+                          ) : null}
+                        </div>
+
+                        <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
+                          <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Checklist operateur</p>
+                          <div className="mt-3 grid gap-2 text-xs">
+                            {[
+                              { label: "Paiement verifie", done: ["payment_verified", "awaiting_flare_page_admin_access", "queued_for_activation", "activation_in_progress", "testing", "active"].includes(ar.status) },
+                              { label: "Acces page confirme", done: ar.flare_page_admin_confirmed === "true" },
+                              { label: "Activation en cours", done: ["activation_in_progress", "testing", "active"].includes(ar.status) },
+                              { label: "Test Messenger valide", done: ["testing", "active"].includes(ar.status) },
+                              { label: "Chatbot actif", done: ar.status === "active" },
+                            ].map((item) => (
+                              <div key={item.label} className="flex items-center justify-between rounded-xl bg-[var(--surface-subtle)] px-3 py-2">
+                                <span className="text-[var(--text-primary)]">{item.label}</span>
+                                <span className={`text-[11px] font-medium ${item.done ? "text-orange-500" : "text-[var(--text-muted)]"}`}>
+                                  {item.done ? "OK" : "A faire"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
                         {/* Status actions */}
                         {nextStatuses.length > 0 && (
                           <div className="flex flex-wrap gap-2">
@@ -1460,11 +1533,78 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
                     Soumis : {pay.submitted_at ? new Date(pay.submitted_at).toLocaleString("fr-FR") : "-"}
                     {pay.organization_scope_id ? ` \u00b7 ${pay.organization_scope_id}` : ""}
                   </p>
+                  {pay.activation_summary ? (
+                    <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-3">
+                      <p className="text-xs font-semibold text-[var(--text-primary)]">
+                        {pay.activation_summary.business_name || pay.activation_summary.contact_full_name || "Demande liee"}
+                      </p>
+                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                        {pay.activation_summary.contact_email || "-"}
+                        {pay.activation_summary.contact_phone ? ` · ${pay.activation_summary.contact_phone}` : ""}
+                        {pay.activation_summary.contact_whatsapp ? ` · WhatsApp ${pay.activation_summary.contact_whatsapp}` : ""}
+                      </p>
+                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                        {pay.activation_summary.facebook_page_name || "Page Facebook non renseignee"}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {pay.activation_summary.contact_email ? (
+                          <a
+                            href={`mailto:${pay.activation_summary.contact_email}`}
+                            className="rounded-lg border border-[var(--border-default)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                          >
+                            Email
+                          </a>
+                        ) : null}
+                        {pay.activation_summary.contact_phone ? (
+                          <a
+                            href={`tel:${pay.activation_summary.contact_phone}`}
+                            className="rounded-lg border border-[var(--border-default)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                          >
+                            Appeler
+                          </a>
+                        ) : null}
+                        {(pay.activation_summary.contact_whatsapp || pay.activation_summary.contact_phone) ? (
+                          <a
+                            href={`https://wa.me/${String(pay.activation_summary.contact_whatsapp || pay.activation_summary.contact_phone).replace(/[^0-9]/g, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-[var(--border-default)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                          >
+                            WhatsApp
+                          </a>
+                        ) : null}
+                        {pay.activation_summary.facebook_page_url ? (
+                          <a
+                            href={pay.activation_summary.facebook_page_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="rounded-lg border border-[var(--border-default)] px-2.5 py-1.5 text-[11px] font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-subtle)]"
+                          >
+                            Ouvrir la page
+                          </a>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                   {pay.proof_file_url && (
                     <a href={pay.proof_file_url} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300">
                       <Eye size={12} /> Voir la preuve
                     </a>
+                  )}
+                  {pay.activation_summary && (
+                    <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-3">
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Handoff activation</p>
+                      <div className="mt-2 grid gap-1 text-xs text-[var(--text-primary)]">
+                        <p>Contact: {pay.activation_summary.contact_full_name || "-"}</p>
+                        <p>Email: {pay.activation_summary.contact_email || "-"}</p>
+                        <p>Telephone: {pay.activation_summary.contact_phone || "-"}</p>
+                        <p>WhatsApp: {pay.activation_summary.contact_whatsapp || "-"}</p>
+                        <p>Page Facebook: {pay.activation_summary.facebook_page_name || "-"}</p>
+                        <p>URL page: {pay.activation_summary.facebook_page_url || "-"}</p>
+                        <p>Entreprise: {pay.activation_summary.business_name || "-"}</p>
+                      </div>
+                    </div>
                   )}
                   {pay.rejection_reason && (
                     <p className="text-xs text-red-400 mt-1">Raison : {pay.rejection_reason}</p>
