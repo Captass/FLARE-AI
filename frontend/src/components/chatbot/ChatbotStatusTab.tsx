@@ -148,12 +148,12 @@ function PremiumMetric({
   glowStatus: "active" | "inactive" | "error" | "pending";
 }) {
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-xl border border-fg/[0.06] bg-gradient-to-br from-fg/[0.02] to-transparent hover:bg-fg/[0.04] transition-colors relative overflow-hidden group">
+    <div className="relative flex flex-col gap-2 overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4 transition-colors hover:bg-[var(--surface-raised)] group">
       <div className="absolute top-0 right-0 p-4 opacity-30 group-hover:opacity-100 transition-opacity">
         <GlowRing status={glowStatus} size={10} />
       </div>
-      <span className="text-[10px] text-fg/40 uppercase tracking-widest font-medium">{label}</span>
-      <span className={`text-[15px] font-semibold tracking-wide ${ok ? "text-fg/90" : "text-orange-400"}`}>{value}</span>
+      <span className="text-[10px] font-medium uppercase tracking-widest text-[var(--text-muted)]">{label}</span>
+      <span className={`text-[15px] font-semibold tracking-wide ${ok ? "text-[var(--text-primary)]" : "text-[var(--accent-orange)]"}`}>{value}</span>
     </div>
   );
 }
@@ -185,7 +185,7 @@ export default function ChatbotStatusTab({
         <button
           type="button"
           onClick={onRefresh}
-          className="flex items-center gap-2 text-xs text-fg/50 hover:text-fg font-medium tracking-wide uppercase transition-colors"
+          className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
         >
           Actualiser <ArrowUpRight className="w-3.5 h-3.5" />
         </button>
@@ -219,7 +219,7 @@ export default function ChatbotStatusTab({
       </div>
 
       {error && (
-        <div className="p-4 mb-6 rounded-xl border border-red-500/20 bg-red-500/10 text-red-100 flex items-start gap-3 text-sm">
+        <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-500/35 bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <p>{error}</p>
         </div>
@@ -228,28 +228,28 @@ export default function ChatbotStatusTab({
       <motion.div
         className={`relative overflow-hidden p-6 rounded-2xl border ${
           guide.tone === "success"
-            ? "border-emerald-500/20 bg-emerald-500/5"
+            ? "border-[color:color-mix(in_srgb,var(--accent-navy)_28%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-navy)_9%,var(--surface-base))]"
             : guide.tone === "error"
               ? "border-red-500/20 bg-red-500/5"
-              : "border-orange-500/20 bg-orange-500/5"
+              : "border-[color:color-mix(in_srgb,var(--accent-orange)_28%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-orange)_9%,var(--surface-base))]"
         }`}
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className={`w-4 h-4 ${guide.tone === "success" ? "text-emerald-400" : "text-orange-400"}`} />
+              <Sparkles className={`w-4 h-4 ${guide.tone === "success" ? "text-[var(--accent-navy)]" : "text-[var(--accent-orange)]"}`} />
               <span
                 className={`text-[10px] font-bold uppercase tracking-widest ${
-                  guide.tone === "success" ? "text-emerald-500/80" : "text-orange-500/80"
+                  guide.tone === "success" ? "text-[var(--accent-navy)]" : "text-[var(--accent-orange)]"
                 }`}
               >
                 {guide.eyebrow}
               </span>
             </div>
-            <h3 className="text-lg font-semibold text-fg/90">{guide.title}</h3>
-            <p className="text-sm text-fg/60 mt-1 max-w-xl">{guide.body}</p>
+            <h3 className="text-lg font-semibold text-[var(--text-primary)]">{guide.title}</h3>
+            <p className="mt-1 max-w-xl text-sm text-[var(--text-secondary)]">{guide.body}</p>
             {guide.bullets.length > 0 && (
-              <ul className="mt-3 text-sm text-fg/55 list-disc list-inside space-y-1">
+              <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-[var(--text-secondary)]">
                 {guide.bullets.map((b) => (
                   <li key={b}>{b}</li>
                 ))}
@@ -260,7 +260,7 @@ export default function ChatbotStatusTab({
             <button
               type="button"
               onClick={() => onJumpToTab(guide.ctaTab!)}
-              className="px-5 py-2.5 whitespace-nowrap bg-fg/10 hover:bg-fg/15 text-fg text-xs font-semibold uppercase tracking-widest rounded-xl transition-all flex items-center gap-2"
+              className="flex items-center gap-2 whitespace-nowrap rounded-xl bg-[var(--accent-orange)] px-5 py-2.5 text-xs font-semibold uppercase tracking-widest text-[#140b02] transition-all hover:brightness-95"
             >
               {guide.ctaLabel}
               <ArrowUpRight className="w-4 h-4" />
@@ -269,9 +269,9 @@ export default function ChatbotStatusTab({
         </div>
       </motion.div>
 
-      <div className="mt-6 p-6 rounded-2xl bg-[var(--bg-background)] border border-fg/[0.04]">
-        <h4 className="text-xs uppercase tracking-widest text-fg/40 mb-3 font-semibold">Compte Facebook</h4>
-        <p className="text-sm text-fg/60 mb-5 leading-relaxed max-w-2xl">
+      <div className="mt-6 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-6">
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-widest text-[var(--text-muted)]">Compte Facebook</h4>
+        <p className="mb-5 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">
           Connectez le compte Meta qui gère vos pages. Vous pourrez ensuite choisir la page et l’activer pour Messenger.
           Si vous avez déjà connecté un compte, utilisez « Ajouter / resynchroniser » sur l’accueil du chatbot pour mettre
           à jour la liste des pages.
@@ -281,7 +281,7 @@ export default function ChatbotStatusTab({
             type="button"
             onClick={onConnect}
             disabled={authLoading || !canManagePages}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-b from-[#1877F2]/20 to-[#1877F2]/10 border border-[#1877F2]/30 text-[#1877F2] font-semibold text-xs tracking-wider uppercase hover:shadow-[0_0_20px_rgba(24,119,242,0.15)] transition-all flex items-center gap-2 disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl border border-[color:color-mix(in_srgb,var(--accent-navy)_28%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-navy)_10%,var(--surface-subtle))] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[var(--accent-navy)] transition-all hover:bg-[color:color-mix(in_srgb,var(--accent-navy)_16%,var(--surface-subtle))] disabled:opacity-50"
           >
             {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
             {activePage ? "Reconnecter Facebook" : "Connecter Facebook"}
@@ -291,7 +291,7 @@ export default function ChatbotStatusTab({
               type="button"
               onClick={() => onActivate(activePage.page_id)}
               disabled={busyPageId === activePage.page_id}
-              className="px-5 py-2.5 rounded-xl border border-emerald-500/30 text-emerald-500 font-semibold text-xs tracking-wider uppercase hover:bg-emerald-500/10 transition-all flex items-center gap-2"
+              className="flex items-center gap-2 rounded-xl bg-[var(--accent-orange)] px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-[#140b02] transition-all hover:brightness-95 disabled:opacity-50"
             >
               {busyPageId === activePage.page_id ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -304,7 +304,7 @@ export default function ChatbotStatusTab({
               type="button"
               onClick={() => onDisconnect(activePage.page_id)}
               disabled={busyPageId === activePage.page_id}
-              className="px-5 py-2.5 rounded-xl border border-red-500/20 text-red-400 font-semibold text-xs tracking-wider uppercase hover:bg-red-500/10 transition-all"
+              className="rounded-xl border border-red-500/35 bg-red-500/10 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-red-700 transition-all hover:bg-red-500/15 disabled:opacity-50 dark:text-red-300"
             >
               {busyPageId === activePage.page_id ? "Déconnexion…" : "Retirer la page"}
             </button>

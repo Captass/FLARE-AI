@@ -113,27 +113,27 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
-      className="overflow-hidden rounded-2xl border border-fg/[0.08] bg-fg/[0.02] p-5 shadow-[var(--shadow-card)]"
+      className="overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface-subtle)] p-5 shadow-[var(--shadow-card)]"
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="text-sm font-medium text-[var(--text-muted)]">Activite en temps reel</p>
-          <p className="mt-1 text-lg font-semibold text-fg/90">Messages et reprises humaines</p>
+          <p className="mt-1 text-lg font-semibold text-[var(--text-primary)]">Messages et reprises humaines</p>
         </div>
         <div className="flex items-center gap-3 text-xs">
-          <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-cyan-300">
+          <span className="rounded-full border border-[color:color-mix(in_srgb,var(--accent-navy)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-navy)_10%,var(--surface-base))] px-2.5 py-1 text-[var(--accent-navy)]">
             Messages: {latestMessages}
           </span>
-          <span className="rounded-full border border-orange-400/30 bg-orange-500/10 px-2.5 py-1 text-orange-300">
+          <span className="rounded-full border border-[color:color-mix(in_srgb,var(--accent-orange)_30%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-orange)_10%,var(--surface-base))] px-2.5 py-1 text-[var(--accent-orange)]">
             A reprendre: {latestNeedsHuman}
           </span>
         </div>
       </div>
 
       {loading ? (
-        <div className="h-[240px] animate-pulse rounded-xl border border-fg/[0.06] bg-fg/[0.03]" />
+        <div className="h-[240px] animate-pulse rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)]" />
       ) : (
-        <div className="relative overflow-hidden rounded-xl border border-fg/[0.06] bg-[linear-gradient(180deg,rgba(255,255,255,0.02)_0%,rgba(255,255,255,0)_100%)]">
+        <div className="relative overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)]">
           <svg
             viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
             className="h-[240px] w-full"
@@ -142,8 +142,8 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
           >
             <defs>
               <linearGradient id="messagesGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="rgba(34,211,238,0.32)" />
-                <stop offset="100%" stopColor="rgba(34,211,238,0.02)" />
+                <stop offset="0%" stopColor="color-mix(in srgb, var(--accent-navy) 32%, transparent)" />
+                <stop offset="100%" stopColor="color-mix(in srgb, var(--accent-navy) 4%, transparent)" />
               </linearGradient>
             </defs>
 
@@ -154,7 +154,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
                 y1={y}
                 x2={CHART_WIDTH - CHART_PADDING_X}
                 y2={y}
-                stroke="rgba(255,255,255,0.08)"
+                stroke="var(--border-default)"
                 strokeWidth="1"
                 strokeDasharray="3 8"
               />
@@ -171,7 +171,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
             <motion.path
               d={messagesPath.line}
               fill="none"
-              stroke="rgb(34,211,238)"
+              stroke="var(--accent-navy)"
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -183,7 +183,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
             <motion.path
               d={needsHumanPath.line}
               fill="none"
-              stroke="rgb(251,146,60)"
+              stroke="var(--accent-orange)"
               strokeWidth="2.3"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -198,7 +198,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
                 cx={point.x}
                 cy={point.y}
                 r="3.2"
-                fill="rgb(34,211,238)"
+                fill="var(--accent-navy)"
                 initial={{ scale: 0.7, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 0.95 }}
                 transition={{ delay: index * 0.03, duration: 0.25 }}
@@ -211,7 +211,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
                 cx={point.x}
                 cy={point.y}
                 r="2.6"
-                fill="rgb(251,146,60)"
+                fill="var(--accent-orange)"
                 initial={{ scale: 0.7, opacity: 0.5 }}
                 animate={{ scale: 1, opacity: 0.9 }}
                 transition={{ delay: index * 0.03 + 0.05, duration: 0.25 }}
@@ -223,8 +223,8 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
                 cx={latestPoint.x}
                 cy={latestPoint.y}
                 r="7.5"
-                fill="rgba(34,211,238,0.15)"
-                stroke="rgba(34,211,238,0.45)"
+                fill="color-mix(in srgb, var(--accent-navy) 16%, transparent)"
+                stroke="color-mix(in srgb, var(--accent-navy) 52%, transparent)"
                 strokeWidth="1.5"
                 animate={{ scale: [0.95, 1.15, 0.95], opacity: [0.5, 0.85, 0.5] }}
                 transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
@@ -233,7 +233,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
           </svg>
 
           <div className="pointer-events-none absolute inset-x-0 bottom-2 px-4">
-            <div className="flex items-center justify-between gap-2 text-[11px] text-fg/40">
+            <div className="flex items-center justify-between gap-2 text-[11px] text-[var(--text-muted)]">
               {series.map((point) => (
                 <span key={`x-label-${point.label}`} className="truncate">
                   {point.label}
@@ -242,7 +242,7 @@ export default function ChatbotRealtimeChart({ data, loading = false }: ChatbotR
             </div>
           </div>
 
-          <div className="pointer-events-none absolute right-3 top-3 flex flex-col items-end gap-2 text-[11px] text-fg/35">
+          <div className="pointer-events-none absolute right-3 top-3 flex flex-col items-end gap-2 text-[11px] text-[var(--text-muted)]">
             <span>{formatAxisValue(maxMetric)}</span>
             <span>{formatAxisValue(Math.round(maxMetric / 2))}</span>
             <span>0</span>
