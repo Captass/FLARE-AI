@@ -1,14 +1,13 @@
 "use client";
 
-import { useRef, useState, useCallback } from "react";
-import { AnimatePresence, motion } from "framer-motion";
-import { Plus, MessageSquare } from "lucide-react";
-import ChatWindow from "@/components/ChatWindow";
-import MessageInput from "@/components/MessageInput";
+import { useCallback, useRef, useState } from "react";
+import { AnimatePresence } from "framer-motion";
+import { MessageSquare, Plus } from "lucide-react";
 import ArtifactViewer, { Artifact } from "@/components/ArtifactViewer";
+import ChatWindow from "@/components/ChatWindow";
 import FilesPanel from "@/components/FilesPanel";
-import { FileAttachment } from "@/lib/api";
-import { saveTrackedFile } from "@/lib/api";
+import MessageInput from "@/components/MessageInput";
+import { FileAttachment, saveTrackedFile } from "@/lib/api";
 
 type ChatMode = "raisonnement" | "rapide" | "creative" | "pro";
 
@@ -23,8 +22,8 @@ interface AssistantPageProps {
   thoughts: any[];
   error: string | null;
   userName: string;
-  chatMode: "raisonnement" | "rapide" | "creative" | "pro";
-  setChatMode: (mode: "raisonnement" | "rapide" | "creative" | "pro") => void;
+  chatMode: ChatMode;
+  setChatMode: (mode: ChatMode) => void;
   send: (text: string, attachment?: any, deep?: boolean, quality?: string, mode?: ChatMode) => void;
   stop: () => void;
   deleteMessagesAfterPoint: (ts: number) => Promise<void>;
@@ -63,7 +62,6 @@ export default function AssistantPage({
   activeArtifactVersions,
   onKnowledgeSaved,
   conversations,
-  folders,
   onSelectConversation,
   onNewChat,
 }: AssistantPageProps) {
@@ -74,12 +72,17 @@ export default function AssistantPage({
   const handleSend = useCallback(
     (text: string, attachment?: object, deepResearch?: boolean, quality?: string, mode?: ChatMode) => {
       lastSentAttachmentRef.current = (attachment as FileAttachment) ?? null;
+
       if (attachment) {
         const att = attachment as FileAttachment;
-        const kind = att.type?.startsWith("image/") ? "image"
-          : att.type?.startsWith("audio/") ? "audio"
-          : att.name?.match(/\.(pdf|docx)$/i) ? "document"
-          : "text";
+        const kind = att.type?.startsWith("image/")
+          ? "image"
+          : att.type?.startsWith("audio/")
+            ? "audio"
+            : att.name?.match(/\.(pdf|docx)$/i)
+              ? "document"
+              : "text";
+
         saveTrackedFile({
           id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
           name: att.name,
@@ -90,15 +93,20 @@ export default function AssistantPage({
           dataUrl: att.dataUrl,
         });
       }
+
       send(text, attachment, deepResearch, quality, mode ?? chatMode);
     },
-    [send, sessionId, activeConvTitle, chatMode]
+    [activeConvTitle, chatMode, send, sessionId]
   );
 
   const handleStop = useCallback(() => {
     const lastUserMsg = messages.filter((m) => m.role === "user").at(-1);
-    if (lastUserMsg?.content) setPendingRestore(lastUserMsg.content);
-    if (lastSentAttachmentRef.current) setPendingRestoreAttachment(lastSentAttachmentRef.current);
+    if (lastUserMsg?.content) {
+      setPendingRestore(lastUserMsg.content);
+    }
+    if (lastSentAttachmentRef.current) {
+      setPendingRestoreAttachment(lastSentAttachmentRef.current);
+    }
     stop();
   }, [messages, stop]);
 
@@ -106,11 +114,18 @@ export default function AssistantPage({
     const inlineUrl = artifact?.url?.startsWith("data:")
       ? artifact.url
       : artifact?.data?.startsWith("data:")
-      ? artifact.data
-      : undefined;
-    if (!inlineUrl) return undefined;
+        ? artifact.data
+        : undefined;
+
+    if (!inlineUrl) {
+      return undefined;
+    }
+
     const match = inlineUrl.match(/^data:(.*?);base64,(.*)$/);
-    if (!match) return undefined;
+    if (!match) {
+      return undefined;
+    }
+
     return {
       content: match[2],
       type: match[1] || "application/octet-stream",
@@ -120,43 +135,58 @@ export default function AssistantPage({
   }, []);
 
   return (
-    <div className="flex flex-1 overflow-hidden relative">
-      {/* ── Sidebar Historique (Gauche - 280px) ── */}
-      <div className="hidden md:flex w-[280px] shrink-0 flex-col border-r border-[var(--border-glass)] bg-[var(--bg-glass)]/20 backdrop-blur-md z-10 transition-all duration-300">
+    <div className="relative flex flex-1 overflow-hidden">
+      <div className="hidden w-[280px] shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--surface-base)] md:flex">
         <div className="p-4">
           <button
             onClick={onNewChat}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-orange-500/10 text-orange-400 font-medium py-2.5 hover:bg-orange-500/20 transition-all border border-orange-500/20 shadow-[0_0_15px_rgba(249,115,22,0.1)] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)]"
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/12 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-all hover:bg-orange-500/18"
           >
-            <Plus size={16} /> Nouvelle discussion
+            <Plus size={16} />
+            Nouvelle discussion
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
-          {conversations?.map((conv) => (
-             <button
-               key={conv.id}
-               onClick={() => onSelectConversation?.(conv.id)}
-               className={`w-full flex flex-col items-start gap-1 px-3 py-2.5 rounded-xl text-left transition-all duration-200 border ${
-                 conv.id === sessionId 
-                  ? 'bg-white/10 text-white border-white/10 shadow-[var(--shadow-card)]' 
-                  : 'text-white/50 border-transparent hover:bg-white/[0.04] hover:text-white/80'
-               }`}
-             >
-               <div className="flex items-center gap-2 w-full">
-                 <MessageSquare size={14} className={conv.id === sessionId ? "text-orange-400" : "text-white/30"} />
-                 <span className="text-sm font-medium truncate flex-1 leading-tight">{conv.title || "Nouvelle discussion"}</span>
-               </div>
-               <span className={`text-[10px] pl-6 font-medium ${conv.id === sessionId ? 'text-white/40' : 'text-white/20'}`}>
-                 {new Date(conv.updated_at || conv.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-               </span>
-             </button>
-          ))}
+
+        <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
+          {conversations?.map((conv) => {
+            const isActive = conv.id === sessionId;
+            return (
+              <button
+                key={conv.id}
+                onClick={() => onSelectConversation?.(conv.id)}
+                className={`flex w-full flex-col items-start gap-1 rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ${
+                  isActive
+                    ? "border-[var(--border-strong)] bg-[var(--surface-selected)] text-[var(--text-primary)] shadow-[var(--shadow-card)]"
+                    : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+                }`}
+              >
+                <div className="flex w-full items-center gap-2">
+                  <MessageSquare
+                    size={14}
+                    className={isActive ? "text-orange-500" : "text-[var(--text-muted)]"}
+                  />
+                  <span className="flex-1 truncate text-sm font-medium leading-tight">
+                    {conv.title || "Nouvelle discussion"}
+                  </span>
+                </div>
+                <span
+                  className={`pl-6 text-[10px] font-medium ${
+                    isActive ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"
+                  }`}
+                >
+                  {new Date(conv.updated_at || conv.created_at).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Colonne de Chat */}
       <div
-        className={`flex flex-col flex-1 min-w-0 transition-all duration-300 ${
+        className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${
           showFilesPanel ? "md:mr-[320px]" : ""
         } ${activeArtifact ? "hidden md:flex md:w-[45%]" : "flex"}`}
       >
@@ -176,6 +206,7 @@ export default function AssistantPage({
             onEditMessage={async (ts, content) => {
               const msgToEdit = messages.find((m) => m.timestamp === ts);
               let attachment: FileAttachment | undefined;
+
               if (msgToEdit?.attachment) {
                 const att = msgToEdit.attachment;
                 if (att.dataUrl?.startsWith("data:")) {
@@ -190,12 +221,14 @@ export default function AssistantPage({
                   };
                 }
               }
+
               await deleteMessagesAfterPoint(ts);
               send(content, attachment, false);
             }}
           />
         </div>
-        <div className="w-full max-w-3xl mx-auto px-2 md:px-4 pb-4 md:pb-6 mt-auto chat-input-mobile safe-bottom shrink-0 bg-[var(--background)]">
+
+        <div className="chat-input-mobile safe-bottom mt-auto w-full max-w-3xl shrink-0 bg-[var(--background)] px-2 pb-4 md:px-4 md:pb-6">
           <MessageInput
             onSend={handleSend}
             onStop={handleStop}
@@ -212,14 +245,13 @@ export default function AssistantPage({
         </div>
       </div>
 
-      {/* Artifact Viewer (Side-by-side) */}
       <AnimatePresence>
         {activeArtifact && (
           <ArtifactViewer
             key="artifact-viewer"
             artifact={activeArtifact}
             versions={activeArtifactVersions}
-            onSelectVersion={(art) => setActiveArtifact(art)}
+            onSelectVersion={(artifact) => setActiveArtifact(artifact)}
             onClose={() => setActiveArtifact(null)}
             onEdit={(prompt) => {
               handleSend(prompt, buildInlineArtifactAttachment(activeArtifact));
@@ -228,7 +260,7 @@ export default function AssistantPage({
               handleSend(
                 JSON.stringify({
                   prompt:
-                    "Supprime totalement le fond de cette image et retourne directement un PNG transparent prêt à utiliser.",
+                    "Supprime totalement le fond de cette image et retourne directement un PNG transparent pret a utiliser.",
                   selection: {
                     type: "image_refinement",
                     action: "remove_background",
@@ -242,7 +274,7 @@ export default function AssistantPage({
             onChangeBackground={(background) => {
               handleSend(
                 JSON.stringify({
-                  prompt: `Remplace le fond de cette image par: ${background}. Garde le sujet principal intact et réaliste.`,
+                  prompt: `Remplace le fond de cette image par: ${background}. Garde le sujet principal intact et realiste.`,
                   selection: {
                     type: "image_refinement",
                     action: "change_background",
@@ -258,13 +290,13 @@ export default function AssistantPage({
               handleSend(
                 JSON.stringify({
                   prompt:
-                    "Retouche uniquement la zone masquée de cette image. Utilise le masque joint comme masque utilisateur et conserve le reste intact.",
+                    "Retouche uniquement la zone masquee de cette image. Utilise le masque joint comme masque utilisateur et conserve le reste intact.",
                   selection: {
                     type: "image_refinement",
                     action: "inpaint",
                     image_url: activeArtifact.url,
                     image_name: activeArtifact.name,
-                    extra: "Le masque joint doit servir de zone blanche à modifier.",
+                    extra: "Le masque joint doit servir de zone blanche a modifier.",
                   },
                 }),
                 {
@@ -278,23 +310,22 @@ export default function AssistantPage({
               setActiveArtifact(null);
             }}
             onOutpaint={(ratio) => {
-              handleSend(`Étends l'image ${activeArtifact.name} au format ${ratio} (Outpainting).`);
+              handleSend(`Etends l'image ${activeArtifact.name} au format ${ratio} (Outpainting).`);
               setActiveArtifact(null);
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* Panneau de fichiers (coulissant à droite) */}
       <div
-        className={`absolute top-0 right-0 h-full w-full md:w-[320px] md:border-l md:border-[var(--border-glass)] bg-[var(--bg-sidebar)] backdrop-blur-[40px] transition-transform duration-300 z-30 flex flex-col ${
+        className={`absolute top-0 right-0 z-30 flex h-full w-full flex-col bg-[var(--surface-base)] transition-transform duration-300 md:w-[320px] md:border-l md:border-[var(--border-default)] ${
           showFilesPanel ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <FilesPanel
           conversationId={sessionId}
           token={token}
-          compact={true}
+          compact
           onClose={() => setShowFilesPanel(false)}
           onOpenArtifact={(artifact) => setActiveArtifact(artifact)}
         />

@@ -64,7 +64,7 @@ function ShopifyLogo() {
 
 function GlobeLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-white/40">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-[var(--text-secondary)]">
       <circle cx="12" cy="12" r="10"/>
       <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/>
     </svg>
@@ -134,7 +134,7 @@ export default function AutomationsPage({ onPush }: AutomationsPageProps) {
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-white/90">
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
             Automatisations
           </h1>
           <p className="text-lg text-[var(--text-muted)]">

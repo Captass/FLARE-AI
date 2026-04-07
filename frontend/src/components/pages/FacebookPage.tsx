@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { Bot, Users, PenTool } from "lucide-react";
+
 import PlatformCard from "@/components/PlatformCard";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 
@@ -14,36 +15,34 @@ const MODULES = [
   {
     id: "chatbot",
     label: "Chatbot IA",
-    description: "Répond automatiquement à vos messages Facebook Messenger",
+    description: "Repond automatiquement a vos messages Facebook Messenger",
     icon: Bot,
-    iconColor: "text-orange-400",
+    iconColor: "text-orange-500 dark:text-orange-300",
     locked: false,
     navLevel: "chatbot" as NavLevel,
   },
   {
     id: "community",
     label: "Community Manager",
-    description: "Gère vos commentaires et publications automatiquement",
+    description: "Gere vos commentaires et publications automatiquement",
     icon: Users,
-    iconColor: "text-white/30",
+    iconColor: "text-[var(--text-secondary)]",
     locked: true,
   },
   {
     id: "content",
     label: "Content Creator",
-    description: "Crée et programme du contenu pour votre page",
+    description: "Cree et programme du contenu pour votre page",
     icon: PenTool,
-    iconColor: "text-white/30",
+    iconColor: "text-[var(--text-secondary)]",
     locked: true,
   },
-];
+] as const;
 
-export default function FacebookPage({ onPush, pendingHumanCount = 0 }: FacebookPageProps) {
+export default function FacebookPage({ onPush }: FacebookPageProps) {
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[860px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
-
-        {/* ── Header ── */}
+      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -56,12 +55,11 @@ export default function FacebookPage({ onPush, pendingHumanCount = 0 }: Facebook
             </svg>
           </div>
           <div className="space-y-1">
-            <h1 className="text-3xl font-bold tracking-tight text-white/90">Facebook</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">Facebook</h1>
             <p className="text-lg text-[var(--text-muted)]">Choisissez un module</p>
           </div>
         </motion.header>
 
-        {/* ── Module grid ── */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" role="list" aria-label="Modules Facebook">
           {MODULES.map((mod, idx) => {
             const Icon = mod.icon;
@@ -74,24 +72,17 @@ export default function FacebookPage({ onPush, pendingHumanCount = 0 }: Facebook
                 role="listitem"
               >
                 <PlatformCard
-                  icon={
-                    <Icon
-                      size={24}
-                      strokeWidth={1.8}
-                      className={mod.iconColor}
-                    />
-                  }
+                  icon={<Icon size={24} strokeWidth={1.8} className={mod.iconColor} />}
                   label={mod.label}
                   description={mod.description}
                   locked={mod.locked}
                   glowColor={mod.locked ? undefined : "#FF7C1A"}
-                  onClick={mod.navLevel ? () => onPush(mod.navLevel!) : undefined}
+                  onClick={mod.navLevel ? () => onPush(mod.navLevel) : undefined}
                 />
               </motion.div>
             );
           })}
         </div>
-
       </div>
     </div>
   );

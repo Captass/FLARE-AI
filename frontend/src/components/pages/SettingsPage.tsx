@@ -325,10 +325,9 @@ function AvatarUploader({
             {initial}
           </div>
         )}
-        <div className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl
-                        bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity gap-1">
-          <Camera size={18} className="text-white" />
-          <span className="text-white text-[10px] font-medium">Modifier</span>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)]/92 opacity-0 transition-opacity group-hover:opacity-100">
+          <Camera size={18} className="text-[var(--text-primary)]" />
+          <span className="text-[10px] font-medium text-[var(--text-primary)]">Modifier</span>
         </div>
         <input
           ref={inputRef}
@@ -705,8 +704,8 @@ export default function SettingsPage({
                       ) : (
                         <Building2 size={22} className="text-[var(--text-muted)]" />
                       )}
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <Camera size={16} className="text-white" />
+                      <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-base)]/92 opacity-0 transition-opacity group-hover:opacity-100">
+                        <Camera size={16} className="text-[var(--text-primary)]" />
                       </div>
                     </div>
                     <input
@@ -777,7 +776,7 @@ export default function SettingsPage({
                 {theme === "dark" ? tx.darkDesc : tx.lightDesc}
               </p>
               <p className="mt-3 text-xs leading-relaxed text-[var(--text-secondary)]">
-                Le changement de th�me se fait maintenant depuis le header principal, en haut � droite, pour rester accessible sur tout le produit.
+                Le changement de theme se fait maintenant depuis le header principal, en haut a droite, pour rester accessible sur tout le produit.
               </p>
             </div>
           </div>
