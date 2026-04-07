@@ -112,7 +112,7 @@ html.light {
 
 html.light body,
 html.light body * {
-  color: rgb(0, 0, 0);
+  color: rgb(0, 0, 0) !important;
 }
 
 html.light input::placeholder,
@@ -127,9 +127,15 @@ html.light [class*="text_"] {
   color: rgb(0, 0, 0) !important;
 }
 
+html.light svg,
+html.light svg * {
+  color: rgb(0, 0, 0) !important;
+  stroke: currentColor;
+}
+
 html.dark body,
 html.dark body * {
-  color: rgb(255, 255, 255);
+  color: rgb(255, 255, 255) !important;
 }
 
 html.dark input::placeholder,
@@ -142,6 +148,12 @@ html.dark [class*="placeholder:"]::placeholder {
 html.dark [class*="text-"],
 html.dark [class*="text_"] {
   color: rgb(255, 255, 255) !important;
+}
+
+html.dark svg,
+html.dark svg * {
+  color: rgb(255, 255, 255) !important;
+  stroke: currentColor;
 }
 
 * {
