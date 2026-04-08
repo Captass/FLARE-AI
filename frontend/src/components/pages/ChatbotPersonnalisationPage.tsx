@@ -32,6 +32,40 @@ interface ChatbotPersonnalisationPageProps {
   selectedPageName?: string | null;
 }
 
+function normalizeCatalogueImages(values: Array<string | null | undefined>): string[] {
+  const deduped: string[] = [];
+  for (const value of values) {
+    const clean = String(value || "").trim();
+    if (!clean || deduped.includes(clean)) continue;
+    deduped.push(clean);
+    if (deduped.length >= 8) break;
+  }
+  return deduped;
+}
+
+function toCatalogueDraftPayload(input: {
+  name?: string;
+  description?: string;
+  price?: string | null;
+  category?: string;
+  image_url?: string;
+  product_images?: string[];
+  sort_order?: number;
+  is_active?: boolean;
+}): CatalogueItemInput {
+  const images = normalizeCatalogueImages([...(input.product_images || []), input.image_url || ""]);
+  return {
+    name: input.name || "",
+    description: input.description || "",
+    price: input.price ?? "",
+    category: input.category || "",
+    sort_order: typeof input.sort_order === "number" ? input.sort_order : 0,
+    is_active: input.is_active ?? true,
+    image_url: images[0] || "",
+    product_images: images,
+  };
+}
+
 export default function ChatbotPersonnalisationPage({
   token,
   getFreshToken,
@@ -49,6 +83,7 @@ export default function ChatbotPersonnalisationPage({
   const [catalogueDraft, setCatalogueDraft] = useState<CatalogueItemInput>(EMPTY_CATALOGUE_INPUT);
   const [editingCatalogueId, setEditingCatalogueId] = useState<string | null>(null);
   const [pendingDeleteCatalogueId, setPendingDeleteCatalogueId] = useState<string | null>(null);
+  const [pendingDraftAction, setPendingDraftAction] = useState<null | { type: "reset" } | { type: "edit"; item: CatalogueItem }>(null);
 
   const resolveAccessToken = useCallback(async () => {
     if (getFreshToken) return await getFreshToken();
@@ -117,15 +152,20 @@ export default function ChatbotPersonnalisationPage({
 
     setSavingSection("catalogue");
     try {
+      const payload: CatalogueItemInput = {
+        ...toCatalogueDraftPayload(catalogueDraft),
+        sort_order: typeof catalogueDraft.sort_order === "number" ? catalogueDraft.sort_order : editingCatalogueId ? 0 : catalogue.length,
+      };
       if (editingCatalogueId) {
-        await updateCatalogueItem(editingCatalogueId, catalogueDraft, accessToken);
+        await updateCatalogueItem(editingCatalogueId, payload, accessToken);
       } else {
-        await createCatalogueItem(catalogueDraft, accessToken, selectedPageId);
+        await createCatalogueItem(payload, accessToken, selectedPageId);
       }
       const nextCat = await getCatalogue(accessToken, selectedPageId);
       setCatalogue(nextCat);
       setEditingCatalogueId(null);
       setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+      setPendingDraftAction(null);
       setFeedback({ tone: "success", message: "Le catalogue a ete mis a jour." });
     } catch (err) {
       setFeedback({
@@ -173,6 +213,89 @@ export default function ChatbotPersonnalisationPage({
       </div>
     );
   }
+
+  const currentCatalogueBaseline = editingCatalogueId
+    ? (() => {
+        const currentItem = catalogue.find((item) => item.id === editingCatalogueId);
+        return currentItem
+          ? toCatalogueDraftPayload({
+              name: currentItem.name,
+              description: currentItem.description,
+              price: currentItem.price,
+              category: currentItem.category,
+              image_url: currentItem.image_url,
+              product_images: currentItem.product_images || (currentItem.image_url ? [currentItem.image_url] : []),
+              sort_order: currentItem.sort_order,
+              is_active: currentItem.is_active,
+            })
+          : EMPTY_CATALOGUE_INPUT;
+      })()
+    : EMPTY_CATALOGUE_INPUT;
+  const hasCatalogueDraftChanges = JSON.stringify({
+    ...catalogueDraft,
+    product_images: catalogueDraft.product_images || [],
+  }) !== JSON.stringify({
+    ...currentCatalogueBaseline,
+    product_images: currentCatalogueBaseline.product_images || [],
+  });
+
+  const requestCatalogueReset = () => {
+    if (savingSection === "catalogue") return;
+    if (hasCatalogueDraftChanges) {
+      setPendingDraftAction({ type: "reset" });
+      setFeedback({ tone: "warning", message: "Confirmez avant de perdre les modifications du produit en cours." });
+      return;
+    }
+    setEditingCatalogueId(null);
+    setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+    setPendingDraftAction(null);
+  };
+
+  const requestCatalogueEdit = (item: CatalogueItem) => {
+    if (savingSection === "catalogue") return;
+    if (hasCatalogueDraftChanges && editingCatalogueId !== item.id) {
+      setPendingDraftAction({ type: "edit", item });
+      setFeedback({ tone: "warning", message: "Confirmez avant d'ouvrir un autre produit et perdre le brouillon actuel." });
+      return;
+    }
+    setEditingCatalogueId(item.id);
+    setCatalogueDraft(toCatalogueDraftPayload({
+      name: item.name,
+      description: item.description,
+      price: item.price,
+      category: item.category,
+      image_url: item.image_url,
+      product_images: item.product_images || (item.image_url ? [item.image_url] : []),
+      sort_order: item.sort_order,
+      is_active: item.is_active,
+    }));
+    setPendingDraftAction(null);
+  };
+
+  const confirmPendingDraftAction = () => {
+    if (!pendingDraftAction) return;
+    if (pendingDraftAction.type === "reset") {
+      setEditingCatalogueId(null);
+      setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
+      setPendingDraftAction(null);
+    }
+    if (pendingDraftAction.type === "edit") {
+      const item = pendingDraftAction.item;
+      setEditingCatalogueId(item.id);
+      setCatalogueDraft(toCatalogueDraftPayload({
+        name: item.name,
+        description: item.description,
+        price: item.price,
+        category: item.category,
+        image_url: item.image_url,
+        product_images: item.product_images || (item.image_url ? [item.image_url] : []),
+        sort_order: item.sort_order,
+        is_active: item.is_active,
+      }));
+      setPendingDraftAction(null);
+      return;
+    }
+  };
 
   const canEdit = true;
   const unlimitedPlan: PlanFeatures = {
@@ -244,6 +367,26 @@ export default function ChatbotPersonnalisationPage({
           </div>
         ) : null}
 
+        {pendingDraftAction ? (
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-orange-500/25 bg-orange-500/10 px-4 py-3 text-sm text-[var(--text-primary)]">
+            <span>Le brouillon actuel sera perdu si vous continuez.</span>
+            <button
+              type="button"
+              onClick={confirmPendingDraftAction}
+              className="rounded-lg bg-orange-500 px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#140b02]"
+            >
+              Continuer
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDraftAction(null)}
+              className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-primary)]"
+            >
+              Garder le brouillon
+            </button>
+          </div>
+        ) : null}
+
         {!selectedPageId ? (
           <div
             role="status"
@@ -290,24 +433,17 @@ export default function ChatbotPersonnalisationPage({
             saving={savingSection === "catalogue"}
             planFeatures={unlimitedPlan}
             templates={CATALOGUE_STARTER_TEMPLATES}
-            onChangeDraft={setCatalogueDraft}
-            onApplyTemplate={(tpl) => setCatalogueDraft(tpl)}
-            onEdit={(item) => {
-              setEditingCatalogueId(item.id);
-              setCatalogueDraft({
-                name: item.name,
-                description: item.description,
-                price: item.price,
-                category: item.category,
-                image_url: item.image_url,
-                sort_order: item.sort_order,
-                is_active: item.is_active,
-              });
+            onChangeDraft={(next) => {
+              setCatalogueDraft(next);
+              setPendingDraftAction(null);
             }}
-            onReset={() => {
-              setEditingCatalogueId(null);
-              setCatalogueDraft(EMPTY_CATALOGUE_INPUT);
-            }}
+            onApplyTemplate={(tpl) =>
+              setCatalogueDraft(toCatalogueDraftPayload({
+                ...tpl,
+              }))
+            }
+            onEdit={requestCatalogueEdit}
+            onReset={requestCatalogueReset}
             onSave={() => void handleSaveCatalogue()}
             onDelete={(id) => {
               setPendingDeleteCatalogueId(id);

@@ -588,11 +588,45 @@ class CatalogueItemPayload(BaseModel):
     price: Optional[str] = None
     category: str = ""
     image_url: str = ""
+    product_images: list[str] = []
     sort_order: int = 0
     is_active: bool = True
 
 
+def _normalize_catalogue_images(images: Optional[list[str]], fallback_image: str = "") -> list[str]:
+    normalized: list[str] = []
+    for raw in images or []:
+        cleaned = _clean_text(raw, 1000)
+        if cleaned and (
+            cleaned.startswith("http://")
+            or cleaned.startswith("https://")
+            or cleaned.startswith("data:image/")
+        ) and cleaned not in normalized:
+            normalized.append(cleaned)
+        if len(normalized) >= 8:
+            break
+    fallback = _clean_text(fallback_image, 1000)
+    if fallback and (
+        fallback.startswith("http://")
+        or fallback.startswith("https://")
+        or fallback.startswith("data:image/")
+    ) and fallback not in normalized:
+        normalized.append(fallback)
+    return normalized[:8]
+
+
+def _decode_catalogue_images(raw_json: Optional[str], image_url: Optional[str]) -> list[str]:
+    try:
+        parsed = _json.loads(raw_json or "[]")
+    except Exception:
+        parsed = []
+    normalized = _normalize_catalogue_images(parsed if isinstance(parsed, list) else [], image_url or "")
+    return normalized
+
+
 def _serialize_catalogue_item(item: ChatbotCatalogueItem) -> dict:
+    product_images = _decode_catalogue_images(item.product_images_json, item.image_url)
+    primary_image = product_images[0] if product_images else ""
     return {
         "id": item.id,
         "organization_slug": item.organization_slug,
@@ -600,7 +634,8 @@ def _serialize_catalogue_item(item: ChatbotCatalogueItem) -> dict:
         "description": item.description or "",
         "price": item.price,
         "category": item.category or "",
-        "image_url": item.image_url or "",
+        "image_url": primary_image,
+        "product_images": product_images,
         "sort_order": item.sort_order or 0,
         "is_active": item.is_active != "false",
         "created_at": item.created_at.isoformat() if item.created_at else None,
@@ -648,6 +683,8 @@ async def create_catalogue_item(
                 detail=f"Limite atteinte : vous ne pouvez pas ajouter plus de {limit} éléments dans votre plan."
             )
 
+    product_images = _normalize_catalogue_images(payload.product_images, payload.image_url)
+
     item = ChatbotCatalogueItem(
         organization_slug=context["organization_slug"],
         page_id=page_id,
@@ -655,7 +692,8 @@ async def create_catalogue_item(
         description=_clean_text(payload.description, 1000),
         price=_clean_text(payload.price, 40) if payload.price else None,
         category=_clean_text(payload.category, 80),
-        image_url=_clean_text(payload.image_url, 500),
+        image_url=product_images[0] if product_images else "",
+        product_images_json=_json.dumps(product_images, ensure_ascii=False),
         sort_order=payload.sort_order,
         is_active="true" if payload.is_active else "false",
         created_at=datetime.utcnow(),
@@ -693,11 +731,13 @@ async def update_catalogue_item(
     )
     if not item:
         raise HTTPException(status_code=404, detail="Article introuvable.")
+    product_images = _normalize_catalogue_images(payload.product_images, payload.image_url)
     item.name = _clean_text(payload.name, 120, "Article")
     item.description = _clean_text(payload.description, 1000)
     item.price = _clean_text(payload.price, 40) if payload.price else None
     item.category = _clean_text(payload.category, 80)
-    item.image_url = _clean_text(payload.image_url, 500)
+    item.image_url = product_images[0] if product_images else ""
+    item.product_images_json = _json.dumps(product_images, ensure_ascii=False)
     item.sort_order = payload.sort_order
     item.is_active = "true" if payload.is_active else "false"
     item.updated_at = datetime.utcnow()
@@ -1009,3 +1049,4 @@ async def upsert_sales_config(
     if sync_warning:
         response["sync_warning"] = sync_warning
     return response
+

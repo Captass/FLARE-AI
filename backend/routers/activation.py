@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header, get_user_identity
@@ -80,9 +80,145 @@ def _add_event(db: Session, request_id: str, event_type: str, actor_type: str, a
     ))
 
 
+def _normalize_facebook_pages_context(raw_pages: Any) -> List[Dict[str, Any]]:
+    if not isinstance(raw_pages, list):
+        return []
+    normalized: List[Dict[str, Any]] = []
+    for raw in raw_pages:
+        if not isinstance(raw, dict):
+            continue
+        page_id = str(raw.get("page_id") or raw.get("id") or "").strip()
+        page_name = str(raw.get("page_name") or raw.get("name") or "").strip()
+        if not page_id and not page_name:
+            continue
+        item: Dict[str, Any] = {
+            "page_id": page_id,
+            "page_name": page_name,
+        }
+        page_url = str(raw.get("page_url") or raw.get("url") or "").strip()
+        if page_url:
+            item["page_url"] = page_url[:1000]
+        if "is_selected" in raw:
+            item["is_selected"] = bool(raw.get("is_selected"))
+        if "is_active" in raw:
+            item["is_active"] = bool(raw.get("is_active"))
+        normalized.append(item)
+        if len(normalized) >= 50:
+            break
+    return normalized
+
+
+def _decode_facebook_pages_context(raw_json: Optional[str]) -> List[Dict[str, Any]]:
+    if not raw_json:
+        return []
+    try:
+        parsed = json.loads(raw_json)
+    except Exception:
+        return []
+    return _normalize_facebook_pages_context(parsed)
+
+
+def _normalize_page_name(value: str) -> str:
+    return str(value or "").strip().lower()
+
+
+def _resolve_flare_selected_page(
+    pages_context: List[Dict[str, Any]],
+    requested_id: str,
+    requested_name: str,
+) -> tuple[str, str]:
+    explicit_id = (requested_id or "").strip()
+    explicit_name = (requested_name or "").strip()
+    selected_page = next((page for page in pages_context if page.get("is_selected")), None)
+
+    if explicit_id:
+        for page in pages_context:
+            if str(page.get("page_id") or "").strip() == explicit_id:
+                return explicit_id, str(page.get("page_name") or explicit_name or "").strip()
+        return explicit_id, explicit_name
+
+    if explicit_name:
+        norm = _normalize_page_name(explicit_name)
+        for page in pages_context:
+            if _normalize_page_name(str(page.get("page_name") or "")) == norm:
+                return str(page.get("page_id") or "").strip(), str(page.get("page_name") or explicit_name).strip()
+        return "", explicit_name
+
+    if selected_page:
+        return (
+            str(selected_page.get("page_id") or "").strip(),
+            str(selected_page.get("page_name") or "").strip(),
+        )
+
+    if pages_context:
+        return (
+            str(pages_context[0].get("page_id") or "").strip(),
+            str(pages_context[0].get("page_name") or "").strip(),
+        )
+
+    return "", ""
+
+
+def _resolve_activation_target(
+    requested_id: str,
+    requested_name: str,
+    pages_context: List[Dict[str, Any]],
+) -> tuple[str, str]:
+    page_id = (requested_id or "").strip()
+    page_name = (requested_name or "").strip()
+    if page_id or page_name:
+        if not pages_context:
+            raise HTTPException(
+                status_code=400,
+                detail="Importez vos pages Facebook avant de choisir une page cible.",
+            )
+
+        if page_id:
+            for page in pages_context:
+                ctx_page_id = str(page.get("page_id") or "").strip()
+                if ctx_page_id == page_id:
+                    resolved_name = str(page.get("page_name") or page_name or "").strip()
+                    return page_id, resolved_name
+            raise HTTPException(
+                status_code=400,
+                detail="La page cible selectionnee n'appartient pas aux pages importees dans cet espace.",
+            )
+
+        normalized_requested_name = _normalize_page_name(page_name)
+        name_matches = [
+            page for page in pages_context
+            if _normalize_page_name(str(page.get("page_name") or "")) == normalized_requested_name
+        ]
+        if len(name_matches) == 1:
+            matched = name_matches[0]
+            return (
+                str(matched.get("page_id") or "").strip(),
+                str(matched.get("page_name") or page_name).strip(),
+            )
+        if len(name_matches) > 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Plusieurs pages portent ce nom. Selectionnez la page cible par identifiant.",
+            )
+        raise HTTPException(
+            status_code=400,
+            detail="La page cible selectionnee n'appartient pas aux pages importees dans cet espace.",
+        )
+
+    selected_page = next((page for page in pages_context if page.get("is_selected")), None)
+    fallback_page = selected_page or (pages_context[0] if pages_context else None)
+    if not fallback_page:
+        return "", ""
+    return (
+        str(fallback_page.get("page_id") or "").strip(),
+        str(fallback_page.get("page_name") or "").strip(),
+    )
+
+
 def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, Any]]:
     if not ar:
         return None
+    selected_pages = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
     return {
         "id": ar.id,
         "organization_scope_id": ar.organization_scope_id,
@@ -96,6 +232,12 @@ def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, A
         "business_name": ar.business_name,
         "business_sector": ar.business_sector,
         "facebook_page_name": ar.facebook_page_name,
+        "flare_selected_page_id_at_submission": ar.flare_selected_page_id_at_submission,
+        "flare_selected_page_name_at_submission": ar.flare_selected_page_name_at_submission,
+        "activation_target_page_id": ar.activation_target_page_id,
+        "activation_target_page_name": ar.activation_target_page_name,
+        "selected_facebook_pages_snapshot": selected_pages,
+        "selected_facebook_pages_count": len(selected_pages),
         "facebook_page_url": ar.facebook_page_url,
         "facebook_admin_email": ar.facebook_admin_email,
         "bot_name": ar.bot_name,
@@ -315,6 +457,11 @@ class ActivationRequestPayload(BaseModel):
     facebook_page_name: str = ""
     facebook_page_url: str = ""
     facebook_admin_email: str = ""
+    selected_facebook_pages: List[Dict[str, Any]] = Field(default_factory=list)
+    flare_selected_page_id: str = ""
+    flare_selected_page_name: str = ""
+    activation_target_page_id: str = ""
+    activation_target_page_name: str = ""
     primary_language: str = "fr"
     bot_name: str = "L'assistant"
     tone: str = "amical"
@@ -362,6 +509,19 @@ def create_activation_request(
     if existing:
         raise HTTPException(status_code=409, detail="Une demande d'activation est deja en cours pour cet espace.")
 
+    selected_pages_context = _normalize_facebook_pages_context(req.selected_facebook_pages)
+    flare_selected_page_id, flare_selected_page_name = _resolve_flare_selected_page(
+        selected_pages_context,
+        req.flare_selected_page_id,
+        req.flare_selected_page_name,
+    )
+    target_page_id, target_page_name = _resolve_activation_target(
+        req.activation_target_page_id,
+        req.activation_target_page_name or req.facebook_page_name or flare_selected_page_name,
+        selected_pages_context,
+    )
+    legacy_page_name = (req.facebook_page_name or target_page_name or flare_selected_page_name or "").strip()
+
     ar = ActivationRequest(
         organization_slug=org_slug,
         organization_scope_id=scope_id,
@@ -377,9 +537,14 @@ def create_activation_request(
         business_city=req.business_city,
         business_country=req.business_country,
         business_description=req.business_description,
-        facebook_page_name=req.facebook_page_name,
+        facebook_page_name=legacy_page_name,
         facebook_page_url=req.facebook_page_url,
         facebook_admin_email=req.facebook_admin_email,
+        selected_facebook_pages_json=json.dumps(selected_pages_context, ensure_ascii=False),
+        flare_selected_page_id_at_submission=flare_selected_page_id,
+        flare_selected_page_name_at_submission=flare_selected_page_name,
+        activation_target_page_id=target_page_id,
+        activation_target_page_name=target_page_name,
         primary_language=req.primary_language,
         bot_name=req.bot_name,
         tone=req.tone,
@@ -393,7 +558,21 @@ def create_activation_request(
     db.add(ar)
     db.flush()
 
-    _add_event(db, ar.id, "request_created", "client", user_email, {"plan": req.selected_plan_id})
+    _add_event(
+        db,
+        ar.id,
+        "request_created",
+        "client",
+        user_email,
+        {
+            "plan": req.selected_plan_id,
+            "target_page_id": target_page_id,
+            "target_page_name": target_page_name,
+            "flare_selected_page_id_at_submission": flare_selected_page_id,
+            "flare_selected_page_name_at_submission": flare_selected_page_name,
+            "selected_pages_count": len(selected_pages_context),
+        },
+    )
 
     # Initialize chatbot preferences from the form data
     prefs = db.query(ChatbotPreferences).filter(
@@ -440,23 +619,74 @@ def update_activation_request(
     if not ar:
         raise HTTPException(status_code=404, detail="Aucune demande d'activation en cours.")
 
+    request_context_locked = ar.status not in {"draft", "awaiting_payment"}
+
     # Client-updatable fields
     allowed_fields = {
         "contact_full_name", "contact_email", "contact_phone", "contact_whatsapp",
         "business_name", "business_sector", "business_city", "business_country", "business_description",
         "facebook_page_name", "facebook_page_url", "facebook_admin_email",
+        "flare_selected_page_id", "flare_selected_page_name",
+        "activation_target_page_id", "activation_target_page_name",
         "primary_language", "bot_name", "tone", "greeting_message",
         "offer_summary", "opening_hours", "delivery_zones", "notes_for_flare",
     }
 
+    immutable_context_fields = {
+        "selected_facebook_pages",
+        "flare_selected_page_id",
+        "flare_selected_page_name",
+        "activation_target_page_id",
+        "activation_target_page_name",
+    }
+    if request_context_locked and any(field in updates for field in immutable_context_fields):
+        raise HTTPException(
+            status_code=409,
+            detail="Le contexte de page est verrouille apres soumission du paiement.",
+        )
+
+    selected_pages_context: Optional[List[Dict[str, Any]]] = None
+    current_pages_context = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
+    if "selected_facebook_pages" in updates:
+        selected_pages_context = _normalize_facebook_pages_context(updates.get("selected_facebook_pages"))
+        ar.selected_facebook_pages_json = json.dumps(selected_pages_context, ensure_ascii=False)
+        current_pages_context = selected_pages_context
+
     for key, value in updates.items():
+        if key in {"flare_selected_page_id", "flare_selected_page_name"}:
+            continue
         if key in allowed_fields and hasattr(ar, key):
             setattr(ar, key, value)
+
+    if "flare_selected_page_id" in updates or "flare_selected_page_name" in updates or selected_pages_context is not None:
+        resolved_flare_selected_page_id, resolved_flare_selected_page_name = _resolve_flare_selected_page(
+            current_pages_context,
+            str(updates.get("flare_selected_page_id", ar.flare_selected_page_id_at_submission) or ""),
+            str(updates.get("flare_selected_page_name", ar.flare_selected_page_name_at_submission) or ""),
+        )
+        ar.flare_selected_page_id_at_submission = resolved_flare_selected_page_id
+        ar.flare_selected_page_name_at_submission = resolved_flare_selected_page_name
+
+    if updates.get("activation_target_page_name") and not updates.get("facebook_page_name"):
+        ar.facebook_page_name = str(updates.get("activation_target_page_name") or "").strip()
+
+    ar.activation_target_page_id = str(ar.activation_target_page_id or "").strip()
+    ar.activation_target_page_name = str(ar.activation_target_page_name or "").strip()
+
+    if any(field in updates for field in {"activation_target_page_id", "activation_target_page_name"}) or selected_pages_context is not None:
+        resolved_target_id, resolved_target_name = _resolve_activation_target(
+            str(updates.get("activation_target_page_id", ar.activation_target_page_id) or ""),
+            str(updates.get("activation_target_page_name", ar.activation_target_page_name or ar.facebook_page_name) or ""),
+            current_pages_context,
+        )
+        ar.activation_target_page_id = resolved_target_id
+        ar.activation_target_page_name = resolved_target_name
 
     # Handle FLARE page admin confirmation
     if updates.get("flare_page_admin_confirmed") == "true" and ar.flare_page_admin_confirmed != "true":
         ar.flare_page_admin_confirmed = "true"
         ar.flare_page_admin_confirmed_at = datetime.utcnow()
+        ar.flare_page_admin_confirmed_by = user_email
         _add_event(db, ar.id, "fb_access_confirmed", "client", user_email)
 
         # Auto-advance status if payment is verified
@@ -828,11 +1058,14 @@ def admin_add_note(
     return {"status": "ok"}
 class UserReportPayload(BaseModel):
     category: str = "other"
+    priority: str = ""
     severity: str = "medium"
     subject: str = ""
     title: str = ""
     message: str = ""
+    details: str = ""
     description: str = ""
+    screen_source: str = ""
     page_context: str = ""
     current_view: str = ""
     preferred_contact: str = "email"
@@ -857,10 +1090,17 @@ def create_user_report(
     org_slug = scoped_user_id.split(":", 1)[1].strip().lower() if scoped_user_id.startswith("org:") else "personal"
     preferred_contact = (req.preferred_contact or ("phone" if req.contact_phone.strip() else "email")).strip().lower()
     normalized_title = (req.subject or req.title or "").strip()
-    normalized_description = (req.message or req.description or "").strip()
-    normalized_view = (req.page_context or req.current_view or "").strip()
+    normalized_description = (req.message or req.details or req.description or "").strip()
+    normalized_view = (req.screen_source or req.page_context or req.current_view or "").strip()
     normalized_contact_email = (req.contact_email or "").strip()
     normalized_contact_phone = (req.contact_phone or req.contact_detail or "").strip()
+    normalized_severity = (req.priority or req.severity or "normal").strip().lower()
+    if normalized_severity == "high":
+        normalized_severity = "critical"
+    if normalized_severity in {"low", "normal", "medium", "critical"}:
+        severity = normalized_severity
+    else:
+        severity = "normal"
 
     report = UserReport(
         organization_slug=org_slug,
@@ -869,7 +1109,7 @@ def create_user_report(
         reporter_email=user_email,
         current_view=normalized_view,
         category=(req.category or "other").strip().lower(),
-        severity=(req.severity or "medium").strip().lower(),
+        severity=severity,
         title=normalized_title,
         description=normalized_description,
         expected_behavior=req.expected_behavior.strip(),
@@ -1117,6 +1357,7 @@ def admin_update_order(
 
 
 def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
+    selected_pages = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
     return {
         "id": ar.id,
         "organization_slug": ar.organization_slug,
@@ -1134,6 +1375,13 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
         "business_city": ar.business_city,
         "business_country": ar.business_country,
         "business_description": ar.business_description,
+        "selected_facebook_pages": selected_pages,
+        "selected_facebook_pages_snapshot": selected_pages,
+        "selected_facebook_pages_count": len(selected_pages),
+        "flare_selected_page_id_at_submission": ar.flare_selected_page_id_at_submission,
+        "flare_selected_page_name_at_submission": ar.flare_selected_page_name_at_submission,
+        "activation_target_page_id": ar.activation_target_page_id,
+        "activation_target_page_name": ar.activation_target_page_name,
         "facebook_page_name": ar.facebook_page_name,
         "facebook_page_url": ar.facebook_page_url,
         "facebook_admin_email": ar.facebook_admin_email,
@@ -1147,6 +1395,7 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
         "notes_for_flare": ar.notes_for_flare,
         "flare_page_admin_confirmed": ar.flare_page_admin_confirmed,
         "flare_page_admin_confirmed_at": ar.flare_page_admin_confirmed_at.isoformat() if ar.flare_page_admin_confirmed_at else None,
+        "flare_page_admin_confirmed_by": ar.flare_page_admin_confirmed_by,
         "assigned_operator_email": ar.assigned_operator_email,
         "internal_notes": ar.internal_notes,
         "blocked_reason": ar.blocked_reason,
@@ -1162,6 +1411,9 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
 
 def _serialize_report(report: UserReport) -> Dict[str, Any]:
     preferred_contact = "email" if report.contact_email else ("phone" if report.contact_phone else "email")
+    normalized_priority = report.severity or "normal"
+    if normalized_priority == "critical":
+        normalized_priority = "high"
     return {
         "id": report.id,
         "organization_slug": report.organization_slug,
@@ -1171,12 +1423,15 @@ def _serialize_report(report: UserReport) -> Dict[str, Any]:
         "user_id": report.reporter_user_id,
         "user_email": report.reporter_email,
         "current_view": report.current_view,
+        "screen_source": report.current_view,
         "page_context": report.current_view,
         "category": report.category,
         "severity": report.severity,
+        "priority": normalized_priority,
         "title": report.title,
         "subject": report.title,
         "description": report.description,
+        "details": report.description,
         "message": report.description,
         "expected_behavior": report.expected_behavior,
         "contact_email": report.contact_email,

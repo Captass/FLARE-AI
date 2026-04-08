@@ -1306,6 +1306,9 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
           {filtered.map(ar => {
             const expanded = expandedId === ar.id;
             const nextStatuses = VALID_NEXT_STATUSES[ar.status] || [];
+            const selectedSnapshotPage = Array.isArray(ar.selected_facebook_pages)
+              ? ar.selected_facebook_pages.find((page) => page.is_selected) || null
+              : null;
             return (
               <motion.div key={ar.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                 className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] overflow-hidden">
@@ -1346,7 +1349,11 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                             ["Entreprise", ar.business_name],
                             ["Secteur", ar.business_sector],
                             ["Ville", `${ar.business_city}, ${ar.business_country}`],
-                            ["Page Facebook", ar.facebook_page_name],
+                            ["Selection FLARE (soumission)", selectedSnapshotPage?.page_name],
+                            ["ID selection FLARE", selectedSnapshotPage?.page_id],
+                            ["Page cible", ar.activation_target_page_name || ar.facebook_page_name],
+                            ["ID page cible", ar.activation_target_page_id],
+                            ["Pages importees", ar.selected_facebook_pages_count ? String(ar.selected_facebook_pages_count) : ""],
                             ["URL Page", ar.facebook_page_url],
                             ["Admin FB", ar.facebook_admin_email],
                             ["Bot", ar.bot_name],
@@ -1361,6 +1368,44 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                             </div>
                           ))}
                         </div>
+
+                        {Array.isArray(ar.selected_facebook_pages) && ar.selected_facebook_pages.length > 0 ? (
+                          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-3">
+                            <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                              Pages importees depuis Meta
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              {ar.selected_facebook_pages.map((page) => {
+                                const isTarget = page.page_id === ar.activation_target_page_id;
+                                const isSelected = Boolean(page.is_selected);
+                                const chipClass = isTarget
+                                  ? "border-orange-500/30 bg-orange-500/10 text-orange-500"
+                                  : isSelected
+                                    ? "border-[var(--accent-navy)]/30 bg-[var(--accent-navy)]/10 text-[var(--accent-navy)]"
+                                    : "border-[var(--border-default)] bg-[var(--surface-base)] text-[var(--text-secondary)]";
+                                return (
+                                  <span
+                                    key={page.page_id}
+                                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-[10px] ${chipClass}`}
+                                  >
+                                    <span>{page.page_name || page.page_id}</span>
+                                    {isSelected ? (
+                                      <span className="rounded-full bg-[var(--accent-navy)]/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--accent-navy)]">
+                                        FLARE
+                                      </span>
+                                    ) : null}
+                                    {isTarget ? (
+                                      <span className="rounded-full bg-orange-500/20 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-orange-500">
+                                        CIBLE
+                                      </span>
+                                    ) : null}
+                                    <span className="text-[9px] text-[var(--text-muted)]">{page.page_id}</span>
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
 
                         <div className="flex flex-wrap gap-2">
                           {ar.contact_email ? (
@@ -1820,7 +1865,9 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
                     {order.delivery_address ? ` \u00b7 ${order.delivery_address}` : ""}
                   </p>
                   {order.customer_request_text && (
-                    <p className="text-[10px] text-[var(--text-secondary)] mt-1 italic">"{order.customer_request_text}"</p>
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-1 italic">
+                      &quot;{order.customer_request_text}&quot;
+                    </p>
                   )}
                   <p className="text-[10px] text-[var(--text-secondary)] mt-1">
                     {order.created_at ? new Date(order.created_at).toLocaleString("fr-FR") : "-"}

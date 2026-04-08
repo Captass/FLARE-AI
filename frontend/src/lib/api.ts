@@ -1012,6 +1012,7 @@ export interface CatalogueItem {
   price: string | null;
   category: string;
   image_url: string;
+  product_images: string[];
   sort_order: number;
   is_active: boolean;
   created_at: string | null;
@@ -1025,6 +1026,7 @@ export interface CatalogueItemInput {
   price?: string | null;
   category?: string;
   image_url?: string;
+  product_images?: string[];
   sort_order?: number;
   is_active?: boolean;
 }
@@ -1754,12 +1756,20 @@ export async function getMyManualPayments(token?: string | null): Promise<{ subm
 
 // ─── Activation Request ─────────────────────────────────────────────────────
 
+export interface ActivationRequestPage {
+  page_id: string;
+  page_name: string;
+  page_url?: string;
+  is_selected?: boolean;
+  is_active?: boolean;
+}
+
 export interface ActivationRequest {
-    id: string;
-    organization_slug: string;
-    organization_scope_id: string;
-    selected_plan_id: string;
-    status: string;
+  id: string;
+  organization_slug: string;
+  organization_scope_id: string;
+  selected_plan_id: string;
+  status: string;
   payment_status: string;
   contact_full_name: string;
   contact_email: string;
@@ -1770,6 +1780,12 @@ export interface ActivationRequest {
   business_city: string;
   business_country: string;
   business_description: string;
+  selected_facebook_pages: ActivationRequestPage[];
+  selected_facebook_pages_count: number;
+  flare_selected_page_id_at_submission?: string | null;
+  flare_selected_page_name_at_submission?: string | null;
+  activation_target_page_id: string;
+  activation_target_page_name: string;
   facebook_page_name: string;
   facebook_page_url: string;
   facebook_admin_email: string;
@@ -1805,7 +1821,7 @@ export async function createActivationRequest(data: Partial<ActivationRequest>, 
   }, token);
 }
 
-export async function updateActivationRequest(updates: Record<string, string>, token?: string | null): Promise<{ activation_request: ActivationRequest }> {
+export async function updateActivationRequest(updates: Record<string, unknown>, token?: string | null): Promise<{ activation_request: ActivationRequest }> {
   return apiRequest<{ activation_request: ActivationRequest }>("/api/chatbot/activation-request", {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

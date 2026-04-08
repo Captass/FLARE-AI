@@ -129,8 +129,8 @@ export default function SignalementModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-4 top-[8vh] z-[190] mx-auto w-full max-w-2xl rounded-[28px] border border-[var(--border-strong)] bg-[var(--surface-raised)] shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
-            style={{ opacity: 1 }}
+            className="fixed inset-x-4 top-[8vh] z-[190] mx-auto w-full max-w-2xl rounded-[28px] border border-[var(--border-strong)] bg-[var(--bg-modal)] shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+            style={{ opacity: 1, backgroundColor: "rgb(var(--background))" }}
           >
             <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] px-5 py-4 md:px-6">
               <div>

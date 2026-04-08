@@ -91,7 +91,16 @@ def build_dynamic_prompt(
             price_str = f" — {i.price}" if i.price else ""
             cat_str = f" [{i.category}]" if i.category else ""
             desc = f" : {i.description}" if i.description else ""
-            img_str = f" (image: {i.image_url})" if i.image_url else ""
+            product_images = []
+            try:
+                parsed_images = _json.loads(getattr(i, "product_images_json", "[]") or "[]")
+                if isinstance(parsed_images, list):
+                    product_images = [str(url).strip() for url in parsed_images if str(url).strip()]
+            except Exception:
+                product_images = []
+            if not product_images and i.image_url:
+                product_images = [i.image_url]
+            img_str = f" (images: {', '.join(product_images[:3])})" if product_images else ""
             catalogue_lines.append(f"- {i.name}{cat_str}{price_str}{desc}{img_str}")
 
     products_display = str(prefs.products_summary or "").strip()

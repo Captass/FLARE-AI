@@ -76,6 +76,40 @@ function normalizeSessionError(message: string, fallback: string): string {
   return value;
 }
 
+function normalizeCatalogueImages(values: Array<string | null | undefined>): string[] {
+  const deduped: string[] = [];
+  for (const value of values) {
+    const clean = String(value || "").trim();
+    if (!clean || deduped.includes(clean)) continue;
+    deduped.push(clean);
+    if (deduped.length >= 8) break;
+  }
+  return deduped;
+}
+
+function toCatalogueDraftPayload(input: {
+  name?: string;
+  description?: string;
+  price?: string | null;
+  category?: string;
+  image_url?: string;
+  product_images?: string[];
+  sort_order?: number;
+  is_active?: boolean;
+}) {
+  const images = normalizeCatalogueImages([...(input.product_images || []), input.image_url || ""]);
+  return {
+    name: input.name || "",
+    description: input.description || "",
+    price: input.price ?? "",
+    category: input.category || "",
+    sort_order: typeof input.sort_order === "number" ? input.sort_order : 0,
+    is_active: input.is_active ?? true,
+    image_url: images[0] || "",
+    product_images: images,
+  };
+}
+
 export default function ChatbotWorkspace({
   token,
   getFreshToken,
@@ -426,13 +460,24 @@ export default function ChatbotWorkspace({
           onApplyTemplate={(template) => {
             setEditingCatalogueId(null);
             setCatalogueDraft({
-              ...template,
+              ...toCatalogueDraftPayload(template),
               sort_order: Math.max(0, catalogue.length),
             });
           }}
           onEdit={(item) => {
             setEditingCatalogueId(item.id);
-            setCatalogueDraft({ name: item.name, description: item.description, price: item.price, category: item.category, image_url: item.image_url, sort_order: item.sort_order, is_active: item.is_active });
+            setCatalogueDraft(
+              toCatalogueDraftPayload({
+                name: item.name,
+                description: item.description,
+                price: item.price,
+                category: item.category,
+                image_url: item.image_url,
+                product_images: item.product_images,
+                sort_order: item.sort_order,
+                is_active: item.is_active,
+              })
+            );
           }}
           onReset={() => {
             setEditingCatalogueId(null);
@@ -447,9 +492,10 @@ export default function ChatbotWorkspace({
             }
             setSavingSection("catalogue");
             try {
+              const payload = toCatalogueDraftPayload(catalogueDraft);
               const savedItem = editingCatalogueId
-                ? await updateCatalogueItem(editingCatalogueId, catalogueDraft, accessToken)
-                : await createCatalogueItem(catalogueDraft, accessToken);
+                ? await updateCatalogueItem(editingCatalogueId, payload, accessToken)
+                : await createCatalogueItem(payload, accessToken);
               setCatalogue(await getCatalogue(accessToken));
               setEditingCatalogueId(null);
               setCatalogueDraft(EMPTY_CATALOGUE_INPUT);

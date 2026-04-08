@@ -367,6 +367,7 @@ class ChatbotCatalogueItem(Base):
     price = Column(String, default="")          # "15 000 Ar", "Sur devis", "À partir de 50 000 Ar"
     category = Column(String, default="")
     image_url = Column(String, nullable=True)
+    product_images_json = Column(Text, default="[]")
     sort_order = Column(Integer, default=0)
     is_active = Column(String, default="true")
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -466,6 +467,13 @@ class ActivationRequest(Base):
     facebook_page_name = Column(String, default="")
     facebook_page_url = Column(String, default="")
     facebook_admin_email = Column(String, default="")
+    # Context captured from Facebook picker/import when available.
+    selected_facebook_pages_json = Column(Text, default="[]")
+    flare_selected_page_id_at_submission = Column(String, default="")
+    flare_selected_page_name_at_submission = Column(String, default="")
+    # Explicit page requested for activation by the user.
+    activation_target_page_id = Column(String, default="")
+    activation_target_page_name = Column(String, default="")
 
     # Chatbot
     primary_language = Column(String, default="fr")
@@ -484,6 +492,7 @@ class ActivationRequest(Base):
     # Acces page FLARE
     flare_page_admin_confirmed = Column(String, default="false")
     flare_page_admin_confirmed_at = Column(DateTime, nullable=True)
+    flare_page_admin_confirmed_by = Column(String, default="")
 
     # Operateur
     assigned_operator_email = Column(String, nullable=True)
@@ -811,13 +820,46 @@ def init_db():
     # Migrations pour chatbot catalogue & portfolio (page_id)
     db = SessionLocal()
     try:
-        if "page_id" not in {str(c.get("name", "")).strip().lower() for c in inspect(engine).get_columns("chatbot_catalogue_items")}:
+        existing_catalogue_cols = {
+            str(c.get("name", "")).strip().lower()
+            for c in inspect(engine).get_columns("chatbot_catalogue_items")
+        }
+        if "page_id" not in existing_catalogue_cols:
             db.execute(text("ALTER TABLE chatbot_catalogue_items ADD COLUMN page_id VARCHAR(255) DEFAULT NULL"))
+        if "product_images_json" not in existing_catalogue_cols:
+            db.execute(text("ALTER TABLE chatbot_catalogue_items ADD COLUMN product_images_json TEXT DEFAULT '[]'"))
         if "page_id" not in {str(c.get("name", "")).strip().lower() for c in inspect(engine).get_columns("chatbot_portfolio_items")}:
             db.execute(text("ALTER TABLE chatbot_portfolio_items ADD COLUMN page_id VARCHAR(255) DEFAULT NULL"))
         db.commit()
     except Exception as e:
         db.rollback()
+    finally:
+        db.close()
+
+    # Migrations pour activation_requests (page context + explicit activation target)
+    db = SessionLocal()
+    try:
+        existing_activation_cols = {
+            str(c.get("name", "")).strip().lower()
+            for c in inspect(engine).get_columns("activation_requests")
+        }
+        activation_columns = {
+            "selected_facebook_pages_json": "TEXT DEFAULT '[]'",
+            "flare_selected_page_id_at_submission": "VARCHAR(255) DEFAULT ''",
+            "flare_selected_page_name_at_submission": "VARCHAR(255) DEFAULT ''",
+            "activation_target_page_id": "VARCHAR(255) DEFAULT ''",
+            "activation_target_page_name": "VARCHAR(255) DEFAULT ''",
+            "flare_page_admin_confirmed_by": "VARCHAR(255) DEFAULT ''",
+        }
+        for column_name, column_sql in activation_columns.items():
+            if column_name in existing_activation_cols:
+                continue
+            db.execute(text(f"ALTER TABLE activation_requests ADD COLUMN {column_name} {column_sql}"))
+            _logger.info("✅ Migration activation_requests: colonne '%s' ajoutée.", column_name)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        _logger.warning("⚠️ Migration activation_requests ignorée: %s", e)
     finally:
         db.close()
 

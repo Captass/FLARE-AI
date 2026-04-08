@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
@@ -17,6 +17,7 @@ import {
   MessageSquare,
 } from "lucide-react";
 import type { NavLevel } from "@/components/NavBreadcrumb";
+import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 import {
   getAssistedLaunchConfig,
   type LaunchConfig,
@@ -63,6 +64,75 @@ function isMissingOrganizationScopeError(message: string): boolean {
   return /organisation|espace|scope|selectionnez d'abord/i.test(message);
 }
 
+type ActivationContextPage = {
+  page_id: string;
+  page_name: string;
+  is_active?: boolean;
+  is_selected?: boolean;
+};
+
+type ActivationPageContext = {
+  imported_pages: ActivationContextPage[];
+  selected_page_id: string | null;
+  target_page_id: string | null;
+  target_page_name: string | null;
+  target_page_url: string | null;
+};
+
+function normalizePageList(
+  pages: Array<{
+    page_id?: string | null;
+    page_name?: string | null;
+    is_active?: boolean;
+    is_selected?: boolean;
+  }> = []
+): ActivationContextPage[] {
+  return pages
+    .filter((p) => Boolean(p.page_id))
+    .map((p) => ({
+      page_id: String(p.page_id),
+      page_name: p.page_name || String(p.page_id),
+      is_active: Boolean(p.is_active),
+      is_selected: Boolean(p.is_selected),
+    }));
+}
+
+function getSnapshotSelectedPageId(
+  pages: ActivationContextPage[] = [],
+  fallbackIds: Array<string | null | undefined> = []
+): string | null {
+  const explicit = pages.find((page) => page.is_selected)?.page_id;
+  if (explicit) return explicit;
+
+  for (const fallbackId of fallbackIds) {
+    if (fallbackId && pages.some((page) => page.page_id === fallbackId)) {
+      return fallbackId;
+    }
+  }
+
+  const active = pages.find((page) => page.is_active);
+  if (active) return active.page_id;
+  return pages[0]?.page_id ?? null;
+}
+
+function getDefaultTargetPageId(
+  pages: ActivationContextPage[],
+  selectedPageId?: string | null,
+  context?: ActivationPageContext | null
+): string {
+  if (context?.target_page_id && pages.some((p) => p.page_id === context.target_page_id)) {
+    return context.target_page_id;
+  }
+  if (selectedPageId && pages.some((p) => p.page_id === selectedPageId)) {
+    return selectedPageId;
+  }
+  const active = pages.find((p) => p.is_active);
+  if (active) {
+    return active.page_id;
+  }
+  return pages[0]?.page_id ?? "";
+}
+
 // ---------------------------------------------------------------------------
 // Types & constants
 // ---------------------------------------------------------------------------
@@ -73,6 +143,8 @@ interface ChatbotActivationPageProps {
   onPush: (level: NavLevel) => void;
   currentScopeType?: "personal" | "organization";
   onRequestOrganizationSelection?: () => void;
+  availablePages?: FacebookMessengerPage[];
+  selectedPageId?: string | null;
 }
 
 type WizardStep =
@@ -98,7 +170,14 @@ const STEP_LABELS: Record<WizardStep, string> = {
   awaiting: "Activation",
 };
 
-const PLANS = [
+const PLANS: Array<{
+  id: ActivationPlanId | "enterprise";
+  name: string;
+  price: string;
+  popular?: boolean;
+  contact?: boolean;
+  features: string[];
+}> = [
   {
     id: "starter",
     name: "Starter",
@@ -325,6 +404,8 @@ export default function ChatbotActivationPage({
   onPush,
   currentScopeType = "personal",
   onRequestOrganizationSelection,
+  availablePages = [],
+  selectedPageId = null,
 }: ChatbotActivationPageProps) {
   // ---- state ----
   const [step, setStep] = useState<WizardStep>("choose_plan");
@@ -370,6 +451,8 @@ export default function ChatbotActivationPage({
     delivery_zones: "",
     notes_for_flare: "",
   });
+  const [pendingTargetPageId, setPendingTargetPageId] = useState<string>("");
+  const [persistedPageContext, setPersistedPageContext] = useState<ActivationPageContext | null>(null);
 
   // flare admin
   const [adminConfirmed, setAdminConfirmed] = useState(false);
@@ -382,6 +465,18 @@ export default function ChatbotActivationPage({
     if (getFreshToken) return await getFreshToken();
     return token ?? null;
   }, [getFreshToken, token]);
+
+  const importedPages = useMemo(
+    () => normalizePageList(availablePages),
+    [availablePages]
+  );
+
+  const targetPageId = pendingTargetPageId;
+  const targetPage = useMemo(
+    () => importedPages.find((p) => p.page_id === targetPageId) ?? null,
+    [importedPages, targetPageId]
+  );
+  const targetPageUrl = targetPage ? `https://facebook.com/${targetPage.page_id}` : "";
 
   // ---- initial load ----
   useEffect(() => {
@@ -447,7 +542,23 @@ export default function ChatbotActivationPage({
         }
 
         if (fetchedAr) {
-          setSelectedPlanId(fetchedAr.selected_plan_id || "pro");
+          const fetchedImportedPages = normalizePageList(fetchedAr.selected_facebook_pages || []);
+          const fetchedContext: ActivationPageContext = {
+            imported_pages: fetchedImportedPages,
+            selected_page_id: getSnapshotSelectedPageId(fetchedImportedPages, [
+              fetchedAr.flare_selected_page_id_at_submission,
+              fetchedAr.activation_target_page_id,
+            ]),
+            target_page_id: fetchedAr.activation_target_page_id || null,
+            target_page_name: fetchedAr.activation_target_page_name || fetchedAr.facebook_page_name || null,
+            target_page_url: fetchedAr.facebook_page_url || null,
+          };
+          setPersistedPageContext(
+            fetchedContext.imported_pages.length > 0 || fetchedContext.target_page_id || fetchedContext.target_page_name
+              ? fetchedContext
+              : null
+          );
+          setSelectedPlanId((fetchedAr.selected_plan_id as ActivationPlanId) || "pro");
           // pre-fill config form from AR
           setCfg((prev) => ({
             ...prev,
@@ -472,6 +583,7 @@ export default function ChatbotActivationPage({
             delivery_zones: fetchedAr.delivery_zones || prev.delivery_zones,
             notes_for_flare: fetchedAr.notes_for_flare || prev.notes_for_flare,
           }));
+          setPendingTargetPageId(fetchedAr.activation_target_page_id || "");
           setAdminConfirmed(fetchedAr.flare_page_admin_confirmed === "true");
 
           // jump to correct step
@@ -527,6 +639,74 @@ export default function ChatbotActivationPage({
       }
     };
   }, [currentScopeType, step, resolveToken]);
+
+  useEffect(() => {
+    if (!ar) return;
+    const snapshotPages = normalizePageList(ar.selected_facebook_pages || []);
+    const nextContext: ActivationPageContext = {
+      imported_pages: snapshotPages,
+      selected_page_id: getSnapshotSelectedPageId(snapshotPages, [
+        ar.flare_selected_page_id_at_submission,
+        ar.activation_target_page_id,
+      ]),
+      target_page_id: ar.activation_target_page_id || null,
+      target_page_name: ar.activation_target_page_name || ar.facebook_page_name || null,
+      target_page_url: ar.facebook_page_url || null,
+    };
+    if (nextContext.imported_pages.length > 0 || nextContext.target_page_id || nextContext.target_page_name) {
+      setPersistedPageContext(nextContext);
+    }
+  }, [ar, selectedPageId]);
+
+  useEffect(() => {
+    if (importedPages.length === 0) {
+      setPendingTargetPageId("");
+      return;
+    }
+
+    setPendingTargetPageId((current) => {
+      if (current && importedPages.some((p) => p.page_id === current)) {
+        return current;
+      }
+
+      const defaultId = getDefaultTargetPageId(
+        importedPages,
+        selectedPageId,
+        persistedPageContext
+      );
+      if (defaultId) {
+        return defaultId;
+      }
+
+      if (cfg.facebook_page_url) {
+        const match = cfg.facebook_page_url.match(/facebook\.com\/([^/?#]+)/i);
+        if (match) {
+          const fromUrl = match[1];
+          const byUrl = importedPages.find((p) => p.page_id === fromUrl);
+          if (byUrl) {
+            return byUrl.page_id;
+          }
+        }
+      }
+
+      if (cfg.facebook_page_name) {
+        const byName = importedPages.find(
+          (p) => p.page_name.toLowerCase() === cfg.facebook_page_name.toLowerCase()
+        );
+        if (byName) {
+          return byName.page_id;
+        }
+      }
+
+      return importedPages[0].page_id;
+    });
+  }, [
+    importedPages,
+    selectedPageId,
+    persistedPageContext,
+    cfg.facebook_page_name,
+    cfg.facebook_page_url,
+  ]);
 
   // ---- actions ----
   const handleChoosePlan = async () => {
@@ -584,7 +764,7 @@ export default function ChatbotActivationPage({
             const existingAr = existing.activation_request;
             if (existingAr) {
               setAr(existingAr);
-              setSelectedPlanId(existingAr.selected_plan_id || selectedPlanId);
+              setSelectedPlanId((existingAr.selected_plan_id as ActivationPlanId) || selectedPlanId);
               setStep(statusToStep(existingAr.status));
               return;
             }
@@ -648,17 +828,54 @@ export default function ChatbotActivationPage({
       onRequestOrganizationSelection?.();
       return;
     }
+
+    if (importedPages.length > 0 && !targetPageId) {
+      setError("Choisissez la page Facebook a activer.");
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
       const t = await resolveToken();
       if (!t) throw new Error("Session expiree");
-      const updates: Record<string, string> = {};
+
+      const effectiveTargetPageName = (targetPage?.page_name || cfg.facebook_page_name || "").trim();
+      const effectiveTargetPageUrl = (targetPageUrl || cfg.facebook_page_url || "").trim();
+      const selectedPageAtSubmissionId = getSnapshotSelectedPageId(importedPages, [
+        selectedPageId,
+        targetPage?.page_id,
+      ]);
+      const pageContext: ActivationPageContext = {
+        imported_pages: importedPages,
+        selected_page_id: selectedPageAtSubmissionId,
+        target_page_id: targetPage?.page_id || null,
+        target_page_name: effectiveTargetPageName || null,
+        target_page_url: effectiveTargetPageUrl || null,
+      };
+
+      const updates: Record<string, unknown> = {};
       for (const [k, v] of Object.entries(cfg)) {
         if (v) updates[k] = v;
       }
+      if (effectiveTargetPageName) {
+        updates.facebook_page_name = effectiveTargetPageName;
+      }
+      if (effectiveTargetPageUrl) {
+        updates.facebook_page_url = effectiveTargetPageUrl;
+      }
+      updates.selected_facebook_pages = pageContext.imported_pages.map((page) => ({
+        page_id: page.page_id,
+        page_name: page.page_name,
+        is_selected: page.page_id === pageContext.selected_page_id,
+        is_active: Boolean(page.is_active),
+      }));
+      updates.activation_target_page_id = pageContext.target_page_id || "";
+      updates.activation_target_page_name = pageContext.target_page_name || "";
+
       const res = await updateActivationRequest(updates, t);
       setAr(res.activation_request);
+      setPersistedPageContext(pageContext);
       setStep("flare_admin");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la sauvegarde");
@@ -762,6 +979,53 @@ export default function ChatbotActivationPage({
   // ---- render helpers ----
   const selectedPlan = PLANS.find((p) => p.id === selectedPlanId) ?? PLANS[1];
   const selectedMethod = paymentMethods.find((m) => m.code === payMethodCode);
+  const persistedImportedPages = persistedPageContext?.imported_pages || [];
+  const shouldUsePersistedPageContext = step === "flare_admin" || step === "awaiting";
+  const effectiveImportedPages =
+    shouldUsePersistedPageContext && persistedImportedPages.length > 0
+      ? persistedImportedPages
+      : importedPages.length > 0
+      ? importedPages
+      : persistedImportedPages;
+  const effectiveSelectedPageId = shouldUsePersistedPageContext
+    ? getSnapshotSelectedPageId(effectiveImportedPages, [
+        persistedPageContext?.selected_page_id,
+        ar?.activation_target_page_id,
+      ])
+    : getSnapshotSelectedPageId(effectiveImportedPages, [
+        selectedPageId,
+        persistedPageContext?.selected_page_id,
+        ar?.activation_target_page_id,
+      ]);
+  const resolvedTargetPageId = shouldUsePersistedPageContext
+    ? ar?.activation_target_page_id || persistedPageContext?.target_page_id || null
+    : targetPage?.page_id || ar?.activation_target_page_id || persistedPageContext?.target_page_id || null;
+  const resolvedTargetPageName =
+    (resolvedTargetPageId
+      ? effectiveImportedPages.find((page) => page.page_id === resolvedTargetPageId)?.page_name || null
+      : null) ||
+    (shouldUsePersistedPageContext
+      ? ar?.activation_target_page_name || persistedPageContext?.target_page_name || ar?.facebook_page_name || null
+      : targetPage?.page_name ||
+        ar?.activation_target_page_name ||
+        persistedPageContext?.target_page_name ||
+        ar?.facebook_page_name ||
+        null);
+  const resolvedTargetPageUrl =
+    (resolvedTargetPageId ? `https://facebook.com/${resolvedTargetPageId}` : null) ||
+    (shouldUsePersistedPageContext
+      ? persistedPageContext?.target_page_url || ar?.facebook_page_url || null
+      : targetPageUrl || persistedPageContext?.target_page_url || ar?.facebook_page_url || null);
+  const selectedPageInFlare =
+    effectiveImportedPages.find((p) => p.page_id === effectiveSelectedPageId) ??
+    null;
+  const displayedPageContext: ActivationPageContext = {
+    imported_pages: effectiveImportedPages,
+    selected_page_id: effectiveSelectedPageId,
+    target_page_id: resolvedTargetPageId,
+    target_page_name: resolvedTargetPageName,
+    target_page_url: resolvedTargetPageUrl,
+  };
 
   const updateCfg = (key: string, value: string) => {
     setCfg((prev) => ({ ...prev, [key]: value }));
@@ -856,7 +1120,7 @@ export default function ChatbotActivationPage({
                           window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
                           return;
                         }
-                        setSelectedPlanId(plan.id);
+                        setSelectedPlanId(plan.id as ActivationPlanId);
                       }}
                       className={`relative flex flex-col items-start text-left p-5 rounded-2xl border transition-all duration-200 ${
                         isSelected
@@ -1190,20 +1454,75 @@ export default function ChatbotActivationPage({
                   <Facebook size={16} />
                   Facebook
                 </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InputField
-                    label="Nom de la page"
-                    value={cfg.facebook_page_name}
-                    onChange={(v) => updateCfg("facebook_page_name", v)}
-                    placeholder="Ma Page Facebook"
-                  />
-                  <InputField
-                    label="URL de la page"
-                    value={cfg.facebook_page_url}
-                    onChange={(v) => updateCfg("facebook_page_url", v)}
-                    placeholder="https://facebook.com/mapage"
-                  />
-                </div>
+                {importedPages.length > 0 ? (
+                  <>
+                    <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3">
+                      <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider mb-2">
+                        Pages importees de Facebook ({importedPages.length})
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {importedPages.slice(0, 6).map((page) => (
+                          <span
+                            key={page.page_id}
+                            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
+                              page.page_id === selectedPageId
+                                ? "bg-orange-500/15 text-orange-500 border border-orange-500/30"
+                                : "bg-[var(--surface-raised)] text-[var(--text-secondary)] border border-[var(--border-default)]"
+                            }`}
+                          >
+                            {page.page_name}
+                          </span>
+                        ))}
+                        {importedPages.length > 6 && (
+                          <span className="inline-flex items-center rounded-full px-2.5 py-1 text-xs bg-[var(--surface-raised)] text-[var(--text-muted)] border border-[var(--border-default)]">
+                            +{importedPages.length - 6} autres
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2">
+                        <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Page selectionnee dans FLARE</p>
+                        <p className="text-sm text-[var(--text-primary)] font-medium truncate">
+                          {selectedPageInFlare?.page_name || "-"}
+                        </p>
+                      </div>
+                      <SelectField
+                        label="Page a activer (cible)"
+                        value={targetPageId}
+                        onChange={setPendingTargetPageId}
+                        options={importedPages.map((page) => ({
+                          value: page.page_id,
+                          label: page.page_name,
+                        }))}
+                        placeholder="Choisir la page a activer"
+                      />
+                    </div>
+
+                    {targetPage && (
+                      <div className="rounded-lg border border-[var(--accent-navy)]/20 bg-[var(--accent-navy)]/7 px-3 py-2 text-xs text-[var(--text-secondary)]">
+                        <span className="font-semibold text-[var(--text-primary)]">Activation demandee:</span>{" "}
+                        {targetPage.page_name} ({targetPage.page_id})
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <InputField
+                      label="Nom de la page"
+                      value={cfg.facebook_page_name}
+                      onChange={(v) => updateCfg("facebook_page_name", v)}
+                      placeholder="Ma Page Facebook"
+                    />
+                    <InputField
+                      label="URL de la page"
+                      value={cfg.facebook_page_url}
+                      onChange={(v) => updateCfg("facebook_page_url", v)}
+                      placeholder="https://facebook.com/mapage"
+                    />
+                  </div>
+                )}
                 <InputField
                   label="Email admin Facebook"
                   type="email"
@@ -1358,12 +1677,34 @@ export default function ChatbotActivationPage({
                   </p>
                   <div className="flex flex-col gap-2 text-sm text-[var(--text-secondary)]">
                     <div className="flex justify-between">
-                      <span>Page Facebook</span>
-                      <span className="text-[var(--text-primary)] font-medium">{cfg.facebook_page_name || "-"}</span>
+                      <span>Page selectionnee FLARE</span>
+                      <span className="text-[var(--text-primary)] font-medium">
+                        {selectedPageInFlare?.page_name || "-"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>URL</span>
-                      <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">{cfg.facebook_page_url || "-"}</span>
+                      <span>ID selection FLARE</span>
+                      <span className="text-[var(--text-primary)] font-medium">
+                        {displayedPageContext.selected_page_id || "-"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Page demandee</span>
+                      <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">
+                        {displayedPageContext.target_page_name || cfg.facebook_page_name || "-"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>ID page demandee</span>
+                      <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">
+                        {displayedPageContext.target_page_id || "-"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>URL cible</span>
+                      <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">
+                        {displayedPageContext.target_page_url || cfg.facebook_page_url || "-"}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span>Email admin</span>
@@ -1434,6 +1775,7 @@ export default function ChatbotActivationPage({
             >
               <AwaitingStatus
                 ar={ar}
+                pageContext={displayedPageContext}
                 onGoToPayment={() => setStep("payment")}
                 onGoToChatbot={() => onPush("chatbot")}
               />
@@ -1551,10 +1893,12 @@ function SelectField({
 
 function AwaitingStatus({
   ar,
+  pageContext,
   onGoToPayment,
   onGoToChatbot,
 }: {
   ar: ActivationRequest | null;
+  pageContext: ActivationPageContext | null;
   onGoToPayment: () => void;
   onGoToChatbot: () => void;
 }) {
@@ -1683,6 +2027,13 @@ function AwaitingStatus({
       ? "bg-orange-500/5"
       : "bg-[var(--accent-navy)]/6";
 
+  const importedPages = pageContext?.imported_pages ?? [];
+  const selectedPageId = pageContext?.selected_page_id || null;
+  const selectedPageName = importedPages.find((p) => p.page_id === selectedPageId)?.page_name || null;
+  const targetPageId = pageContext?.target_page_id || ar.activation_target_page_id || null;
+  const targetPageName = pageContext?.target_page_name || ar.facebook_page_name || null;
+  const targetPageUrl = pageContext?.target_page_url || ar.facebook_page_url || null;
+
   return (
     <div
       className={`rounded-2xl backdrop-blur-md border shadow-[var(--shadow-card)] p-8 text-center max-w-md w-full flex flex-col items-center gap-4 ${borderColor} ${bgColor}`}
@@ -1692,6 +2043,39 @@ function AwaitingStatus({
       <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
         {display.description}
       </p>
+      {(targetPageName || importedPages.length > 0) && (
+        <div className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-left">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+            Contexte page Facebook
+          </p>
+          <div className="space-y-1.5 text-xs text-[var(--text-secondary)]">
+            <p>
+              Pages importees:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{importedPages.length || "-"}</span>
+            </p>
+            <p>
+              Selection FLARE:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{selectedPageName || "-"}</span>
+            </p>
+            <p>
+              ID selection FLARE:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{selectedPageId || "-"}</span>
+            </p>
+            <p>
+              Page demandee:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{targetPageName || "-"}</span>
+            </p>
+            <p>
+              ID page demandee:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{targetPageId || "-"}</span>
+            </p>
+            <p className="truncate">
+              URL cible:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{targetPageUrl || "-"}</span>
+            </p>
+          </div>
+        </div>
+      )}
       {display.action}
       {!display.action && s !== "active" && (
         <p className="text-xs text-[var(--text-muted)] mt-2">
@@ -1701,4 +2085,5 @@ function AwaitingStatus({
     </div>
   );
 }
+
 
