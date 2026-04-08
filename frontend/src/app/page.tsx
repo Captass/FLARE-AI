@@ -1104,7 +1104,7 @@ export default function Home() {
             <FlareMark tone="auto" className="w-6 animate-pulse" priority />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium uppercase tracking-[0.35em] text-[var(--text-primary)]">RAM&apos;S FLARE</p>
+            <p className="text-sm font-medium uppercase tracking-[0.35em] text-[var(--text-primary)]">FLARE AI</p>
             <p className="text-xs text-[var(--text-muted)]">Chargement</p>
           </div>
         </div>
