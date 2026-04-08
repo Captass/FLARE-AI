@@ -121,7 +121,7 @@ export default function SignalementModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[180] bg-black/45 backdrop-blur-[2px]"
+            className="fixed inset-0 z-[180] bg-black/70 backdrop-blur-md"
             onClick={onClose}
           />
           <motion.div
@@ -129,7 +129,8 @@ export default function SignalementModal({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 12, scale: 0.98 }}
             transition={{ duration: 0.18 }}
-            className="fixed inset-x-4 top-[8vh] z-[190] mx-auto w-full max-w-2xl rounded-[28px] border border-[var(--border-default)] bg-[var(--surface-base)] shadow-[var(--shadow-card)]"
+            className="fixed inset-x-4 top-[8vh] z-[190] mx-auto w-full max-w-2xl rounded-[28px] border border-[var(--border-strong)] bg-[var(--surface-raised)] shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+            style={{ opacity: 1 }}
           >
             <div className="flex items-start justify-between gap-4 border-b border-[var(--border-default)] px-5 py-4 md:px-6">
               <div>
