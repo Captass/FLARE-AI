@@ -20,9 +20,12 @@ export default function SpaceModal({ isOpen, onClose, onConfirm }: SpaceModalPro
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
-      <div className="relative w-full max-w-[400px] rounded-2xl bg-[rgba(10,12,18,0.97)] shadow-2xl overflow-hidden">
+      <div
+        className="relative w-full max-w-[400px] overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-modal)] shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+        style={{ backgroundColor: "rgb(var(--background))", opacity: 1 }}
+      >
         <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-[18px] font-semibold tracking-tight text-white">

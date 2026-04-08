@@ -66,13 +66,14 @@ export default function OrganizationAccessPanel({
 
   return (
     <div className="fixed inset-0 z-[150]">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
       <div className="absolute inset-0 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[540px] max-h-[85vh] flex flex-col rounded-2xl bg-[rgba(10,12,18,0.97)] shadow-2xl overflow-hidden"
+          className="w-full max-w-[540px] max-h-[85vh] flex flex-col overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--bg-modal)] shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
+          style={{ backgroundColor: "rgb(var(--background))", opacity: 1 }}
         >
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
