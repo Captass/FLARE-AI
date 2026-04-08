@@ -1075,6 +1075,8 @@ async def _activate_facebook_page_core(
     db: Session,
     organization_slug: str,
     target_page_id: str,
+    *,
+    actor_email: str,
 ) -> dict[str, Any]:
     """
     Abonnement Meta subscribed_apps, synchro Messenger direct, desactivation des autres pages actives de l'org.
@@ -1119,9 +1121,17 @@ async def _activate_facebook_page_core(
             FacebookPageConnection.is_active == "true",
             FacebookPageConnection.status == "active",
         )
-        .first()
+        .all()
     )
-    if active_elsewhere:
+    transferable_elsewhere = [
+        row for row in active_elsewhere
+        if user_can_edit_organization(actor_email, slug=row.organization_slug)
+    ]
+    blocking_elsewhere = [
+        row for row in active_elsewhere
+        if row.organization_slug not in {candidate.organization_slug for candidate in transferable_elsewhere}
+    ]
+    if blocking_elsewhere:
         raise HTTPException(
             status_code=409,
             detail="Cette page Facebook est deja active sur une autre organisation.",
@@ -1141,7 +1151,7 @@ async def _activate_facebook_page_core(
     if not page_access_token:
         logger.error(
             "Activation page=%s org=%s : token de page indisponible (encrypted=%s)",
-            resolved_page_id,
+            target_page_id,
             organization_slug,
             "present" if connection.page_access_token_encrypted else "vide",
         )
@@ -1195,6 +1205,16 @@ async def _activate_facebook_page_core(
             other.webhook_subscribed = "false"
             other.direct_service_synced = "false"
             other.updated_at = now
+
+        for transferred in transferable_elsewhere:
+            transferred.status = "disconnected"
+            transferred.is_active = "false"
+            transferred.webhook_subscribed = "false"
+            transferred.direct_service_synced = "false"
+            transferred.last_error = (
+                f"Activation transferee vers l'organisation {organization_slug}."
+            )
+            transferred.updated_at = now
         db.commit()
     except HTTPException as exc:
         if subscribed_target:
@@ -1227,7 +1247,12 @@ async def activate_facebook_page(
     if target_page_id != str(page_id or "").strip():
         raise HTTPException(status_code=400, detail="Page Facebook incoherente.")
 
-    return await _activate_facebook_page_core(db, context["organization_slug"], target_page_id)
+    return await _activate_facebook_page_core(
+        db,
+        context["organization_slug"],
+        target_page_id,
+        actor_email=context["user_email"],
+    )
 
 
 @router.post("/pages/{page_id}/deactivate")
