@@ -348,6 +348,21 @@ export default function Home() {
     if (savedLang) setLang(savedLang);
   }, []);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    if (sidebarOpen) {
+      document.body.classList.add("sidebar-mobile-open");
+      return () => {
+        document.body.classList.remove("sidebar-mobile-open");
+      };
+    }
+
+    document.body.classList.remove("sidebar-mobile-open");
+  }, [sidebarOpen]);
+
   const handleLangChange = (newLang: 'fr' | 'en') => {
     setLang(newLang);
     localStorage.setItem('flare-lang', newLang);
@@ -1352,7 +1367,11 @@ export default function Home() {
         />
 
       {/* Zone principale 3D Glass */}
-      <main className="relative z-10 flex min-w-0 flex-1 flex-col bg-transparent">
+      <main
+        className={`relative z-10 flex min-w-0 flex-1 flex-col bg-transparent transition-[filter,opacity] duration-200 md:transition-none ${
+          sidebarOpen ? "pointer-events-none blur-[3px] opacity-70 md:pointer-events-auto md:blur-0 md:opacity-100" : ""
+        }`}
+      >
         {/* Header Gemini Type */}
         <div className="z-20 flex w-full items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 md:px-5">
           <div className="flex items-center gap-2 md:gap-4 min-w-0">

@@ -703,3 +703,8 @@ body {
 
 
 body.hide-app-sidebar aside, body.hide-app-sidebar aside.fixed, body.hide-app-sidebar .fixed.inset-y-0.left-0 { display: none !important; visibility: hidden !important; }
+
+body.sidebar-mobile-open {
+  overflow: hidden;
+  touch-action: none;
+}

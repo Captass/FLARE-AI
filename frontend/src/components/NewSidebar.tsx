@@ -227,6 +227,21 @@ export default function NewSidebar({
     };
   }, [profileMenuOpen]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    if (open) {
+      document.body.classList.add("sidebar-mobile-open");
+      return () => {
+        document.body.classList.remove("sidebar-mobile-open");
+      };
+    }
+
+    document.body.classList.remove("sidebar-mobile-open");
+  }, [open]);
+
   return (
     <>
       <AnimatePresence>
@@ -237,7 +252,7 @@ export default function NewSidebar({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[90] bg-black/60 md:hidden"
+            className="fixed inset-0 z-[90] bg-black/55 backdrop-blur-lg md:hidden"
             onClick={onClose}
             aria-hidden
           />
@@ -245,7 +260,7 @@ export default function NewSidebar({
       </AnimatePresence>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col border-r border-[var(--border-default)] bg-[var(--surface-base)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col border-r border-[var(--border-default)] bg-[var(--surface-base)] shadow-[0_28px_90px_rgba(0,0,0,0.30)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 md:bg-[var(--bg-sidebar)] md:shadow-none ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
