@@ -25,6 +25,7 @@ import type { NavLevel } from "@/components/NavBreadcrumb";
 interface NewSidebarProps {
   activeView: NavLevel;
   onNavigate: (level: NavLevel) => void;
+  onNavigateHome?: () => void;
   onOpenReport?: () => void;
   user?: User | null;
   onLogout?: () => void;
@@ -162,6 +163,7 @@ function UserAvatar({
 export default function NewSidebar({
   activeView,
   onNavigate,
+  onNavigateHome,
   onOpenReport,
   user,
   onLogout,
@@ -268,7 +270,15 @@ export default function NewSidebar({
         <div className="flex items-center justify-between px-3 pb-3 pt-4">
           <button
             type="button"
-            onClick={() => navigate("home")}
+            onClick={() => {
+              if (onNavigateHome) {
+                setProfileMenuOpen(false);
+                onNavigateHome();
+                onClose?.();
+                return;
+              }
+              navigate("home");
+            }}
             className="flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left transition-colors hover:bg-[var(--surface-subtle)]"
             title={homeLabel}
             aria-label={homeLabel}

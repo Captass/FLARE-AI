@@ -1349,6 +1349,7 @@ export default function Home() {
         <NewSidebar
           activeView={sidebarActiveView}
           onNavigate={(v) => { navigateWithAccess(v); setSidebarOpen(false); }}
+          onNavigateHome={() => { navigateWithAccess("home"); setSidebarOpen(false); }}
           onOpenReport={() => setIsReportModalOpen(true)}
           open={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
