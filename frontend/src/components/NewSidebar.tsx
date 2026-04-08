@@ -201,6 +201,7 @@ export default function NewSidebar({
   const logoutLabel = lang === "en" ? "Log out" : "Se deconnecter";
   const profileActionsLabel = lang === "en" ? "Profile actions" : "Actions du profil";
   const settingsLabel = lang === "en" ? "Settings" : "Reglages";
+  const homeLabel = lang === "en" ? "Go to home" : "Retour a l'accueil";
 
   useEffect(() => {
     if (!profileMenuOpen) {
@@ -265,7 +266,13 @@ export default function NewSidebar({
         }`}
       >
         <div className="flex items-center justify-between px-3 pb-3 pt-4">
-          <div className="flex min-w-0 items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => navigate("home")}
+            className="flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+            title={homeLabel}
+            aria-label={homeLabel}
+          >
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
               <FlareMark tone="auto" className="w-[16px]" />
             </div>
@@ -274,7 +281,7 @@ export default function NewSidebar({
                 {brandName || "FLARE AI"}
               </span>
             )}
-          </div>
+          </button>
 
           <button
             onClick={() => setExpanded((current) => !current)}
