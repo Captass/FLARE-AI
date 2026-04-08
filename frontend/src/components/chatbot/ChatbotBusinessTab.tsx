@@ -8,6 +8,8 @@ import { InputField, SectionCard, TextareaField } from "@/components/chatbot/Cha
 interface ChatbotBusinessTabProps {
   preferences: ChatbotPreferences;
   onChange: (next: ChatbotPreferences) => void;
+  businessHoursDraft?: unknown;
+  onBusinessHoursChange?: (next: unknown) => void;
   canEdit: boolean;
   saving: boolean;
   onSave: () => void;

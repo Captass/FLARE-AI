@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { FileText, Image as ImageIcon, Film, X, ChevronLeft, PenTool } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import TextEditorPanel from "./TextEditorPanel";
 import GraphicDesignerPanel from "./GraphicDesignerPanel";
 import VideoEditorPanel from "./VideoEditorPanel";
@@ -18,7 +19,7 @@ type TabType = "text" | "visual" | "video";
 const TABS: Array<{
   id: TabType;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
 }> = [
   { id: "text", label: "Ecrire", icon: FileText },
   { id: "visual", label: "Images", icon: ImageIcon },

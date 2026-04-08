@@ -18,6 +18,7 @@ import {
   Upload,
   Wand2,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { FileAttachment, generateContentStudioVisual, sendMessage } from "@/lib/api";
 
@@ -40,7 +41,7 @@ const WORKFLOWS: Array<{
   id: Workflow;
   label: string;
   subtitle: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   requiresImage?: boolean;
 }> = [
   { id: "poster", label: "Affiche", subtitle: "Affiche propre et prête à publier", icon: LayoutTemplate },

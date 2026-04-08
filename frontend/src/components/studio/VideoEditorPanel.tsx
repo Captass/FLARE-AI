@@ -32,6 +32,7 @@ import {
   Palette,
   Music,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import VideoTimeline from "./VideoTimeline";
 import { getContentStudioVideoJobStatus, submitContentStudioVideoEdit } from "@/lib/api";
@@ -62,7 +63,7 @@ const MODE_PRESETS: Array<{
   id: EditMode;
   label: string;
   subtitle: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   palette: string;
 }> = [
   { id: "social", label: "Social Cut", subtitle: "Cuts rapides, hook, retention", icon: Flame, palette: "from-orange-500/25 to-red-500/10" },

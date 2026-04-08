@@ -444,7 +444,15 @@ export default function ChatbotWorkspace({
       return <ChatbotIdentityTab preferences={preferences} onChange={setPreferences} canEdit={canEdit} saving={savingSection === "identity"} onSave={() => void persistPreferences("identity", "Identite du bot enregistree.")} />;
     }
     if (activeTab === "business") {
-      return <ChatbotBusinessTab preferences={preferences} businessHoursDraft={businessHoursDraft} onChange={setPreferences} onBusinessHoursChange={setBusinessHoursDraft} canEdit={canEdit} saving={savingSection === "business"} onSave={() => void persistPreferences("business", "Informations entreprise enregistrees.")} />;
+      return (
+        <ChatbotBusinessTab
+          preferences={preferences}
+          onChange={setPreferences}
+          canEdit={canEdit}
+          saving={savingSection === "business"}
+          onSave={() => void persistPreferences("business", "Informations entreprise enregistrees.")}
+        />
+      );
     }
     if (activeTab === "catalogue") {
       return (

@@ -137,7 +137,7 @@ export interface Folder {
 export interface ChatResponse {
   response: string;
   session_id: string;
-  images?: { prompt: string; type: string; data: string }[];
+  images?: { prompt: string; type: string; data: string; url?: string }[];
   knowledge_saved?: string[];  // Titres des docs sauvegardÃ©s/mis Ã  jour par l'agent
   suggestions?: string[];
 }

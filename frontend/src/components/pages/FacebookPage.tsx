@@ -11,7 +11,15 @@ interface FacebookPageProps {
   pendingHumanCount?: number;
 }
 
-const MODULES = [
+const MODULES: Array<{
+  id: string;
+  label: string;
+  description: string;
+  icon: typeof Bot;
+  iconColor: string;
+  locked: boolean;
+  navLevel?: NavLevel;
+}> = [
   {
     id: "chatbot",
     label: "Chatbot IA",
@@ -19,7 +27,7 @@ const MODULES = [
     icon: Bot,
     iconColor: "text-orange-500 dark:text-orange-300",
     locked: false,
-    navLevel: "chatbot" as NavLevel,
+    navLevel: "chatbot",
   },
   {
     id: "community",
@@ -37,7 +45,7 @@ const MODULES = [
     iconColor: "text-[var(--text-secondary)]",
     locked: true,
   },
-] as const;
+];
 
 export default function FacebookPage({ onPush }: FacebookPageProps) {
   return (
@@ -63,6 +71,7 @@ export default function FacebookPage({ onPush }: FacebookPageProps) {
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3" role="list" aria-label="Modules Facebook">
           {MODULES.map((mod, idx) => {
             const Icon = mod.icon;
+            const navLevel = mod.navLevel;
             return (
               <motion.div
                 key={mod.id}
@@ -77,7 +86,7 @@ export default function FacebookPage({ onPush }: FacebookPageProps) {
                   description={mod.description}
                   locked={mod.locked}
                   glowColor={mod.locked ? undefined : "#FF7C1A"}
-                  onClick={mod.navLevel ? () => onPush(mod.navLevel) : undefined}
+                  onClick={navLevel ? (() => onPush(navLevel as NavLevel)) : undefined}
                 />
               </motion.div>
             );
@@ -87,3 +96,4 @@ export default function FacebookPage({ onPush }: FacebookPageProps) {
     </div>
   );
 }
+
