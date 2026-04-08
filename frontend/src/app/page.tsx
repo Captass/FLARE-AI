@@ -1450,6 +1450,7 @@ export default function Home() {
           displayName={resolvedUserDisplayName}
           avatarUrl={resolvedUserAvatarUrl}
           brandName="FLARE AI"
+          logoUrl={resolvedBrandLogoUrl}
           lang={lang}
           userEmail={user?.email ?? null}
         />
