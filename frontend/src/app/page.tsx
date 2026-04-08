@@ -30,7 +30,7 @@ const SpaceManagerModal = dynamic(() => import("@/components/SpaceManagerModal")
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useFolders } from "@/hooks/useFolders";
-import { BookOpen, X, FolderOpen, ChevronDown, Menu, Download, AlertCircle } from "lucide-react";
+import { BookOpen, X, FolderOpen, ChevronDown, Menu, Download, AlertCircle, ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -99,6 +99,45 @@ export type ActiveView =
 
 type AppView = NavLevel | ActiveView;
 
+const DEFAULT_BACK_TARGET: Partial<Record<AppView, AppView>> = {
+  assistant: "home",
+  chat: "home",
+  memory: "assistant",
+  prompts: "assistant",
+  knowledge: "assistant",
+  files: "assistant",
+  dashboard: "home",
+  automations: "home",
+  facebook: "automations",
+  google: "automations",
+  chatbot: "home",
+  "chatbot-personnalisation": "chatbot",
+  "chatbot-parametres": "chatbot",
+  "chatbot-dashboard": "chatbot",
+  "chatbot-clients": "chatbot",
+  "chatbot-client-detail": "chatbot-clients",
+  "chatbot-orders": "chatbot",
+  "chatbot-activation": "chatbot",
+  leads: "chatbot-dashboard",
+  conversations: "chatbot-dashboard",
+  expenses: "chatbot-dashboard",
+  chatbotFiles: "chatbot-dashboard",
+  automationHub: "automations",
+  prospection: "automationHub",
+  content: "automationHub",
+  followup: "automationHub",
+  agents: "automationHub",
+  guide: "home",
+  billing: "home",
+  contact: "home",
+  settings: "home",
+  admin: "home",
+};
+
+function resolveFallbackBackTarget(view: AppView): AppView {
+  return DEFAULT_BACK_TARGET[view] ?? "home";
+}
+
 function resolvePreferredFacebookPageId(
   pages: FacebookMessengerPage[],
   currentSelectedPageId: string | null | undefined,
@@ -148,6 +187,46 @@ type LockedModuleConfig = {
   highlights: { title: string; description: string }[];
   availableNow: { label: string; description: string; view: ActiveView; tone?: "primary" | "secondary" }[];
 };
+
+const DEFAULT_NAV_STACKS: Record<AppView, AppView[]> = {
+  home: ["home"],
+  automations: ["home", "automations"],
+  facebook: ["home", "facebook"],
+  google: ["home", "google"],
+  chatbot: ["home", "chatbot"],
+  leads: ["home", "chatbot", "leads"],
+  conversations: ["home", "chatbot", "conversations"],
+  expenses: ["home", "chatbot", "expenses"],
+  chatbotFiles: ["home", "chatbot", "chatbotFiles"],
+  "chatbot-personnalisation": ["home", "chatbot", "chatbot-personnalisation"],
+  "chatbot-parametres": ["home", "chatbot", "chatbot-parametres"],
+  "chatbot-dashboard": ["home", "chatbot", "chatbot-dashboard"],
+  "chatbot-clients": ["home", "chatbot", "chatbot-clients"],
+  "chatbot-client-detail": ["home", "chatbot", "chatbot-clients", "chatbot-client-detail"],
+  "chatbot-orders": ["home", "chatbot", "chatbot-orders"],
+  "chatbot-activation": ["home", "chatbot", "chatbot-activation"],
+  admin: ["home", "admin"],
+  assistant: ["home", "assistant"],
+  chat: ["home", "assistant"],
+  memory: ["home", "assistant", "memory"],
+  prompts: ["home", "assistant", "prompts"],
+  knowledge: ["home", "assistant", "knowledge"],
+  files: ["home", "assistant", "files"],
+  billing: ["home", "billing"],
+  guide: ["home", "guide"],
+  contact: ["home", "contact"],
+  settings: ["home", "settings"],
+  dashboard: ["home", "chatbot", "chatbot-dashboard"],
+  automationHub: ["home", "automations", "automationHub"],
+  prospection: ["home", "automations", "prospection"],
+  content: ["home", "automations", "content"],
+  followup: ["home", "automations", "followup"],
+  agents: ["home", "automations", "agents"],
+};
+
+function resolveDefaultNavStack(view: AppView): AppView[] {
+  return [...(DEFAULT_NAV_STACKS[view] ?? [view])];
+}
 
 const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
   prospection: {
@@ -343,6 +422,8 @@ export default function Home() {
   const { theme, toggleTheme: handleThemeToggle } = useThemePreference();
 
   const [lang, setLang] = useState<'fr' | 'en'>('fr');
+  const hasHistoryBack = navStack.length > 1;
+  const showStandaloneBack = activeView !== "home" && !hasHistoryBack;
 
   useEffect(() => {
     const savedLang = localStorage.getItem('flare-lang') as 'fr' | 'en' | null;
@@ -788,12 +869,12 @@ export default function Home() {
   useEffect(() => () => { if (toastTimerRef.current) clearTimeout(toastTimerRef.current); }, []);
 
   const handleSelectConversation = useCallback(async (id: string) => {
-    setNavStack(["assistant" as NavLevel]);
+    setNavStack(resolveDefaultNavStack("assistant"));
     await loadConversation(id);
   }, [loadConversation]);
 
   const handleNewChat = useCallback(() => {
-    setNavStack(["assistant" as NavLevel]);
+    setNavStack(resolveDefaultNavStack("assistant"));
     newConversation();
   }, [newConversation]);
 
@@ -903,7 +984,7 @@ export default function Home() {
         const targetView = pendingOrganizationTarget;
         setPendingOrganizationTarget(null);
         if (targetView) {
-          setNavStack([targetView]);
+          setNavStack(resolveDefaultNavStack(targetView));
         }
         return;
       }
@@ -919,7 +1000,7 @@ export default function Home() {
         setShowOrganizationAccess(false);
         const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
         setPendingOrganizationTarget(null);
-        setNavStack([targetView]);
+        setNavStack(resolveDefaultNavStack(targetView));
       } catch (err) {
         console.error("Erreur connexion organisation:", err);
         pushAppNotice(err instanceof Error ? err.message : "Impossible d'ouvrir cet espace pour le moment.");
@@ -948,7 +1029,7 @@ export default function Home() {
       setShowOrganizationAccess(false);
       const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
       setPendingOrganizationTarget(null);
-      setNavStack([targetView]);
+      setNavStack(resolveDefaultNavStack(targetView));
       return true;
     } catch (err) {
       console.error("Erreur creation organisation:", err);
@@ -970,7 +1051,7 @@ export default function Home() {
     try {
       await deleteOrganization(organizationSlug, token);
       await loadOrganizationState();
-      setNavStack(["home" as NavLevel]);
+      setNavStack(resolveDefaultNavStack("home"));
     } catch (err) {
       console.error("Erreur suppression organisation:", err);
       pushAppNotice(err instanceof Error ? err.message : "Suppression de l'espace impossible pour le moment.");
@@ -1007,7 +1088,7 @@ export default function Home() {
       ]);
       setShowOrganizationAccess(false);
       setPendingOrganizationTarget(null);
-      setNavStack(["home" as NavLevel]);
+      setNavStack(resolveDefaultNavStack("home"));
     } catch (err) {
       console.error("Erreur retour espace personnel:", err);
       pushAppNotice(err instanceof Error ? err.message : "Impossible de revenir a l'espace personnel.");
@@ -1047,7 +1128,7 @@ export default function Home() {
         void openOrganizationAccess(view as AppView);
         return;
       }
-      setNavStack([view as AppView]);
+      setNavStack(resolveDefaultNavStack(view as AppView));
     },
     [openOrganizationAccess, organizationConnectionRequired, requestAuth, user]
   );
@@ -1090,9 +1171,19 @@ export default function Home() {
 
   useEffect(() => {
     if (!user && GUEST_LOCKED_VIEWS.includes(activeView as ActiveView)) {
-      setNavStack(["home" as NavLevel]);
+      setNavStack(resolveDefaultNavStack("home"));
     }
   }, [activeView, user]);
+
+  const handleHeaderBack = useCallback(() => {
+    if (hasHistoryBack) {
+      onPop();
+      return;
+    }
+
+    const fallbackTarget = resolveFallbackBackTarget(activeView);
+    setNavStack(resolveDefaultNavStack(fallbackTarget));
+  }, [activeView, hasHistoryBack, onPop]);
 
 
   // Ã¢â€â‚¬Ã¢â€â‚¬ Landing page publique, connexion, puis application Ã¢â€â‚¬Ã¢â€â‚¬
@@ -1359,7 +1450,6 @@ export default function Home() {
           displayName={resolvedUserDisplayName}
           avatarUrl={resolvedUserAvatarUrl}
           brandName="FLARE AI"
-          logoUrl={resolvedBrandLogoUrl}
           lang={lang}
           userEmail={user?.email ?? null}
         />
@@ -1395,14 +1485,24 @@ export default function Home() {
                  Accueil
                </span>
              ) : null}
+              {showStandaloneBack && (
+                <button
+                  onClick={handleHeaderBack}
+                  aria-label="Retour"
+                  className="inline-flex items-center gap-1 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-1.5 text-[var(--text-secondary)] transition-all hover:text-[var(--text-primary)] hover:bg-[var(--surface-raised)]"
+                >
+                  <ArrowLeft size={15} />
+                  <span className="hidden text-xs font-medium sm:inline">Retour</span>
+                </button>
+              )}
                {breadcrumbStack.length > 1 && (
                  <div className="flex-1 min-w-0">
                   <NavBreadcrumb navStack={breadcrumbStack} onPop={onPop} />
                  </div>
                )}
               {activeView !== "home" && (
-                <div className="hidden md:flex flex-col items-start">
-                  <span className="text-[16px] md:text-[18px] font-medium text-[var(--text-primary)] tracking-wide truncate font-sans">{resolvedViewTitle}</span>
+                <div className="flex min-w-0 flex-col items-start">
+                  <span className="truncate text-[15px] md:text-[18px] font-medium text-[var(--text-primary)] tracking-wide font-sans">{resolvedViewTitle}</span>
                 </div>
               )}
           </div>
@@ -1582,7 +1682,7 @@ export default function Home() {
                   await loadSetupStatus().catch(() => null);
                 }}
                 onSkip={() => {
-                  setNavStack(["chatbot" as NavLevel]);
+                  setNavStack(resolveDefaultNavStack("chatbot"));
                 }}
                 onRequestOrganizationSelection={openChatbotOrganizationAccess}
                 onRefreshSetupStatus={loadSetupStatus}

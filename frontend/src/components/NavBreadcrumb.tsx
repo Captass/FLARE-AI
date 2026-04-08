@@ -9,6 +9,10 @@ export type NavLevel =
   | "facebook"
   | "google"
   | "chatbot"
+  | "leads"
+  | "conversations"
+  | "expenses"
+  | "chatbotFiles"
   | "chatbot-personnalisation"
   | "chatbot-parametres"
   | "chatbot-dashboard"
@@ -18,6 +22,15 @@ export type NavLevel =
   | "chatbot-activation"
   | "admin"
   | "assistant"
+  | "memory"
+  | "prompts"
+  | "knowledge"
+  | "files"
+  | "automationHub"
+  | "prospection"
+  | "content"
+  | "followup"
+  | "agents"
   | "guide"
   | "billing"
   | "contact"
@@ -29,8 +42,12 @@ export const NAV_LABELS: Record<NavLevel, string> = {
   facebook: "Facebook",
   google: "Google",
   chatbot: "Chatbot IA",
+  leads: "Leads",
+  conversations: "Conversations",
+  expenses: "Depenses",
+  chatbotFiles: "Contenu chatbot",
   "chatbot-personnalisation": "Personnalisation",
-  "chatbot-parametres": "Paramètres",
+  "chatbot-parametres": "Parametres",
   "chatbot-dashboard": "Tableau de bord",
   "chatbot-clients": "Clients & Conversations",
   "chatbot-client-detail": "Fiche client",
@@ -38,10 +55,19 @@ export const NAV_LABELS: Record<NavLevel, string> = {
   "chatbot-activation": "Activation",
   admin: "Administration",
   assistant: "Assistant IA",
+  memory: "Memoire",
+  prompts: "Prompts",
+  knowledge: "Base de connaissances",
+  files: "Fichiers",
+  automationHub: "Hub",
+  prospection: "Prospection",
+  content: "Studio contenu",
+  followup: "Suivi client",
+  agents: "Agents",
   guide: "Guide",
   billing: "Abonnements",
   contact: "Contactez-nous",
-  settings: "Paramètres",
+  settings: "Parametres",
 };
 
 interface NavBreadcrumbProps {
@@ -60,7 +86,6 @@ export default function NavBreadcrumb({ navStack, onPop }: NavBreadcrumbProps) {
       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
       className="flex items-center gap-2 px-4 py-3 md:px-6"
     >
-      {/* Back button */}
       <AnimatePresence>
         {canGoBack && (
           <motion.button
@@ -71,38 +96,26 @@ export default function NavBreadcrumb({ navStack, onPop }: NavBreadcrumbProps) {
             transition={{ duration: 0.18 }}
             onClick={onPop}
             aria-label="Retour"
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg
-                       text-white/30 hover:text-white/70 hover:bg-white/[0.05]
-                       transition-all duration-150"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-primary)] transition-all duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)]"
           >
             <ArrowLeft size={15} />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Breadcrumb trail */}
-      <nav
-        aria-label="Navigation"
-        className="flex items-center gap-1 min-w-0 overflow-hidden"
-      >
+      <nav aria-label="Navigation" className="flex min-w-0 items-center gap-1 overflow-hidden">
         {navStack.map((level, idx) => {
           const isLast = idx === navStack.length - 1;
           const label = NAV_LABELS[level] ?? level;
 
           return (
-            <span key={`${level}-${idx}`} className="flex items-center gap-1 min-w-0">
-              {idx > 0 && (
-                <ChevronRight
-                  size={12}
-                  className="shrink-0 text-white/15"
-                  aria-hidden
-                />
-              )}
+            <span key={`${level}-${idx}`} className="flex min-w-0 items-center gap-1">
+              {idx > 0 && <ChevronRight size={12} className="shrink-0 text-[var(--text-muted)]" aria-hidden />}
               <span
                 className={`truncate text-sm font-medium transition-colors duration-150 ${
                   isLast
-                    ? "text-white/80"
-                    : "text-white/25 hover:text-white/50 cursor-default"
+                    ? "text-[var(--text-primary)]"
+                    : "cursor-default text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}
               >
                 {label}
