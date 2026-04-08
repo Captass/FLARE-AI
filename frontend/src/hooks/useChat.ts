@@ -267,6 +267,30 @@ export function useChat(
             if (resolvedSessionId && authToken) {
               void syncConversationMessages(resolvedSessionId);
             }
+          } else if (event.type === "response") {
+            receivedAssistantOutput = true;
+            resolvedSessionId = event.session_id || resolvedSessionId;
+            const assistantMsg: Message = {
+              id: generateId() + "-response",
+              role: "assistant",
+              content: event.content || "",
+              timestamp: new Date().toISOString(),
+              responseTime: (Date.now() - startTime) / 1000,
+            };
+            setMessages((prev) => {
+              const filtered = prev.filter((m) => m.id !== streamingId);
+              return [...filtered, assistantMsg];
+            });
+            setThought(null);
+            setThoughts([]);
+            thoughtsRef.current = [];
+            if (resolvedSessionId && authToken) {
+              void syncConversationMessages(resolvedSessionId);
+            }
+          } else if (event.type === "done") {
+            if (resolvedSessionId && authToken) {
+              void syncConversationMessages(resolvedSessionId);
+            }
           } else if (event.type === "error") {
             throw new Error(event.content);
           }

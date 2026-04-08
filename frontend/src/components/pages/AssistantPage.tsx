@@ -2,14 +2,12 @@
 
 import { useCallback, useRef, useState } from "react";
 import { AnimatePresence } from "framer-motion";
-import { MessageSquare, Plus } from "lucide-react";
+import { FolderOpen, MessageSquare, Plus } from "lucide-react";
 import ArtifactViewer, { Artifact } from "@/components/ArtifactViewer";
 import ChatWindow from "@/components/ChatWindow";
 import FilesPanel from "@/components/FilesPanel";
 import MessageInput from "@/components/MessageInput";
-import { FileAttachment, saveTrackedFile } from "@/lib/api";
-
-type ChatMode = "raisonnement" | "rapide" | "creative" | "pro";
+import { ChatMode, FileAttachment, saveTrackedFile } from "@/lib/api";
 
 interface AssistantPageProps {
   token?: string | null;
@@ -26,7 +24,7 @@ interface AssistantPageProps {
   setChatMode: (mode: ChatMode) => void;
   send: (text: string, attachment?: any, deep?: boolean, quality?: string, mode?: ChatMode) => void;
   stop: () => void;
-  deleteMessagesAfterPoint: (ts: number) => Promise<void>;
+  deleteMessagesAfterPoint: (ts: string) => Promise<void>;
   showFilesPanel: boolean;
   setShowFilesPanel: (show: boolean) => void;
   activeArtifact: Artifact | null;
@@ -136,112 +134,107 @@ export default function AssistantPage({
 
   return (
     <div className="relative flex flex-1 overflow-hidden">
-      <div className="hidden w-[280px] shrink-0 flex-col border-r border-[var(--border-default)] bg-[var(--surface-base)] md:flex">
-        <div className="p-4">
-          <button
-            onClick={onNewChat}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/12 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-all hover:bg-orange-500/18"
-          >
-            <Plus size={16} />
-            Nouvelle discussion
-          </button>
-        </div>
-
-        <div className="flex-1 space-y-1 overflow-y-auto px-2 pb-4">
-          {conversations?.map((conv) => {
-            const isActive = conv.id === sessionId;
-            return (
-              <button
-                key={conv.id}
-                onClick={() => onSelectConversation?.(conv.id)}
-                className={`flex w-full flex-col items-start gap-1 rounded-xl border px-3 py-2.5 text-left transition-all duration-200 ${
-                  isActive
-                    ? "border-[var(--border-strong)] bg-[var(--surface-selected)] text-[var(--text-primary)] shadow-[var(--shadow-card)]"
-                    : "border-transparent text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
-                }`}
-              >
-                <div className="flex w-full items-center gap-2">
-                  <MessageSquare
-                    size={14}
-                    className={isActive ? "text-orange-500" : "text-[var(--text-muted)]"}
-                  />
-                  <span className="flex-1 truncate text-sm font-medium leading-tight">
-                    {conv.title || "Nouvelle discussion"}
-                  </span>
-                </div>
-                <span
-                  className={`pl-6 text-[10px] font-medium ${
-                    isActive ? "text-[var(--text-secondary)]" : "text-[var(--text-muted)]"
-                  }`}
-                >
-                  {new Date(conv.updated_at || conv.created_at).toLocaleDateString("fr-FR", {
-                    day: "numeric",
-                    month: "short",
-                  })}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       <div
         className={`flex min-w-0 flex-1 flex-col transition-all duration-300 ${
           showFilesPanel ? "md:mr-[320px]" : ""
         } ${activeArtifact ? "hidden md:flex md:w-[45%]" : "flex"}`}
       >
-        <div className="flex-1 overflow-hidden">
-          <ChatWindow
-            messages={messages}
-            isLoading={isLoading}
-            isFetchingHistory={isFetchingHistory}
-            thought={thought}
-            thoughts={thoughts}
-            error={error}
-            userName={userName}
-            onSuggestion={(text) => setPendingRestore(text)}
-            onViewArtifact={(url, type, name, previewUrl) =>
-              setActiveArtifact({ url, type, name, data: previewUrl })
-            }
-            onEditMessage={async (ts, content) => {
-              const msgToEdit = messages.find((m) => m.timestamp === ts);
-              let attachment: FileAttachment | undefined;
+        <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center gap-3 px-4 pb-3 pt-4 md:px-6">
+          <button
+            type="button"
+            onClick={onNewChat}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/12 px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-all hover:bg-orange-500/18"
+          >
+            <Plus size={16} />
+            Nouvelle discussion
+          </button>
 
-              if (msgToEdit?.attachment) {
-                const att = msgToEdit.attachment;
-                if (att.dataUrl?.startsWith("data:")) {
-                  const parts = att.dataUrl.split(",");
-                  const base64Content = parts[1];
-                  const mimeType = parts[0].match(/data:(.*?);/)?.[1] || "application/octet-stream";
-                  attachment = {
-                    content: base64Content,
-                    type: mimeType,
-                    name: att.name,
-                    dataUrl: att.dataUrl,
-                  };
-                }
-              }
+          <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto pb-1">
+            {conversations?.slice(0, 8).map((conv) => {
+              const isActive = conv.id === sessionId;
+              return (
+                <button
+                  key={conv.id}
+                  type="button"
+                  onClick={() => onSelectConversation?.(conv.id)}
+                  className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-2 text-sm transition-all ${
+                    isActive
+                      ? "border-[var(--border-strong)] bg-[var(--surface-selected)] text-[var(--text-primary)]"
+                      : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                  }`}
+                >
+                  <MessageSquare size={14} className={isActive ? "text-orange-500" : "text-[var(--text-muted)]"} />
+                  <span className="max-w-[180px] truncate">{conv.title || "Nouvelle discussion"}</span>
+                </button>
+              );
+            })}
+          </div>
 
-              await deleteMessagesAfterPoint(ts);
-              send(content, attachment, false);
-            }}
-          />
+          <button
+            type="button"
+            onClick={() => setShowFilesPanel(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] transition-all hover:bg-[var(--surface-raised)]"
+          >
+            <FolderOpen size={14} />
+            Fichiers
+          </button>
         </div>
 
-        <div className="chat-input-mobile safe-bottom mt-auto w-full max-w-3xl shrink-0 bg-[var(--background)] px-2 pb-4 md:px-4 md:pb-6">
-          <MessageInput
-            onSend={handleSend}
-            onStop={handleStop}
-            isLoading={isLoading}
-            disabled={false}
-            authToken={token}
-            onKnowledgeSaved={onKnowledgeSaved}
-            restoredValue={pendingRestore}
-            onRestoredValueConsumed={() => setPendingRestore("")}
-            restoredAttachment={pendingRestoreAttachment}
-            chatMode={chatMode}
-            setChatMode={setChatMode}
-          />
+        <div className="flex-1 overflow-hidden">
+          <div className="mx-auto h-full w-full max-w-[1180px] px-2 md:px-4">
+            <ChatWindow
+              messages={messages}
+              isLoading={isLoading}
+              isFetchingHistory={isFetchingHistory}
+              thought={thought}
+              thoughts={thoughts}
+              error={error}
+              userName={userName}
+              onSuggestion={(text) => setPendingRestore(text)}
+              onViewArtifact={(url, type, name, previewUrl) =>
+                setActiveArtifact({ url, type, name, data: previewUrl })
+              }
+              onEditMessage={async (ts, content) => {
+                const msgToEdit = messages.find((m) => m.timestamp === ts);
+                let attachment: FileAttachment | undefined;
+
+                if (msgToEdit?.attachment) {
+                  const att = msgToEdit.attachment;
+                  if (att.dataUrl?.startsWith("data:")) {
+                    const parts = att.dataUrl.split(",");
+                    const base64Content = parts[1];
+                    const mimeType = parts[0].match(/data:(.*?);/)?.[1] || "application/octet-stream";
+                    attachment = {
+                      content: base64Content,
+                      type: mimeType,
+                      name: att.name,
+                      dataUrl: att.dataUrl,
+                    };
+                  }
+                }
+                await deleteMessagesAfterPoint(ts);
+                send(content, attachment, false);
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="chat-input-mobile safe-bottom mt-auto w-full shrink-0 bg-[var(--background)] px-2 pb-4 md:px-4 md:pb-6">
+          <div className="mx-auto w-full max-w-[900px]">
+            <MessageInput
+              onSend={handleSend}
+              onStop={handleStop}
+              isLoading={isLoading}
+              disabled={false}
+              authToken={token}
+              onKnowledgeSaved={onKnowledgeSaved}
+              restoredValue={pendingRestore}
+              onRestoredValueConsumed={() => setPendingRestore("")}
+              restoredAttachment={pendingRestoreAttachment}
+              chatMode={chatMode}
+              setChatMode={setChatMode}
+            />
+          </div>
         </div>
       </div>
 

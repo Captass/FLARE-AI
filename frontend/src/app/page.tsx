@@ -30,7 +30,7 @@ const SpaceManagerModal = dynamic(() => import("@/components/SpaceManagerModal")
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useFolders } from "@/hooks/useFolders";
-import { BookOpen, X, FolderOpen, ChevronDown, Menu, Download, AlertCircle, ArrowLeft } from "lucide-react";
+import { BookOpen, X, ChevronDown, Menu, Download, AlertCircle, ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -1438,7 +1438,7 @@ export default function Home() {
 
         {/* Sidebar */}
         <NewSidebar
-          activeView={sidebarActiveView}
+          activeView={activeView as NavLevel}
           onNavigate={(v) => { navigateWithAccess(v); setSidebarOpen(false); }}
           onNavigateHome={() => { navigateWithAccess("home"); setSidebarOpen(false); }}
           onOpenReport={() => setIsReportModalOpen(true)}
@@ -1459,7 +1459,7 @@ export default function Home() {
           open={isReportModalOpen}
           token={token}
           currentView={activeView}
-          currentViewLabel={resolvedViewTitle}
+          currentViewLabel={resolvedViewTitle ?? "Ecran actuel"}
           getFreshToken={getFreshToken}
           onClose={() => setIsReportModalOpen(false)}
         />
@@ -1520,16 +1520,6 @@ export default function Home() {
              </div>
 
               <div className={`flex items-center gap-1.5 md:gap-3 ${activeView !== "home" ? "md:border-l md:border-[var(--border-muted)] md:pl-4" : ""}`}>
-                  {activeView === "assistant" && (
-                    <button
-                      onClick={() => setShowFilesPanel(!showFilesPanel)}
-                      className={`p-2 md:p-2.5 rounded-xl transition-all ${showFilesPanel ? 'bg-[var(--bg-active)] text-[var(--text-primary)] border border-[var(--border-glass)]' : 'text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]'}`}
-                      title="Fichiers"
-                    >
-                      <FolderOpen size={19} strokeWidth={1.5} />
-                    </button>
-                 )}
-
                  {/* Org switcher */}
                  <div className="flex items-center gap-2">
                  {user ? (

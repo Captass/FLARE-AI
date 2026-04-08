@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Zap,
   Bot,
+  Brain,
   BookOpen,
   CreditCard,
   MessageCircle,
@@ -16,6 +17,7 @@ import {
   ChevronUp,
   AlertCircle,
   ShieldCheck,
+  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
@@ -31,8 +33,8 @@ interface NewSidebarProps {
   onLogout?: () => void;
   displayName?: string;
   avatarUrl?: string;
-  brandName?: string;
   logoUrl?: string;
+  brandName?: string;
   open?: boolean;
   onClose?: () => void;
   lang?: "fr" | "en";
@@ -46,6 +48,15 @@ type NavItem = {
   labelEn: string;
   icon: typeof Zap;
 };
+
+const ASSISTANT_ITEMS: NavItem[] = [
+  { id: "assistant", labelFr: "Discussions", labelEn: "Chats", icon: MessageCircle },
+  { id: "memory", labelFr: "Memoire", labelEn: "Memory", icon: Brain },
+  { id: "knowledge", labelFr: "Connaissances", labelEn: "Knowledge", icon: BookOpen },
+  { id: "prompts", labelFr: "Prompts", labelEn: "Prompts", icon: Zap },
+  { id: "files", labelFr: "Fichiers", labelEn: "Files", icon: FileText },
+  { id: "settings", labelFr: "Reglages", labelEn: "Settings", icon: Settings },
+];
 
 const MAIN_ITEMS: NavItem[] = [
   { id: "chatbot", labelFr: "Chatbot Facebook", labelEn: "Facebook Chatbot", icon: MessageCircle },
@@ -169,6 +180,7 @@ export default function NewSidebar({
   onLogout,
   displayName,
   avatarUrl,
+  logoUrl,
   brandName,
   open = false,
   onClose,
@@ -185,7 +197,7 @@ export default function NewSidebar({
     ? "chatbot"
     : (["automations", "prospection", "content", "followup", "agents", "automationHub"] as string[]).includes(activeView as string)
       ? "automations"
-      : activeView === "assistant"
+      : (["assistant", "chat", "memory", "knowledge", "prompts", "files"] as string[]).includes(activeView as string)
         ? "assistant"
         : activeView === ("admin" as NavLevel)
           ? "admin"
@@ -324,6 +336,32 @@ export default function NewSidebar({
               />
             ))}
           </nav>
+
+          {activeMainItem === "assistant" && expanded ? (
+            <div className="mt-2 space-y-0.5 px-1" aria-label="Navigation assistant">
+              {ASSISTANT_ITEMS.map((item) => {
+                const label = lang === "en" ? item.labelEn : item.labelFr;
+                const Icon = item.icon;
+                const isActive = activeView === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    id={`tour-nav-${item.id}`}
+                    type="button"
+                    onClick={() => navigate(item.id)}
+                    className={`ml-6 flex w-[calc(100%-1.5rem)] items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] transition-all ${
+                      isActive
+                        ? "bg-[var(--surface-selected)] text-[var(--text-primary)]"
+                        : "text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+                    }`}
+                  >
+                    <Icon size={13} className="shrink-0" />
+                    <span className="truncate">{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
 
           <SectionDivider />
 

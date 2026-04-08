@@ -326,6 +326,8 @@ export type StreamEvent =
   | { type: "thought"; content: string }
   | { type: "delta"; content: string }
   | { type: "final"; response: string; images: any[]; sources?: SourceInfo[]; knowledge_saved: string[]; session_id: string; response_time?: number; suggestions?: string[] }
+  | { type: "response"; content: string; session_id?: string }
+  | { type: "done"; session_id?: string }
   | { type: "error"; content: string };
 
 export async function* sendMessageStream(
@@ -372,24 +374,50 @@ export async function* sendMessageStream(
   const decoder = new TextDecoder();
   let buffer = "";
 
+  const parseEventBlock = (block: string): StreamEvent | null => {
+    const payloadLines = block
+      .split("\n")
+      .map((line) => line.trimEnd())
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice(5).trimStart());
+
+    if (payloadLines.length === 0) {
+      return null;
+    }
+
+    const payload = payloadLines.join("\n");
+    if (!payload) {
+      return null;
+    }
+
+    try {
+      return JSON.parse(payload) as StreamEvent;
+    } catch (error) {
+      console.error("Error parsing SSE payload:", error, payload);
+      return null;
+    }
+  };
+
   while (true) {
     const { done, value } = await reader.read();
-    if (done) break;
+    if (done) {
+      const trailing = parseEventBlock(buffer);
+      if (trailing && (trailing as { type?: string }).type !== "keepalive") {
+        yield trailing;
+      }
+      break;
+    }
 
     buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n\n");
-    buffer = lines.pop() || "";
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() || "";
 
-    for (const line of lines) {
-      if (line.startsWith("data: ")) {
-        try {
-          const data = JSON.parse(line.slice(6));
-          if (data.type === "keepalive") continue; // Heartbeat SSE, ignorer
-          yield data as StreamEvent;
-        } catch (e) {
-          console.error("Error parsing SSE line:", e);
-        }
+    for (const block of blocks) {
+      const data = parseEventBlock(block);
+      if (!data || (data as { type?: string }).type === "keepalive") {
+        continue;
       }
+      yield data;
     }
   }
 }
