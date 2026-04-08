@@ -79,8 +79,8 @@ const PLANS: Plan[] = [
     name: "Business",
     price: "120 000 Ar",
     priceNote: "/mois",
-    color: "border-[rgba(var(--brand-blue-strong),0.28)] bg-[rgba(var(--brand-blue-soft),0.12)]",
-    accent: "text-[rgb(var(--brand-blue-strong))]",
+    color: "border-[var(--accent-navy)]/25 bg-[var(--accent-navy)]/8",
+    accent: "text-[var(--text-primary)]",
     features: [
       "Multi-pages Facebook",
       "Chatbot IA 24h/24",
@@ -96,7 +96,7 @@ const PLANS: Plan[] = [
     name: "Entreprise",
     price: "Sur devis",
     color: "border-[var(--border-default)] bg-[var(--surface-subtle)]",
-    accent: "text-[var(--text-secondary)]",
+    accent: "text-[var(--text-primary)]",
     contact: true,
     features: [
       "Solution sur mesure",
@@ -150,7 +150,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
           className="space-y-2"
         >
           <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">Abonnements</h1>
-          <p className="text-lg text-[var(--text-muted)]">Votre plan actuel et les offres disponibles</p>
+          <p className="text-lg text-[var(--text-secondary)]">Votre plan actuel et les offres disponibles</p>
         </motion.header>
 
         {/* ── Plan card ── */}
@@ -158,8 +158,8 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl backdrop-blur-md bg-[var(--bg-glass)]
-                     border border-[var(--border-glass)] shadow-[var(--shadow-card)]
+          className="rounded-2xl bg-[var(--surface-base)]
+                     border border-[var(--border-default)] shadow-[var(--shadow-card)]
                      px-6 py-6 flex flex-col gap-6"
         >
           {loading ? (
@@ -196,8 +196,8 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                              transition-all duration-200 group text-left w-full"
                 >
                   <div className="flex items-center gap-3">
-                    <Zap size={16} className="text-orange-400" />
-                    <span className="text-base font-semibold text-orange-400">
+                    <Zap size={16} className="text-orange-500" />
+                    <span className="text-base font-semibold text-[var(--text-primary)]">
                       {(!currentPlanId || currentPlanId === "free") ? "Choisir un plan" : "Changer de plan"}
                     </span>
                     {billing?.features?.upgrade_to && (
@@ -206,7 +206,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                       </span>
                     )}
                   </div>
-                  <ArrowRight size={16} className="text-orange-400/60 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight size={16} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
                 </button>
               )}
             </>
@@ -218,11 +218,11 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl backdrop-blur-md bg-[var(--bg-glass)]
-                     border border-[var(--border-glass)] shadow-[var(--shadow-card)]
+          className="rounded-2xl bg-[var(--surface-base)]
+                     border border-[var(--border-default)] shadow-[var(--shadow-card)]
                      px-6 py-6 flex flex-col gap-2"
         >
-          <p className="mb-4 text-sm font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
+          <p className="mb-4 text-sm font-medium text-[var(--text-secondary)]">
             Modules inclus dans votre plan
           </p>
           {loading ? (
@@ -253,7 +253,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
         >
-          <p className="mb-5 text-sm font-medium uppercase tracking-[0.1em] text-[var(--text-muted)]">
+          <p className="mb-5 text-sm font-medium text-[var(--text-secondary)]">
             Toutes les offres
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -276,7 +276,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
 
                   {/* Current badge */}
                   {isCurrent && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-[rgb(var(--brand-blue-strong))] px-3 py-0.5 text-[11px] font-semibold text-white shadow-md">
+                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-[var(--accent-navy)]/30 bg-[var(--accent-navy)]/12 px-3 py-0.5 text-[11px] font-semibold text-[var(--text-primary)] shadow-md">
                       <CheckCircle2 size={10} />
                       Plan actuel
                     </span>
@@ -288,7 +288,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
                     <p className="mt-1 text-2xl font-bold tracking-tight text-[var(--text-primary)]">
                       {plan.price}
                       {plan.priceNote && (
-                        <span className="text-sm font-normal text-[var(--text-secondary)]">{plan.priceNote}</span>
+                        <span className="ml-1 text-sm font-normal text-[var(--text-secondary)]">{plan.priceNote}</span>
                       )}
                     </p>
                   </div>
@@ -305,7 +305,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
 
                   {/* CTA */}
                   {isCurrent ? (
-                    <div className="mt-auto pt-2 text-center text-sm font-medium text-[rgb(var(--brand-blue-strong))]">
+                    <div className="mt-auto pt-2 text-center text-sm font-medium text-[var(--text-primary)]">
                       Plan actif
                     </div>
                   ) : plan.contact ? (
@@ -342,3 +342,4 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
     </div>
   );
 }
+

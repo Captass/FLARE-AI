@@ -183,7 +183,7 @@ const TONES = [
 // ---------------------------------------------------------------------------
 
 const glass =
-  "rounded-2xl backdrop-blur-md bg-[var(--bg-glass)] border border-[var(--border-glass)] shadow-[var(--shadow-card)]";
+  "rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] shadow-[var(--shadow-card)]";
 
 function stepIndexOf(s: WizardStep): number {
   return STEP_ORDER.indexOf(s);
@@ -244,7 +244,7 @@ function StepIndicator({
             <span
               className={`text-[10px] font-medium hidden sm:block ${
                 isCurrent
-                  ? "text-orange-400"
+                  ? "text-orange-500"
                   : isDone
                   ? "text-[var(--text-secondary)]"
                   : "text-[var(--text-muted)]"
@@ -288,7 +288,7 @@ function OrganizationScopeRequiredPanel({
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-2xl px-4 py-10 md:px-8 md:py-14">
         <div className={`${glass} p-6 md:p-8 text-center flex flex-col items-center gap-4`}>
-          <div className="h-12 w-12 rounded-xl bg-orange-500/15 text-orange-400 flex items-center justify-center">
+          <div className="h-12 w-12 rounded-xl bg-orange-500/15 text-orange-500 flex items-center justify-center">
             <Building2 size={22} />
           </div>
           <h2 className="text-xl font-semibold text-[var(--text-primary)]">Choisissez d&apos;abord votre espace de travail</h2>
@@ -733,7 +733,7 @@ export default function ChatbotActivationPage({
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-orange-400/80" />
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500" />
       </div>
     );
   }
@@ -756,10 +756,10 @@ export default function ChatbotActivationPage({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
         >
-          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-fg/90 mb-1">
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-[var(--text-primary)] mb-1">
             Activation du chatbot
           </h1>
-          <p className="text-sm text-[var(--text-muted)]">
+          <p className="text-sm text-[var(--text-secondary)]">
             Suivez les etapes pour activer votre chatbot IA sur Facebook
             Messenger.
           </p>
@@ -775,7 +775,7 @@ export default function ChatbotActivationPage({
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
-              className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+              className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-[var(--text-primary)]"
             >
               {error}
             </motion.div>
@@ -795,10 +795,10 @@ export default function ChatbotActivationPage({
               className="flex flex-col gap-6"
             >
               <div className="text-center">
-                <h2 className="text-lg font-semibold text-fg/85 mb-1">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
                   Choisissez votre offre
                 </h2>
-                <p className="text-sm text-[var(--text-muted)]">
+                <p className="text-sm text-[var(--text-secondary)]">
                   Selectionnez le plan qui correspond a votre activite.
                 </p>
               </div>
@@ -823,7 +823,7 @@ export default function ChatbotActivationPage({
                       className={`relative flex flex-col items-start text-left p-5 rounded-2xl border transition-all duration-200 ${
                         isSelected
                           ? "border-orange-500 bg-orange-500/5 shadow-lg shadow-orange-500/10"
-                          : "border-fg/[0.08] bg-fg/[0.02] hover:border-fg/[0.15] hover:bg-fg/[0.04]"
+                          : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)]"
                       }`}
                     >
                       {plan.popular && (
@@ -831,18 +831,18 @@ export default function ChatbotActivationPage({
                           Populaire
                         </span>
                       )}
-                      <p className="text-base font-semibold text-fg/90">
+                      <p className="text-base font-semibold text-[var(--text-primary)]">
                         {plan.name}
                       </p>
-                      <p className="text-lg font-bold text-orange-400 mt-1">
+                      <p className="text-lg font-bold text-orange-500 mt-1">
                         {plan.price}
                       </p>
-                      <ul className="mt-4 flex flex-col gap-1.5 text-sm text-fg/60">
+                      <ul className="mt-4 flex flex-col gap-1.5 text-sm text-[var(--text-secondary)]">
                         {plan.features.map((f) => (
                           <li key={f} className="flex items-start gap-2">
                             <CheckCircle2
                               size={14}
-                              className="mt-0.5 shrink-0 text-orange-400/70"
+                              className="mt-0.5 shrink-0 text-orange-500"
                             />
                             <span>{f}</span>
                           </li>
@@ -850,14 +850,14 @@ export default function ChatbotActivationPage({
                       </ul>
                       {isEnterprise ? (
                         <div className="mt-4 w-full">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-fg/50">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
                             <MessageSquare size={14} />
                             Contactez-nous
                           </span>
                         </div>
                       ) : isSelected ? (
                         <div className="mt-4 w-full">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-400">
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-500">
                             <CheckCircle2 size={14} />
                             Selectionne
                           </span>
@@ -902,22 +902,22 @@ export default function ChatbotActivationPage({
               {/* Recap */}
               <div className={`${glass} p-5 flex items-center justify-between`}>
                 <div>
-                  <p className="text-xs uppercase tracking-widest text-fg/40 mb-1">
+                  <p className="text-xs font-semibold text-[var(--text-secondary)] mb-1">
                     Plan selectionne
                   </p>
-                  <p className="text-lg font-bold text-fg/90">
+                  <p className="text-lg font-bold text-[var(--text-primary)]">
                     {selectedPlan.name}
                   </p>
                 </div>
-                <p className="text-xl font-bold text-orange-400">
+                <p className="text-xl font-bold text-orange-500">
                   {selectedPlan.price}
                 </p>
               </div>
 
               {/* Payment methods */}
               <div>
-                <h3 className="text-sm font-semibold text-fg/70 mb-3 flex items-center gap-2">
-                  <CreditCard size={16} className="text-orange-400" />
+                <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 flex items-center gap-2">
+                  <CreditCard size={16} className="text-orange-500" />
                   Methodes de paiement
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -931,23 +931,23 @@ export default function ChatbotActivationPage({
                         className={`text-left p-4 rounded-xl border transition-all duration-200 ${
                           isActive
                             ? "border-orange-500 bg-orange-500/5"
-                            : "border-fg/[0.08] bg-fg/[0.02] hover:border-fg/[0.15]"
+                            : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-strong)]"
                         }`}
                       >
-                        <p className="font-semibold text-fg/85 text-sm">
+                        <p className="font-semibold text-[var(--text-primary)] text-sm">
                           {pm.label}
                         </p>
-                        <p className="text-xs text-fg/50 mt-1">
+                        <p className="text-xs text-[var(--text-secondary)] mt-1">
                           {pm.recipient_name}
                         </p>
                         <div className="flex items-center gap-2 mt-2">
-                          <code className="text-sm font-mono text-orange-400 bg-white/5 px-2 py-0.5 rounded">
+                          <code className="text-sm font-mono text-orange-500 bg-[var(--surface-subtle)] px-2 py-0.5 rounded">
                             {pm.recipient_number}
                           </code>
                           <CopyButton text={pm.recipient_number} />
                         </div>
                         {pm.instructions && (
-                          <p className="text-xs text-fg/40 mt-2 leading-relaxed">
+                          <p className="text-xs text-[var(--text-muted)] mt-2 leading-relaxed">
                             {pm.instructions}
                           </p>
                         )}
@@ -956,7 +956,7 @@ export default function ChatbotActivationPage({
                   })}
                 </div>
                 {paymentMethods.length === 0 && (
-                  <p className="text-sm text-fg/40 italic">
+                  <p className="text-sm text-[var(--text-secondary)] italic">
                     Aucune methode de paiement disponible pour le moment.
                   </p>
                 )}
@@ -964,12 +964,12 @@ export default function ChatbotActivationPage({
 
               {/* Payment form */}
               <div className={`${glass} p-5 flex flex-col gap-4`}>
-                <h3 className="text-sm font-semibold text-fg/70">
+                <h3 className="text-sm font-semibold text-[var(--text-secondary)]">
                   Informations de paiement
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg/50">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       Nom complet du payeur
                     </span>
                     <input
@@ -977,11 +977,11 @@ export default function ChatbotActivationPage({
                       value={payerName}
                       onChange={(e) => setPayerName(e.target.value)}
                       placeholder="Nom et prenom"
-                      className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 placeholder:text-fg/25 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
+                      className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
                     />
                   </label>
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-fg/50">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">
                       Telephone du payeur
                     </span>
                     <input
@@ -989,12 +989,12 @@ export default function ChatbotActivationPage({
                       value={payerPhone}
                       onChange={(e) => setPayerPhone(e.target.value)}
                       placeholder="034 00 000 00"
-                      className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 placeholder:text-fg/25 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
+                      className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
                     />
                   </label>
                 </div>
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-fg/50">
+                  <span className="text-xs font-medium text-[var(--text-secondary)]">
                     Reference de transaction *
                   </span>
                   <input
@@ -1003,11 +1003,11 @@ export default function ChatbotActivationPage({
                     onChange={(e) => setTxRef(e.target.value)}
                     placeholder="Ex: MP240501XYZ"
                     required
-                    className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 placeholder:text-fg/25 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
+                    className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
                   />
                 </label>
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-fg/50">
+                  <span className="text-xs font-medium text-[var(--text-secondary)]">
                     Notes (optionnel)
                   </span>
                   <textarea
@@ -1015,7 +1015,7 @@ export default function ChatbotActivationPage({
                     onChange={(e) => setPayNotes(e.target.value)}
                     rows={2}
                     placeholder="Informations complementaires..."
-                    className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 placeholder:text-fg/25 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors resize-none"
+                    className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors resize-none"
                   />
                 </label>
               </div>
@@ -1025,7 +1025,7 @@ export default function ChatbotActivationPage({
                 <button
                   type="button"
                   onClick={goPrev}
-                  className="inline-flex items-center gap-2 text-sm text-fg/50 hover:text-fg/80 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <ArrowLeft size={16} />
                   Precedent
@@ -1060,17 +1060,17 @@ export default function ChatbotActivationPage({
               className="flex flex-col gap-6"
             >
               <div className="text-center">
-                <h2 className="text-lg font-semibold text-fg/85 mb-1">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
                   Configurez votre chatbot
                 </h2>
-                <p className="text-sm text-[var(--text-muted)]">
+                <p className="text-sm text-[var(--text-secondary)]">
                   Ces informations seront utilisees pour personnaliser votre bot.
                 </p>
               </div>
 
               {/* Contact */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-1">
+                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
                   <Building2 size={16} />
                   Contact
                 </legend>
@@ -1107,7 +1107,7 @@ export default function ChatbotActivationPage({
 
               {/* Entreprise */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-1">
+                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
                   <Building2 size={16} />
                   Entreprise
                 </legend>
@@ -1148,7 +1148,7 @@ export default function ChatbotActivationPage({
 
               {/* Facebook */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-1">
+                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
                   <Facebook size={16} />
                   Facebook
                 </legend>
@@ -1177,7 +1177,7 @@ export default function ChatbotActivationPage({
 
               {/* Chatbot */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-1">
+                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
                   <CheckCircle2 size={16} />
                   Chatbot
                 </legend>
@@ -1211,7 +1211,7 @@ export default function ChatbotActivationPage({
 
               {/* Vente */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-400 flex items-center gap-2 mb-1">
+                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
                   <CreditCard size={16} />
                   Vente
                 </legend>
@@ -1239,7 +1239,7 @@ export default function ChatbotActivationPage({
 
               {/* Notes */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-fg/60 mb-1">
+                <legend className="text-sm font-semibold text-[var(--text-secondary)] mb-1">
                   Notes pour FLARE (optionnel)
                 </legend>
                 <TextareaField
@@ -1255,7 +1255,7 @@ export default function ChatbotActivationPage({
                 <button
                   type="button"
                   onClick={goPrev}
-                  className="inline-flex items-center gap-2 text-sm text-fg/50 hover:text-fg/80 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <ArrowLeft size={16} />
                   Precedent
@@ -1290,51 +1290,51 @@ export default function ChatbotActivationPage({
               className="flex flex-col gap-6"
             >
               <div className="text-center">
-                <h2 className="text-lg font-semibold text-fg/85 mb-1">
+                <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
                   Connexion de votre page Facebook
                 </h2>
-                <p className="text-sm text-[var(--text-muted)]">
+                <p className="text-sm text-[var(--text-secondary)]">
                   Un technicien FLARE va connecter votre chatbot a votre page Facebook.
                 </p>
               </div>
 
               <div className={`${glass} p-6 flex flex-col gap-5`}>
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
-                    <Facebook size={20} className="text-blue-400" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--accent-navy)]/10">
+                    <Facebook size={20} className="text-[var(--accent-navy)]" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-fg/85">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
                       Comment ca marche ?
                     </p>
-                    <p className="text-xs text-fg/50 mt-1 leading-relaxed">
+                    <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
                       Notre equipe technique se chargera de connecter votre chatbot
                       a votre page Facebook. Vous n&apos;avez rien a faire de votre cote.
                     </p>
                   </div>
                 </div>
 
-                <div className="border-t border-fg/[0.06] pt-4">
-                  <p className="text-sm font-semibold text-fg/70 mb-3">
+                <div className="border-t border-[var(--border-default)] pt-4">
+                  <p className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
                     Informations de votre page :
                   </p>
-                  <div className="flex flex-col gap-2 text-sm text-fg/60">
+                  <div className="flex flex-col gap-2 text-sm text-[var(--text-secondary)]">
                     <div className="flex justify-between">
                       <span>Page Facebook</span>
-                      <span className="text-fg/80 font-medium">{cfg.facebook_page_name || "-"}</span>
+                      <span className="text-[var(--text-primary)] font-medium">{cfg.facebook_page_name || "-"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>URL</span>
-                      <span className="text-fg/80 font-medium truncate max-w-[60%]">{cfg.facebook_page_url || "-"}</span>
+                      <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">{cfg.facebook_page_url || "-"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Email admin</span>
-                      <span className="text-fg/80 font-medium">{cfg.facebook_admin_email || "-"}</span>
+                      <span className="text-[var(--text-primary)] font-medium">{cfg.facebook_admin_email || "-"}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-blue-500/5 border border-blue-500/10 px-4 py-3 text-xs text-fg/50 leading-relaxed">
+                <div className="rounded-lg bg-[var(--accent-navy)]/6 border border-[var(--accent-navy)]/16 px-4 py-3 text-xs text-[var(--text-secondary)] leading-relaxed">
                   En cliquant sur &quot;Confirmer&quot;, un technicien FLARE sera notifie
                   et se chargera de connecter votre chatbot. Vous serez prevenu
                   des que votre chatbot sera actif.
@@ -1346,9 +1346,9 @@ export default function ChatbotActivationPage({
                     type="checkbox"
                     checked={adminConfirmed}
                     onChange={(e) => setAdminConfirmed(e.target.checked)}
-                    className="mt-0.5 h-5 w-5 rounded border-fg/20 bg-white/5 text-orange-500 focus:ring-orange-500/30 accent-orange-500"
+                    className="mt-0.5 h-5 w-5 rounded border-[var(--border-default)] bg-[var(--surface-subtle)] text-orange-500 focus:ring-orange-500/30 accent-orange-500"
                   />
-                  <span className="text-sm text-fg/70 group-hover:text-fg/90 transition-colors">
+                  <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
                     Je confirme les informations ci-dessus et je souhaite que
                     l&apos;equipe FLARE connecte mon chatbot.
                   </span>
@@ -1360,7 +1360,7 @@ export default function ChatbotActivationPage({
                 <button
                   type="button"
                   onClick={goPrev}
-                  className="inline-flex items-center gap-2 text-sm text-fg/50 hover:text-fg/80 transition-colors"
+                  className="inline-flex items-center gap-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                 >
                   <ArrowLeft size={16} />
                   Precedent
@@ -1427,14 +1427,14 @@ function InputField({
   return (
     <label className="flex flex-col gap-1">
       {label && (
-        <span className="text-xs font-medium text-fg/50">{label}</span>
+        <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
       )}
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 placeholder:text-fg/25 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
+        className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
       />
     </label>
   );
@@ -1456,14 +1456,14 @@ function TextareaField({
   return (
     <label className="flex flex-col gap-1">
       {label && (
-        <span className="text-xs font-medium text-fg/50">{label}</span>
+        <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
       )}
       <textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
-        className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 placeholder:text-fg/25 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors resize-none"
+        className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors resize-none"
       />
     </label>
   );
@@ -1485,12 +1485,12 @@ function SelectField({
   return (
     <label className="flex flex-col gap-1">
       {label && (
-        <span className="text-xs font-medium text-fg/50">{label}</span>
+        <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
       )}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-fg/[0.08] bg-white/[0.03] px-3 py-2 text-sm text-fg/90 focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
+        className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
       >
         {placeholder && (
           <option value="" disabled>
@@ -1523,8 +1523,8 @@ function AwaitingStatus({
   if (!ar) {
     return (
       <div className={`${glass} p-8 text-center max-w-md w-full`}>
-        <Loader2 className="h-8 w-8 animate-spin text-orange-400 mx-auto mb-4" />
-        <p className="text-sm text-fg/60">Chargement du statut...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-orange-500 mx-auto mb-4" />
+        <p className="text-sm text-[var(--text-secondary)]">Chargement du statut...</p>
       </div>
     );
   }
@@ -1541,42 +1541,42 @@ function AwaitingStatus({
 
   const configs: Record<string, StatusDisplay> = {
     payment_submitted: {
-      icon: <Clock size={32} className="text-blue-400" />,
+      icon: <Clock size={32} className="text-[var(--accent-navy)]" />,
       label: "Preuve recue, verification en cours",
       description:
         "Notre equipe verifie votre paiement. Ce processus prend generalement quelques heures. Cette page se rafraichit automatiquement.",
       color: "blue",
     },
     payment_verified: {
-      icon: <CheckCircle2 size={32} className="text-emerald-400" />,
+      icon: <CheckCircle2 size={32} className="text-orange-500" />,
       label: "Paiement valide !",
       description:
         "Votre paiement a ete confirme. L'activation de votre chatbot va bientot commencer.",
       color: "green",
     },
     queued_for_activation: {
-      icon: <Clock size={32} className="text-blue-400" />,
+      icon: <Clock size={32} className="text-[var(--accent-navy)]" />,
       label: "En file d'attente",
       description:
         "Votre chatbot est en attente d'activation par notre equipe. Vous serez notifie des que le processus debute.",
       color: "blue",
     },
     activation_in_progress: {
-      icon: <Loader2 size={32} className="animate-spin text-blue-400" />,
+      icon: <Loader2 size={32} className="animate-spin text-[var(--accent-navy)]" />,
       label: "Activation en cours",
       description:
         "Notre equipe configure votre chatbot en ce moment. Restez sur cette page ou revenez plus tard.",
       color: "blue",
     },
     testing: {
-      icon: <Loader2 size={32} className="animate-spin text-blue-400" />,
+      icon: <Loader2 size={32} className="animate-spin text-[var(--accent-navy)]" />,
       label: "Test en cours",
       description:
         "Nous testons votre chatbot pour nous assurer que tout fonctionne parfaitement.",
       color: "blue",
     },
     active: {
-      icon: <CheckCircle2 size={32} className="text-emerald-400" />,
+      icon: <CheckCircle2 size={32} className="text-orange-500" />,
       label: "Chatbot actif !",
       description:
         "Votre chatbot IA est maintenant operationnel sur votre page Facebook. Rendez-vous sur le tableau de bord pour gerer votre bot.",
@@ -1621,7 +1621,7 @@ function AwaitingStatus({
   };
 
   const display = configs[s] ?? {
-    icon: <Clock size={32} className="text-fg/40" />,
+    icon: <Clock size={32} className="text-[var(--text-muted)]" />,
     label: `Statut : ${s}`,
     description: "Votre demande est en cours de traitement.",
     color: "blue" as const,
@@ -1629,37 +1629,38 @@ function AwaitingStatus({
 
   const borderColor =
     display.color === "green"
-      ? "border-emerald-500/30"
+      ? "border-orange-500/30"
       : display.color === "red"
       ? "border-red-500/30"
       : display.color === "orange"
       ? "border-orange-500/30"
-      : "border-blue-500/30";
+      : "border-[var(--accent-navy)]/24";
 
   const bgColor =
     display.color === "green"
-      ? "bg-emerald-500/5"
+      ? "bg-orange-500/6"
       : display.color === "red"
       ? "bg-red-500/5"
       : display.color === "orange"
       ? "bg-orange-500/5"
-      : "bg-blue-500/5";
+      : "bg-[var(--accent-navy)]/6";
 
   return (
     <div
       className={`rounded-2xl backdrop-blur-md border shadow-[var(--shadow-card)] p-8 text-center max-w-md w-full flex flex-col items-center gap-4 ${borderColor} ${bgColor}`}
     >
       {display.icon}
-      <h2 className="text-xl font-bold text-fg/90">{display.label}</h2>
-      <p className="text-sm text-fg/60 leading-relaxed">
+      <h2 className="text-xl font-bold text-[var(--text-primary)]">{display.label}</h2>
+      <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
         {display.description}
       </p>
       {display.action}
       {!display.action && s !== "active" && (
-        <p className="text-xs text-fg/30 mt-2">
+        <p className="text-xs text-[var(--text-muted)] mt-2">
           Rafraichissement automatique toutes les 15 secondes
         </p>
       )}
     </div>
   );
 }
+

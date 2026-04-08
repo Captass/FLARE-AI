@@ -80,12 +80,12 @@ type AdminTab = "menu" | "costs" | "connected" | "accounts" | "activations" | "p
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
 const ACTION_META: Record<string, { icon: typeof MessageSquare; label: string; color: string; emoji: string }> = {
-  message:       { icon: MessageSquare,  label: "Messages",      color: "text-[rgb(var(--brand-blue-strong))]",    emoji: "💬" },
-  research:      { icon: Globe,          label: "Recherche",     color: "text-[rgb(var(--brand-blue-strong))]",    emoji: "🔍" },
+  message:       { icon: MessageSquare,  label: "Messages",      color: "text-[var(--accent-navy)]",    emoji: "💬" },
+  research:      { icon: Globe,          label: "Recherche",     color: "text-[var(--accent-navy)]",    emoji: "🔍" },
   deep_research: { icon: Microscope,     label: "Deep Research", color: "text-[var(--text-primary)]",   emoji: "🧪" },
   image_gen:     { icon: ImageIcon,      label: "Image Gen",     color: "text-orange-500",    emoji: "🎨" },
   video_gen:     { icon: Video,          label: "Vidéo Gen",     color: "text-orange-500", emoji: "🎬" },
-  doc_gen:       { icon: FileText,       label: "Documents",     color: "text-[rgb(var(--brand-blue-strong))]",  emoji: "📝" },
+  doc_gen:       { icon: FileText,       label: "Documents",     color: "text-[var(--accent-navy)]",  emoji: "📝" },
   sheet_gen:     { icon: FileSpreadsheet, label: "Tableurs",     color: "text-orange-500", emoji: "📊" },
 };
 
@@ -143,8 +143,8 @@ function formatDate(iso: string | null): string {
 function DataSubGrid({ actions, tokens, cost, accent = "text-[var(--text-primary)]" }: any) {
   return (
     <div className="grid grid-cols-3 gap-1 h-full items-center">
-      <div className="text-center font-[family-name:var(--font-outfit)] text-[10px] text-[var(--text-muted)]">{actions || 0}</div>
-      <div className="text-right font-[family-name:var(--font-outfit)] text-[10px] text-[var(--text-muted)]">{formatTokens(tokens)}</div>
+      <div className="text-center font-[family-name:var(--font-outfit)] text-[10px] text-[var(--text-secondary)]">{actions || 0}</div>
+      <div className="text-right font-[family-name:var(--font-outfit)] text-[10px] text-[var(--text-secondary)]">{formatTokens(tokens)}</div>
       <div className={`text-right font-[family-name:var(--font-outfit)] text-[10px] font-bold ${accent}`}>{formatCost(cost)}</div>
     </div>
   );
@@ -152,9 +152,9 @@ function DataSubGrid({ actions, tokens, cost, accent = "text-[var(--text-primary
 
 function ActionRow({ label, icon: Icon, emoji, g3, flash, total_cost }: any) {
   return (
-    <div className="grid grid-cols-12 gap-0 py-2 border-b border-[var(--border-glass)] items-center last:border-0 hover:bg-[var(--bg-hover)] transition-colors -mx-4 px-4">
+    <div className="grid grid-cols-12 gap-0 py-2 border-b border-[var(--border-default)] items-center last:border-0 hover:bg-[var(--surface-subtle)] transition-colors -mx-4 px-4">
       <div className="col-span-3 flex items-center gap-2.5">
-        <div className="flex h-5 w-5 items-center justify-center rounded-md border border-[var(--border-glass)] bg-[var(--surface-subtle)]">
+        <div className="flex h-5 w-5 items-center justify-center rounded-md border border-[var(--border-default)] bg-[var(--surface-subtle)]">
           <span className="text-[12px]">{emoji}</span>
         </div>
         <span className="text-[11px] font-medium text-[var(--text-secondary)]">{label}</span>
@@ -164,8 +164,8 @@ function ActionRow({ label, icon: Icon, emoji, g3, flash, total_cost }: any) {
         <DataSubGrid actions={g3?.actions} tokens={g3?.tokens} cost={g3?.cost} accent="text-[var(--text-primary)]/80" />
       </div>
 
-      <div className="col-span-3 h-full px-2 border-l border-[var(--border-glass)]">
-        <DataSubGrid actions={flash?.actions} tokens={flash?.tokens} cost={flash?.cost} accent="text-[rgb(var(--brand-blue-strong))]" />
+      <div className="col-span-3 h-full px-2 border-l border-[var(--border-default)]">
+        <DataSubGrid actions={flash?.actions} tokens={flash?.tokens} cost={flash?.cost} accent="text-[var(--accent-navy)]" />
       </div>
 
       <div className="col-span-3 text-right pr-4">
@@ -176,27 +176,27 @@ function ActionRow({ label, icon: Icon, emoji, g3, flash, total_cost }: any) {
 }
 
 const LedgerTable = ({ ledger, loading }: { ledger: LedgerEntry[], loading: boolean }) => (
-    <div className="mt-10 bg-[var(--bg-card)] border border-[var(--border-glass)] rounded-[32px] overflow-hidden backdrop-blur-3xl shadow-2xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-glass)]">
+    <div className="mt-10 bg-[var(--surface-base)] border border-[var(--border-default)] rounded-[32px] overflow-hidden shadow-[var(--shadow-card)]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-default)]">
             <h3 className="text-lg font-bold text-[var(--text-primary)]">Journal des Transactions</h3>
-            {loading && <div className="w-5 h-5 border-2 border-[var(--border-glass)] border-t-[var(--text-primary)] rounded-full animate-spin" />}
+            {loading && <div className="w-5 h-5 border-2 border-[var(--border-default)] border-t-[var(--text-primary)] rounded-full animate-spin" />}
         </div>
         <div className="overflow-x-auto">
             <table className="w-full text-left">
                 <thead>
-                    <tr className="bg-[var(--bg-hover)]">
+                    <tr className="bg-[var(--surface-subtle)]">
                         {['Date', 'Utilisateur', 'Action', 'Modèle', 'Tokens', 'Coût'].map(h => (
-                             <th key={h} className="px-4 py-2 text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest first:pl-6 last:pr-6">{h}</th>
+                             <th key={h} className="px-4 py-2 text-[9px] font-semibold text-[var(--text-secondary)] tracking-[0.05em] first:pl-6 last:pr-6">{h}</th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-[var(--border-glass)]">
+                <tbody className="divide-y divide-[var(--border-default)]">
                     {ledger.map(entry => (
-                        <tr key={entry.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                        <tr key={entry.id} className="hover:bg-[var(--surface-subtle)] transition-colors">
                             <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap first:pl-6 last:pr-6">{timeAgo(entry.timestamp)}</td>
                             <td className="px-4 py-3 text-xs text-[var(--text-primary)] whitespace-nowrap truncate max-w-[200px]">{entry.user_email}</td>
                             <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap">{entry.action}</td>
-                            <td className="px-4 py-3 text-xs text-[var(--text-muted)] whitespace-nowrap truncate max-w-[150px]">{entry.model}</td>
+                            <td className="px-4 py-3 text-xs text-[var(--text-secondary)] whitespace-nowrap truncate max-w-[150px]">{entry.model}</td>
                             <td className="px-4 py-3 text-xs text-[var(--text-secondary)] font-[family-name:var(--font-outfit)] text-right">{formatTokens(entry.tokens)}</td>
                              <td className="px-4 py-3 text-xs text-[var(--text-primary)] font-[family-name:var(--font-outfit)] font-bold text-right">{formatCost(entry.cost)}</td>
                         </tr>
@@ -230,9 +230,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Utilisateurs Connectés",
       subtitle: "Activité en temps réel & sessions actives",
       icon: Wifi,
-      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
-      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
-      iconColor: "text-[rgb(var(--brand-blue-strong))]",
+      color: "from-[var(--accent-navy)]/12 to-[var(--accent-navy)]/4",
+      borderColor: "border-[var(--accent-navy)]/20",
+      iconColor: "text-[var(--accent-navy)]",
       stat: `${stats.onlineCount}`,
       statLabel: "En ligne",
     },
@@ -241,9 +241,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Nouveaux Comptes",
       subtitle: "Inscriptions & croissance utilisateurs",
       icon: UserPlus,
-      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
-      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
-      iconColor: "text-[rgb(var(--brand-blue-strong))]",
+      color: "from-[var(--accent-navy)]/12 to-[var(--accent-navy)]/4",
+      borderColor: "border-[var(--accent-navy)]/20",
+      iconColor: "text-[var(--accent-navy)]",
       stat: `${stats.newToday}`,
       statLabel: "Aujourd'hui",
     },
@@ -252,9 +252,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Activations",
       subtitle: "Demandes d'activation chatbot & suivi operateur",
       icon: Rocket,
-      color: "from-orange-500/20 to-red-500/10",
+      color: "from-orange-500/16 to-orange-500/6",
       borderColor: "border-orange-500/20",
-      iconColor: "text-orange-400",
+      iconColor: "text-orange-500",
       stat: "-",
       statLabel: "En attente",
     },
@@ -263,9 +263,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Paiements",
       subtitle: "Verifier et valider les preuves de paiement",
       icon: CreditCard,
-      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
-      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
-      iconColor: "text-[rgb(var(--brand-blue-strong))]",
+      color: "from-[var(--accent-navy)]/12 to-[var(--accent-navy)]/4",
+      borderColor: "border-[var(--accent-navy)]/20",
+      iconColor: "text-[var(--accent-navy)]",
       stat: "-",
       statLabel: "A verifier",
     },
@@ -274,9 +274,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       title: "Commandes",
       subtitle: "Commandes Messenger de tous les clients",
       icon: ShoppingBag,
-      color: "from-[rgba(var(--brand-blue-soft),0.18)] to-[rgba(var(--brand-blue-soft),0.06)]",
-      borderColor: "border-[rgba(var(--brand-blue-strong),0.20)]",
-      iconColor: "text-[rgb(var(--brand-blue-strong))]",
+      color: "from-[var(--accent-navy)]/12 to-[var(--accent-navy)]/4",
+      borderColor: "border-[var(--accent-navy)]/20",
+      iconColor: "text-[var(--accent-navy)]",
       stat: "-",
       statLabel: "Total",
     },
@@ -296,14 +296,14 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
       <div className="flex items-center gap-4 mb-10">
-        <div className="w-12 h-12 rounded-2xl bg-[var(--bg-hover)] flex items-center justify-center shadow-lg border border-[var(--border-glass)]">
+        <div className="w-12 h-12 rounded-2xl bg-[var(--surface-subtle)] flex items-center justify-center shadow-lg border border-[var(--border-default)]">
           <ShieldCheck size={24} className="text-[var(--text-primary)]" />
         </div>
         <div>
           <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Administration</h1>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-            <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">FLARE AI — Admin Engine</p>
+            <p className="text-[11px] font-[family-name:var(--font-outfit)] font-medium tracking-[0.05em] text-[var(--text-secondary)]">FLARE AI — Admin Engine</p>
           </div>
         </div>
       </div>
@@ -312,8 +312,8 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
         {[
           { label: "Utilisateurs", val: stats.totalUsers, icon: Users, color: "text-[var(--text-primary)]" },
-          { label: "En ligne", val: stats.onlineCount, icon: Wifi, color: "text-[rgb(var(--brand-blue-strong))]" },
-          { label: "Nouveaux (24h)", val: stats.newToday, icon: UserPlus, color: "text-[rgb(var(--brand-blue-strong))]" },
+          { label: "En ligne", val: stats.onlineCount, icon: Wifi, color: "text-[var(--accent-navy)]" },
+          { label: "Nouveaux (24h)", val: stats.newToday, icon: UserPlus, color: "text-[var(--accent-navy)]" },
           { label: "Coût Total", val: formatCost(stats.totalCost), icon: DollarSign, color: "text-orange-500" },
         ].map((kpi, i) => (
           <motion.div
@@ -321,11 +321,11 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)] hover:bg-[var(--bg-hover)] transition-all"
+            className="p-6 rounded-[28px] bg-[var(--surface-base)] border border-[var(--border-default)] hover:bg-[var(--surface-subtle)] transition-all"
           >
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{kpi.label}</span>
-              <kpi.icon size={16} className="text-[var(--text-muted)]" />
+              <span className="text-[10px] font-semibold text-[var(--text-secondary)]">{kpi.label}</span>
+              <kpi.icon size={16} className="text-[var(--text-secondary)]" />
             </div>
             <p className={`text-2xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)] tracking-tight`}>{kpi.val}</p>
           </motion.div>
@@ -343,7 +343,7 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
             onClick={() => onNavigate(card.id)}
             className={`p-8 rounded-[32px] bg-gradient-to-br ${card.color} border ${card.borderColor} text-left hover:scale-[1.02] transition-all group cursor-pointer`}
           >
-            <div className={`w-14 h-14 rounded-2xl bg-black/20 border border-[var(--border-glass)] flex items-center justify-center mb-6 ${card.iconColor}`}>
+            <div className={`w-14 h-14 rounded-2xl bg-[var(--surface-subtle)] border border-[var(--border-default)] flex items-center justify-center mb-6 ${card.iconColor}`}>
               <card.icon size={28} />
             </div>
             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">{card.title}</h3>
@@ -351,9 +351,9 @@ function AdminMenu({ onNavigate, stats }: { onNavigate: (tab: AdminTab) => void;
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{card.stat}</p>
-                <p className="text-[10px] uppercase tracking-widest text-[var(--text-muted)]">{card.statLabel}</p>
+                <p className="text-[10px] font-medium tracking-[0.05em] text-[var(--text-secondary)]">{card.statLabel}</p>
               </div>
-              <ChevronRight size={20} className="text-[var(--text-muted)] group-hover:text-[var(--text-primary)] group-hover:translate-x-1 transition-all" />
+              <ChevronRight size={20} className="text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] group-hover:translate-x-1 transition-all" />
             </div>
           </motion.button>
         ))}
@@ -400,8 +400,8 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
 
   const statusConfig = {
     online: { label: "En ligne", color: "bg-orange-500", textColor: "text-orange-500", ring: "ring-orange-500/20" },
-    recent: { label: "Récent", color: "bg-[rgb(var(--brand-blue-strong))]", textColor: "text-[rgb(var(--brand-blue-strong))]", ring: "ring-[rgba(var(--brand-blue-strong),0.20)]" },
-    away: { label: "Absent", color: "bg-[var(--border-default)]", textColor: "text-[var(--text-muted)]", ring: "ring-[var(--border-default)]" },
+    recent: { label: "Récent", color: "bg-[var(--accent-navy)]", textColor: "text-[var(--accent-navy)]", ring: "ring-[var(--accent-navy)]/20" },
+    away: { label: "Absent", color: "bg-[var(--border-default)]", textColor: "text-[var(--text-secondary)]", ring: "ring-[var(--border-default)]" },
   };
 
   return (
@@ -409,7 +409,7 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+          <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-secondary)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]">
             <ChevronLeft size={20} />
           </button>
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
@@ -419,7 +419,7 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Utilisateurs Connectés</h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-              <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">Temps reel — rafraichi toutes les 15s</p>
+              <p className="text-[11px] font-[family-name:var(--font-outfit)] font-medium tracking-[0.05em] text-[var(--text-secondary)]">Temps reel — rafraichi toutes les 15s</p>
             </div>
           </div>
         </div>
@@ -427,11 +427,11 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-              autoRefresh ? "border-orange-500/20 bg-orange-500/10 text-orange-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-[var(--text-muted)]"
+              autoRefresh ? "border-orange-500/20 bg-orange-500/10 text-orange-500" : "bg-[var(--surface-subtle)] border-[var(--border-default)] text-[var(--text-secondary)]"
             }`}
           >
             <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-orange-500 animate-pulse" : "bg-[var(--border-default)]"}`} />
-            <span className="text-[10px] font-[family-name:var(--font-outfit)] uppercase tracking-widest">
+            <span className="text-[10px] font-[family-name:var(--font-outfit)] tracking-[0.05em]">
               {autoRefresh ? `Live (${nextRefresh}s)` : "Pausé"}
             </span>
           </button>
@@ -446,14 +446,14 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { label: "En ligne", val: data?.online_count ?? 0, color: "text-orange-500", dot: "bg-orange-500" },
-          { label: "Récemment actifs", val: data?.recent_count ?? 0, color: "text-[rgb(var(--brand-blue-strong))]", dot: "bg-[rgb(var(--brand-blue-strong))]" },
-          { label: "Actifs (24h)", val: data?.total_active_24h ?? 0, color: "text-[rgb(var(--brand-blue-strong))]", dot: "bg-[rgb(var(--brand-blue-strong))]" },
+          { label: "Récemment actifs", val: data?.recent_count ?? 0, color: "text-[var(--accent-navy)]", dot: "bg-[var(--accent-navy)]" },
+          { label: "Actifs (24h)", val: data?.total_active_24h ?? 0, color: "text-[var(--accent-navy)]", dot: "bg-[var(--accent-navy)]" },
         ].map((kpi, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)]">
+            className="p-6 rounded-[28px] bg-[var(--surface-base)] border border-[var(--border-default)]">
             <div className="flex items-center gap-2 mb-3">
               <div className={`w-2 h-2 rounded-full ${kpi.dot} animate-pulse`} />
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
+              <span className="text-[10px] font-bold tracking-[0.05em] text-[var(--text-secondary)]">{kpi.label}</span>
             </div>
             <p className={`text-3xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)]`}>{kpi.val}</p>
           </motion.div>
@@ -461,44 +461,44 @@ function ConnectedUsersTab({ token, onBack }: { token: string; onBack: () => voi
       </div>
 
       {/* Users Table */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-glass)] rounded-[32px] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-glass)]">
-          <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-widest">Sessions Actives</h3>
+      <div className="bg-[var(--surface-base)] border border-[var(--border-default)] rounded-[32px] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-default)]">
+          <h3 className="text-[13px] font-bold text-[var(--text-primary)] tracking-[0.05em]">Sessions Actives</h3>
         </div>
 
-        <div className="grid grid-cols-12 gap-0 bg-[var(--bg-hover)] px-6 py-2 border-b border-[var(--border-glass)]">
-          <div className="col-span-4 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Utilisateur</div>
-          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Statut</div>
-          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Derniere action</div>
-          <div className="col-span-2 text-right text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Tokens (24h)</div>
-          <div className="col-span-2 text-right text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Cout (24h)</div>
+        <div className="grid grid-cols-12 gap-0 bg-[var(--surface-subtle)] px-6 py-2 border-b border-[var(--border-default)]">
+          <div className="col-span-4 text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Utilisateur</div>
+          <div className="col-span-2 text-center text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Statut</div>
+          <div className="col-span-2 text-center text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Derniere action</div>
+          <div className="col-span-2 text-right text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Tokens (24h)</div>
+          <div className="col-span-2 text-right text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Cout (24h)</div>
         </div>
 
         <div className="divide-y divide-[var(--border-glass)]">
           {(!data?.users || data.users.length === 0) ? (
             <div className="p-16 text-center">
-              <WifiOff size={32} className="mx-auto mb-3 text-[var(--text-muted)]" />
+              <WifiOff size={32} className="mx-auto mb-3 text-[var(--text-secondary)]" />
               <p className="text-xs text-[var(--text-secondary)]">Aucun utilisateur actif dans les dernieres 24h</p>
             </div>
           ) : data.users.map((user, idx) => {
             const sc = statusConfig[user.status];
             return (
               <motion.div key={user.user_id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.03 }}
-                className="grid grid-cols-12 gap-0 px-6 py-4 items-center hover:bg-[var(--bg-hover)] transition-colors">
+                className="grid grid-cols-12 gap-0 px-6 py-4 items-center hover:bg-[var(--surface-subtle)] transition-colors">
                 <div className="col-span-4 flex items-center gap-3 min-w-0">
                   <div className="relative">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[var(--text-primary)]/10 to-[var(--text-primary)]/20 border border-[var(--border-glass)] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[var(--text-primary)]/10 to-[var(--text-primary)]/20 border border-[var(--border-default)] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm">
                       {(user.email || "?").charAt(0).toUpperCase()}
                     </div>
-                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${sc.color} border-2 border-zinc-950 rounded-full ${user.status === "online" ? "animate-pulse" : ""}`} />
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 ${sc.color} border-2 border-[var(--surface-base)] rounded-full ${user.status === "online" ? "animate-pulse" : ""}`} />
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{user.email}</p>
-                    <p className="text-[10px] font-[family-name:var(--font-outfit)] tracking-tighter text-[var(--text-muted)]">UID: {user.user_id} · {timeAgo(user.last_seen)}</p>
+                    <p className="text-[10px] font-[family-name:var(--font-outfit)] tracking-tighter text-[var(--text-secondary)]">UID: {user.user_id} · {timeAgo(user.last_seen)}</p>
                   </div>
                 </div>
                 <div className="col-span-2 flex justify-center">
-                  <span className={`rounded-full border border-[var(--border-glass)] bg-[var(--surface-subtle)] px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${sc.textColor}`}>
+                  <span className={`rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1 text-[10px] font-semibold tracking-wider ${sc.textColor}`}>
                     {sc.label}
                   </span>
                 </div>
@@ -562,30 +562,30 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
       {/* Header */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+          <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-secondary)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]">
             <ChevronLeft size={20} />
           </button>
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(var(--brand-blue-strong),0.20)] bg-[rgba(var(--brand-blue-soft),0.12)]">
-            <UserPlus size={24} className="text-[rgb(var(--brand-blue-strong))]" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[var(--accent-navy)]/20 bg-[var(--accent-navy)]/8">
+            <UserPlus size={24} className="text-[var(--accent-navy)]" />
           </div>
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Nouveaux Comptes</h1>
-            <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">Inscriptions & croissance</p>
+            <p className="text-[11px] font-[family-name:var(--font-outfit)] font-medium tracking-[0.05em] text-[var(--text-secondary)]">Inscriptions & croissance</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setAutoRefresh(!autoRefresh)}
             className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-              autoRefresh ? "border-[rgba(var(--brand-blue-strong),0.20)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-[var(--text-muted)]"
+              autoRefresh ? "border-[var(--accent-navy)]/20 bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]" : "bg-[var(--surface-subtle)] border-[var(--border-default)] text-[var(--text-secondary)]"
             }`}
           >
-            <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-[rgb(var(--brand-blue-strong))] animate-pulse" : "bg-[var(--border-default)]"}`} />
-            <span className="text-[10px] font-[family-name:var(--font-outfit)] uppercase tracking-widest">
+            <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-[var(--accent-navy)] animate-pulse" : "bg-[var(--border-default)]"}`} />
+            <span className="text-[10px] font-[family-name:var(--font-outfit)] tracking-[0.05em]">
               {autoRefresh ? `Live (${nextRefresh}s)` : "Pausé"}
             </span>
           </button>
-          <div className="flex bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-xl p-0.5">
+          <div className="flex bg-[var(--surface-subtle)] border border-[var(--border-default)] rounded-xl p-0.5">
             {[
               { label: "7J", val: 7 },
               { label: "30J", val: 30 },
@@ -594,7 +594,7 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
             ].map((opt) => (
               <button key={opt.val} onClick={() => setDays(opt.val)}
                 className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                  days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                  days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                 }`}>
                 {opt.label}
               </button>
@@ -611,55 +611,55 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
       <div className="grid grid-cols-3 gap-4 mb-8">
         {[
           { label: "Aujourd'hui", val: data?.new_today ?? 0, color: "text-orange-500" },
-          { label: "Cette semaine", val: data?.new_this_week ?? 0, color: "text-[rgb(var(--brand-blue-strong))]" },
+          { label: "Cette semaine", val: data?.new_this_week ?? 0, color: "text-[var(--accent-navy)]" },
           { label: `${days} derniers jours`, val: data?.total ?? 0, color: "text-[var(--text-primary)]" },
         ].map((kpi, i) => (
           <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)]">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
+            className="p-6 rounded-[28px] bg-[var(--surface-base)] border border-[var(--border-default)]">
+            <span className="text-[10px] font-bold tracking-[0.05em] text-[var(--text-secondary)]">{kpi.label}</span>
             <p className={`text-3xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)] mt-2`}>{kpi.val}</p>
           </motion.div>
         ))}
       </div>
 
       {/* Accounts Table */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border-glass)] rounded-[32px] overflow-hidden">
-        <div className="px-6 py-4 border-b border-[var(--border-glass)]">
-          <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-widest">Comptes Créés</h3>
+      <div className="bg-[var(--surface-base)] border border-[var(--border-default)] rounded-[32px] overflow-hidden">
+        <div className="px-6 py-4 border-b border-[var(--border-default)]">
+          <h3 className="text-[13px] font-bold text-[var(--text-primary)] tracking-[0.05em]">Comptes Créés</h3>
         </div>
 
-        <div className="grid grid-cols-12 gap-0 bg-[var(--bg-hover)] px-6 py-2 border-b border-[var(--border-glass)]">
-          <div className="col-span-4 text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Email</div>
-          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Plan</div>
-          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Inscrit le</div>
-          <div className="col-span-2 text-center text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Activite</div>
-          <div className="col-span-2 text-right text-[9px] font-bold uppercase tracking-widest text-[var(--text-muted)]">Cout total</div>
+        <div className="grid grid-cols-12 gap-0 bg-[var(--surface-subtle)] px-6 py-2 border-b border-[var(--border-default)]">
+          <div className="col-span-4 text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Email</div>
+          <div className="col-span-2 text-center text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Plan</div>
+          <div className="col-span-2 text-center text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Inscrit le</div>
+          <div className="col-span-2 text-center text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Activite</div>
+          <div className="col-span-2 text-right text-[9px] font-semibold tracking-[0.05em] text-[var(--text-secondary)]">Cout total</div>
         </div>
 
         <div className="divide-y divide-[var(--border-glass)]">
           {(!data?.accounts || data.accounts.length === 0) ? (
             <div className="p-16 text-center">
-              <UserPlus size={32} className="mx-auto mb-3 text-[var(--text-muted)]" />
+              <UserPlus size={32} className="mx-auto mb-3 text-[var(--text-secondary)]" />
               <p className="text-xs text-[var(--text-secondary)]">Aucun nouveau compte sur cette periode</p>
             </div>
           ) : data.accounts.map((acc, idx) => {
             const planColor = acc.plan === "business" ? "text-orange-500 bg-orange-500/10 border-orange-500/20"
-              : acc.plan === "pro" ? "text-[rgb(var(--brand-blue-strong))] bg-[rgba(var(--brand-blue-soft),0.12)] border-[rgba(var(--brand-blue-strong),0.20)]"
+              : acc.plan === "pro" ? "text-[var(--accent-navy)] bg-[var(--accent-navy)]/8 border-[var(--accent-navy)]/20"
               : "text-[var(--text-primary)] bg-[var(--surface-subtle)] border-[var(--border-default)]";
             return (
               <motion.div key={acc.user_id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: idx * 0.03 }}
-                className="grid grid-cols-12 gap-0 px-6 py-4 items-center hover:bg-[var(--bg-hover)] transition-colors">
+                className="grid grid-cols-12 gap-0 px-6 py-4 items-center hover:bg-[var(--surface-subtle)] transition-colors">
                 <div className="col-span-4 flex items-center gap-3 min-w-0">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-glass)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))] text-sm font-bold">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--accent-navy)]/8 text-[var(--accent-navy)] text-sm font-bold">
                     {(acc.email || "?").charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0">
                     <p className="text-[13px] font-medium text-[var(--text-primary)] truncate">{acc.email}</p>
-                    <p className="text-[10px] font-[family-name:var(--font-outfit)] tracking-tighter text-[var(--text-muted)]">UID: {acc.user_id}</p>
+                    <p className="text-[10px] font-[family-name:var(--font-outfit)] tracking-tighter text-[var(--text-secondary)]">UID: {acc.user_id}</p>
                   </div>
                 </div>
                 <div className="col-span-2 flex justify-center">
-                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${planColor}`}>
+                  <span className={`px-3 py-1 rounded-full text-[10px] font-semibold tracking-wider border ${planColor}`}>
                     {acc.plan}
                   </span>
                 </div>
@@ -670,7 +670,7 @@ function NewAccountsTab({ token, onBack }: { token: string; onBack: () => void }
                   {acc.is_active ? (
                     <span className="text-[11px] font-medium text-orange-500">{acc.total_actions} actions</span>
                   ) : (
-                    <span className="text-[11px] italic text-[var(--text-muted)]">Inactif</span>
+                    <span className="text-[11px] italic text-[var(--text-secondary)]">Inactif</span>
                   )}
                 </div>
                 <div className="col-span-2 text-right">
@@ -808,8 +808,8 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--background)]">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-[var(--border-glass)] border-t-[var(--text-primary)] rounded-full animate-spin" />
-          <div className="text-xs font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">Chargement Cost Intelligence...</div>
+          <div className="w-12 h-12 border-4 border-[var(--border-default)] border-t-[var(--text-primary)] rounded-full animate-spin" />
+          <div className="text-xs font-[family-name:var(--font-outfit)] tracking-[0.05em] text-[var(--text-secondary)]">Chargement Cost Intelligence...</div>
         </div>
       </div>
     );
@@ -824,7 +824,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
           <p className="mb-6 text-sm text-[var(--text-secondary)]">{error}</p>
           <div className="flex flex-col gap-3">
             <button onClick={refresh} className="rounded-xl bg-orange-500 px-6 py-3 text-sm font-bold text-black">Reessayer</button>
-            <button onClick={onBack} className="rounded-xl border border-[var(--border-glass)] bg-[var(--bg-hover)] px-6 py-3 text-xs font-bold text-[var(--text-primary)]">Retour au menu</button>
+            <button onClick={onBack} className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-6 py-3 text-xs font-bold text-[var(--text-primary)]">Retour au menu</button>
           </div>
         </div>
       </div>
@@ -848,7 +848,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
           <div className="flex items-center gap-4">
-            <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]">
+            <button onClick={onBack} className="p-2 rounded-xl text-[var(--text-secondary)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]">
               <ChevronLeft size={20} />
             </button>
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10">
@@ -858,7 +858,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
               <h1 className="text-2xl font-bold text-[var(--text-primary)] tracking-tight">Cost Intelligence</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-orange-500 animate-pulse" />
-                <p className="text-[11px] font-[family-name:var(--font-outfit)] uppercase tracking-widest text-[var(--text-muted)]">FLARE AI — Admin Engine</p>
+                <p className="text-[11px] font-[family-name:var(--font-outfit)] font-medium tracking-[0.05em] text-[var(--text-secondary)]">FLARE AI — Admin Engine</p>
               </div>
             </div>
           </div>
@@ -866,25 +866,25 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
           <div className="flex items-center gap-3">
             <button onClick={() => setAutoRefresh(!autoRefresh)}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border transition-all ${
-                autoRefresh ? "border-orange-500/20 bg-orange-500/10 text-orange-500" : "bg-[var(--bg-hover)] border-[var(--border-glass)] text-[var(--text-muted)]"
+                autoRefresh ? "border-orange-500/20 bg-orange-500/10 text-orange-500" : "bg-[var(--surface-subtle)] border-[var(--border-default)] text-[var(--text-secondary)]"
               }`}>
               <div className={`h-1.5 w-1.5 rounded-full ${autoRefresh ? "bg-orange-500 animate-pulse" : "bg-[var(--border-default)]"}`} />
-              <span className="text-[10px] font-[family-name:var(--font-outfit)] uppercase tracking-widest">
+              <span className="text-[10px] font-[family-name:var(--font-outfit)] tracking-[0.05em]">
                 {autoRefresh ? `Live (${nextRefresh}s)` : "Static"}
               </span>
             </button>
-            <div className="flex bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-xl p-0.5">
+            <div className="flex bg-[var(--surface-subtle)] border border-[var(--border-default)] rounded-xl p-0.5">
               {[{ label: "1J", val: 1 }, { label: "7J", val: 7 }, { label: "30J", val: 30 }, { label: "ALL", val: 0 }].map((opt) => (
                 <button key={opt.val} onClick={() => setDays(opt.val)}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${
-                    days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                    days === opt.val ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-lg" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                   }`}>
                   {opt.label}
                 </button>
               ))}
             </div>
             <button onClick={triggerSync} disabled={loading}
-              className="flex items-center gap-2 rounded-xl border border-[rgba(var(--brand-blue-strong),0.20)] bg-[rgba(var(--brand-blue-soft),0.12)] px-3 py-2 text-xs font-bold text-[rgb(var(--brand-blue-strong))] transition-all hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-50">
+              className="flex items-center gap-2 rounded-xl border border-[var(--accent-navy)]/20 bg-[var(--accent-navy)]/8 px-3 py-2 text-xs font-bold text-[var(--accent-navy)] transition-all hover:bg-[var(--accent-navy)]/14 disabled:opacity-50">
               <Users size={14} />
               Sync Firebase
             </button>
@@ -912,17 +912,17 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
           {[
             { label: "Utilisateurs", val: data?.total_users ?? 0, sub: "Comptes actifs", icon: Users, color: "text-[var(--text-primary)]" },
             { label: "Gemini 3 Pro", val: formatCost(totalG3), sub: "Coût Raisonnement", icon: Brain, color: "text-[var(--text-primary)]" },
-            { label: "GEMINI 3 FLASH", val: formatCost(totalFlash), sub: "Coût Vitesse", icon: Zap, color: "text-[rgb(var(--brand-blue-strong))]" },
+            { label: "GEMINI 3 FLASH", val: formatCost(totalFlash), sub: "Coût Vitesse", icon: Zap, color: "text-[var(--accent-navy)]" },
             { label: "Total Google Cloud", val: formatCost(data?.total_cost ?? 0), sub: `${formatTokens(totalTokens)} tokens`, icon: DollarSign, color: "text-[var(--text-primary)]" }
           ].map((kpi, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-              className="p-6 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)] hover:bg-[var(--bg-hover)] transition-all cursor-default">
+              className="p-6 rounded-[28px] bg-[var(--surface-base)] border border-[var(--border-default)] hover:bg-[var(--surface-subtle)] transition-all cursor-default">
               <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
-                <kpi.icon size={16} className="text-[var(--text-muted)]" />
+                <span className="text-[10px] font-bold tracking-[0.05em] text-[var(--text-secondary)]">{kpi.label}</span>
+                <kpi.icon size={16} className="text-[var(--text-secondary)]" />
               </div>
               <p className={`text-2xl font-bold ${kpi.color} font-[family-name:var(--font-outfit)] tracking-tight`}>{kpi.val}</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-1">{kpi.sub}</p>
+              <p className="text-[11px] text-[var(--text-secondary)] mt-1">{kpi.sub}</p>
             </motion.div>
           ))}
         </div>
@@ -930,19 +930,19 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           {[
             { label: "Messages", val: totalMessages, icon: MessageSquare, color: "text-orange-500" },
-            { label: "Recherches", val: totalResearch, icon: Globe, color: "text-[rgb(var(--brand-blue-strong))]" },
+            { label: "Recherches", val: totalResearch, icon: Globe, color: "text-[var(--accent-navy)]" },
             { label: "Images", val: totalImages, icon: ImageIcon, color: "text-orange-500" },
-            { label: "Vidéos", val: totalVideos, icon: Video, color: "text-[rgb(var(--brand-blue-strong))]" },
-            { label: "Documents", val: totalDocs, icon: FileText, color: "text-[rgb(var(--brand-blue-strong))]" },
+            { label: "Vidéos", val: totalVideos, icon: Video, color: "text-[var(--accent-navy)]" },
+            { label: "Documents", val: totalDocs, icon: FileText, color: "text-[var(--accent-navy)]" },
             { label: "Tableurs", val: totalSheets, icon: FileSpreadsheet, color: "text-orange-500" },
           ].map((kpi, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i + 4) * 0.05 }}
-              className="p-4 rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-glass)] flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-2xl bg-[var(--bg-hover)] border border-[var(--border-glass)] flex items-center justify-center ${kpi.color}`}>
+              className="p-4 rounded-[28px] bg-[var(--surface-base)] border border-[var(--border-default)] flex items-center gap-4">
+              <div className={`w-12 h-12 rounded-2xl bg-[var(--surface-subtle)] border border-[var(--border-default)] flex items-center justify-center ${kpi.color}`}>
                 <kpi.icon size={24} />
               </div>
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">{kpi.label}</span>
+                <span className="text-[10px] font-bold tracking-[0.05em] text-[var(--text-secondary)]">{kpi.label}</span>
                 <p className="text-2xl font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)] tracking-tight">{kpi.val}</p>
               </div>
             </motion.div>
@@ -950,19 +950,19 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
         </div>
 
         {/* Master Table */}
-        <div className="bg-[var(--bg-card)] border border-[var(--border-glass)] rounded-[32px] overflow-hidden backdrop-blur-3xl shadow-2xl">
+        <div className="bg-[var(--surface-base)] border border-[var(--border-default)] rounded-[32px] overflow-hidden shadow-[var(--shadow-card)]">
           <div className="flex items-center justify-between px-6 py-4">
             <div className="relative">
-              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+              <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]" />
               <input value={search} onChange={(e) => setSearch(e.target.value)}
                 placeholder={`Rechercher parmi ${sortedUsers.length} utilisateurs...`}
-                className="w-80 rounded-xl border border-[var(--border-glass)] bg-[var(--bg-hover)] py-2.5 pl-10 pr-4 text-sm text-[var(--text-primary)] transition-all placeholder:text-[var(--text-muted)] focus:border-[var(--border-subtle)] focus:outline-none" />
+                className="w-80 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] py-2.5 pl-10 pr-4 text-sm text-[var(--text-primary)] transition-all placeholder:text-[var(--text-secondary)] focus:border-[var(--border-subtle)] focus:outline-none" />
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setSort({ ...sort, asc: !sort.asc })} className="p-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-glass)] text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)] transition-all">
+              <button onClick={() => setSort({ ...sort, asc: !sort.asc })} className="p-2.5 rounded-xl bg-[var(--surface-subtle)] border border-[var(--border-default)] text-[var(--text-primary)] hover:bg-[var(--surface-raised)] transition-all">
                 <ArrowUpDown size={14} className={`transition-transform ${sort.asc ? "" : "rotate-180"}`} />
               </button>
-              <div className="flex bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-xl p-0.5">
+              <div className="flex bg-[var(--surface-subtle)] border border-[var(--border-default)] rounded-xl p-0.5">
                 {[
                   { key: "cost", label: "Coût" },
                   { key: "tokens", label: "Tokens" },
@@ -971,7 +971,7 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
                 ].map(opt => (
                   <button key={opt.key} onClick={() => setSort({ ...sort, key: opt.key })}
                     className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                      sort.key === opt.key ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-md" : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                      sort.key === opt.key ? "bg-[var(--text-primary)] text-[rgb(var(--background))] shadow-md" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}>
                     {opt.label}
                   </button>
@@ -980,22 +980,22 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
             </div>
           </div>
 
-          <div className="grid grid-cols-12 gap-0 border-y border-[var(--border-glass)] bg-[var(--bg-hover)] px-6 py-2">
-            <div className="col-span-4 text-[9px] font-bold text-zinc-500 uppercase tracking-widest">IDENTITÉ UTILISATEUR</div>
-            <div className="col-span-3 text-center border-x border-[var(--border-glass)]">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">GEMINI 3 PRO</span>
+          <div className="grid grid-cols-12 gap-0 border-y border-[var(--border-default)] bg-[var(--surface-subtle)] px-6 py-2">
+            <div className="col-span-4 text-[9px] font-semibold text-[var(--text-secondary)] tracking-[0.05em]">IDENTITÉ UTILISATEUR</div>
+            <div className="col-span-3 text-center border-x border-[var(--border-default)]">
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] tracking-[0.05em]">GEMINI 3 PRO</span>
             </div>
             <div className="col-span-3 text-center">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">GEMINI 3 FLASH</span>
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] tracking-[0.05em]">GEMINI 3 FLASH</span>
             </div>
             <div className="col-span-2 text-right self-center">
-              <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">Grand Total</span>
+              <span className="text-[9px] font-semibold text-[var(--text-secondary)] tracking-[0.05em]">Grand Total</span>
             </div>
           </div>
 
           <div className="divide-y divide-[var(--border-glass)]">
             {paginatedUsers.length === 0 ? (
-              <div className="p-20 text-center text-zinc-700 font-[family-name:var(--font-outfit)] text-xs uppercase tracking-widest italic">Aucun utilisateur correspondant.</div>
+              <div className="p-20 text-center text-[var(--text-secondary)] font-[family-name:var(--font-outfit)] text-xs tracking-[0.05em] italic">Aucun utilisateur correspondant.</div>
             ) : (
               paginatedUsers.map((user, idx) => {
                 try {
@@ -1010,40 +1010,40 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
                   return (
                     <div key={user.user_id || idx} className="group">
                       <div onClick={() => toggleUser(user.user_id)}
-                        className={`grid grid-cols-12 gap-0 px-6 py-5 items-center cursor-pointer transition-all ${isExpanded ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--bg-hover)]'}`}>
+                        className={`grid grid-cols-12 gap-0 px-6 py-5 items-center cursor-pointer transition-all ${isExpanded ? 'bg-[var(--bg-active)]' : 'hover:bg-[var(--surface-subtle)]'}`}>
                         <div className="col-span-4 flex items-center gap-4 min-w-0 pr-4">
                           <div className="relative">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[var(--text-primary)]/10 to-[var(--text-primary)]/20 border border-[var(--border-glass)] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm shadow-inner overflow-hidden">
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[var(--text-primary)]/10 to-[var(--text-primary)]/20 border border-[var(--border-default)] flex items-center justify-center text-[var(--text-primary)] font-bold text-sm shadow-inner overflow-hidden">
                               {email.charAt(0).toUpperCase()}
                             </div>
                             {user.last_active && (Date.now() - new Date(user.last_active).getTime() < 180000) && (
-                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-zinc-950 rounded-full animate-pulse" />
+                              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-orange-500 border-2 border-[var(--surface-base)] rounded-full animate-pulse" />
                             )}
                           </div>
                           <div className="flex flex-col min-w-0">
                             <div className="flex items-center gap-2">
-                              {isExpanded ? <ChevronDown size={14} className="text-[var(--text-primary)]" /> : <ChevronRight size={14} className="text-zinc-600" />}
+                              {isExpanded ? <ChevronDown size={14} className="text-[var(--text-primary)]" /> : <ChevronRight size={14} className="text-[var(--text-secondary)]" />}
                               <span className="text-[13px] font-bold text-[var(--text-primary)] truncate">{email}</span>
                             </div>
-                            <span className="text-[10px] text-zinc-500 font-[family-name:var(--font-outfit)] tracking-tighter truncate pl-5 opacity-60">ID: {user.user_id}</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] font-[family-name:var(--font-outfit)] tracking-tighter truncate pl-5 opacity-60">ID: {user.user_id}</span>
                           </div>
                         </div>
-                        <div className="col-span-3 h-full px-2 border-l border-[var(--border-glass)]">
+                        <div className="col-span-3 h-full px-2 border-l border-[var(--border-default)]">
                           <DataSubGrid actions={g3?.total?.actions} tokens={g3?.total?.tokens} cost={g3?.total?.cost} accent="text-[var(--text-primary)]" />
                         </div>
-                        <div className="col-span-3 h-full px-2 border-l border-[var(--border-glass)]">
-                          <DataSubGrid actions={flash?.total?.actions} tokens={flash?.total?.tokens} cost={flash?.total?.cost} accent="text-emerald-400" />
+                        <div className="col-span-3 h-full px-2 border-l border-[var(--border-default)]">
+                          <DataSubGrid actions={flash?.total?.actions} tokens={flash?.total?.tokens} cost={flash?.total?.cost} accent="text-orange-500" />
                         </div>
                         <div className="col-span-2 text-right pr-4">
                           <div className="flex flex-col items-end">
                             <span className="text-lg font-bold text-[var(--text-primary)] font-[family-name:var(--font-outfit)] tracking-tighter">{formatCost(grandTotal.cost)}</span>
-                            <span className="text-[9px] text-zinc-500 font-bold uppercase">{formatTokens(grandTotal.tokens)} tokens</span>
+                            <span className="text-[9px] text-[var(--text-secondary)] font-bold uppercase">{formatTokens(grandTotal.tokens)} tokens</span>
                           </div>
                         </div>
                       </div>
                       {isExpanded && (
                         <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                          className="bg-black/60 border-t border-[var(--border-glass)] px-6 py-6 overflow-hidden">
+                          className="bg-[var(--surface-subtle)] border-t border-[var(--border-default)] px-6 py-6 overflow-hidden">
                           <div className="flex items-center gap-2 mb-4">
                             <div className="h-4 w-1 bg-[var(--text-primary)] rounded-full" />
                             <h3 className="text-[10px] font-bold text-[var(--text-primary)] uppercase tracking-[0.2em]">Breakdown Analytique</h3>
@@ -1068,8 +1068,8 @@ function CostIntelligenceTab({ token, onBack }: { token: string; onBack: () => v
           </div>
 
           {sortedUsers.length > visibleUsers && (
-            <div className="p-4 text-center border-t border-[var(--border-glass)]">
-              <button onClick={() => setVisibleUsers(v => v + 20)} className="text-[var(--text-primary)] text-xs font-bold uppercase tracking-widest hover:opacity-80">
+            <div className="p-4 text-center border-t border-[var(--border-default)]">
+              <button onClick={() => setVisibleUsers(v => v + 20)} className="text-[var(--text-primary)] text-xs font-bold tracking-[0.05em] hover:opacity-80">
                 Afficher plus ({sortedUsers.length - visibleUsers} restants)
               </button>
             </div>
@@ -1123,7 +1123,7 @@ export default function AdminPanel({ token }: AdminPanelProps) {
   if (!token) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[var(--background)]">
-        <p className="text-zinc-500">Authentification requise.</p>
+        <p className="text-[var(--text-secondary)]">Authentification requise.</p>
       </div>
     );
   }
@@ -1164,12 +1164,12 @@ const ACTIVATION_STATUS_COLORS: Record<string, string> = {
   draft: "bg-[var(--surface-subtle)] text-[var(--text-primary)]",
   awaiting_payment: "bg-orange-500/10 text-orange-500",
   payment_submitted: "bg-orange-500/10 text-orange-500",
-  payment_verified: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  payment_verified: "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]",
   awaiting_flare_page_admin_access: "bg-orange-500/10 text-orange-500",
-  queued_for_activation: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  queued_for_activation: "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]",
   activation_in_progress: "bg-orange-500/10 text-orange-500",
-  testing: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
-  active: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]",
+  testing: "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]",
+  active: "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]",
   blocked: "bg-red-500/10 text-red-500",
   rejected: "bg-red-500/10 text-red-500",
   canceled: "bg-[var(--surface-subtle)] text-[var(--text-primary)]",
@@ -1262,13 +1262,13 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
       <div className="flex items-center gap-3 mb-8">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
-          <ChevronLeft size={20} className="text-[var(--text-muted)]" />
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--surface-subtle)] transition-colors">
+          <ChevronLeft size={20} className="text-[var(--text-secondary)]" />
         </button>
         <Rocket size={24} className="text-orange-400" />
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Activations</h2>
-        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
-          <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
+        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--surface-subtle)]">
+          <RefreshCcw size={16} className={`text-[var(--text-secondary)] ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
@@ -1288,16 +1288,16 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "payment_submitted", "payment_verified", "queued_for_activation", "activation_in_progress", "testing", "active", "blocked", "rejected"].map(s => (
           <button key={s} onClick={() => setStatusFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "border border-orange-500/30 bg-orange-500/10 text-orange-500" : "border border-transparent bg-[var(--bg-hover)] text-[var(--text-muted)] hover:border-[var(--border-glass)]"}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === s ? "border border-orange-500/30 bg-orange-500/10 text-orange-500" : "border border-transparent bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-default)]"}`}>
             {s === "all" ? "Toutes" : ACTIVATION_STATUS_LABELS[s] || s}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 rounded-2xl bg-[var(--bg-hover)] animate-pulse" />)}</div>
+        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 rounded-2xl bg-[var(--surface-subtle)] animate-pulse" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-[var(--text-muted)]">
+        <div className="text-center py-16 text-[var(--text-secondary)]">
           <Rocket size={48} className="mx-auto mb-4 opacity-30" />
           <p>Aucune activation {statusFilter !== "all" ? "avec ce statut" : ""}</p>
         </div>
@@ -1308,33 +1308,33 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
             const nextStatuses = VALID_NEXT_STATUSES[ar.status] || [];
             return (
               <motion.div key={ar.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] overflow-hidden">
+                className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] overflow-hidden">
                 <button onClick={() => setExpandedId(expanded ? null : ar.id)}
-                  className="w-full p-4 flex items-center gap-4 text-left hover:bg-[var(--bg-hover)] transition-colors">
+                  className="w-full p-4 flex items-center gap-4 text-left hover:bg-[var(--surface-subtle)] transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-semibold text-[var(--text-primary)] truncate">{ar.business_name || ar.organization_slug}</span>
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${ACTIVATION_STATUS_COLORS[ar.status] || "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${ACTIVATION_STATUS_COLORS[ar.status] || "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
                         {ACTIVATION_STATUS_LABELS[ar.status] || ar.status}
                       </span>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--bg-hover)] text-[var(--text-muted)]">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--surface-subtle)] text-[var(--text-secondary)]">
                         {ar.selected_plan_id}
                       </span>
                     </div>
-                    <p className="text-xs text-[var(--text-muted)] mt-1 truncate">
+                    <p className="text-xs text-[var(--text-secondary)] mt-1 truncate">
                       {ar.contact_full_name} &middot; {ar.contact_email || ar.contact_phone || "-"} &middot; {ar.requested_at ? new Date(ar.requested_at).toLocaleDateString("fr-FR") : "-"}
                     </p>
                   </div>
                   {ar.assigned_operator_email && (
-                    <span className="rounded-full bg-[rgba(var(--brand-blue-soft),0.12)] px-2 py-0.5 text-[10px] text-[rgb(var(--brand-blue-strong))]">{ar.assigned_operator_email}</span>
+                    <span className="rounded-full bg-[var(--accent-navy)]/8 px-2 py-0.5 text-[10px] text-[var(--accent-navy)]">{ar.assigned_operator_email}</span>
                   )}
-                  <ChevronDown size={16} className={`text-[var(--text-muted)] transition-transform ${expanded ? "rotate-180" : ""}`} />
+                  <ChevronDown size={16} className={`text-[var(--text-secondary)] transition-transform ${expanded ? "rotate-180" : ""}`} />
                 </button>
 
                 <AnimatePresence>
                   {expanded && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                      className="border-t border-[var(--border-glass)]">
+                      className="border-t border-[var(--border-default)]">
                       <div className="p-4 space-y-4">
                         {/* Detail grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -1356,7 +1356,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                             ["Raison blocage", ar.blocked_reason || "-"],
                           ].filter(([, v]) => v && v !== "-").map(([label, val]) => (
                             <div key={label as string} className="flex justify-between gap-2">
-                              <span className="text-[var(--text-muted)]">{label}</span>
+                              <span className="text-[var(--text-secondary)]">{label}</span>
                               <span className="text-[var(--text-primary)] text-right truncate max-w-[60%]">{val}</span>
                             </div>
                           ))}
@@ -1402,7 +1402,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                         </div>
 
                         <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
-                          <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Checklist operateur</p>
+                          <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Checklist operateur</p>
                           <div className="mt-3 grid gap-2 text-xs">
                             {[
                               { label: "Paiement verifie", done: ["payment_verified", "awaiting_flare_page_admin_access", "queued_for_activation", "activation_in_progress", "testing", "active"].includes(ar.status) },
@@ -1413,7 +1413,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                             ].map((item) => (
                               <div key={item.label} className="flex items-center justify-between rounded-xl bg-[var(--surface-subtle)] px-3 py-2">
                                 <span className="text-[var(--text-primary)]">{item.label}</span>
-                                <span className={`text-[11px] font-medium ${item.done ? "text-orange-500" : "text-[var(--text-muted)]"}`}>
+                                <span className={`text-[11px] font-medium ${item.done ? "text-orange-500" : "text-[var(--text-secondary)]"}`}>
                                   {item.done ? "OK" : "A faire"}
                                 </span>
                               </div>
@@ -1424,13 +1424,13 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                         {/* Status actions */}
                         {nextStatuses.length > 0 && (
                           <div className="flex flex-wrap gap-2">
-                            <span className="text-[10px] text-[var(--text-muted)] uppercase tracking-wider self-center mr-2">Transition &rarr;</span>
+                            <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider self-center mr-2">Transition &rarr;</span>
                             {nextStatuses.map(ns => (
                               <button key={ns} onClick={() => handleSetStatus(ar.id, ns)}
                                 disabled={actionBusy === ar.id}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                                  ns === "active" ? "border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)]" :
-                                  ns === "blocked" || ns === "rejected" || ns === "canceled" ? "border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/20" :
+                                  ns === "active" ? "border-[var(--accent-navy)]/28 bg-[var(--accent-navy)]/8 text-[var(--accent-navy)] hover:bg-[var(--accent-navy)]/14" :
+                                  ns === "blocked" || ns === "rejected" || ns === "canceled" ? "border-red-500/30 bg-red-500/10 text-red-500 hover:bg-red-500/10" :
                                   "border-orange-500/30 bg-orange-500/10 text-orange-500 hover:bg-orange-500/20"
                                 }`}>
                                 {ACTIVATION_STATUS_LABELS[ns] || ns}
@@ -1442,9 +1442,9 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                         {/* Assign operator */}
                         <div className="flex gap-2">
                           <input value={assignEmailDrafts[ar.id] || ""} onChange={e => setAssignEmailDrafts((current) => ({ ...current, [ar.id]: e.target.value }))} placeholder="Email operateur..."
-                            className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+                            className="flex-1 bg-[var(--surface-subtle)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]" />
                           <button onClick={() => handleAssign(ar.id)} disabled={actionBusy === ar.id || !(assignEmailDrafts[ar.id] || "").trim()}
-                            className="rounded-lg border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] px-3 py-2 text-xs font-medium text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-40">
+                            className="rounded-lg border border-[var(--accent-navy)]/28 bg-[var(--accent-navy)]/8 px-3 py-2 text-xs font-medium text-[var(--accent-navy)] hover:bg-[var(--accent-navy)]/14 disabled:opacity-40">
                             Assigner
                           </button>
                         </div>
@@ -1452,7 +1452,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                         {/* Add note */}
                         <div className="flex gap-2">
                           <input value={noteDrafts[ar.id] || ""} onChange={e => setNoteDrafts((current) => ({ ...current, [ar.id]: e.target.value }))} placeholder="Ajouter une note..."
-                            className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-muted)]" />
+                            className="flex-1 bg-[var(--surface-subtle)] border border-[var(--border-default)] rounded-lg px-3 py-2 text-xs text-[var(--text-primary)] placeholder:text-[var(--text-secondary)]" />
                           <button onClick={() => handleAddNote(ar.id)} disabled={actionBusy === ar.id || !(noteDrafts[ar.id] || "").trim()}
                             className="rounded-lg border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-medium text-orange-500 hover:bg-orange-500/20 disabled:opacity-40">
                             <StickyNote size={14} />
@@ -1530,7 +1530,7 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
 
   const paymentStatusColor = (s: string) => {
     if (s === "submitted") return "bg-orange-500/10 text-orange-500";
-    if (s === "verified") return "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]";
+    if (s === "verified") return "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]";
     if (s === "rejected") return "bg-red-500/10 text-red-500";
     return "bg-[var(--surface-subtle)] text-[var(--text-primary)]";
   };
@@ -1538,13 +1538,13 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
       <div className="flex items-center gap-3 mb-8">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
-          <ChevronLeft size={20} className="text-[var(--text-muted)]" />
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--surface-subtle)] transition-colors">
+          <ChevronLeft size={20} className="text-[var(--text-secondary)]" />
         </button>
-        <CreditCard size={24} className="text-[rgb(var(--brand-blue-strong))]" />
+        <CreditCard size={24} className="text-[var(--accent-navy)]" />
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Paiements</h2>
-        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
-          <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
+        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--surface-subtle)]">
+          <RefreshCcw size={16} className={`text-[var(--text-secondary)] ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
@@ -1563,16 +1563,16 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "submitted", "verified", "rejected"].map(s => (
           <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "border border-[var(--accent-navy)]/28 bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]" : "bg-[var(--surface-subtle)] text-[var(--text-secondary)] border border-transparent hover:border-[var(--border-default)]"}`}>
             {s === "all" ? "Tous" : s === "submitted" ? "A verifier" : s === "verified" ? "Verifies" : "Refuses"}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--bg-hover)] animate-pulse" />)}</div>
+        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--surface-subtle)] animate-pulse" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-[var(--text-muted)]">
+        <div className="text-center py-16 text-[var(--text-secondary)]">
           <CreditCard size={48} className="mx-auto mb-4 opacity-30" />
           <p>Aucun paiement {filter !== "all" ? "avec ce statut" : ""}</p>
         </div>
@@ -1580,22 +1580,22 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
         <div className="space-y-3">
           {filtered.map((pay: any) => (
             <motion.div key={pay.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-4">
+              className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="font-semibold text-sm text-[var(--text-primary)]">{pay.payer_full_name || "Inconnu"}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${paymentStatusColor(pay.status)}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${paymentStatusColor(pay.status)}`}>
                       {pay.status === "submitted" ? "A verifier" : pay.status === "verified" ? "Verifie" : pay.status === "rejected" ? "Refuse" : pay.status}
                     </span>
-                    <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full">{pay.method_code}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded-full">{pay.method_code}</span>
                   </div>
-                  <p className="text-xs text-[var(--text-muted)]">
+                  <p className="text-xs text-[var(--text-secondary)]">
                     Ref: <span className="text-[var(--text-primary)] font-mono">{pay.transaction_reference || "-"}</span>
                     {pay.amount ? ` \u00b7 ${pay.amount} ${pay.currency || ""}` : ""}
                     {pay.payer_phone ? ` \u00b7 ${pay.payer_phone}` : ""}
                   </p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
                     Soumis : {pay.submitted_at ? new Date(pay.submitted_at).toLocaleString("fr-FR") : "-"}
                     {pay.organization_scope_id ? ` \u00b7 ${pay.organization_scope_id}` : ""}
                   </p>
@@ -1604,12 +1604,12 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
                       <p className="text-xs font-semibold text-[var(--text-primary)]">
                         {pay.activation_summary.business_name || pay.activation_summary.contact_full_name || "Demande liee"}
                       </p>
-                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                      <p className="mt-1 text-[11px] text-[var(--text-secondary)]">
                         {pay.activation_summary.contact_email || "-"}
                         {pay.activation_summary.contact_phone ? ` · ${pay.activation_summary.contact_phone}` : ""}
                         {pay.activation_summary.contact_whatsapp ? ` · WhatsApp ${pay.activation_summary.contact_whatsapp}` : ""}
                       </p>
-                      <p className="mt-1 text-[11px] text-[var(--text-muted)]">
+                      <p className="mt-1 text-[11px] text-[var(--text-secondary)]">
                         {pay.activation_summary.facebook_page_name || "Page Facebook non renseignee"}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -1654,13 +1654,13 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
                   ) : null}
                   {pay.proof_file_url && (
                     <a href={pay.proof_file_url} target="_blank" rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-2 text-xs text-blue-400 hover:text-blue-300">
+                      className="inline-flex items-center gap-1 mt-2 text-xs text-[var(--accent-navy)] hover:text-[var(--text-primary)]">
                       <Eye size={12} /> Voir la preuve
                     </a>
                   )}
                   {pay.activation_summary && (
                     <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-3">
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Handoff activation</p>
+                      <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-secondary)]">Handoff activation</p>
                       <div className="mt-2 grid gap-1 text-xs text-[var(--text-primary)]">
                         <p>Contact: {pay.activation_summary.contact_full_name || "-"}</p>
                         <p>Email: {pay.activation_summary.contact_email || "-"}</p>
@@ -1680,27 +1680,27 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
                 {pay.status === "submitted" && (
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     <button onClick={() => handleVerify(pay.id)} disabled={actionBusy === pay.id}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/30 disabled:opacity-40 flex items-center gap-1">
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-orange-500/12 text-[var(--text-primary)] border border-orange-500/30 hover:bg-orange-500/18 disabled:opacity-40 flex items-center gap-1">
                       <CheckCircle2 size={12} /> Valider
                     </button>
                     {rejectingId === pay.id ? (
                       <div className="flex flex-col gap-1">
                         <input value={rejectReasons[pay.id] || ""} onChange={e => setRejectReasons((current) => ({ ...current, [pay.id]: e.target.value }))} placeholder="Raison du refus..."
-                          className="bg-[var(--bg-hover)] border border-[var(--border-glass)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] w-40" />
+                          className="bg-[var(--surface-subtle)] border border-[var(--border-default)] rounded-lg px-2 py-1 text-xs text-[var(--text-primary)] w-40" />
                         <div className="flex gap-1">
                           <button onClick={() => handleReject(pay.id)} disabled={actionBusy === pay.id}
-                            className="flex-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-40">
+                            className="flex-1 px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/10 text-[var(--text-primary)] border border-red-500/30 hover:bg-red-500/18 disabled:opacity-40">
                             Confirmer
                           </button>
                           <button onClick={() => { setRejectingId(null); setRejectReasons((current) => ({ ...current, [pay.id]: "" })); }}
-                            className="px-2 py-1 rounded-lg text-[10px] text-[var(--text-muted)] hover:bg-[var(--bg-hover)]">
+                            className="px-2 py-1 rounded-lg text-[10px] text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)]">
                             Annuler
                           </button>
                         </div>
                       </div>
                     ) : (
                       <button onClick={() => setRejectingId(pay.id)}
-                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 flex items-center gap-1">
+                        className="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-[var(--text-primary)] border border-red-500/30 hover:bg-red-500/18 flex items-center gap-1">
                         <XCircle size={12} /> Refuser
                       </button>
                     )}
@@ -1752,7 +1752,7 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
   };
 
   const orderStatusColor = (s: string) => {
-    const m: Record<string, string> = { new: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]", confirmed: "bg-orange-500/10 text-orange-500", delivered: "bg-orange-500/10 text-orange-500", cancelled: "bg-red-500/10 text-red-500", needs_followup: "bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" };
+    const m: Record<string, string> = { new: "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]", confirmed: "bg-orange-500/10 text-orange-500", delivered: "bg-orange-500/10 text-orange-500", cancelled: "bg-red-500/10 text-red-500", needs_followup: "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]" };
     return m[s] || "bg-[var(--surface-subtle)] text-[var(--text-primary)]";
   };
   const orderStatusLabel = (s: string) => {
@@ -1763,13 +1763,13 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
   return (
     <div className="flex-1 overflow-y-auto p-4 md:p-10 bg-[var(--background)]">
       <div className="flex items-center gap-3 mb-8">
-        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--bg-hover)] transition-colors">
-          <ChevronLeft size={20} className="text-[var(--text-muted)]" />
+        <button onClick={onBack} className="p-2 rounded-xl hover:bg-[var(--surface-subtle)] transition-colors">
+          <ChevronLeft size={20} className="text-[var(--text-secondary)]" />
         </button>
-        <ShoppingBag size={24} className="text-[rgb(var(--brand-blue-strong))]" />
+        <ShoppingBag size={24} className="text-[var(--accent-navy)]" />
         <h2 className="text-xl font-bold text-[var(--text-primary)]">Commandes (tous clients)</h2>
-        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--bg-hover)]">
-          <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />
+        <button onClick={() => { setLoading(true); load(); }} className="ml-auto p-2 rounded-xl hover:bg-[var(--surface-subtle)]">
+          <RefreshCcw size={16} className={`text-[var(--text-secondary)] ${loading ? "animate-spin" : ""}`} />
         </button>
       </div>
 
@@ -1782,16 +1782,16 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
       <div className="flex flex-wrap gap-2 mb-6">
         {["all", "new", "confirmed", "needs_followup", "delivered", "cancelled"].map(s => (
           <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] text-[rgb(var(--brand-blue-strong))]" : "bg-[var(--bg-hover)] text-[var(--text-muted)] border border-transparent hover:border-[var(--border-glass)]"}`}>
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filter === s ? "border border-[var(--accent-navy)]/28 bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]" : "bg-[var(--surface-subtle)] text-[var(--text-secondary)] border border-transparent hover:border-[var(--border-default)]"}`}>
             {s === "all" ? "Toutes" : orderStatusLabel(s)}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--bg-hover)] animate-pulse" />)}</div>
+        <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--surface-subtle)] animate-pulse" />)}</div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-[var(--text-muted)]">
+        <div className="text-center py-16 text-[var(--text-secondary)]">
           <ShoppingBag size={48} className="mx-auto mb-4 opacity-30" />
           <p>Aucune commande {filter !== "all" ? "avec ce statut" : ""}</p>
         </div>
@@ -1799,30 +1799,30 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
         <div className="space-y-3">
           {filtered.map(order => (
             <motion.div key={order.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-4">
+              className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="font-semibold text-sm text-[var(--text-primary)]">{order.contact_name || "Contact inconnu"}</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${orderStatusColor(order.status)}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${orderStatusColor(order.status)}`}>
                       {orderStatusLabel(order.status)}
                     </span>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${order.source === "signal" ? "bg-orange-500/10 text-orange-500" : "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
                       {order.source === "signal" ? "Signal IA" : "Manuel"}
                     </span>
-                    <span className="text-[10px] text-[var(--text-muted)] bg-[var(--bg-hover)] px-2 py-0.5 rounded-full">{order.page_name || order.organization_slug}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded-full">{order.page_name || order.organization_slug}</span>
                   </div>
                   <p className="text-xs text-[var(--text-primary)] mt-1">{order.product_summary || "-"}</p>
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
                     {order.quantity_text ? `Qte: ${order.quantity_text}` : ""}
                     {order.amount_text ? ` \u00b7 ${order.amount_text}` : ""}
                     {order.contact_phone ? ` \u00b7 ${order.contact_phone}` : ""}
                     {order.delivery_address ? ` \u00b7 ${order.delivery_address}` : ""}
                   </p>
                   {order.customer_request_text && (
-                    <p className="text-[10px] text-[var(--text-muted)] mt-1 italic">"{order.customer_request_text}"</p>
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-1 italic">"{order.customer_request_text}"</p>
                   )}
-                  <p className="text-[10px] text-[var(--text-muted)] mt-1">
+                  <p className="text-[10px] text-[var(--text-secondary)] mt-1">
                     {order.created_at ? new Date(order.created_at).toLocaleString("fr-FR") : "-"}
                     {order.source === "signal" && order.confidence > 0 ? ` \u00b7 Confiance: ${Math.round(order.confidence * 100)}%` : ""}
                   </p>
@@ -1844,11 +1844,11 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
                   {!["cancelled", "delivered"].includes(order.status) && (
                     <>
                       <button onClick={() => handleUpdateStatus(order.id, "needs_followup")} disabled={actionBusy === order.id}
-                        className="rounded-lg border border-[rgba(var(--brand-blue-strong),0.30)] bg-[rgba(var(--brand-blue-soft),0.12)] px-2 py-1 text-[10px] font-medium text-[rgb(var(--brand-blue-strong))] hover:bg-[rgba(var(--brand-blue-soft),0.20)] disabled:opacity-40">
+                        className="rounded-lg border border-[var(--accent-navy)]/28 bg-[var(--accent-navy)]/8 px-2 py-1 text-[10px] font-medium text-[var(--accent-navy)] hover:bg-[var(--accent-navy)]/14 disabled:opacity-40">
                         A suivre
                       </button>
                       <button onClick={() => handleUpdateStatus(order.id, "cancelled")} disabled={actionBusy === order.id}
-                        className="px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-40">
+                        className="px-2 py-1 rounded-lg text-[10px] font-medium bg-red-500/10 text-[var(--text-primary)] border border-red-500/30 hover:bg-red-500/18 disabled:opacity-40">
                         Annuler
                       </button>
                     </>
@@ -1862,3 +1862,5 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
     </div>
   );
 }
+
+
