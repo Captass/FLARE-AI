@@ -1321,8 +1321,8 @@ export default function Home() {
               <Download size={18} className="text-[var(--text-muted)]" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-[var(--text-primary)]">Installer RAM&apos;S FLARE</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">AccÃƒÂ¨s rapide depuis votre ÃƒÂ©cran d&apos;accueil</p>
+              <p className="text-[13px] font-medium text-[var(--text-primary)]">Installer FLARE AI</p>
+              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Acces rapide depuis votre ecran d&apos;accueil</p>
             </div>
             <button
               onClick={async () => {
@@ -1358,7 +1358,7 @@ export default function Home() {
           onLogout={logoutWithScopeReset}
           displayName={resolvedUserDisplayName}
           avatarUrl={resolvedUserAvatarUrl}
-          brandName={resolvedBrandName}
+          brandName="FLARE AI"
           logoUrl={resolvedBrandLogoUrl}
           lang={lang}
           userEmail={user?.email ?? null}
