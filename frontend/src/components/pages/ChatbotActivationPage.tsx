@@ -31,6 +31,11 @@ import {
   getMyManualPayments,
   type ManualPaymentSubmission,
 } from "@/lib/api";
+import {
+  clearRememberedActivationPlan,
+  readRememberedActivationPlan,
+  type ActivationPlanId,
+} from "@/lib/activationFlow";
 
 // ---------------------------------------------------------------------------
 // Error parsing helper
@@ -333,7 +338,7 @@ export default function ChatbotActivationPage({
   const [submissions, setSubmissions] = useState<ManualPaymentSubmission[]>([]);
 
   // plan selection
-  const [selectedPlanId, setSelectedPlanId] = useState<string>("pro");
+  const [selectedPlanId, setSelectedPlanId] = useState<ActivationPlanId>("pro");
 
   // payment form
   const [payMethodCode, setPayMethodCode] = useState("");
@@ -380,6 +385,13 @@ export default function ChatbotActivationPage({
 
   // ---- initial load ----
   useEffect(() => {
+    const rememberedPlan = readRememberedActivationPlan();
+    if (rememberedPlan) {
+      setSelectedPlanId(rememberedPlan);
+    }
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     void (async () => {
@@ -412,8 +424,12 @@ export default function ChatbotActivationPage({
         const fetchedPm =
           pmRes.status === "fulfilled" ? pmRes.value.methods : [];
 
-        setAr(fetchedAr);
-        setLaunchConfig(fetchedLc);
+      setAr(fetchedAr);
+      setLaunchConfig(fetchedLc);
+      if (fetchedAr?.selected_plan_id && ["starter", "pro", "business"].includes(fetchedAr.selected_plan_id)) {
+        setSelectedPlanId(fetchedAr.selected_plan_id as ActivationPlanId);
+        clearRememberedActivationPlan();
+      }
 
         // merge payment methods from launch config + billing endpoint
         const allMethods = [
@@ -529,12 +545,34 @@ export default function ChatbotActivationPage({
         t
       );
       setAr(res.activation_request);
+      clearRememberedActivationPlan();
       setStep("payment");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la creation");
       if (isMissingOrganizationScopeError(msg)) {
+        // In org scope, this is usually a stale scoped token: retry once with a forced refresh.
+        if (currentScopeType === "organization" && getFreshToken) {
+          try {
+            const refreshedToken = await getFreshToken(true);
+            if (refreshedToken) {
+              const retry = await createActivationRequest(
+                { selected_plan_id: selectedPlanId } as Partial<ActivationRequest>,
+                refreshedToken
+              );
+              setAr(retry.activation_request);
+              setStep("payment");
+              return;
+            }
+          } catch {
+            // Fall through to user-facing error below.
+          }
+          setError("Session organisation indisponible. Rechargez la page puis reessayez.");
+          return;
+        }
         setError("Selectionnez d'abord une organisation active.");
-        onRequestOrganizationSelection?.();
+        if (currentScopeType !== "organization") {
+          onRequestOrganizationSelection?.();
+        }
         return;
       }
       // If an AR already exists, load it and resume from the correct step

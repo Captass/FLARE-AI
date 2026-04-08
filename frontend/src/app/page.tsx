@@ -56,6 +56,7 @@ import ChatbotOrdersPage from "@/components/pages/ChatbotOrdersPage";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import SignalementModal from "@/components/SignalementModal";
 import { useThemePreference } from "@/hooks/useThemePreference";
+import { rememberActivationPlan, type ActivationPlanId } from "@/lib/activationFlow";
 
 import {
   ChatMode,
@@ -866,6 +867,11 @@ export default function Home() {
     void openOrganizationAccess("chatbot");
   }, [openOrganizationAccess]);
 
+  const openActivationFlow = useCallback((planId: ActivationPlanId) => {
+    rememberActivationPlan(planId);
+    onPush("chatbot-activation");
+  }, [onPush]);
+
   const closeOrganizationAccess = useCallback(() => {
     setShowOrganizationAccess(false);
     setPendingOrganizationTarget(null);
@@ -1654,6 +1660,7 @@ export default function Home() {
         fallbackPhotoUrl={user?.photoURL || ""}
         hasSharedOrganizations={hasSharedOrganizations}
         onOpenOrganizationAccess={openOrganizationAccess}
+        onOpenActivationFlow={openActivationFlow}
         onIdentitySaved={handleWorkspaceIdentitySaved}
         onStartTour={() => {}}
       />

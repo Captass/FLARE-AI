@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { X, Settings2, Save, RotateCcw, Info, Sparkles, Monitor, Moon, Sun, Smartphone, Check, Crown, Zap, TrendingUp, BookOpen, Loader2, Brain, FileText, Lightbulb, Layers, Bot } from "lucide-react";
-import { WorkspaceIdentity, getUserPreferences, updateUserPreferences, resetUserPreferences, getUserPlan, UserPlan, createCheckoutSession, createCustomerPortalSession } from "@/lib/api";
+import { WorkspaceIdentity, getUserPreferences, updateUserPreferences, resetUserPreferences, getUserPlan, UserPlan, createCustomerPortalSession } from "@/lib/api";
 import {
   DEFAULT_CHATBOT_PREFERENCES,
   type ChatbotPreferences,
   getChatbotPreferences,
   updateChatbotPreferences,
 } from "@/lib/api";
+import { type ActivationPlanId } from "@/lib/activationFlow";
 import KnowledgePanel from "./KnowledgePanel";
 import ChatbotPreferencesForm from "./ChatbotPreferencesForm";
 import IdentitySettingsSection from "./IdentitySettingsSection";
@@ -27,6 +28,7 @@ interface SettingsModalProps {
   hasSharedOrganizations?: boolean;
   onOpenOrganizationAccess?: () => void;
   onIdentitySaved?: (next: WorkspaceIdentity) => void;
+  onOpenActivationFlow?: (planId: ActivationPlanId) => void;
 }
 
 const LEGACY_PROFILE_MARKERS = ["Profil :", "?? Profil :"];
@@ -111,6 +113,7 @@ export default function SettingsModal({
   hasSharedOrganizations = false,
   onOpenOrganizationAccess,
   onIdentitySaved,
+  onOpenActivationFlow,
 }: SettingsModalProps) {
   const [userPreferences, setUserPreferences] = useState("");
   const [prefMode, setPrefMode] = useState<"guided" | "raw">("guided");
@@ -133,22 +136,10 @@ export default function SettingsModal({
   const [chatbotSaved, setChatbotSaved] = useState(false);
   const [chatbotError, setChatbotError] = useState<string | null>(null);
 
-  const handleCheckout = async (planId: string) => {
-    setCheckoutLoading(true);
+  const handleCheckout = async (planId: ActivationPlanId) => {
     setBillingFeedback(null);
-    try {
-      const session = await createCheckoutSession(planId, token);
-      if (session.url) {
-        window.location.href = session.url;
-      } else {
-        throw new Error("URL de checkout non reçue.");
-      }
-    } catch (error) { 
-      console.error("Erreur de checkout Stripe:", error);
-      setBillingFeedback("Une erreur est survenue lors de la redirection vers le paiement. Veuillez réessayer.");
-    } finally {
-      setCheckoutLoading(false);
-    }
+    onClose();
+    onOpenActivationFlow?.(planId);
   };
 
   const handlePortalSession = async () => {

@@ -6,6 +6,7 @@ import { Crown, CheckCircle2, Lock, ArrowRight, Calendar, Zap, Sparkles, Message
 import { getBillingFeatures, type BillingFeatures, type PlanFeatures } from "@/lib/api";
 import { SkeletonCard } from "@/components/SkeletonLoader";
 import type { NavLevel } from "@/components/NavBreadcrumb";
+import { rememberActivationPlan, type ActivationPlanId } from "@/lib/activationFlow";
 
 interface BillingPageProps {
   token?: string | null;
@@ -135,6 +136,7 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
       window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
       return;
     }
+    rememberActivationPlan(plan.id as ActivationPlanId);
     onPush?.("chatbot-activation" as NavLevel);
   };
 
