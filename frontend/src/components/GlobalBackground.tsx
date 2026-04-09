@@ -29,7 +29,7 @@ export default function GlobalBackground() {
   }, [mouseX, mouseY]);
 
   return (
-    <div className="fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
+    <div className="global-app-background fixed inset-0 z-[-1] pointer-events-none overflow-hidden">
       {/* ── Dot grid pattern ── */}
       <div
         className="absolute inset-0 opacity-[0.03]"

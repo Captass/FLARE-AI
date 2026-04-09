@@ -16,7 +16,7 @@ class SplineBoundary extends React.Component<
   static getDerivedStateFromError() { return { hasError: true }; }
   componentDidCatch(err: Error) { console.warn("[Spline]", err.message); }
   render() {
-    if (this.state.hasError) return <div className="w-full h-full bg-[#020305]" />;
+    if (this.state.hasError) return <div className="landing-spline-fallback w-full h-full bg-[#020305]" />;
     return this.props.children;
   }
 }
@@ -71,6 +71,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     return () => {
       window.removeEventListener("beforeinstallprompt", handlePrompt);
       window.removeEventListener("pwa-prompt-ready", handleCustomPrompt);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.add("is-public-landing");
+    return () => {
+      document.body.classList.remove("is-public-landing");
     };
   }, []);
 
@@ -212,7 +219,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     <div
       ref={containerRef}
       id="hero"
-      className="relative w-full h-screen overflow-y-auto no-scrollbar bg-[#020305] font-sans select-none"
+      className="landing-theme-scope landing-shell relative w-full h-screen overflow-y-auto no-scrollbar bg-[#020305] font-sans select-none"
     >
       {/* ── Sticky Navbar ── */}
       <AnimatePresence>
@@ -221,11 +228,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
-            className="fixed top-0 left-0 right-0 z-[60] px-6 py-4 flex items-center justify-between glass border-b border-white/5 mx-4 mt-4 rounded-3xl"
+            className="landing-nav fixed top-0 left-0 right-0 z-[60] mx-4 mt-4 flex items-center justify-between rounded-3xl border-b border-white/5 px-6 py-4 glass"
           >
             <div className="flex items-center gap-2 cursor-pointer" onClick={() => document.getElementById('hero')?.scrollTo({ top: 0, behavior: 'smooth' })}>
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
-                <FlareMark tone="dark" className="w-[18px]" />
+              <div className="landing-mark-chip flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
+                <FlareMark tone="auto" className="w-[18px]" />
               </div>
               <span className="text-white text-sm font-light tracking-[0.3em] uppercase hidden sm:block">RAM&apos;S FLARE</span>
             </div>
@@ -278,7 +285,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            className="fixed inset-0 z-[70] bg-black p-8 flex flex-col gap-8"
+            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 bg-black p-8"
           >
             <button className="self-end text-white" onClick={() => setMobileMenuOpen(false)}>
               <X size={32} />
@@ -303,7 +310,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 </button>
               ))}
             </nav>
-            <div className="mt-auto border-t border-white/5 pt-8 flex flex-col gap-4">
+            <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
                <button onClick={() => onStart("login")} className="w-full py-4 text-white/60 font-light uppercase tracking-widest border border-white/10 rounded-2xl">Se connecter</button>
                <button onClick={() => onStart("signup")} className="w-full py-4 bg-orange-500 text-white font-light uppercase tracking-widest rounded-2xl">Commencer gratuitement</button>
             </div>
@@ -330,13 +337,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         transition={{ delay: 1, duration: 1 }}
         className="fixed right-4 md:right-8 top-[15vh] bottom-[15vh] hidden sm:flex flex-col items-center gap-4 z-50 pointer-events-none"
       >
-        <div className="flex-1 w-[2px] bg-white/5 relative rounded-full overflow-hidden">
+        <div className="landing-scroll-track relative flex-1 w-[2px] overflow-hidden rounded-full bg-white/5">
           <motion.div
             style={{
               scaleY: scrollYProgress,
               transformOrigin: "top"
             }}
-            className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/40 to-white/10"
+            className="landing-scroll-fill absolute top-0 left-0 h-full w-full bg-gradient-to-b from-white/40 to-white/10"
           />
         </div>
 
@@ -356,7 +363,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         {/* 3D Robot Background */}
         <div className="absolute inset-0 z-0 opacity-40 grayscale-[80%]">
           <SplineBoundary>
-            <Suspense fallback={<div className="w-full h-full bg-[#020305]" />}>
+            <Suspense fallback={<div className="landing-spline-fallback w-full h-full bg-[#020305]" />}>
               <Spline
                 scene="https://prod.spline.design/JD2om2Ai-FFKwh9D/scene.splinecode"
                 onLoad={onLoad}
@@ -368,8 +375,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         {/* Dark Overlays for readability */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#020305] via-[#020305]/80 to-transparent pointer-events-none z-[1]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black pointer-events-none z-[1]" />
+        <div className="landing-hero-fade-x absolute inset-0 pointer-events-none z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/80 to-transparent" />
+        <div className="landing-hero-fade-y absolute inset-0 pointer-events-none z-[1] bg-gradient-to-b from-black/20 via-transparent to-black" />
 
         {/* Header */}
         <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
@@ -384,8 +391,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 style={{ x: logoParallaxX, y: logoParallaxY }}
                 className="relative flex h-14 w-14 items-center justify-center transition-all duration-700 group-hover:scale-110 md:h-24 md:w-24"
               >
-                <div className="absolute inset-0 rounded-[30%] border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.12),rgba(255,255,255,0.03)_55%,transparent_100%)] shadow-[0_0_50px_rgba(255,255,255,0.08)]" />
-                <FlareMark tone="dark" className="w-8 md:w-14" priority />
+                <div className="landing-mark-frame absolute inset-0 rounded-[30%] border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.12),rgba(255,255,255,0.03)_55%,transparent_100%)] shadow-[0_0_50px_rgba(255,255,255,0.08)]" />
+                <FlareMark tone="auto" className="w-8 md:w-14" priority />
               </motion.div>
               <div className="flex flex-col justify-center">
                 <span className="text-white text-lg md:text-3xl font-extralight tracking-[0.3em] md:tracking-[0.6em] uppercase leading-none">RAM&apos;S FLARE</span>
@@ -418,7 +425,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               className="max-w-4xl pt-10 md:pt-20"
             >
               {/* Badge */}
-              <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full bg-white/[0.04] border border-white/[0.08] mb-8 backdrop-blur-md">
+              <div className="landing-badge mb-8 inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 backdrop-blur-md">
                 <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
                 <span className="text-[10px] md:text-xs font-medium text-white/60 uppercase tracking-[0.2em]">Automatisation intelligente</span>
               </div>
@@ -448,7 +455,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 {canInstall && (
                   <button
                     onClick={handleInstallClick}
-                    className="px-6 py-5 text-white/50 hover:text-white rounded-full font-light text-[12px] uppercase tracking-widest border border-white/10 hover:border-white/20 transition-all flex items-center gap-3"
+                    className="landing-secondary-button flex items-center gap-3 rounded-full border border-white/10 px-6 py-5 text-[12px] font-light uppercase tracking-widest text-white/50 transition-all hover:border-white/20 hover:text-white"
                   >
                     <Download size={14} />
                     Installer l&apos;app
@@ -480,7 +487,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
          ══════════════════════════════════════════════════════ */}
       <section
         id="solutions"
-        className="relative py-24 md:py-32 bg-[#050506] overflow-hidden px-6 sm:px-16 md:px-24 border-t border-white/5 z-20"
+        className="landing-section-muted relative z-20 overflow-hidden border-t border-white/5 bg-[#050506] px-6 py-24 sm:px-16 md:px-24 md:py-32"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -506,13 +513,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   viewport={{ once: true }}
                   transition={{ delay: index * 0.1 }}
                   onClick={() => onStart("signup", item.prompt)}
-                  className="group p-8 md:p-10 rounded-[24px] bg-white/[0.02] border border-white/[0.06] hover:border-white/[0.12] relative overflow-hidden text-left w-full transition-all duration-500 hover:bg-white/[0.04]"
+                className="landing-card group relative w-full overflow-hidden rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-8 text-left transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.04] md:p-10"
                 >
                   {/* Subtle glow on hover */}
                   <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-orange-500/[0.04] rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 -translate-y-1/2 translate-x-1/3" />
 
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
-                    <div className="w-14 h-14 bg-white/[0.04] rounded-2xl flex items-center justify-center border border-white/[0.08] group-hover:border-orange-500/30 group-hover:bg-orange-500/10 transition-all duration-500 shrink-0">
+                    <div className="landing-icon-panel flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] transition-all duration-500 group-hover:border-orange-500/30 group-hover:bg-orange-500/10">
                       <Icon className="text-white/50 group-hover:text-orange-400 transition-colors" size={22} />
                     </div>
 
@@ -538,7 +545,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
          ══════════════════════════════════════════════════════ */}
       <section
         id="advantages"
-        className="relative py-24 md:py-32 bg-black overflow-hidden px-6 sm:px-16 md:px-24"
+        className="landing-section-base relative overflow-hidden bg-black px-6 py-24 sm:px-16 md:px-24 md:py-32"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -553,7 +560,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/[0.06] rounded-[24px] overflow-hidden">
+          <div className="landing-divider grid grid-cols-1 gap-px overflow-hidden rounded-[24px] bg-white/[0.06] md:grid-cols-2">
             {ADVANTAGES.map((adv, index) => (
               <motion.div
                 key={index}
@@ -561,7 +568,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.08 }}
-                className="p-8 md:p-10 bg-[#060607] group"
+                className="landing-card-muted group bg-[#060607] p-8 md:p-10"
               >
                 <span className="text-[11px] text-white/15 font-mono font-bold tracking-widest">{adv.number}</span>
                 <h3 className="mt-4 text-lg md:text-xl text-white font-medium tracking-tight font-[family-name:var(--font-outfit)]">{adv.title}</h3>
@@ -575,7 +582,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           NOTRE HISTOIRE
          ══════════════════════════════════════════════════════ */}
-      <section id="story" className="relative py-24 md:py-32 bg-[#020305] overflow-hidden px-6 sm:px-16 md:px-24">
+      <section id="story" className="landing-section-base relative overflow-hidden bg-[#020305] px-6 py-24 sm:px-16 md:px-24 md:py-32">
         {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
         <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
           <SplineBoundary>
@@ -589,7 +596,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           </SplineBoundary>
         </div>
         {/* Overlay pour lisibilité */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#020305] via-[#020305]/85 to-[#020305]/60 z-[1]" />
+        <div className="landing-story-overlay absolute inset-0 z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/85 to-[#020305]/60" />
 
         <div className="relative z-10 max-w-6xl mx-auto">
           <motion.div
@@ -646,7 +653,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           AVIS & CONFIANCE
          ══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 md:py-32 bg-[#050506] overflow-hidden px-6 sm:px-16 md:px-24 border-t border-white/5">
+      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 bg-[#050506] px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -672,9 +679,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-[24px] bg-white/[0.02] border border-white/[0.06]"
+                className="landing-card rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-8"
               >
-                <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-5">
+                <div className="landing-icon-panel mb-5 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04]">
                   <span className="text-white/40 text-lg font-light">{String(i + 1).padStart(2, "0")}</span>
                 </div>
                 <h3 className="text-lg text-white font-medium tracking-tight">{item.title}</h3>
@@ -706,7 +713,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           CTA FINAL
          ══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 md:py-32 bg-[#020305] overflow-hidden px-6 sm:px-16 md:px-24">
+      <section className="landing-section-base relative overflow-hidden bg-[#020305] px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -739,9 +746,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         {/* Footer minimal */}
-        <div className="mt-24 pt-8 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4 max-w-6xl mx-auto">
+        <div className="landing-footer mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 sm:flex-row">
           <div className="flex items-center gap-3">
-            <FlareMark tone="dark" className="w-5" />
+            <FlareMark tone="auto" className="w-5" />
             <span className="text-white/20 text-xs font-light tracking-[0.2em] uppercase">RAM&apos;S FLARE</span>
           </div>
           <div className="flex items-center gap-6">
@@ -764,6 +771,164 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         html { scroll-behavior: smooth; }
+        .landing-shell {
+          background:
+            radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.08), transparent 24%),
+            radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.09), transparent 28%),
+            #020305;
+        }
+        .landing-spline-fallback {
+          background:
+            radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 55%),
+            #020305;
+        }
+        .landing-nav {
+          background: rgba(7, 8, 11, 0.72);
+          border-color: rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(18px);
+          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+        }
+        .landing-mobile-menu {
+          background: rgba(2, 3, 5, 0.98);
+        }
+        .landing-mobile-actions {
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+        .landing-mark-chip,
+        .landing-icon-panel {
+          border-color: rgba(255, 255, 255, 0.08);
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .landing-mark-frame {
+          border-color: rgba(255, 255, 255, 0.1);
+          box-shadow: 0 0 50px rgba(255, 255, 255, 0.08);
+        }
+        .landing-badge {
+          border-color: rgba(255, 255, 255, 0.1);
+          background: rgba(255, 255, 255, 0.05);
+        }
+        .landing-secondary-button {
+          border-color: rgba(255, 255, 255, 0.12);
+        }
+        .landing-scroll-track {
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .landing-scroll-fill {
+          background: linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0.12));
+        }
+        .landing-hero-fade-x {
+          background: linear-gradient(to right, rgba(2,3,5,0.94), rgba(2,3,5,0.76), rgba(2,3,5,0.18));
+        }
+        .landing-hero-fade-y {
+          background: linear-gradient(to bottom, rgba(2,3,5,0.16), rgba(2,3,5,0), rgba(2,3,5,0.72));
+        }
+        .landing-section-base {
+          background: #020305;
+        }
+        .landing-section-muted {
+          background: #050506;
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+        .landing-card {
+          background: rgba(255, 255, 255, 0.03);
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+        .landing-card:hover {
+          background: rgba(255, 255, 255, 0.05);
+          border-color: rgba(255, 255, 255, 0.14);
+        }
+        .landing-divider {
+          background: rgba(255, 255, 255, 0.08);
+        }
+        .landing-card-muted {
+          background: #060607;
+        }
+        .landing-story-overlay {
+          background: linear-gradient(to right, rgba(2,3,5,0.92), rgba(2,3,5,0.78), rgba(2,3,5,0.54));
+        }
+        .landing-footer {
+          border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        html.light .landing-shell {
+          background:
+            radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.12), transparent 24%),
+            radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.09), transparent 28%),
+            linear-gradient(135deg, #f6f0e7 0%, #fcfcfd 44%, #f0f4fb 100%);
+        }
+        html.light .landing-spline-fallback {
+          background:
+            radial-gradient(circle at center, rgba(255, 255, 255, 0.55), transparent 55%),
+            linear-gradient(135deg, #f6f0e7 0%, #fcfcfd 44%, #f0f4fb 100%);
+        }
+        html.light .landing-nav {
+          background: rgba(255, 255, 255, 0.88);
+          border-color: rgba(15, 23, 42, 0.1);
+          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+        }
+        html.light .landing-mobile-menu {
+          background: rgba(252, 252, 253, 0.98);
+        }
+        html.light .landing-mobile-actions {
+          border-color: rgba(15, 23, 42, 0.08);
+        }
+        html.light .landing-mark-chip,
+        html.light .landing-icon-panel {
+          border-color: rgba(15, 23, 42, 0.1);
+          background: rgba(255, 255, 255, 0.78);
+        }
+        html.light .landing-mark-frame {
+          border-color: rgba(15, 23, 42, 0.1);
+          box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+        }
+        html.light .landing-badge {
+          border-color: rgba(15, 23, 42, 0.08);
+          background: rgba(255, 255, 255, 0.78);
+        }
+        html.light .landing-secondary-button {
+          border-color: rgba(15, 23, 42, 0.14);
+          background: rgba(255, 255, 255, 0.72);
+        }
+        html.light .landing-scroll-track {
+          background: rgba(15, 23, 42, 0.1);
+        }
+        html.light .landing-scroll-fill {
+          background: linear-gradient(to bottom, rgba(28,58,106,0.45), rgba(249,115,22,0.22));
+        }
+        html.light .landing-hero-fade-x {
+          background: linear-gradient(to right, rgba(252,252,253,0.96), rgba(252,252,253,0.84), rgba(252,252,253,0.22));
+        }
+        html.light .landing-hero-fade-y {
+          background: linear-gradient(to bottom, rgba(252,252,253,0.18), rgba(252,252,253,0), rgba(252,252,253,0.72));
+        }
+        html.light .landing-section-base {
+          background: linear-gradient(180deg, #fcfcfd 0%, #f8f4ec 100%);
+        }
+        html.light .landing-section-muted {
+          background: linear-gradient(180deg, #f4eee3 0%, #fcfcfd 100%);
+          border-color: rgba(15, 23, 42, 0.08);
+        }
+        html.light .landing-card {
+          background: rgba(255, 255, 255, 0.82);
+          border-color: rgba(15, 23, 42, 0.08);
+          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.04);
+        }
+        html.light .landing-card:hover {
+          background: rgba(255, 255, 255, 0.96);
+          border-color: rgba(15, 23, 42, 0.14);
+        }
+        html.light .landing-divider {
+          background: rgba(15, 23, 42, 0.08);
+        }
+        html.light .landing-card-muted {
+          background: rgba(255, 255, 255, 0.84);
+        }
+        html.light .landing-story-overlay {
+          background: linear-gradient(to right, rgba(252,252,253,0.94), rgba(252,252,253,0.82), rgba(252,252,253,0.46));
+        }
+        html.light .landing-footer {
+          border-color: rgba(15, 23, 42, 0.08);
+        }
       `}</style>
     </div>
   );

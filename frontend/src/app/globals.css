@@ -45,6 +45,7 @@
   --text-quaternary: rgb(255, 255, 255);
   --text-placeholder: rgb(255, 255, 255);
   /* Semantic surface tokens */
+  --surface-base: rgb(18, 19, 22);
   --surface-subtle: rgba(255, 255, 255, 0.04);
   --surface-raised: rgba(255, 255, 255, 0.06);
   --surface-overlay: rgba(255, 255, 255, 0.08);
@@ -99,6 +100,7 @@ html.light {
   --text-quaternary: rgb(0, 0, 0);
   --text-placeholder: rgb(0, 0, 0);
   /* Semantic surface tokens */
+  --surface-base: rgb(255, 255, 255);
   --surface-subtle: rgba(15, 15, 20, 0.04);
   --surface-raised: rgba(15, 15, 20, 0.06);
   --surface-overlay: rgba(15, 15, 20, 0.08);
@@ -110,50 +112,138 @@ html.light {
   --divide-default: rgba(15, 15, 20, 0.08);
 }
 
-html.light body,
-html.light body * {
+html.light body:not(.is-public-landing),
+html.light body:not(.is-public-landing) * {
   color: rgb(0, 0, 0) !important;
 }
 
-html.light input::placeholder,
-html.light textarea::placeholder,
-html.light [class*="placeholder:"]::placeholder {
+html.light body:not(.is-public-landing) input::placeholder,
+html.light body:not(.is-public-landing) textarea::placeholder,
+html.light body:not(.is-public-landing) [class*="placeholder:"]::placeholder {
   color: rgb(0, 0, 0) !important;
   opacity: 1 !important;
 }
 
-html.light [class*="text-"],
-html.light [class*="text_"] {
+html.light body:not(.is-public-landing) [class*="text-"],
+html.light body:not(.is-public-landing) [class*="text_"] {
   color: rgb(0, 0, 0) !important;
 }
 
-html.light svg,
-html.light svg * {
+html.light body:not(.is-public-landing) svg,
+html.light body:not(.is-public-landing) svg * {
   color: rgb(0, 0, 0) !important;
   stroke: currentColor;
 }
 
-html.dark body,
-html.dark body * {
+html.dark body:not(.is-public-landing),
+html.dark body:not(.is-public-landing) * {
   color: rgb(255, 255, 255) !important;
 }
 
-html.dark input::placeholder,
-html.dark textarea::placeholder,
-html.dark [class*="placeholder:"]::placeholder {
+html.dark body:not(.is-public-landing) input::placeholder,
+html.dark body:not(.is-public-landing) textarea::placeholder,
+html.dark body:not(.is-public-landing) [class*="placeholder:"]::placeholder {
   color: rgb(255, 255, 255) !important;
   opacity: 1 !important;
 }
 
-html.dark [class*="text-"],
-html.dark [class*="text_"] {
+html.dark body:not(.is-public-landing) [class*="text-"],
+html.dark body:not(.is-public-landing) [class*="text_"] {
   color: rgb(255, 255, 255) !important;
 }
 
-html.dark svg,
-html.dark svg * {
+html.dark body:not(.is-public-landing) svg,
+html.dark body:not(.is-public-landing) svg * {
   color: rgb(255, 255, 255) !important;
   stroke: currentColor;
+}
+
+/* Keep landing hero styles readable despite global app-wide contrast forcing */
+html.light .landing-theme-scope [class*="text-"],
+html.light .landing-theme-scope [class*="text_"],
+html.light .landing-theme-scope svg,
+html.light .landing-theme-scope svg * {
+  color: revert !important;
+  stroke: revert !important;
+}
+
+html.light .landing-theme-scope input::placeholder,
+html.light .landing-theme-scope textarea::placeholder,
+html.light .landing-theme-scope [class*="placeholder:"]::placeholder {
+  color: revert !important;
+  opacity: revert !important;
+}
+
+body.is-public-landing .global-app-background {
+  display: none;
+}
+
+html.light .landing-shell {
+  background:
+    radial-gradient(circle at top right, rgba(15, 31, 64, 0.06), transparent 34%),
+    linear-gradient(180deg, #fbf7f0 0%, #f4ede2 100%);
+}
+
+html.light .landing-nav {
+  background: rgba(255, 255, 255, 0.84) !important;
+  border-color: rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(20px);
+}
+
+html.light .landing-mark-chip,
+html.light .landing-mark-frame,
+html.light .landing-card,
+html.light .landing-card-muted,
+html.light .landing-icon-panel,
+html.light .landing-divider,
+html.light .landing-footer {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+
+html.light .landing-mark-chip,
+html.light .landing-icon-panel {
+  background: rgba(255, 255, 255, 0.78) !important;
+}
+
+html.light .landing-card,
+html.light .landing-card-muted {
+  background: rgba(255, 255, 255, 0.74) !important;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.05);
+}
+
+html.light .landing-divider {
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+html.light .landing-secondary-button {
+  background: rgba(255, 255, 255, 0.78) !important;
+  border-color: rgba(15, 23, 42, 0.1) !important;
+}
+
+html.light .landing-section-base,
+html.light .landing-section-muted {
+  border-top-color: rgba(15, 23, 42, 0.06) !important;
+}
+
+html.light .landing-section-base {
+  background: #f6efe5 !important;
+}
+
+html.light .landing-section-muted {
+  background: #fcfaf6 !important;
+}
+
+html.light .landing-hero-fade-x {
+  background: linear-gradient(90deg, rgba(251, 247, 240, 0.96) 0%, rgba(251, 247, 240, 0.82) 42%, rgba(251, 247, 240, 0.14) 100%) !important;
+}
+
+html.light .landing-hero-fade-y {
+  background: linear-gradient(180deg, rgba(255, 252, 246, 0.7) 0%, rgba(255, 252, 246, 0.02) 48%, rgba(239, 231, 219, 0.9) 100%) !important;
+}
+
+html.light .landing-story-overlay {
+  background: linear-gradient(90deg, rgba(246, 239, 229, 0.97) 0%, rgba(246, 239, 229, 0.84) 48%, rgba(246, 239, 229, 0.58) 100%) !important;
 }
 
 * {
