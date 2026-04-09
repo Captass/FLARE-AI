@@ -223,7 +223,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
     <div
       ref={containerRef}
       id="hero"
-      className="landing-theme-scope landing-shell relative w-full h-screen overflow-y-auto no-scrollbar bg-[#020305] font-sans select-none"
+      className="landing-theme-scope landing-shell relative w-full h-screen overflow-y-auto no-scrollbar font-sans select-none"
     >
       {/* ── Sticky Navbar ── */}
       <AnimatePresence>
@@ -238,7 +238,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               <div className="landing-mark-chip flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
                 <FlareMark tone="auto" className="w-[18px]" />
               </div>
-              <span className="text-white text-sm font-light tracking-[0.3em] uppercase hidden sm:block">RAM&apos;S FLARE</span>
+              <span className="landing-brand-title hidden uppercase sm:block">FLARE AI</span>
             </div>
 
             <div className="hidden md:flex items-center gap-8">
@@ -254,7 +254,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                     const el = document.getElementById(link.id);
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="text-white/50 hover:text-white text-[10px] uppercase tracking-widest transition-colors font-medium pb-1"
+                  className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
                 >
                   {link.label}
                 </button>
@@ -262,25 +262,20 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             </div>
 
             <div className="flex items-center gap-4">
-              <ThemeToggle
-                theme={theme}
-                onToggle={onToggleTheme}
-                compact
-                className="landing-theme-toggle"
-              />
+              <ThemeToggle theme={theme} onToggle={onToggleTheme} className="landing-theme-toggle" />
               <button
                 onClick={() => onStart("login")}
-                className="text-white/60 hover:text-white text-[10px] uppercase font-light tracking-widest hidden sm:block"
+                className="landing-plain-button text-[10px] uppercase font-medium hidden sm:block"
               >
                 Se connecter
               </button>
               <button
                 onClick={() => onStart("signup")}
-                className="px-5 py-2.5 bg-orange-500 text-white text-[10px] font-medium uppercase tracking-widest rounded-full hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
+                className="landing-nav-cta px-5 py-2.5 bg-orange-500 text-[10px] font-medium uppercase rounded-full transition-all shadow-lg shadow-orange-500/20"
               >
                 Commencer
               </button>
-              <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(true)}>
+              <button className="landing-mobile-trigger md:hidden" onClick={() => setMobileMenuOpen(true)}>
                 <Menu size={20} />
               </button>
             </div>
@@ -295,9 +290,9 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 bg-black p-8"
+            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 p-8"
           >
-            <button className="self-end text-white" onClick={() => setMobileMenuOpen(false)}>
+            <button className="landing-mobile-trigger self-end" onClick={() => setMobileMenuOpen(false)}>
               <X size={32} />
             </button>
             <nav className="flex flex-col gap-6 mt-12">
@@ -314,20 +309,16 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                     setMobileMenuOpen(false);
                   }}
-                  className="text-white text-2xl font-light uppercase tracking-tighter text-left"
+                  className="landing-mobile-link text-2xl font-semibold uppercase text-left"
                 >
                   {link.label}
                 </button>
               ))}
             </nav>
             <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
-               <ThemeToggle
-                 theme={theme}
-                 onToggle={onToggleTheme}
-                 className="landing-theme-toggle-mobile justify-center"
-               />
-               <button onClick={() => onStart("login")} className="w-full py-4 text-white/60 font-light uppercase tracking-widest border border-white/10 rounded-2xl">Se connecter</button>
-               <button onClick={() => onStart("signup")} className="w-full py-4 bg-orange-500 text-white font-light uppercase tracking-widest rounded-2xl">Commencer gratuitement</button>
+               <ThemeToggle theme={theme} onToggle={onToggleTheme} className="landing-theme-toggle-mobile justify-center" />
+               <button onClick={() => onStart("login")} className="landing-mobile-secondary w-full py-4 uppercase border rounded-2xl">Se connecter</button>
+               <button onClick={() => onStart("signup")} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Commencer gratuitement</button>
             </div>
           </motion.div>
         )}
@@ -352,7 +343,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
         transition={{ delay: 1, duration: 1 }}
         className="fixed right-4 md:right-8 top-[15vh] bottom-[15vh] hidden sm:flex flex-col items-center gap-4 z-50 pointer-events-none"
       >
-        <div className="landing-scroll-track relative flex-1 w-[2px] overflow-hidden rounded-full bg-white/5">
+          <div className="landing-scroll-track relative flex-1 w-[2px] overflow-hidden rounded-full bg-white/5">
           <motion.div
             style={{
               scaleY: scrollYProgress,
@@ -367,7 +358,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2"
         >
-          <ArrowDown size={14} className="text-white/40" />
+          <ArrowDown size={14} className="landing-scroll-arrow" />
         </motion.div>
       </motion.div>
 
@@ -406,27 +397,22 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                 <FlareMark tone="auto" className="w-8 md:w-14" priority />
               </motion.div>
               <div className="flex flex-col justify-center">
-                <span className="text-white text-lg md:text-3xl font-extralight tracking-[0.3em] md:tracking-[0.6em] uppercase leading-none">RAM&apos;S FLARE</span>
-                <span className="text-[8px] md:text-xs text-white/40 uppercase tracking-[0.1em] md:tracking-[0.4em] mt-1 md:mt-3 font-light">Votre business, en pilote automatique</span>
+                <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none">FLARE AI</span>
+                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3">Votre business, en pilote automatique</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2 md:gap-5 cursor-auto pointer-events-auto">
-              <ThemeToggle
-                theme={theme}
-                onToggle={onToggleTheme}
-                compact
-                className="landing-theme-toggle"
-              />
+              <ThemeToggle theme={theme} onToggle={onToggleTheme} className="landing-theme-toggle" />
               <button
                 onClick={() => onStart("login")}
-                className="text-white/60 hover:text-white transition-colors text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] font-medium hidden xs:block"
+                className="landing-plain-button transition-colors text-[10px] md:text-xs uppercase font-medium hidden xs:block"
               >
                 Se connecter
               </button>
               <button
                 onClick={() => onStart("signup")}
-                className="px-4 py-2 md:px-8 md:py-3 bg-orange-500 border border-transparent text-white text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] rounded-full hover:bg-orange-600 hover:scale-105 transition-all duration-300 font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] whitespace-nowrap"
+                className="landing-nav-cta whitespace-nowrap rounded-full border border-transparent bg-orange-500 px-4 py-2 text-[10px] md:px-8 md:py-3 md:text-xs uppercase transition-all duration-300 font-medium shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:scale-105 hover:bg-orange-600"
               >
                 Commencer
               </button>
@@ -444,18 +430,18 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               {/* Badge */}
               <div className="landing-badge mb-8 inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 backdrop-blur-md">
                 <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                <span className="text-[10px] md:text-xs font-medium text-white/60 uppercase tracking-[0.2em]">Automatisation intelligente</span>
+                <span className="landing-kicker text-[10px] md:text-xs font-medium uppercase">Automatisation intelligente</span>
               </div>
 
               <motion.h1
                 style={{ rotateX, rotateY }}
-                className="text-[32px] sm:text-[52px] md:text-[78px] font-extralight text-white leading-[1.1] md:leading-[1] tracking-tighter perspective-1000 font-[family-name:var(--font-outfit)]"
+                className="landing-headline text-[32px] sm:text-[52px] md:text-[78px] leading-[1.1] md:leading-[1] perspective-1000 font-[family-name:var(--font-outfit)]"
               >
                 Vendez plus.<br />
-                <span className="font-bold text-white tracking-tight">Travaillez moins.</span>
+                <span className="font-bold tracking-tight">Travaillez moins.</span>
               </motion.h1>
 
-              <p className="text-white/40 mt-8 mb-10 text-sm md:text-xl max-w-xl font-light leading-relaxed">
+              <p className="landing-copy mt-8 mb-10 text-sm md:text-xl max-w-xl leading-relaxed">
                 Votre IA répond à vos clients, crée vos contenus et suit vos ventes.
                 Vous gardez le contrôle, elle fait le travail.
               </p>
@@ -463,7 +449,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               <div className="flex flex-col sm:flex-row items-start gap-4">
                 <button
                   onClick={() => onStart("signup")}
-                  className="group px-10 py-5 bg-orange-500 text-white rounded-full font-bold text-[13px] uppercase tracking-widest hover:bg-orange-600 hover:scale-105 transition-all duration-300 shadow-2xl shadow-orange-500/20 flex items-center gap-3"
+                  className="landing-cta-hero group flex items-center gap-3 rounded-full bg-orange-500 px-10 py-5 text-[13px] font-bold uppercase tracking-widest transition-all duration-300 shadow-2xl shadow-orange-500/20 hover:scale-105 hover:bg-orange-600"
                 >
                   Essayer gratuitement
                   <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -472,7 +458,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                 {canInstall && (
                   <button
                     onClick={handleInstallClick}
-                    className="landing-secondary-button flex items-center gap-3 rounded-full border border-white/10 px-6 py-5 text-[12px] font-light uppercase tracking-widest text-white/50 transition-all hover:border-white/20 hover:text-white"
+                    className="landing-secondary-button flex items-center gap-3 rounded-full border px-6 py-5 text-[12px] font-medium uppercase transition-all"
                   >
                     <Download size={14} />
                     Installer l&apos;app
@@ -489,8 +475,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               >
                 {METRICS.map((m, i) => (
                   <div key={i} className="flex flex-col">
-                    <span className="text-2xl md:text-4xl font-bold text-white tracking-tight font-[family-name:var(--font-outfit)]">{m.value}</span>
-                    <span className="text-[10px] md:text-xs text-white/30 uppercase tracking-widest mt-1 font-light">{m.label}</span>
+                    <span className="landing-metric-value text-2xl md:text-4xl font-bold tracking-tight font-[family-name:var(--font-outfit)]">{m.value}</span>
+                    <span className="landing-metric-label mt-1 text-[10px] md:text-xs uppercase">{m.label}</span>
                   </div>
                 ))}
               </motion.div>
@@ -504,7 +490,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
          ══════════════════════════════════════════════════════ */}
       <section
         id="solutions"
-        className="landing-section-muted relative z-20 overflow-hidden border-t border-white/5 bg-[#050506] px-6 py-24 sm:px-16 md:px-24 md:py-32"
+        className="landing-section-muted relative z-20 overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -513,8 +499,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-24 max-w-2xl"
           >
-            <span className="text-orange-500/80 text-[10px] md:text-xs uppercase tracking-[0.5em] font-medium">Ce que RAM&apos;S FLARE fait pour vous</span>
-            <h2 className="mt-4 text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Ce que FLARE AI fait pour vous</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
               Trois leviers pour <span className="font-semibold">faire décoller votre activité</span>.
             </h2>
           </motion.div>
@@ -541,11 +527,11 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xl md:text-2xl text-white font-medium tracking-tight mb-3 font-[family-name:var(--font-outfit)]">{item.title}</h3>
-                      <p className="text-white/40 text-sm md:text-base leading-relaxed max-w-2xl">{item.description}</p>
+                      <h3 className="landing-card-title mb-3 text-xl md:text-2xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{item.title}</h3>
+                      <p className="landing-card-copy text-sm md:text-base leading-relaxed max-w-2xl">{item.description}</p>
                     </div>
 
-                    <div className="flex items-center gap-2 text-[10px] text-white/30 group-hover:text-orange-400 font-medium uppercase tracking-widest transition-colors shrink-0">
+                    <div className="landing-card-cta flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest transition-colors shrink-0">
                       {item.cta}
                       <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -562,7 +548,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
          ══════════════════════════════════════════════════════ */}
       <section
         id="advantages"
-        className="landing-section-base relative overflow-hidden bg-black px-6 py-24 sm:px-16 md:px-24 md:py-32"
+        className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -571,8 +557,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-24 max-w-2xl"
           >
-            <span className="text-white/30 text-[10px] md:text-xs uppercase tracking-[0.5em] font-medium">Pourquoi nos clients restent</span>
-            <h2 className="mt-4 text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Pourquoi nos clients restent</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
               Conçu pour ceux qui veulent <span className="font-semibold">des résultats, pas des gadgets</span>.
             </h2>
           </motion.div>
@@ -587,9 +573,9 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                 transition={{ delay: index * 0.08 }}
                 className="landing-card-muted group bg-[#060607] p-8 md:p-10"
               >
-                <span className="text-[11px] text-white/15 font-mono font-bold tracking-widest">{adv.number}</span>
-                <h3 className="mt-4 text-lg md:text-xl text-white font-medium tracking-tight font-[family-name:var(--font-outfit)]">{adv.title}</h3>
-                <p className="mt-3 text-white/35 text-sm leading-relaxed">{adv.text}</p>
+                <span className="landing-card-index text-[11px] font-mono font-bold tracking-widest">{adv.number}</span>
+                <h3 className="landing-card-title mt-4 text-lg md:text-xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{adv.title}</h3>
+                <p className="landing-card-copy mt-3 text-sm leading-relaxed">{adv.text}</p>
               </motion.div>
             ))}
           </div>
@@ -599,7 +585,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
       {/* ══════════════════════════════════════════════════════
           NOTRE HISTOIRE
          ══════════════════════════════════════════════════════ */}
-      <section id="story" className="landing-section-base relative overflow-hidden bg-[#020305] px-6 py-24 sm:px-16 md:px-24 md:py-32">
+      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
         {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
         <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
           <SplineBoundary>
@@ -622,8 +608,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-20 max-w-2xl"
           >
-            <span className="text-white/30 text-[10px] md:text-xs uppercase tracking-[0.5em] font-medium">Notre histoire</span>
-            <h2 className="mt-4 text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Notre histoire</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
               Né à Madagascar, <span className="font-semibold">pensé pour le monde</span>.
             </h2>
           </motion.div>
@@ -640,9 +626,9 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                 <img src="/kevin.png" alt="Kévin — Fondateur" className="w-full h-full object-cover" />
               </div>
               <div className="mt-4">
-                <p className="text-sm font-medium text-white">Kévin</p>
-                <p className="text-xs text-white/30">Fondateur & Architecte</p>
-                <p className="text-xs text-white/20">RAM&apos;S FLARE — Madagascar</p>
+                <p className="landing-card-title text-sm font-medium">Kévin</p>
+                <p className="landing-card-copy text-xs">Fondateur & Architecte</p>
+                <p className="landing-card-copy text-xs">FLARE AI — Madagascar</p>
               </div>
             </motion.div>
 
@@ -653,13 +639,13 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               viewport={{ once: true }}
               className="flex flex-col gap-6 max-w-xl"
             >
-              <p className="text-white/45 text-base md:text-lg leading-relaxed font-light">
-                RAM&apos;S FLARE est né d&apos;un constat simple : les petites entreprises et les entrepreneurs perdent un temps fou sur des tâches que l&apos;IA peut faire mieux et plus vite.
+              <p className="landing-copy text-base md:text-lg leading-relaxed">
+                FLARE AI est né d&apos;un constat simple : les petites entreprises et les entrepreneurs perdent un temps fou sur des tâches que l&apos;IA peut faire mieux et plus vite.
               </p>
-              <p className="text-white/45 text-base md:text-lg leading-relaxed font-light">
+              <p className="landing-copy text-base md:text-lg leading-relaxed">
                 Notre mission est de rendre l&apos;intelligence artificielle accessible à tous les professionnels — sans code, sans jargon, sans prise de tête.
               </p>
-              <p className="text-white/45 text-base md:text-lg leading-relaxed font-light">
+              <p className="landing-copy text-base md:text-lg leading-relaxed">
                 Chaque fonctionnalité est conçue pour un seul objectif : vous faire gagner du temps et de l&apos;argent, dès le premier jour.
               </p>
             </motion.div>
@@ -670,7 +656,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
       {/* ══════════════════════════════════════════════════════
           AVIS & CONFIANCE
          ══════════════════════════════════════════════════════ */}
-      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 bg-[#050506] px-6 py-24 sm:px-16 md:px-24 md:py-32">
+      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -678,8 +664,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-20 text-center"
           >
-            <span className="text-orange-500/80 text-[10px] md:text-xs uppercase tracking-[0.5em] font-medium">Confiance & sécurité</span>
-            <h2 className="mt-4 text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Confiance & sécurité</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
               Vos données sont <span className="font-semibold">entre de bonnes mains</span>.
             </h2>
           </motion.div>
@@ -699,10 +685,10 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                 className="landing-card rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-8"
               >
                 <div className="landing-icon-panel mb-5 flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04]">
-                  <span className="text-white/40 text-lg font-light">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="landing-card-index text-lg font-light">{String(i + 1).padStart(2, "0")}</span>
                 </div>
-                <h3 className="text-lg text-white font-medium tracking-tight">{item.title}</h3>
-                <p className="mt-3 text-white/35 text-sm leading-relaxed">{item.text}</p>
+                <h3 className="landing-card-title text-lg font-medium tracking-tight">{item.title}</h3>
+                <p className="landing-card-copy mt-3 text-sm leading-relaxed">{item.text}</p>
               </motion.div>
             ))}
           </div>
@@ -719,7 +705,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               { label: "Conditions d'utilisation", href: "#" },
               { label: "Politique cookies", href: "#" },
             ].map((link) => (
-              <a key={link.label} href={link.href} className="text-white/25 hover:text-white/50 text-xs uppercase tracking-widest transition-colors font-light">
+              <a key={link.label} href={link.href} className="landing-footer-link text-xs uppercase transition-colors font-medium">
                 {link.label}
               </a>
             ))}
@@ -730,7 +716,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
       {/* ══════════════════════════════════════════════════════
           CTA FINAL
          ══════════════════════════════════════════════════════ */}
-      <section className="landing-section-base relative overflow-hidden bg-[#020305] px-6 py-24 sm:px-16 md:px-24 md:py-32">
+      <section className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -740,21 +726,21 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             <h2 className="text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
               Prêt à automatiser <span className="font-semibold">votre croissance</span> ?
             </h2>
-            <p className="mt-6 text-white/35 text-base md:text-lg max-w-xl mx-auto font-light leading-relaxed">
+            <p className="landing-copy mt-6 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
               Commencez gratuitement. Aucune carte bancaire requise. Résultats visibles dès le premier jour.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <button
                 onClick={() => onStart("signup")}
-                className="group px-10 py-5 bg-orange-500 text-white rounded-full font-bold text-[13px] uppercase tracking-widest hover:bg-orange-600 hover:scale-105 transition-all duration-300 shadow-2xl shadow-orange-500/20 flex items-center gap-3"
+                className="landing-cta-hero group px-10 py-5 bg-orange-500 rounded-full font-bold text-[13px] uppercase tracking-widest hover:bg-orange-600 hover:scale-105 transition-all duration-300 shadow-2xl shadow-orange-500/20 flex items-center gap-3"
               >
                 Créer mon compte
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button
                 onClick={() => onStart("login")}
-                className="px-8 py-5 text-white/40 hover:text-white rounded-full font-light text-[12px] uppercase tracking-widest transition-colors"
+                className="landing-plain-button rounded-full px-8 py-5 text-[12px] uppercase transition-colors"
               >
                 J&apos;ai déjà un compte
               </button>
@@ -766,20 +752,20 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
         <div className="landing-footer mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 sm:flex-row">
           <div className="flex items-center gap-3">
             <FlareMark tone="auto" className="w-5" />
-            <span className="text-white/20 text-xs font-light tracking-[0.2em] uppercase">RAM&apos;S FLARE</span>
+            <span className="landing-brand-title text-xs uppercase">FLARE AI</span>
           </div>
           <div className="flex items-center gap-6">
             {[
               { label: "Confidentialité", href: "#" },
               { label: "CGU", href: "#" },
             ].map((link) => (
-              <a key={link.label} href={link.href} className="text-white/15 hover:text-white/30 text-[10px] uppercase tracking-widest font-light transition-colors">
+              <a key={link.label} href={link.href} className="landing-footer-link text-[10px] uppercase transition-colors font-medium">
                 {link.label}
               </a>
             ))}
           </div>
-          <p className="text-white/15 text-[10px] uppercase tracking-widest font-light">
-            Conçu par RAM&apos;S FLARE — Madagascar
+          <p className="landing-footer-link text-[10px] uppercase font-medium">
+            Conçu par FLARE AI — Madagascar
           </p>
         </div>
       </section>
@@ -788,196 +774,210 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         html { scroll-behavior: smooth; }
-        .landing-shell {
-          background:
-            radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.08), transparent 24%),
-            radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.09), transparent 28%),
-            #020305;
-        }
-        .landing-spline-fallback {
-          background:
-            radial-gradient(circle at center, rgba(255, 255, 255, 0.08), transparent 55%),
-            #020305;
-        }
-        .landing-nav {
-          background: rgba(7, 8, 11, 0.72);
-          border-color: rgba(255, 255, 255, 0.08);
-          backdrop-filter: blur(18px);
-          box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
-        }
-        .landing-mobile-menu {
-          background: rgba(2, 3, 5, 0.98);
-        }
-        .landing-mobile-actions {
-          border-color: rgba(255, 255, 255, 0.08);
-        }
-        .landing-theme-toggle,
-        .landing-theme-toggle-mobile {
-          border-color: rgba(255, 255, 255, 0.14) !important;
-          background: rgba(7, 8, 11, 0.56) !important;
-          color: rgba(255, 255, 255, 0.88) !important;
-          backdrop-filter: blur(18px);
-        }
-        .landing-theme-toggle:hover,
-        .landing-theme-toggle-mobile:hover {
-          border-color: rgba(255, 255, 255, 0.22) !important;
-          background: rgba(7, 8, 11, 0.68) !important;
-        }
-        .landing-hero-scene {
-          opacity: 0.72;
-          filter: grayscale(0.42);
-        }
-        .landing-mark-chip,
-        .landing-icon-panel {
-          border-color: rgba(255, 255, 255, 0.08);
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .landing-mark-frame {
-          border-color: rgba(255, 255, 255, 0.1);
-          box-shadow: 0 0 50px rgba(255, 255, 255, 0.08);
-        }
-        .landing-badge {
-          border-color: rgba(255, 255, 255, 0.1);
-          background: rgba(255, 255, 255, 0.05);
-        }
-        .landing-secondary-button {
-          border-color: rgba(255, 255, 255, 0.12);
-        }
-        .landing-scroll-track {
-          background: rgba(255, 255, 255, 0.08);
-        }
-        .landing-scroll-fill {
-          background: linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0.12));
-        }
-        .landing-solution-icon {
-          color: rgba(255, 255, 255, 0.58);
-        }
-        .landing-card:hover .landing-solution-icon {
-          color: rgba(251, 146, 60, 0.95);
-        }
-        .landing-section-base {
-          background: #020305;
-        }
-        .landing-section-muted {
-          background: #050506;
-          border-color: rgba(255, 255, 255, 0.08);
-        }
-        .landing-card {
-          background: rgba(255, 255, 255, 0.03);
-          border-color: rgba(255, 255, 255, 0.08);
-        }
-        .landing-card:hover {
-          background: rgba(255, 255, 255, 0.05);
-          border-color: rgba(255, 255, 255, 0.14);
-        }
-        .landing-divider {
-          background: rgba(255, 255, 255, 0.08);
-        }
-        .landing-card-muted {
-          background: #060607;
-        }
-        .landing-story-overlay {
-          background: linear-gradient(to right, rgba(2,3,5,0.92), rgba(2,3,5,0.78), rgba(2,3,5,0.54));
-        }
-        .landing-footer {
-          border-color: rgba(255, 255, 255, 0.08);
-        }
 
-        html.light .landing-shell {
+        .landing-shell {
           background:
             radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.12), transparent 24%),
             radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.09), transparent 28%),
             linear-gradient(135deg, #f6f0e7 0%, #fcfcfd 44%, #f0f4fb 100%);
         }
-        html.light .landing-spline-fallback {
+        .landing-spline-fallback {
           background:
             radial-gradient(circle at center, rgba(255, 255, 255, 0.55), transparent 55%),
             linear-gradient(135deg, #f6f0e7 0%, #fcfcfd 44%, #f0f4fb 100%);
         }
-        html.light .landing-nav {
-          background: rgba(255, 255, 255, 0.88);
-          border-color: rgba(15, 23, 42, 0.1);
+        .landing-nav,
+        .landing-mobile-menu {
+          background: rgba(255, 255, 255, 0.92);
+          border-color: rgba(15, 23, 42, 0.12);
           box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
+          backdrop-filter: blur(20px);
         }
-        html.light .landing-mobile-menu {
-          background: rgba(252, 252, 253, 0.98);
-        }
-        html.light .landing-mobile-actions {
-          border-color: rgba(15, 23, 42, 0.08);
-        }
-        html.light .landing-theme-toggle,
-        html.light .landing-theme-toggle-mobile {
-          border-color: rgba(15, 23, 42, 0.12) !important;
-          background: rgba(255, 255, 255, 0.84) !important;
-          color: rgba(15, 23, 42, 0.9) !important;
-          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-        }
-        html.light .landing-theme-toggle:hover,
-        html.light .landing-theme-toggle-mobile:hover {
-          border-color: rgba(15, 23, 42, 0.18) !important;
-          background: rgba(255, 255, 255, 0.96) !important;
-        }
-        html.light .landing-hero-scene {
-          opacity: 0.9;
-          filter: grayscale(0.08);
-        }
-        html.light .landing-mark-chip,
-        html.light .landing-icon-panel {
+        .landing-mobile-actions,
+        .landing-footer {
           border-color: rgba(15, 23, 42, 0.1);
-          background: rgba(255, 255, 255, 0.78);
         }
-        html.light .landing-mark-frame {
-          border-color: rgba(15, 23, 42, 0.1);
-          box-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+        .landing-theme-toggle,
+        .landing-theme-toggle-mobile {
+          background: rgba(255, 247, 237, 0.98) !important;
+          color: #000000 !important;
+          border: 1px solid rgba(249, 115, 22, 0.45) !important;
+          box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+          min-height: 42px;
         }
-        html.light .landing-badge {
-          border-color: rgba(15, 23, 42, 0.08);
-          background: rgba(255, 255, 255, 0.78);
+        .landing-theme-toggle span,
+        .landing-theme-toggle-mobile span {
+          color: #000 !important;
         }
-        html.light .landing-secondary-button {
-          border-color: rgba(15, 23, 42, 0.14);
-          background: rgba(255, 255, 255, 0.72);
+        .landing-theme-toggle > span:first-child,
+        .landing-theme-toggle-mobile > span:first-child {
+          background: rgba(249, 115, 22, 0.18) !important;
+          border-color: rgba(249, 115, 22, 0.55) !important;
+          color: #000 !important;
         }
-        html.light .landing-scroll-track {
-          background: rgba(15, 23, 42, 0.1);
+        .landing-theme-toggle > span:last-child,
+        .landing-theme-toggle-mobile > span:last-child {
+          font-weight: 700;
+          letter-spacing: 0.04em !important;
         }
-        html.light .landing-scroll-fill {
-          background: linear-gradient(to bottom, rgba(28,58,106,0.45), rgba(249,115,22,0.22));
+        .landing-theme-toggle svg,
+        .landing-theme-toggle-mobile svg,
+        .landing-mobile-trigger,
+        .landing-scroll-fill,
+        .landing-scroll-track,
+        .landing-solution-icon,
+        .landing-scroll-arrow {
+          color: #000 !important;
+          stroke: currentColor !important;
         }
-        html.light .landing-solution-icon {
-          color: rgba(15, 23, 42, 0.68);
+        .landing-theme-toggle:hover,
+        .landing-theme-toggle-mobile:hover {
+          background: rgba(255, 247, 237, 1) !important;
+          border-color: rgba(249, 115, 22, 0.75) !important;
         }
-        html.light .landing-hero-fade-x,
-        html.light .landing-hero-fade-y {
-          background: transparent;
+        .landing-hero-scene {
+          opacity: 0.94;
+          filter: grayscale(0.1);
         }
-        html.light .landing-section-base {
-          background: linear-gradient(180deg, #fcfcfd 0%, #f8f4ec 100%);
-        }
-        html.light .landing-section-muted {
-          background: linear-gradient(180deg, #f4eee3 0%, #fcfcfd 100%);
-          border-color: rgba(15, 23, 42, 0.08);
-        }
-        html.light .landing-card {
+        .landing-mark-chip,
+        .landing-mark-frame,
+        .landing-icon-panel,
+        .landing-badge,
+        .landing-secondary-button,
+        .landing-card,
+        .landing-card-muted {
           background: rgba(255, 255, 255, 0.82);
-          border-color: rgba(15, 23, 42, 0.08);
+          border-color: rgba(15, 23, 42, 0.1);
           box-shadow: 0 18px 42px rgba(15, 23, 42, 0.04);
         }
-        html.light .landing-card:hover {
+        .landing-secondary-button {
+          color: #000 !important;
+        }
+        .landing-card:hover {
           background: rgba(255, 255, 255, 0.96);
           border-color: rgba(15, 23, 42, 0.14);
         }
-        html.light .landing-divider {
+        .landing-card:hover .landing-solution-icon {
+          color: rgba(249, 115, 22, 1) !important;
+        }
+        .landing-divider {
           background: rgba(15, 23, 42, 0.08);
         }
-        html.light .landing-card-muted {
-          background: rgba(255, 255, 255, 0.84);
+        .landing-section-base {
+          background: linear-gradient(180deg, #fcfcfd 0%, #f8f4ec 100%);
         }
-        html.light .landing-story-overlay {
+        .landing-section-muted {
+          background: linear-gradient(180deg, #f4eee3 0%, #fcfcfd 100%);
+          border-color: rgba(15, 23, 42, 0.08);
+        }
+        .landing-story-overlay {
           background: linear-gradient(to right, rgba(252,252,253,0.94), rgba(252,252,253,0.82), rgba(252,252,253,0.46));
         }
-        html.light .landing-footer {
-          border-color: rgba(15, 23, 42, 0.08);
+
+        .landing-brand-title {
+          color: #000 !important;
+          font-weight: 700;
+          letter-spacing: 0.015em;
+        }
+        .landing-brand-subtitle {
+          color: #000 !important;
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.045em;
+        }
+        .landing-nav-link,
+        .landing-plain-button,
+        .landing-mobile-link,
+        .landing-mobile-secondary,
+        .landing-mobile-cta,
+        .landing-kicker,
+        .landing-headline,
+        .landing-copy,
+        .landing-metric-value,
+        .landing-metric-label,
+        .landing-section-kicker,
+        .landing-section-title,
+        .landing-card-index,
+        .landing-card-title,
+        .landing-card-copy,
+        .landing-footer-link {
+          color: #000 !important;
+        }
+        .landing-nav-link,
+        .landing-section-kicker,
+        .landing-kicker,
+        .landing-metric-label,
+        .landing-footer-link,
+        .landing-mobile-secondary,
+        .landing-mobile-cta,
+        .landing-plain-button {
+          letter-spacing: 0.05em;
+        }
+        .landing-headline,
+        .landing-section-title {
+          font-weight: 700;
+          letter-spacing: -0.04em;
+        }
+        .landing-copy,
+        .landing-card-copy {
+          font-weight: 500;
+        }
+        .landing-card-cta {
+          color: #000 !important;
+        }
+        .landing-card:hover .landing-card-cta {
+          color: rgb(234 88 12) !important;
+        }
+        .landing-nav-cta,
+        .landing-mobile-cta {
+          color: #000 !important;
+        }
+        .landing-theme-scope [class*="text-"],
+        .landing-theme-scope [class*="text_"],
+        .landing-theme-scope p,
+        .landing-theme-scope h1,
+        .landing-theme-scope h2,
+        .landing-theme-scope h3,
+        .landing-theme-scope span,
+        .landing-theme-scope a,
+        .landing-theme-scope button {
+          color: #000 !important;
+        }
+        .landing-theme-scope svg,
+        .landing-theme-scope svg * {
+          color: #000 !important;
+          stroke: currentColor !important;
+        }
+        .landing-cta-hero,
+        .landing-cta-hero * {
+          color: #fff !important;
+        }
+
+        html.dark .landing-shell {
+          background:
+            radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.1), transparent 24%),
+            radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.07), transparent 28%),
+            linear-gradient(135deg, #efebe5 0%, #f7f3ed 44%, #ecefed 100%);
+        }
+        html.dark .landing-theme-scope [class*="text-"],
+        html.dark .landing-theme-scope [class*="text_"],
+        html.dark .landing-theme-scope p,
+        html.dark .landing-theme-scope h1,
+        html.dark .landing-theme-scope h2,
+        html.dark .landing-theme-scope h3,
+        html.dark .landing-theme-scope span,
+        html.dark .landing-theme-scope a,
+        html.dark .landing-theme-scope button {
+          color: #000 !important;
+        }
+        html.dark .landing-theme-scope svg,
+        html.dark .landing-theme-scope svg * {
+          color: #000 !important;
+          stroke: currentColor !important;
+        }
+        html.dark .landing-theme-scope .landing-cta-hero,
+        html.dark .landing-theme-scope .landing-cta-hero * {
+          color: #fff !important;
         }
       `}</style>
     </div>
