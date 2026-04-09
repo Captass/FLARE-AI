@@ -6,6 +6,8 @@ import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, Animat
 import Spline from "@splinetool/react-spline";
 import React from "react";
 import FlareMark from "./FlareMark";
+import ThemeToggle from "@/components/ui/ThemeToggle";
+import type { ThemePreference } from "@/lib/theme";
 
 /* Tiny error boundary so a Spline crash doesn't kill the page */
 class SplineBoundary extends React.Component<
@@ -23,9 +25,11 @@ class SplineBoundary extends React.Component<
 
 interface LandingPageProps {
   onStart: (mode: "login" | "signup", prompt?: string) => void;
+  theme: ThemePreference;
+  onToggleTheme: () => void;
 }
 
-export default function LandingPage({ onStart }: LandingPageProps) {
+export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -258,6 +262,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </div>
 
             <div className="flex items-center gap-4">
+              <ThemeToggle
+                theme={theme}
+                onToggle={onToggleTheme}
+                compact
+                className="landing-theme-toggle"
+              />
               <button
                 onClick={() => onStart("login")}
                 className="text-white/60 hover:text-white text-[10px] uppercase font-light tracking-widest hidden sm:block"
@@ -311,6 +321,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               ))}
             </nav>
             <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
+               <ThemeToggle
+                 theme={theme}
+                 onToggle={onToggleTheme}
+                 className="landing-theme-toggle-mobile justify-center"
+               />
                <button onClick={() => onStart("login")} className="w-full py-4 text-white/60 font-light uppercase tracking-widest border border-white/10 rounded-2xl">Se connecter</button>
                <button onClick={() => onStart("signup")} className="w-full py-4 bg-orange-500 text-white font-light uppercase tracking-widest rounded-2xl">Commencer gratuitement</button>
             </div>
@@ -361,7 +376,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
          ══════════════════════════════════════════════════════ */}
       <section className="relative w-full h-screen flex flex-col items-center justify-center sm:block">
         {/* 3D Robot Background */}
-        <div className="absolute inset-0 z-0 opacity-40 grayscale-[80%]">
+        <div className="landing-hero-scene absolute inset-0 z-0 opacity-40 grayscale-[80%]">
           <SplineBoundary>
             <Suspense fallback={<div className="landing-spline-fallback w-full h-full bg-[#020305]" />}>
               <Spline
@@ -373,10 +388,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </Suspense>
           </SplineBoundary>
         </div>
-
-        {/* Dark Overlays for readability */}
-        <div className="landing-hero-fade-x absolute inset-0 pointer-events-none z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/80 to-transparent" />
-        <div className="landing-hero-fade-y absolute inset-0 pointer-events-none z-[1] bg-gradient-to-b from-black/20 via-transparent to-black" />
 
         {/* Header */}
         <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
@@ -400,7 +411,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 md:gap-8 cursor-auto pointer-events-auto">
+            <div className="flex items-center gap-2 md:gap-5 cursor-auto pointer-events-auto">
+              <ThemeToggle
+                theme={theme}
+                onToggle={onToggleTheme}
+                compact
+                className="landing-theme-toggle"
+              />
               <button
                 onClick={() => onStart("login")}
                 className="text-white/60 hover:text-white transition-colors text-[10px] md:text-xs uppercase tracking-[0.1em] md:tracking-[0.2em] font-medium hidden xs:block"
@@ -520,7 +537,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
                     <div className="landing-icon-panel flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] transition-all duration-500 group-hover:border-orange-500/30 group-hover:bg-orange-500/10">
-                      <Icon className="text-white/50 group-hover:text-orange-400 transition-colors" size={22} />
+                      <Icon className="landing-solution-icon transition-colors" size={22} />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -794,6 +811,22 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         .landing-mobile-actions {
           border-color: rgba(255, 255, 255, 0.08);
         }
+        .landing-theme-toggle,
+        .landing-theme-toggle-mobile {
+          border-color: rgba(255, 255, 255, 0.14) !important;
+          background: rgba(7, 8, 11, 0.56) !important;
+          color: rgba(255, 255, 255, 0.88) !important;
+          backdrop-filter: blur(18px);
+        }
+        .landing-theme-toggle:hover,
+        .landing-theme-toggle-mobile:hover {
+          border-color: rgba(255, 255, 255, 0.22) !important;
+          background: rgba(7, 8, 11, 0.68) !important;
+        }
+        .landing-hero-scene {
+          opacity: 0.72;
+          filter: grayscale(0.42);
+        }
         .landing-mark-chip,
         .landing-icon-panel {
           border-color: rgba(255, 255, 255, 0.08);
@@ -816,11 +849,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         .landing-scroll-fill {
           background: linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0.12));
         }
-        .landing-hero-fade-x {
-          background: linear-gradient(to right, rgba(2,3,5,0.94), rgba(2,3,5,0.76), rgba(2,3,5,0.18));
+        .landing-solution-icon {
+          color: rgba(255, 255, 255, 0.58);
         }
-        .landing-hero-fade-y {
-          background: linear-gradient(to bottom, rgba(2,3,5,0.16), rgba(2,3,5,0), rgba(2,3,5,0.72));
+        .landing-card:hover .landing-solution-icon {
+          color: rgba(251, 146, 60, 0.95);
         }
         .landing-section-base {
           background: #020305;
@@ -872,6 +905,22 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         html.light .landing-mobile-actions {
           border-color: rgba(15, 23, 42, 0.08);
         }
+        html.light .landing-theme-toggle,
+        html.light .landing-theme-toggle-mobile {
+          border-color: rgba(15, 23, 42, 0.12) !important;
+          background: rgba(255, 255, 255, 0.84) !important;
+          color: rgba(15, 23, 42, 0.9) !important;
+          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+        }
+        html.light .landing-theme-toggle:hover,
+        html.light .landing-theme-toggle-mobile:hover {
+          border-color: rgba(15, 23, 42, 0.18) !important;
+          background: rgba(255, 255, 255, 0.96) !important;
+        }
+        html.light .landing-hero-scene {
+          opacity: 0.9;
+          filter: grayscale(0.08);
+        }
         html.light .landing-mark-chip,
         html.light .landing-icon-panel {
           border-color: rgba(15, 23, 42, 0.1);
@@ -895,11 +944,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         html.light .landing-scroll-fill {
           background: linear-gradient(to bottom, rgba(28,58,106,0.45), rgba(249,115,22,0.22));
         }
-        html.light .landing-hero-fade-x {
-          background: linear-gradient(to right, rgba(252,252,253,0.96), rgba(252,252,253,0.84), rgba(252,252,253,0.22));
+        html.light .landing-solution-icon {
+          color: rgba(15, 23, 42, 0.68);
         }
+        html.light .landing-hero-fade-x,
         html.light .landing-hero-fade-y {
-          background: linear-gradient(to bottom, rgba(252,252,253,0.18), rgba(252,252,253,0), rgba(252,252,253,0.72));
+          background: transparent;
         }
         html.light .landing-section-base {
           background: linear-gradient(180deg, #fcfcfd 0%, #f8f4ec 100%);

@@ -234,16 +234,20 @@ html.light .landing-section-muted {
   background: #fcfaf6 !important;
 }
 
-html.light .landing-hero-fade-x {
-  background: linear-gradient(90deg, rgba(251, 247, 240, 0.96) 0%, rgba(251, 247, 240, 0.82) 42%, rgba(251, 247, 240, 0.14) 100%) !important;
-}
-
-html.light .landing-hero-fade-y {
-  background: linear-gradient(180deg, rgba(255, 252, 246, 0.7) 0%, rgba(255, 252, 246, 0.02) 48%, rgba(239, 231, 219, 0.9) 100%) !important;
-}
-
 html.light .landing-story-overlay {
   background: linear-gradient(90deg, rgba(246, 239, 229, 0.97) 0%, rgba(246, 239, 229, 0.84) 48%, rgba(246, 239, 229, 0.58) 100%) !important;
+}
+
+.landing-solution-icon {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.landing-card:hover .landing-solution-icon {
+  color: rgba(251, 146, 60, 0.95);
+}
+
+html.light .landing-solution-icon {
+  color: rgba(15, 23, 42, 0.68);
 }
 
 * {

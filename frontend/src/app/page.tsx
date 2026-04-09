@@ -1222,7 +1222,7 @@ export default function Home() {
   }
 
   if (!user) {
-    return <LandingPage onStart={handleStart} />;
+    return <LandingPage onStart={handleStart} theme={theme} onToggleTheme={handleThemeToggle} />;
   }
 
   const viewTitleMap: Partial<Record<AppView, string>> = {
