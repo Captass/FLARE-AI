@@ -190,33 +190,33 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
   const USE_CASES = [
     {
       icon: MessageSquare,
-      title: "Répondez à vos clients pendant que vous dormez",
-      description: "Votre chatbot IA gère chaque message Facebook, qualifie les prospects et relance automatiquement. Vous ne perdez plus aucune vente.",
-      cta: "Activer mon chatbot",
+      title: "Tu réponds à tes prospects 24/7",
+      description: "FLARE AI répond aux messages Facebook, qualifie les prospects et relance automatiquement. Tu rates moins de ventes.",
+      cta: "Activer le chatbot",
       prompt: "Configure mon chatbot Facebook pour répondre aux clients automatiquement",
     },
     {
       icon: Zap,
-      title: "Créez en 30 secondes ce qui prenait 3 heures",
-      description: "Posts, emails, propositions commerciales, visuels — demandez, c'est prêt. Votre assistant comprend votre marque et écrit comme vous.",
-      cta: "Essayer maintenant",
+      title: "Tu crées tes contenus en quelques minutes",
+      description: "Posts, emails, propositions et visuels : tu demandes, FLARE AI génère. Tu publies plus vite, sans blocage.",
+      cta: "Créer maintenant",
       prompt: "Rédige un post Facebook accrocheur pour promouvoir mes services",
     },
     {
       icon: BarChart3,
-      title: "Voyez exactement ce qui rapporte et ce qui coûte",
-      description: "Tableau de bord clair : combien de prospects, combien de conversions, combien vous dépensez. Prenez les bonnes décisions, vite.",
-      cta: "Voir le tableau de bord",
+      title: "Tu vois ce qui rapporte en temps réel",
+      description: "Leads, conversions, coût et revenus au même endroit. Tu décides vite, avec des chiffres clairs.",
+      cta: "Voir les chiffres",
       prompt: "Montre-moi un résumé de mes performances commerciales",
     },
   ];
 
   /* ── Avantages concrets ── */
   const ADVANTAGES = [
-    { number: "01", title: "Zéro configuration", text: "Connectez votre page Facebook, et c'est parti. Pas de code, pas de formation." },
-    { number: "02", title: "Votre IA, votre ton", text: "Elle apprend votre façon de parler, votre offre, vos prix. Chaque réponse sonne comme vous." },
-    { number: "03", title: "Résultats mesurables", text: "Suivez vos leads, vos ventes et votre ROI en temps réel depuis un seul écran." },
-    { number: "04", title: "Fonctionne non-stop", text: "Pendant que vous dormez, votre IA répond, qualifie et relance. 24h/24, 7j/7." },
+    { number: "01", title: "Zéro configuration", text: "Tu connectes ta page Facebook et c'est parti. Pas de code, pas de formation." },
+    { number: "02", title: "Ton IA, ton ton", text: "Elle apprend ta façon de parler, ton offre et tes prix. Chaque réponse sonne comme toi." },
+    { number: "03", title: "Résultats mesurables", text: "Tu suis tes leads, tes ventes et ton ROI en temps réel depuis un seul écran." },
+    { number: "04", title: "Fonctionne non-stop", text: "Pendant que tu dors, ton IA répond, qualifie et relance. 24h/24, 7j/7." },
   ];
 
   return (
@@ -398,7 +398,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               </motion.div>
               <div className="flex flex-col justify-center">
                 <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none">FLARE AI</span>
-                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3">Votre business, en pilote automatique</span>
+                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3">Ton business, en pilote automatique</span>
               </div>
             </div>
 
@@ -442,8 +442,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               </motion.h1>
 
               <p className="landing-copy mt-8 mb-10 text-sm md:text-xl max-w-xl leading-relaxed">
-                Votre IA répond à vos clients, crée vos contenus et suit vos ventes.
-                Vous gardez le contrôle, elle fait le travail.
+                Ton IA répond à tes clients, crée tes contenus et suit tes ventes.
+                Tu gardes le contrôle, elle fait le travail.
               </p>
 
               <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -499,10 +499,13 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-24 max-w-2xl"
           >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Ce que FLARE AI fait pour vous</span>
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Ce que FLARE AI fait pour toi</span>
             <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              Trois leviers pour <span className="font-semibold">faire décoller votre activité</span>.
+              3 services concrets pour <span className="font-semibold">vendre plus</span>.
             </h2>
+            <p className="landing-copy mt-4 max-w-xl text-sm md:text-lg leading-relaxed">
+              Tu actives, FLARE AI exécute.
+            </p>
           </motion.div>
 
           <div className="grid grid-cols-1 gap-6">
@@ -523,7 +526,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
 
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
                     <div className="landing-icon-panel flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] transition-all duration-500 group-hover:border-orange-500/30 group-hover:bg-orange-500/10">
-                      <Icon className="landing-solution-icon transition-colors" size={22} />
+                      <Icon className="landing-solution-icon landing-solution-icon-strong transition-colors" size={26} strokeWidth={2.2} />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -557,9 +560,9 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-24 max-w-2xl"
           >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Pourquoi nos clients restent</span>
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Pourquoi ça marche</span>
             <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              Conçu pour ceux qui veulent <span className="font-semibold">des résultats, pas des gadgets</span>.
+              Conçu pour <span className="font-semibold">te faire gagner du temps</span>, pas pour faire joli.
             </h2>
           </motion.div>
 
@@ -640,13 +643,13 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               className="flex flex-col gap-6 max-w-xl"
             >
               <p className="landing-copy text-base md:text-lg leading-relaxed">
-                FLARE AI est né d&apos;un constat simple : les petites entreprises et les entrepreneurs perdent un temps fou sur des tâches que l&apos;IA peut faire mieux et plus vite.
+                FLARE AI est né d&apos;un constat simple : les petites entreprises perdent un temps fou sur des tâches que l&apos;IA peut faire mieux et plus vite.
               </p>
               <p className="landing-copy text-base md:text-lg leading-relaxed">
-                Notre mission est de rendre l&apos;intelligence artificielle accessible à tous les professionnels — sans code, sans jargon, sans prise de tête.
+                Notre mission est de rendre l&apos;intelligence artificielle accessible, sans code, sans jargon et sans prise de tête.
               </p>
               <p className="landing-copy text-base md:text-lg leading-relaxed">
-                Chaque fonctionnalité est conçue pour un seul objectif : vous faire gagner du temps et de l&apos;argent, dès le premier jour.
+                Chaque fonctionnalité est conçue pour un seul objectif : te faire gagner du temps et de l&apos;argent, dès le premier jour.
               </p>
             </motion.div>
           </div>
@@ -666,15 +669,15 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
           >
             <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Confiance & sécurité</span>
             <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              Vos données sont <span className="font-semibold">entre de bonnes mains</span>.
+              Tes données sont <span className="font-semibold">entre de bonnes mains</span>.
             </h2>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { title: "Chiffrement de bout en bout", text: "Toutes vos données sont chiffrées en transit et au repos. Aucun accès tiers non autorisé." },
+              { title: "Chiffrement de bout en bout", text: "Toutes tes données sont chiffrées en transit et au repos. Aucun accès tiers non autorisé." },
               { title: "Hébergement sécurisé", text: "Infrastructure Google Cloud Platform, conformité RGPD, sauvegardes automatiques quotidiennes." },
-              { title: "Transparence totale", text: "Pas de revente de données. Pas de tracking publicitaire. Votre business reste votre business." },
+              { title: "Transparence totale", text: "Pas de revente de données. Pas de tracking publicitaire. Ton business reste ton business." },
             ].map((item, i) => (
               <motion.div
                 key={i}
@@ -724,10 +727,10 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
           >
             <h2 className="text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
-              Prêt à automatiser <span className="font-semibold">votre croissance</span> ?
+              Prêt à automatiser <span className="font-semibold">ton business</span> ?
             </h2>
             <p className="landing-copy mt-6 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
-              Commencez gratuitement. Aucune carte bancaire requise. Résultats visibles dès le premier jour.
+              Tu commences gratuitement. Aucune carte bancaire requise. Des résultats visibles dès le premier jour.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -827,7 +830,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
         .landing-scroll-track,
         .landing-solution-icon,
         .landing-scroll-arrow {
-          color: #000 !important;
+          color: rgb(234 88 12) !important;
           stroke: currentColor !important;
         }
         .landing-theme-toggle:hover,
@@ -853,12 +856,21 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
         .landing-secondary-button {
           color: #000 !important;
         }
+        .landing-icon-panel {
+          background: rgba(255, 237, 213, 0.95);
+          border-color: rgba(249, 115, 22, 0.42);
+          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.12);
+        }
         .landing-card:hover {
           background: rgba(255, 255, 255, 0.96);
           border-color: rgba(15, 23, 42, 0.14);
         }
         .landing-card:hover .landing-solution-icon {
-          color: rgba(249, 115, 22, 1) !important;
+          color: rgba(194, 65, 12, 1) !important;
+        }
+        .landing-solution-icon-strong {
+          color: rgb(234 88 12) !important;
+          stroke: currentColor !important;
         }
         .landing-divider {
           background: rgba(15, 23, 42, 0.08);
