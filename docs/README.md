@@ -119,6 +119,8 @@ Pour le chatbot Facebook FLARE AI et son cockpit dans FLARE AI :
 
 Specification officielle de la version de lancement lundi :
 
+- [Manuel interne d'exploitation beta assistee - 2026-04-12](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/FLARE%20AI/docs/handover/INTERNAL_ASSISTED_BETA_OPERATIONS_MANUAL_2026-04-12.md)
+
 1. [README v1 launch](specs/launch/v1_2026-04-04_assisted_activation/README.md)
 2. [Architecture finale](specs/launch/v1_2026-04-04_assisted_activation/01_FINAL_ARCHITECTURE.md)
 3. [Tunnel client](specs/launch/v1_2026-04-04_assisted_activation/02_CLIENT_FLOW.md)
