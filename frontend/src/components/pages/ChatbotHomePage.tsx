@@ -95,19 +95,23 @@ type ActivationBanner = {
   label: string;
   description: string;
   color: "orange" | "navy" | "red";
-  cta?: { label: string; navTarget: NavLevel };
+  cta?: { label: string; navTarget?: NavLevel; action?: () => void };
 };
 
 function getActivationBanner(
   scopeType: "personal" | "organization",
   planId: string | null,
   ar: ActivationRequest | null,
+  onRequestOrganizationSelection?: () => void,
 ): ActivationBanner | null {
   if (scopeType !== "organization") {
     return {
       label: "Creez votre espace",
       description: "Creez ou choisissez un espace de travail pour activer votre chatbot.",
       color: "orange",
+      cta: onRequestOrganizationSelection
+        ? { label: "Choisir ou creer un espace", action: onRequestOrganizationSelection }
+        : undefined,
     };
   }
   if (!ar) {
@@ -504,7 +508,12 @@ export default function ChatbotHomePage({
       overview?.active_page?.webhook_subscribed
     );
 
-  const activationBanner = getActivationBanner(currentScopeType, currentPlanId, activationRequest);
+  const activationBanner = getActivationBanner(
+    currentScopeType,
+    currentPlanId,
+    activationRequest,
+    onRequestOrganizationSelection
+  );
 
   // Etapes du guide d'onboarding
   const hasAnyPage = pages.length > 0;
@@ -583,7 +592,15 @@ export default function ChatbotHomePage({
                 {activationBanner.cta && (
                   <button
                     type="button"
-                    onClick={() => onPush(activationBanner.cta!.navTarget)}
+                    onClick={() => {
+                      if (activationBanner.cta?.action) {
+                        activationBanner.cta.action();
+                        return;
+                      }
+                      if (activationBanner.cta?.navTarget) {
+                        onPush(activationBanner.cta.navTarget);
+                      }
+                    }}
                     className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)] transition-colors"
                   >
                     {activationBanner.cta.label}
