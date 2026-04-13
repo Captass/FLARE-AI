@@ -482,7 +482,7 @@ export function resolveGuideContent(view: GuideViewKey, context: GuideContext): 
       stageCard = {
         title: "Etape paiement",
         nextAction: "Envoie la preuve de paiement puis attends validation FLARE.",
-        unlockCondition: "Le statut paiement doit passer a verified.",
+        unlockCondition: "Ton paiement doit etre valide par FLARE.",
         tone: "warning",
       };
       steps[1].status = "next";
@@ -492,7 +492,7 @@ export function resolveGuideContent(view: GuideViewKey, context: GuideContext): 
       stageCard = {
         title: "Etape acces page",
         nextAction: "Confirme l'acces admin FLARE sur la page Facebook cible.",
-        unlockCondition: "Le champ flare_page_admin_confirmed doit etre true.",
+        unlockCondition: "FLARE doit avoir l'acces admin a la bonne page Facebook.",
         tone: "warning",
       };
       steps[0].status = "done";
@@ -503,7 +503,7 @@ export function resolveGuideContent(view: GuideViewKey, context: GuideContext): 
       stageCard = {
         title: "Activation en cours",
         nextAction: "Attends la verification operateur puis le test Messenger final.",
-        unlockCondition: "Le statut activation doit passer a active.",
+        unlockCondition: "Le chatbot doit etre valide puis marque comme actif.",
         tone: "info",
       };
       steps[0].status = "done";
@@ -524,7 +524,7 @@ export function resolveGuideContent(view: GuideViewKey, context: GuideContext): 
       : {
           title: "Selection de page requise",
           nextAction: "Choisis la page Facebook cible dans la liste.",
-          unlockCondition: "selectedPageId non vide.",
+          unlockCondition: "Tu dois choisir une page Facebook dans FLARE.",
           tone: "warning",
         };
   }
@@ -549,7 +549,7 @@ export function resolveGuideContent(view: GuideViewKey, context: GuideContext): 
       : {
           title: "Bot non actif",
           nextAction: "Passe sur Activation pour finaliser le tunnel.",
-          unlockCondition: "Status activation = active.",
+          unlockCondition: "Le chatbot doit etre marque comme actif sur ta page.",
           tone: "warning",
         };
   }
