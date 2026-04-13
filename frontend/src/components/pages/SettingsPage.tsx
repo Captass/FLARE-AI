@@ -92,9 +92,9 @@ const T = {
     errorPwd: "Impossible d'envoyer l'email. Vérifiez votre connexion.",
     errorPwdEmail: "Aucun email associé à ce compte.",
     orgRoleHint: "Pour modifier l'organisation, contactez un administrateur.",
-    guideAssistant: "Guide IA contextuel",
+    guideAssistant: "Assistant d'aide",
     guideAssistantDesc:
-      "Affiche un guide flottant en bas a droite pour expliquer chaque page et la prochaine action.",
+      "Affiche un petit assistant en bas a droite pour t'expliquer chaque page et te dire quoi faire ensuite.",
     guideAssistantSaving: "Mise a jour...",
   },
   en: {
@@ -139,9 +139,9 @@ const T = {
     errorPwd: "Unable to send the email. Check your connection.",
     errorPwdEmail: "No email associated with this account.",
     orgRoleHint: "Contact an administrator to modify the organisation.",
-    guideAssistant: "Contextual AI guide",
+    guideAssistant: "Help assistant",
     guideAssistantDesc:
-      "Show a floating guide in the bottom-right corner to explain each page and the next action.",
+      "Show a small helper in the bottom-right corner to explain each page and what to do next.",
     guideAssistantSaving: "Updating...",
   },
 } as const;

@@ -85,7 +85,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   home: {
     audience: "user",
     title: "Accueil",
-    summary: "Cette page te donne la prochaine action utile pour activer et exploiter ton espace.",
+    summary: "Ici tu vois ou aller ensuite pour avancer sans te perdre dans l'application.",
     steps: [
       { id: "scope", label: "Verifie ton espace actif", status: "next" },
       { id: "offer", label: "Choisis ou verifie ton offre", status: "todo" },
@@ -100,7 +100,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   assistant: {
     audience: "user",
     title: "Assistant IA",
-    summary: "Utilise l'assistant pour produire vite, mais gere activation et chatbot dans les modules dedies.",
+    summary: "Ici tu demandes a FLARE AI d'ecrire, analyser ou creer pour toi.",
     steps: [
       { id: "new-chat", label: "Demarre une nouvelle discussion", status: "next" },
       { id: "ask-task", label: "Donne un objectif concret", status: "todo" },
@@ -115,7 +115,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   chatbot: {
     audience: "user",
     title: "Chatbot Facebook",
-    summary: "Tu configures ici le bot, la page Facebook et la progression vers l'activation.",
+    summary: "Ici tu relies ton chatbot a ta page Facebook et tu suis son activation.",
     steps: [
       { id: "page", label: "Selectionne une page Facebook", status: "next" },
       { id: "configure", label: "Complete personnalisation et reglages", status: "todo" },
@@ -131,7 +131,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-activation": {
     audience: "user",
     title: "Activation",
-    summary: "Le tunnel officiel: offre, paiement, preuve, acces page, activation manuelle FLARE.",
+    summary: "Ici tu passes du paiement au chatbot actif sur ta page Facebook.",
     steps: [
       { id: "offer", label: "Choisir une offre", status: "next" },
       { id: "payment", label: "Payer et envoyer la preuve", status: "todo" },
@@ -148,7 +148,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-parametres": {
     audience: "user",
     title: "Parametres Facebook",
-    summary: "Ici tu connectes les pages Facebook et choisis la page active pour le bot.",
+    summary: "Ici tu choisis la bonne page Facebook et tu verifies qu'elle est bien reliee au bot.",
     steps: [
       { id: "connect", label: "Connecter Meta", status: "next" },
       { id: "select", label: "Selectionner la page cible", status: "todo" },
@@ -163,7 +163,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-personnalisation": {
     audience: "user",
     title: "Personnalisation",
-    summary: "Renseigne l'identite du bot et ton catalogue pour des reponses utiles des le premier message.",
+    summary: "Ici tu apprends au bot qui tu es, ce que tu vends et comment il doit repondre.",
     steps: [
       { id: "identity", label: "Regler nom, ton et message d'accueil", status: "next" },
       { id: "catalog", label: "Ajouter tes produits et visuels", status: "todo" },
@@ -178,7 +178,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-dashboard": {
     audience: "user",
     title: "Dashboard chatbot",
-    summary: "Tu suis ici l'activite du bot, les messages traites et les points a reprendre.",
+    summary: "Ici tu vois ce que le bot fait, ce qui marche et ce que tu dois reprendre a la main.",
     steps: [
       { id: "read", label: "Lire les KPI du jour", status: "next" },
       { id: "clients", label: "Ouvrir les clients a forte intention", status: "todo" },
@@ -193,7 +193,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-clients": {
     audience: "user",
     title: "Clients",
-    summary: "Tu suis les prospects, leur statut et les conversations a reprendre.",
+    summary: "Ici tu suis les prospects chauds et les conversations qui demandent ton aide.",
     steps: [
       { id: "sort", label: "Trier par priorite", status: "next" },
       { id: "open", label: "Ouvrir les fiches critiques", status: "todo" },
@@ -208,7 +208,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-client-detail": {
     audience: "user",
     title: "Fiche client",
-    summary: "Cette fiche sert au suivi detaille d'un client et des actions commerciales.",
+    summary: "Ici tu regardes un client en detail pour savoir quoi faire ensuite.",
     steps: [
       { id: "timeline", label: "Verifier historique et intention", status: "next" },
       { id: "action", label: "Declencher la prochaine action", status: "todo" },
@@ -219,7 +219,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   "chatbot-orders": {
     audience: "user",
     title: "Commandes",
-    summary: "Tu visualises les commandes remontees par le bot et les etapes de traitement.",
+    summary: "Ici tu vois les commandes detectees par le bot et leur avancement.",
     steps: [
       { id: "filter", label: "Filtrer les commandes a traiter", status: "next" },
       { id: "status", label: "Mettre a jour les statuts", status: "todo" },
@@ -233,7 +233,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   billing: {
     audience: "user",
     title: "Abonnements",
-    summary: "Choisis une offre puis continue le tunnel de paiement manuel et validation.",
+    summary: "Ici tu choisis l'offre qui te convient avant de payer et lancer l'activation.",
     steps: [
       { id: "select", label: "Selectionner l'offre adaptee", status: "next" },
       { id: "proof", label: "Envoyer la preuve de paiement", status: "todo" },
@@ -248,7 +248,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   settings: {
     audience: "user",
     title: "Parametres",
-    summary: "Tu geres ici ton profil, ton espace et les preferences globales de l'application.",
+    summary: "Ici tu regles ton profil, ton espace et les options generales de l'application.",
     steps: [
       { id: "profile", label: "Mettre a jour le profil", status: "next" },
       { id: "org", label: "Verifier l'identite de l'espace", status: "todo" },
@@ -260,7 +260,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   admin: {
     audience: "operator",
     title: "Administration",
-    summary: "Vue operateur pour traiter paiements, activations et signalements de bout en bout.",
+    summary: "Ici l'equipe FLARE traite les paiements, les activations et les dossiers bloques.",
     steps: [
       { id: "payment", label: "Verifier les paiements en attente", status: "next" },
       { id: "assign", label: "Assigner les activations", status: "todo" },
@@ -275,7 +275,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   guide: {
     audience: "user",
     title: "Guide",
-    summary: "Reference des principaux parcours de FLARE AI.",
+    summary: "Ici tu trouves les grandes explications de l'application si tu veux une vue d'ensemble.",
     steps: [
       { id: "read", label: "Parcourir les sections utiles", status: "next" },
       { id: "apply", label: "Appliquer dans ton parcours reel", status: "todo" },
@@ -286,7 +286,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   contact: {
     audience: "user",
     title: "Contact",
-    summary: "Tu peux contacter l'equipe FLARE pour support, vente ou incident.",
+    summary: "Ici tu peux demander de l'aide a l'equipe FLARE.",
     steps: [{ id: "message", label: "Envoyer un message clair", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-home", label: "Retour accueil", target: "home", tone: "primary" }],
@@ -294,7 +294,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   automations: {
     audience: "user",
     title: "Automatisations",
-    summary: "Hub des modules automatiques disponibles et bloques.",
+    summary: "Ici tu vois les modules automatiques disponibles et ceux qui restent bloques.",
     steps: [{ id: "pick", label: "Choisir un module", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-chatbot", label: "Ouvrir chatbot", target: "chatbot", tone: "primary" }],
@@ -302,7 +302,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   automationHub: {
     audience: "user",
     title: "Automation Hub",
-    summary: "Selectionne le module adapte a ton besoin metier.",
+    summary: "Ici tu choisis le module automatique qui correspond a ton besoin.",
     steps: [{ id: "module", label: "Ouvrir un module", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-automations", label: "Retour automations", target: "automations", tone: "primary" }],
@@ -310,7 +310,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   facebook: {
     audience: "user",
     title: "Facebook",
-    summary: "Section d'integration Facebook hors tunnel principal chatbot.",
+    summary: "Ici tu verifies l'integration Facebook en dehors du tunnel principal du chatbot.",
     steps: [{ id: "check", label: "Verifier l'integration", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-chatbot-param", label: "Ouvrir parametres Facebook", target: "chatbot-parametres", tone: "primary" }],
@@ -318,7 +318,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   google: {
     audience: "user",
     title: "Google",
-    summary: "Section d'integration Google.",
+    summary: "Ici tu verifies l'integration Google.",
     steps: [{ id: "check", label: "Verifier l'integration", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-home", label: "Retour accueil", target: "home", tone: "primary" }],
@@ -326,7 +326,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   memory: {
     audience: "user",
     title: "Memoire",
-    summary: "Memoire contextuelle de l'assistant.",
+    summary: "Ici tu vois ce que l'assistant garde en memoire pour mieux t'aider.",
     steps: [{ id: "review", label: "Relire les faits utiles", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-assistant", label: "Retour assistant", target: "assistant", tone: "primary" }],
@@ -334,7 +334,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   dashboard: {
     audience: "user",
     title: "Dashboard",
-    summary: "Vue d'ensemble generale.",
+    summary: "Ici tu vois les indicateurs principaux de ton espace.",
     steps: [{ id: "kpi", label: "Lire les KPI", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-chatbot-dashboard", label: "Dashboard chatbot", target: "chatbot-dashboard", tone: "primary" }],
@@ -342,7 +342,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   leads: {
     audience: "user",
     title: "Leads",
-    summary: "Leads detectes dans Messenger.",
+    summary: "Ici tu vois les prospects les plus chauds detectes dans Messenger.",
     steps: [{ id: "prioritize", label: "Prioriser les leads chauds", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-clients", label: "Voir clients", target: "chatbot-clients", tone: "primary" }],
@@ -350,7 +350,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   conversations: {
     audience: "user",
     title: "Conversations",
-    summary: "Reprises humaines et suivi conversationnel.",
+    summary: "Ici tu reprends les conversations importantes quand le bot ne suffit plus.",
     steps: [{ id: "reply", label: "Repondre aux conversations critiques", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-dashboard", label: "Retour dashboard chatbot", target: "chatbot-dashboard", tone: "primary" }],
@@ -358,7 +358,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   expenses: {
     audience: "user",
     title: "Depenses",
-    summary: "Suivi des depenses et couts de conversation.",
+    summary: "Ici tu surveilles les couts du bot et les depenses anormales.",
     steps: [{ id: "check", label: "Verifier les couts anormaux", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-dashboard", label: "Retour dashboard chatbot", target: "chatbot-dashboard", tone: "primary" }],
@@ -366,7 +366,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   chatbotFiles: {
     audience: "user",
     title: "Fichiers chatbot",
-    summary: "Espace de documents relies au chatbot.",
+    summary: "Ici tu ranges les documents utiles au chatbot.",
     steps: [{ id: "upload", label: "Ajouter les documents utiles", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-chatbot", label: "Retour chatbot", target: "chatbot", tone: "primary" }],
@@ -374,7 +374,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   prompts: {
     audience: "user",
     title: "Prompts",
-    summary: "Bibliotheque de prompts pour l'assistant.",
+    summary: "Ici tu trouves des demandes pretes a l'emploi pour l'assistant.",
     steps: [{ id: "pick", label: "Choisir un prompt", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-assistant", label: "Retour assistant", target: "assistant", tone: "primary" }],
@@ -382,7 +382,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   knowledge: {
     audience: "user",
     title: "Knowledge",
-    summary: "Documents et base de reference de l'assistant.",
+    summary: "Ici tu geres les documents qui servent de base a l'assistant.",
     steps: [{ id: "verify", label: "Verifier les sources", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-assistant", label: "Retour assistant", target: "assistant", tone: "primary" }],
@@ -390,7 +390,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   files: {
     audience: "user",
     title: "Fichiers",
-    summary: "Historique des fichiers envoyes.",
+    summary: "Ici tu retrouves les fichiers deja envoyes a l'assistant.",
     steps: [{ id: "review", label: "Revoir les pieces jointes", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-assistant", label: "Retour assistant", target: "assistant", tone: "primary" }],
@@ -398,7 +398,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   prospection: {
     audience: "user",
     title: "Prospection",
-    summary: "Module en attente d'ouverture.",
+    summary: "Ce module n'est pas encore ouvert.",
     steps: [{ id: "wait", label: "Suivre l'ouverture du module", status: "next" }],
     warnings: ["Ce module est encore verrouille."],
     ctas: [{ id: "to-automations", label: "Retour automations", target: "automations", tone: "primary" }],
@@ -406,7 +406,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   content: {
     audience: "user",
     title: "Studio contenu",
-    summary: "Module en attente d'ouverture.",
+    summary: "Ce module n'est pas encore ouvert.",
     steps: [{ id: "wait", label: "Suivre l'ouverture du module", status: "next" }],
     warnings: ["Ce module est encore verrouille."],
     ctas: [{ id: "to-automations", label: "Retour automations", target: "automations", tone: "primary" }],
@@ -414,7 +414,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   followup: {
     audience: "user",
     title: "Suivi client",
-    summary: "Module en attente d'ouverture.",
+    summary: "Ce module n'est pas encore ouvert.",
     steps: [{ id: "wait", label: "Suivre l'ouverture du module", status: "next" }],
     warnings: ["Ce module est encore verrouille."],
     ctas: [{ id: "to-automations", label: "Retour automations", target: "automations", tone: "primary" }],
@@ -422,7 +422,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   agents: {
     audience: "user",
     title: "Agents",
-    summary: "Module en attente d'ouverture.",
+    summary: "Ce module n'est pas encore ouvert.",
     steps: [{ id: "wait", label: "Suivre l'ouverture du module", status: "next" }],
     warnings: ["Ce module est encore verrouille."],
     ctas: [{ id: "to-automations", label: "Retour automations", target: "automations", tone: "primary" }],

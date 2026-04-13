@@ -24,7 +24,7 @@ interface FloatingContextualGuideProps {
 
 function StepPill({ status }: { status?: "todo" | "done" | "blocked" | "next" }) {
   if (status === "done") {
-    return <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-green-600 dark:text-green-400">OK</span>;
+    return <span className="rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-green-600 dark:text-green-400">Fait</span>;
   }
   if (status === "blocked") {
     return <span className="rounded-full bg-red-500/12 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-red-600 dark:text-red-400">Bloque</span>;
@@ -32,7 +32,7 @@ function StepPill({ status }: { status?: "todo" | "done" | "blocked" | "next" })
   if (status === "next") {
     return <span className="rounded-full bg-orange-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-orange-600 dark:text-orange-400">Maintenant</span>;
   }
-  return <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">A faire</span>;
+  return <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">Ensuite</span>;
 }
 
 export default function FloatingContextualGuide({
@@ -83,7 +83,7 @@ export default function FloatingContextualGuide({
             className="pointer-events-auto inline-flex h-12 items-center gap-2 rounded-2xl border border-orange-500/30 bg-[var(--surface-base)] px-4 text-[var(--text-primary)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-raised)]"
           >
             <BookOpen size={16} className="text-orange-500" />
-            <span className="text-sm font-medium">Guide IA</span>
+            <span className="text-sm font-medium">Aide</span>
           </motion.button>
         )}
 
@@ -97,7 +97,7 @@ export default function FloatingContextualGuide({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Guide contextuel</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-muted)]">Je t'aide ici</p>
                 <h3 className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{content.title}</h3>
                 <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{content.summary}</p>
               </div>
@@ -116,7 +116,7 @@ export default function FloatingContextualGuide({
                 onClick={() => onNavigate(visibleCtas[0].target)}
                 className="mt-3 inline-flex w-full items-center justify-between rounded-xl border border-orange-500/30 bg-orange-500/10 px-3 py-2 text-xs font-semibold text-orange-600 transition-colors hover:bg-orange-500/15 dark:text-orange-400"
               >
-                {visibleCtas[0].label}
+                Faire ca maintenant
                 <ChevronRight size={14} />
               </button>
             )}
@@ -125,7 +125,7 @@ export default function FloatingContextualGuide({
               onClick={() => setPanelState("open")}
               className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
             >
-              Ouvrir le guide detaille
+              Voir l'explication simple
               <ChevronRight size={12} />
             </button>
           </motion.div>
@@ -143,10 +143,12 @@ export default function FloatingContextualGuide({
               <div className="min-w-0">
                 <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">
                   <Sparkles size={12} className="text-orange-500" />
-                  {content.audience === "operator" ? "Mode operateur" : "Mode utilisateur"}
+                  {content.audience === "operator" ? "Aide operateur" : "Assistant d'aide"}
                 </div>
                 <h3 className="mt-2 text-sm font-semibold text-[var(--text-primary)]">{content.title}</h3>
-                <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">{content.summary}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  Tu es sur cette page. Je t'explique a quoi elle sert et quoi faire maintenant.
+                </p>
               </div>
               <div className="flex items-center gap-1">
                 <button
@@ -178,13 +180,23 @@ export default function FloatingContextualGuide({
                       : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
                 }`}
               >
-                <p className="font-semibold">{content.stageCard.title}</p>
+                <p className="font-semibold">Commence par ca</p>
                 <p className="mt-1 leading-relaxed">{content.stageCard.nextAction}</p>
-                <p className="mt-1 text-[11px] opacity-90">Condition: {content.stageCard.unlockCondition}</p>
+                <p className="mt-1 text-[11px] opacity-90">Pour debloquer la suite: {content.stageCard.unlockCondition}</p>
               </div>
             )}
 
+            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2.5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">
+                Cette page sert a
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--text-primary)]">{content.summary}</p>
+            </div>
+
             <div className="mt-3 space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)] px-1">
+                Fais les choses dans cet ordre
+              </p>
               {content.steps.map((step) => (
                 <div key={step.id} className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
@@ -197,6 +209,9 @@ export default function FloatingContextualGuide({
 
             {content.warnings.length > 0 && (
               <div className="mt-3 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2.5">
+                <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-red-700 dark:text-red-300">
+                  Fais attention a ca
+                </p>
                 {content.warnings.map((warning, idx) => (
                   <p key={`${warning}-${idx}`} className="text-xs leading-relaxed text-red-700 dark:text-red-300">
                     {warning}
@@ -206,6 +221,11 @@ export default function FloatingContextualGuide({
             )}
 
             <div className="mt-3 grid gap-2">
+              {visibleCtas.length > 0 && (
+                <p className="px-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]">
+                  Raccourcis utiles
+                </p>
+              )}
               {visibleCtas.map((cta) => (
                 <button
                   key={cta.id}
