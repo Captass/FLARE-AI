@@ -55,11 +55,14 @@ import ChatbotActivationPage from "@/components/pages/ChatbotActivationPage";
 import ChatbotOrdersPage from "@/components/pages/ChatbotOrdersPage";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import SignalementModal from "@/components/SignalementModal";
+import FloatingContextualGuide from "@/components/guide/FloatingContextualGuide";
+import type { GuideContext } from "@/components/guide/guideAssistantContent";
 import { useThemePreference } from "@/hooks/useThemePreference";
 import { rememberActivationPlan, type ActivationPlanId } from "@/lib/activationFlow";
 
 import {
   ChatMode,
+  ActivationRequest,
   FileAttachment,
   OrganizationAccessResponse,
   WorkspaceIdentity,
@@ -75,6 +78,7 @@ import {
   syncUser,
   trackClientEvent,
   toRenderableMediaUrl,
+  getMyActivationRequest,
 } from "@/lib/api";
 import { getChatbotSetupStatus, type ChatbotSetupStatus } from "@/lib/api";
 
@@ -175,6 +179,8 @@ const ORGANIZATION_REQUIRED_VIEWS: ActiveView[] = [
   "followup",
   "agents",
 ];
+
+const ADMIN_EMAILS = ["cptskevin@gmail.com"];
 
 type LockedModuleView = "prospection" | "content" | "followup" | "agents";
 
@@ -417,6 +423,7 @@ export default function Home() {
   const [pendingOrganizationTarget, setPendingOrganizationTarget] = useState<AppView | null>(null);
   const [workspaceIdentity, setWorkspaceIdentity] = useState<WorkspaceIdentity | null>(null);
   const [setupStatus, setSetupStatus] = useState<ChatbotSetupStatus | null>(null);
+  const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
   const [selectedFacebookPageId, setSelectedFacebookPageId] = useState<string | null>(null);
   const [facebookPages, setFacebookPages] = useState<FacebookMessengerPage[]>([]);
   const { theme, toggleTheme: handleThemeToggle } = useThemePreference();
@@ -769,6 +776,32 @@ export default function Home() {
     }
   }, [resolveAccessToken, user]);
 
+  const loadActivationRequest = useCallback(async () => {
+    const requestIdentity = sessionIdentityRef.current;
+    const accessToken = await resolveAccessToken();
+    if (!user || !accessToken) {
+      setActivationRequest(null);
+      return null;
+    }
+
+    try {
+      const response = await getMyActivationRequest(accessToken);
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
+      const next = response.activation_request ?? null;
+      setActivationRequest(next);
+      return next;
+    } catch (err) {
+      if (sessionIdentityRef.current !== requestIdentity) {
+        return null;
+      }
+      console.error("Erreur chargement demande activation:", err);
+      setActivationRequest(null);
+      return null;
+    }
+  }, [resolveAccessToken, user]);
+
   // Called by ChatbotParametresPage whenever the FB pages list changes (OAuth, activate, disconnect).
   // Keeps facebookPages in sync without needing a full setup-status reload.
   const handlePagesChanged = useCallback((pages: FacebookMessengerPage[]) => {
@@ -801,6 +834,7 @@ export default function Home() {
     setShowOrganizationAccess(false);
     setWorkspaceIdentity(null);
     setSetupStatus(null);
+    setActivationRequest(null);
     setFacebookPages([]);
     setSelectedFacebookPageId(null);
   }, [sessionIdentity]);
@@ -830,6 +864,7 @@ export default function Home() {
       loadOrganizationState().catch(() => null);
       loadWorkspaceIdentity().catch(() => null);
       loadSetupStatus().catch(() => null);
+      loadActivationRequest().catch(() => null);
       localStorage.setItem("flare-onboarding-v2.3.7-done", "1");
 
       await pingServer();
@@ -852,7 +887,20 @@ export default function Home() {
       if (pingInterval) clearInterval(pingInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, resolveAccessToken, user]);
+  }, [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, resolveAccessToken, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (
+      activeView === "chatbot" ||
+      activeView === "chatbot-activation" ||
+      activeView === "chatbot-parametres" ||
+      activeView === "billing" ||
+      activeView === "admin"
+    ) {
+      loadActivationRequest().catch(() => null);
+    }
+  }, [activeView, loadActivationRequest, user]);
 
   useEffect(() => {
     if (!user || user.emailVerified) return;
@@ -925,6 +973,52 @@ export default function Home() {
   const resolvedBrandLogoUrl = toRenderableMediaUrl(
     workspaceIdentity?.current_branding.logo_url || undefined
   );
+  const canAccessAdmin = Boolean(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+  const selectedFacebookPage =
+    selectedFacebookPageId
+      ? facebookPages.find((page) => page.page_id === selectedFacebookPageId) ?? null
+      : null;
+  const guideAssistantEnabled = workspaceIdentity?.user_profile?.guide_assistant_enabled ?? true;
+  const guideContext = useMemo<GuideContext>(
+    () => ({
+      hasOrganizationScope: organizationAccess?.current_scope.type === "organization",
+      userRole: organizationAccess?.current_scope.current_user_role ?? null,
+      hasSelectedFacebookPage: Boolean(selectedFacebookPageId),
+      hasConnectedFacebookPage: facebookPages.length > 0,
+      isBotActive: Boolean(selectedFacebookPage?.is_active || setupStatus?.has_connected_page),
+      setupStep: setupStatus?.step ?? null,
+      activationStatus: activationRequest?.status ?? null,
+      paymentStatus: activationRequest?.payment_status ?? null,
+      flarePageAdminConfirmed: activationRequest?.flare_page_admin_confirmed === "true",
+    }),
+    [
+      activationRequest?.flare_page_admin_confirmed,
+      activationRequest?.payment_status,
+      activationRequest?.status,
+      facebookPages.length,
+      organizationAccess?.current_scope.current_user_role,
+      organizationAccess?.current_scope.type,
+      selectedFacebookPage?.is_active,
+      selectedFacebookPageId,
+      setupStatus?.has_connected_page,
+      setupStatus?.step,
+    ]
+  );
+  const guideBottomClassName =
+    activeView === "assistant" || activeView === "chat"
+      ? "bottom-[168px] md:bottom-8"
+      : showInstallBanner
+        ? "bottom-24 md:bottom-28"
+        : "bottom-4 md:bottom-6";
+  const guideVisible =
+    !sidebarOpen &&
+    !isSettingsModalOpen &&
+    !isSpaceModalOpen &&
+    !isSpaceManagerOpen &&
+    !showOrganizationAccess &&
+    !isReportModalOpen &&
+    !(activeView === "assistant" && showFilesPanel) &&
+    !activeArtifact;
 
   const openOrganizationAccess = useCallback(async (targetView?: AppView) => {
     if (!user) {
@@ -996,6 +1090,7 @@ export default function Home() {
           loadOrganizationState(),
           loadWorkspaceIdentity().catch(() => null),
           loadSetupStatus().catch(() => null),
+          loadActivationRequest().catch(() => null),
         ]);
         setShowOrganizationAccess(false);
         const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
@@ -1008,7 +1103,7 @@ export default function Home() {
         setOrganizationLoading(false);
       }
     },
-    [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, pendingOrganizationTarget, resolveAccessToken]
+    [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, pendingOrganizationTarget, resolveAccessToken]
   );
 
   const handleCreateOrganizationScope = useCallback(async (name: string) => {
@@ -1025,6 +1120,7 @@ export default function Home() {
         loadOrganizationState(),
         loadWorkspaceIdentity().catch(() => null),
         loadSetupStatus().catch(() => null),
+        loadActivationRequest().catch(() => null),
       ]);
       setShowOrganizationAccess(false);
       const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
@@ -1042,7 +1138,7 @@ export default function Home() {
     } finally {
       setOrganizationLoading(false);
     }
-  }, [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, pendingOrganizationTarget, resolveAccessToken]);
+  }, [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, pendingOrganizationTarget, resolveAccessToken]);
 
   const handleDeleteOrganizationScope = useCallback(async (organizationSlug: string) => {
     if (!token) return;
@@ -1085,6 +1181,7 @@ export default function Home() {
         loadOrganizationState(),
         loadWorkspaceIdentity().catch(() => null),
         loadSetupStatus().catch(() => null),
+        loadActivationRequest().catch(() => null),
       ]);
       setShowOrganizationAccess(false);
       setPendingOrganizationTarget(null);
@@ -1095,7 +1192,7 @@ export default function Home() {
     } finally {
       setOrganizationLoading(false);
     }
-  }, [loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, resolveAccessToken]);
+  }, [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, resolveAccessToken]);
 
   const logoutWithScopeReset = useCallback(async () => {
     try {
@@ -1128,9 +1225,21 @@ export default function Home() {
         void openOrganizationAccess(view as AppView);
         return;
       }
+      if ((view as AppView) === "admin" && !canAccessAdmin) {
+        pushAppNotice("Cette vue est reservee a l'equipe FLARE.");
+        return;
+      }
       setNavStack(resolveDefaultNavStack(view as AppView));
     },
-    [openOrganizationAccess, organizationConnectionRequired, requestAuth, user]
+    [canAccessAdmin, openOrganizationAccess, organizationConnectionRequired, pushAppNotice, requestAuth, user]
+  );
+
+  const handleGuideNavigate = useCallback(
+    (target: string) => {
+      navigateWithAccess(target as AppView);
+      setSidebarOpen(false);
+    },
+    [navigateWithAccess]
   );
 
   const openMessengerConversation = useCallback(
@@ -1719,6 +1828,16 @@ export default function Home() {
         )}
         </AnimatePresence>
       </main>
+
+      <FloatingContextualGuide
+        enabled={guideAssistantEnabled}
+        visible={guideVisible}
+        activeView={activeView}
+        context={guideContext}
+        onNavigate={handleGuideNavigate}
+        canAccessAdmin={canAccessAdmin}
+        bottomClassName={guideBottomClassName}
+      />
     </div>
 
     <SpaceModal 

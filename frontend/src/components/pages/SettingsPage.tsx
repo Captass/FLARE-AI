@@ -17,6 +17,7 @@ import {
   Building2,
   Palette,
   AlertCircle,
+  Bot,
 } from "lucide-react";
 import {
   WorkspaceIdentity,
@@ -91,6 +92,10 @@ const T = {
     errorPwd: "Impossible d'envoyer l'email. Vérifiez votre connexion.",
     errorPwdEmail: "Aucun email associé à ce compte.",
     orgRoleHint: "Pour modifier l'organisation, contactez un administrateur.",
+    guideAssistant: "Guide IA contextuel",
+    guideAssistantDesc:
+      "Affiche un guide flottant en bas a droite pour expliquer chaque page et la prochaine action.",
+    guideAssistantSaving: "Mise a jour...",
   },
   en: {
     title: "Settings",
@@ -134,6 +139,10 @@ const T = {
     errorPwd: "Unable to send the email. Check your connection.",
     errorPwdEmail: "No email associated with this account.",
     orgRoleHint: "Contact an administrator to modify the organisation.",
+    guideAssistant: "Contextual AI guide",
+    guideAssistantDesc:
+      "Show a floating guide in the bottom-right corner to explain each page and the next action.",
+    guideAssistantSaving: "Updating...",
   },
 } as const;
 
@@ -261,23 +270,27 @@ function ErrorBanner({ message }: { message: string }) {
 
 function Toggle({
   enabled,
+  disabled = false,
   onToggle,
   label,
 }: {
   enabled: boolean;
+  disabled?: boolean;
   onToggle: () => void;
   label: string;
 }) {
   return (
     <button
       onClick={onToggle}
+      disabled={disabled}
       role="switch"
       aria-checked={enabled}
       aria-label={label}
       className={`relative h-6 w-11 rounded-full border transition-all duration-200
         ${enabled
           ? "bg-orange-500/30 border-orange-500/40"
-          : "bg-[var(--surface-subtle)] border-[var(--border-default)]"}`}
+          : "bg-[var(--surface-subtle)] border-[var(--border-default)]"}
+        ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
     >
       <span
         className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-[var(--icon-active)] shadow transition-transform duration-200
@@ -392,6 +405,11 @@ export default function SettingsPage({
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [guideAssistantEnabled, setGuideAssistantEnabled] = useState(
+    workspaceIdentity?.user_profile?.guide_assistant_enabled ?? true
+  );
+  const [guideAssistantSaving, setGuideAssistantSaving] = useState(false);
+  const [guideAssistantError, setGuideAssistantError] = useState<string | null>(null);
 
   // Organisation state
   const canEditOrg = workspaceIdentity?.can_edit_organization ?? false;
@@ -424,6 +442,9 @@ export default function SettingsPage({
       setOrgName(workspaceIdentity.organization_branding?.organization_name || "");
       setOrgDesc(workspaceIdentity.organization_branding?.workspace_description || "");
       setOrgLogoPreview(workspaceIdentity.organization_branding?.logo_url || undefined);
+      setGuideAssistantEnabled(
+        workspaceIdentity.user_profile?.guide_assistant_enabled ?? true
+      );
     }
   }, [workspaceIdentity]);
 
@@ -558,6 +579,33 @@ export default function SettingsPage({
       );
     } finally {
       setResettingPwd(false);
+    }
+  };
+
+  const handleGuideAssistantToggle = async () => {
+    const nextEnabled = !guideAssistantEnabled;
+    setGuideAssistantEnabled(nextEnabled);
+    setGuideAssistantError(null);
+
+    const t = await getToken();
+    if (!t) {
+      setGuideAssistantEnabled(!nextEnabled);
+      setGuideAssistantError(tx.errorAuth);
+      return;
+    }
+
+    setGuideAssistantSaving(true);
+    try {
+      const nextIdentity = await updateUserProfileSettings(
+        { guide_assistant_enabled: nextEnabled },
+        t
+      );
+      onIdentitySaved?.(nextIdentity);
+    } catch {
+      setGuideAssistantEnabled(!nextEnabled);
+      setGuideAssistantError(tx.errorSave);
+    } finally {
+      setGuideAssistantSaving(false);
     }
   };
 
@@ -779,6 +827,35 @@ export default function SettingsPage({
                 Le changement de theme se fait maintenant depuis le header principal, en haut a droite, pour rester accessible sur tout le produit.
               </p>
             </div>
+          </div>
+          <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-4">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <Bot size={15} className="text-orange-400" />
+                  <p className="text-sm font-medium text-[var(--text-primary)]">
+                    {tx.guideAssistant}
+                  </p>
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+                  {tx.guideAssistantDesc}
+                </p>
+                {guideAssistantSaving && (
+                  <p className="mt-2 text-[11px] text-[var(--text-muted)]">
+                    {tx.guideAssistantSaving}
+                  </p>
+                )}
+              </div>
+              <Toggle
+                enabled={guideAssistantEnabled}
+                disabled={guideAssistantSaving}
+                onToggle={handleGuideAssistantToggle}
+                label={tx.guideAssistant}
+              />
+            </div>
+            {guideAssistantError && (
+              <p className="mt-2 text-xs text-red-500">{guideAssistantError}</p>
+            )}
           </div>
         </SectionCard>
         {/* ── Langue ── */}

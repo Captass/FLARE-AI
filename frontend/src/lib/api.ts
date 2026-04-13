@@ -1219,6 +1219,7 @@ export interface UserProfileSettings {
   full_name: string;
   avatar_url: string;
   workspace_name: string;
+  guide_assistant_enabled: boolean;
 }
 
 export interface OrganizationBrandingSettings {

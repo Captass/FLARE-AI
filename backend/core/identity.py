@@ -60,16 +60,17 @@ def save_setting_json(db: Session, key: str, user_id: str, payload: Dict[str, An
     return payload
 
 
-def default_user_profile(email: Optional[str] = None) -> Dict[str, str]:
+def default_user_profile(email: Optional[str] = None) -> Dict[str, Any]:
     return {
         "display_name": _pretty_name_from_email(email),
         "full_name": "",
         "avatar_url": "",
         "workspace_name": "Mon espace",
+        "guide_assistant_enabled": True,
     }
 
 
-def load_user_profile(db: Session, user_id: str, email: Optional[str] = None) -> Dict[str, str]:
+def load_user_profile(db: Session, user_id: str, email: Optional[str] = None) -> Dict[str, Any]:
     payload = default_user_profile(email)
     stored = _load_setting_json(db, USER_PROFILE_KEY, user_id)
 
@@ -84,6 +85,9 @@ def load_user_profile(db: Session, user_id: str, email: Optional[str] = None) ->
         stored.get("workspace_name"),
         fallback=payload["workspace_name"],
         limit=100,
+    )
+    payload["guide_assistant_enabled"] = bool(
+        stored.get("guide_assistant_enabled", payload["guide_assistant_enabled"])
     )
     return payload
 

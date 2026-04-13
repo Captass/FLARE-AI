@@ -44,6 +44,7 @@ class UserProfileRequest(BaseModel):
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
     workspace_name: Optional[str] = None
+    guide_assistant_enabled: Optional[bool] = None
 
 
 class OrganizationBrandingRequest(BaseModel):
@@ -247,6 +248,8 @@ def update_user_profile(
         next_value["avatar_url"] = _clean_text(req.avatar_url, limit=2048)
     if req.workspace_name is not None:
         next_value["workspace_name"] = _clean_text(req.workspace_name, limit=100, fallback="Mon espace")
+    if req.guide_assistant_enabled is not None:
+        next_value["guide_assistant_enabled"] = bool(req.guide_assistant_enabled)
 
     save_setting_json(db, USER_PROFILE_KEY, raw_user_id, next_value)
     db.commit()
