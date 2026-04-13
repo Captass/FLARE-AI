@@ -86,6 +86,8 @@ export type ActiveView =
   | "chat"
   | "memory"
   | "dashboard"
+  | "facebook"
+  | "google"
   | "chatbot"
   | "leads"
   | "conversations"
@@ -114,13 +116,13 @@ const DEFAULT_BACK_TARGET: Partial<Record<AppView, AppView>> = {
   automations: "home",
   facebook: "automations",
   google: "automations",
-  chatbot: "home",
+  chatbot: "facebook",
   "chatbot-personnalisation": "chatbot",
   "chatbot-parametres": "chatbot",
-  "chatbot-dashboard": "chatbot",
-  "chatbot-clients": "chatbot",
+  "chatbot-dashboard": "facebook",
+  "chatbot-clients": "chatbot-dashboard",
   "chatbot-client-detail": "chatbot-clients",
-  "chatbot-orders": "chatbot",
+  "chatbot-orders": "chatbot-dashboard",
   "chatbot-activation": "chatbot",
   leads: "chatbot-dashboard",
   conversations: "chatbot-dashboard",
@@ -168,6 +170,8 @@ function resolvePreferredFacebookPageId(
 
 const GUEST_LOCKED_VIEWS: ActiveView[] = ["chat", "memory", "prompts", "knowledge", "files", "admin"];
 const ORGANIZATION_REQUIRED_VIEWS: ActiveView[] = [
+  "facebook",
+  "google",
   "chatbot",
   "leads",
   "conversations",
@@ -197,20 +201,20 @@ type LockedModuleConfig = {
 const DEFAULT_NAV_STACKS: Record<AppView, AppView[]> = {
   home: ["home"],
   automations: ["home", "automations"],
-  facebook: ["home", "facebook"],
-  google: ["home", "google"],
-  chatbot: ["home", "chatbot"],
-  leads: ["home", "chatbot", "leads"],
-  conversations: ["home", "chatbot", "conversations"],
-  expenses: ["home", "chatbot", "expenses"],
-  chatbotFiles: ["home", "chatbot", "chatbotFiles"],
-  "chatbot-personnalisation": ["home", "chatbot", "chatbot-personnalisation"],
-  "chatbot-parametres": ["home", "chatbot", "chatbot-parametres"],
-  "chatbot-dashboard": ["home", "chatbot", "chatbot-dashboard"],
-  "chatbot-clients": ["home", "chatbot", "chatbot-clients"],
-  "chatbot-client-detail": ["home", "chatbot", "chatbot-clients", "chatbot-client-detail"],
-  "chatbot-orders": ["home", "chatbot", "chatbot-orders"],
-  "chatbot-activation": ["home", "chatbot", "chatbot-activation"],
+  facebook: ["home", "automations", "facebook"],
+  google: ["home", "automations", "google"],
+  chatbot: ["home", "automations", "facebook", "chatbot"],
+  leads: ["home", "automations", "facebook", "chatbot-dashboard", "leads"],
+  conversations: ["home", "automations", "facebook", "chatbot-dashboard", "conversations"],
+  expenses: ["home", "automations", "facebook", "chatbot-dashboard", "expenses"],
+  chatbotFiles: ["home", "automations", "facebook", "chatbot-dashboard", "chatbotFiles"],
+  "chatbot-personnalisation": ["home", "automations", "facebook", "chatbot", "chatbot-personnalisation"],
+  "chatbot-parametres": ["home", "automations", "facebook", "chatbot", "chatbot-parametres"],
+  "chatbot-dashboard": ["home", "automations", "facebook", "chatbot-dashboard"],
+  "chatbot-clients": ["home", "automations", "facebook", "chatbot-dashboard", "chatbot-clients"],
+  "chatbot-client-detail": ["home", "automations", "facebook", "chatbot-dashboard", "chatbot-clients", "chatbot-client-detail"],
+  "chatbot-orders": ["home", "automations", "facebook", "chatbot-dashboard", "chatbot-orders"],
+  "chatbot-activation": ["home", "automations", "facebook", "chatbot", "chatbot-activation"],
   admin: ["home", "admin"],
   assistant: ["home", "assistant"],
   chat: ["home", "assistant"],
@@ -222,7 +226,7 @@ const DEFAULT_NAV_STACKS: Record<AppView, AppView[]> = {
   guide: ["home", "guide"],
   contact: ["home", "contact"],
   settings: ["home", "settings"],
-  dashboard: ["home", "chatbot", "chatbot-dashboard"],
+  dashboard: ["home", "automations", "facebook", "chatbot-dashboard"],
   automationHub: ["home", "automations", "automationHub"],
   prospection: ["home", "automations", "prospection"],
   content: ["home", "automations", "content"],
@@ -257,14 +261,14 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
     ],
     availableNow: [
       {
-        label: "Ouvrir Chatbot Facebook",
-        description: "La page deja prete pour traiter les demandes entrantes et faire remonter les clients a suivre.",
-        view: "chatbot",
+        label: "Ouvrir Facebook",
+        description: "Le module deja pret pour suivre les messages, leads et activations.",
+        view: "facebook",
         tone: "primary",
       },
       {
         label: "Voir les clients chauds",
-        description: "Priorisez tout de suite les clients que le chatbot remonte en premier.",
+        description: "Priorisez tout de suite les clients chauds detectes par Facebook.",
         view: "leads",
       },
       {
@@ -302,13 +306,13 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
         tone: "primary",
       },
       {
-        label: "Ouvrir Chatbot Facebook",
-        description: "Le module qui fait deja remonter les demandes utiles dans l'app.",
-        view: "chatbot",
+        label: "Ouvrir Facebook",
+        description: "Le module deja ouvert pour piloter messages et activations.",
+        view: "facebook",
       },
       {
-        label: "Voir le budget chatbot",
-        description: "Gardez une lecture claire des depenses avant d'ajouter d'autres modules.",
+        label: "Voir le budget Facebook",
+        description: "Garder une lecture claire des depenses avant d'ajouter d'autres plateformes.",
         view: "expenses",
       },
     ],
@@ -336,7 +340,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
     availableNow: [
       {
         label: "Ouvrir les clients chauds",
-        description: "La vue la plus proche du suivi client aujourd'hui pour voir les urgences remontees par le chatbot.",
+        description: "La vue la plus proche du suivi client aujourd'hui pour voir les urgences remontees par Facebook.",
         view: "leads",
         tone: "primary",
       },
@@ -346,9 +350,9 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
         view: "conversations",
       },
       {
-        label: "Voir le chatbot",
-        description: "Revenir a la vue d'ensemble qui tourne deja dans FLARE.",
-        view: "chatbot",
+        label: "Voir Facebook",
+        description: "Revenir a la vue d'ensemble Facebook.",
+        view: "facebook",
       },
     ],
   },
@@ -374,9 +378,9 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
     ],
     availableNow: [
       {
-        label: "Ouvrir Chatbot Facebook",
-        description: "Le module automatise deja actif pour les demandes entrantes et les priorites du jour.",
-        view: "chatbot",
+        label: "Ouvrir Facebook",
+        description: "Le module automatise deja actif pour les demandes entrantes.",
+        view: "facebook",
         tone: "primary",
       },
       {
@@ -1451,8 +1455,18 @@ export default function Home() {
           activeView === "leads" ||
           activeView === "conversations" ||
           activeView === "expenses" ||
-          activeView === "chatbotFiles"
-        ? "chatbot"
+          activeView === "chatbotFiles" ||
+          activeView === "facebook" ||
+          activeView === "google" ||
+          activeView === "chatbot" ||
+          activeView === "chatbot-personnalisation" ||
+          activeView === "chatbot-parametres" ||
+          activeView === "chatbot-dashboard" ||
+          activeView === "chatbot-clients" ||
+          activeView === "chatbot-client-detail" ||
+          activeView === "chatbot-orders" ||
+          activeView === "chatbot-activation"
+        ? "automations"
         : activeView === "automationHub" ||
           activeView === "prospection" ||
           activeView === "content" ||

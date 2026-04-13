@@ -1,16 +1,11 @@
 "use client";
 
-import { motion } from "framer-motion";
-import PlatformCard from "@/components/PlatformCard";
+import type { ReactNode } from "react";
 import type { NavLevel } from "@/components/NavBreadcrumb";
-
-interface AutomationsPageProps {
-  onPush: (level: NavLevel) => void;
-}
 
 function FacebookLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="#1877F2">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#1877F2" aria-hidden>
       <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
     </svg>
   );
@@ -18,7 +13,7 @@ function FacebookLogo() {
 
 function GoogleLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24">
+    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
@@ -29,19 +24,19 @@ function GoogleLogo() {
 
 function TikTokLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-      <path d="M14.5 3h2.3a4.9 4.9 0 004.2 4.2v2.3a7.2 7.2 0 01-4.2-1.2v6.2a5.5 5.5 0 11-5.5-5.5c.3 0 .7 0 1 .1v2.4a3.2 3.2 0 102.2 3V3z" fill="#111827" />
-      <path d="M14.5 3h2.3a4.9 4.9 0 004.2 4.2v1.2a6.1 6.1 0 01-4.2-1.1v6.1a5.5 5.5 0 11-5.5-5.5v1.3a4.2 4.2 0 104.2 4.2V3z" fill="#25F4EE" fillOpacity=".85" />
-      <path d="M14.5 3h2.3a4.9 4.9 0 004.2 4.2v.7a6.4 6.4 0 01-4.2-1v5.9a5.5 5.5 0 11-5.5-5.5v.8a4.6 4.6 0 104.6 4.6V3z" fill="#FE2C55" fillOpacity=".72" />
+    <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden>
+      <path fill="#111111" d="M14.97 1c.37 1.96 1.54 3.39 3.53 3.62v2.56a6.35 6.35 0 01-3.44-1.04v7.03c0 3.55-2.15 5.83-5.49 5.83-3.18 0-5.57-2.2-5.57-5.4 0-3.45 2.74-5.56 6.07-5.22v2.68c-1.68-.22-3.25.62-3.25 2.42 0 1.6 1.16 2.49 2.63 2.49 1.57 0 2.7-1 2.7-2.96V1h2.82z" />
+      <path fill="#25F4EE" d="M15.06 6.14a6.35 6.35 0 003.44 1.04V4.62c-.26-.03-.5-.08-.73-.15v1.97a6.35 6.35 0 01-3.44-1.04v7.03c0 3.55-2.15 5.83-5.49 5.83-.59 0-1.15-.08-1.67-.24a5.35 5.35 0 002.4.52c3.34 0 5.49-2.28 5.49-5.83V6.14z" />
+      <path fill="#FE2C55" d="M10.07 8.38v2.68c-.32-.04-.63-.04-.94.01-1.48.24-2.3 1.34-2.3 2.66 0 1.39.95 2.34 2.38 2.34.27 0 .52-.03.76-.11a2.61 2.61 0 01-1.48.44c-1.47 0-2.63-.89-2.63-2.49 0-1.8 1.57-2.64 3.25-2.42V8.8c.31-.04.63-.06.96-.04.01-.13.01-.25 0-.38z" />
     </svg>
   );
 }
 
 function InstagramLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ig-grad)">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="url(#ig-grad-shared)" aria-hidden>
       <defs>
-        <linearGradient id="ig-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+        <linearGradient id="ig-grad-shared" x1="0%" y1="100%" x2="100%" y2="0%">
           <stop offset="0%" stopColor="#f09433" />
           <stop offset="25%" stopColor="#e6683c" />
           <stop offset="50%" stopColor="#dc2743" />
@@ -56,27 +51,44 @@ function InstagramLogo() {
 
 function LinkedInLogo() {
   return (
-    <svg width="28" height="28" viewBox="0 0 24 24" fill="#0A66C2">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#0A66C2" aria-hidden>
       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
     </svg>
   );
 }
 
-type PlatformItem = {
+function ShopifyLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="#96bf48" aria-hidden>
+      <path d="M15.337.925c-.06-.018-.12-.024-.186-.024-.054 0-.108.006-.162.018C14.883.937 14.037 1.303 13.605 1.471c-.366-1.053-.939-2.019-1.985-2.019-.03 0-.06 0-.09.003C11.265-1.025 10.893-1.5 10.449-1.5c-3.705 0-5.49 4.647-6.045 7.005-.024.09-.042.183-.048.273-.633.195-1.083.336-1.143.357-.354.111-.366.123-.411.459-.033.249-.999 7.734-.999 7.734L14.367 16.5l5.799-1.254S15.513 1.023 15.337.925zM11.673 2.283c-.015 0-.024 0-.036.003-.012 0-.024.003-.036.003-.396.033-.78.465-.974.819-.165-.027-.333-.051-.495-.057.18-.681.462-1.329.81-1.794.147.276.291.633.39 1.026h.341zm1.008 3.372l-1.95.597c.18-.69.54-1.35.987-1.794.168.366.312.84.372 1.266-.135-.03-.273-.051-.411-.069h.002zM12 4.578l-.168.048a3.97 3.97 0 00-.369-1.008c.162.054.321.12.471.204L12 4.578zM10.878 1.992c.114 0 .228.012.339.042-.111.144-.219.306-.318.492a2.994 2.994 0 00-.438-.036c.138-.312.279-.498.417-.498zM13.218 2.4c.18.468.312.978.378 1.5l-.84.255c.114-.459.279-.915.462-1.257zM12.75.243c.03.018.054.036.072.054a1.617 1.617 0 01-.384.246c-.09-.396-.219-.726-.372-.981.255.156.498.402.684.681z" />
+    </svg>
+  );
+}
+
+function GlobeLogo() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-[var(--text-secondary)]" aria-hidden>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+    </svg>
+  );
+}
+
+export interface AutomationPlatform {
   id: string;
   label: string;
   description: string;
-  icon: JSX.Element;
+  icon: ReactNode;
   locked: boolean;
   glowColor?: string;
   navLevel?: NavLevel;
-};
+}
 
-const PLATFORMS: PlatformItem[] = [
+export const AUTOMATION_PLATFORMS: AutomationPlatform[] = [
   {
     id: "facebook",
     label: "Facebook",
-    description: "Messages, leads et reponses automatiques",
+    description: "Messages, leads et chatbot de vente.",
     icon: <FacebookLogo />,
     locked: false,
     glowColor: "#1877F2",
@@ -85,7 +97,7 @@ const PLATFORMS: PlatformItem[] = [
   {
     id: "google",
     label: "Google",
-    description: "Acquisition, campagnes et suivi de performance",
+    description: "Prospection, Ads et tableau de bord.",
     icon: <GoogleLogo />,
     locked: false,
     glowColor: "#4285F4",
@@ -94,71 +106,36 @@ const PLATFORMS: PlatformItem[] = [
   {
     id: "tiktok",
     label: "TikTok",
-    description: "DM, qualification et relances automatisees",
+    description: "Contenu, messages et ventes sociales.",
     icon: <TikTokLogo />,
     locked: true,
   },
   {
     id: "instagram",
     label: "Instagram",
-    description: "Publications, stories et DM automatises",
+    description: "DM, posts et suivi commercial.",
     icon: <InstagramLogo />,
     locked: true,
   },
   {
     id: "linkedin",
     label: "LinkedIn",
-    description: "Prospection B2B et sequences automatisees",
+    description: "Prospection B2B et contenu pro.",
     icon: <LinkedInLogo />,
     locked: true,
   },
+  {
+    id: "shopify",
+    label: "Shopify",
+    description: "Commandes, relances et tunnel ecommerce.",
+    icon: <ShopifyLogo />,
+    locked: true,
+  },
+  {
+    id: "website",
+    label: "Site web",
+    description: "Formulaires, chatbot et capture de leads.",
+    icon: <GlobeLogo />,
+    locked: true,
+  },
 ];
-
-export default function AutomationsPage({ onPush }: AutomationsPageProps) {
-  return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
-        <motion.header
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-2"
-        >
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">Automatisations</h1>
-          <p className="text-lg text-[var(--text-muted)]">Choisis ta plateforme</p>
-        </motion.header>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.05 }}
-          className="grid grid-cols-2 gap-4 md:grid-cols-3"
-          role="list"
-          aria-label="Plateformes disponibles"
-        >
-          {PLATFORMS.map((platform, idx) => {
-            const navLevel = platform.navLevel;
-            return (
-              <motion.div
-                key={platform.id}
-                initial={{ opacity: 0, y: 14 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 + idx * 0.05, ease: [0.16, 1, 0.3, 1] }}
-                role="listitem"
-              >
-                <PlatformCard
-                  icon={platform.icon}
-                  label={platform.label}
-                  description={platform.description}
-                  locked={platform.locked}
-                  glowColor={platform.glowColor}
-                  onClick={navLevel ? () => onPush(navLevel) : undefined}
-                />
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </div>
-    </div>
-  );
-}

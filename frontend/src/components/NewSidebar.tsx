@@ -59,9 +59,8 @@ const ASSISTANT_ITEMS: NavItem[] = [
 ];
 
 const MAIN_ITEMS: NavItem[] = [
-  { id: "chatbot", labelFr: "Chatbot Facebook", labelEn: "Facebook Chatbot", icon: MessageCircle },
-  { id: "assistant", labelFr: "Assistant IA", labelEn: "AI Assistant", icon: Bot },
   { id: "automations", labelFr: "Automatisations", labelEn: "Automations", icon: Zap },
+  { id: "assistant", labelFr: "Assistant IA", labelEn: "AI Assistant", icon: Bot },
 ];
 
 const SECONDARY_ITEMS: NavItem[] = [
@@ -193,15 +192,32 @@ export default function NewSidebar({
   const sidebarWidth = expanded ? "w-[240px]" : "w-[64px]";
 
   const isAdmin = Boolean(userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()));
-  const activeMainItem = (["chatbot", "facebook", "google", "chatbot-personnalisation", "chatbot-parametres", "chatbot-dashboard", "chatbot-clients", "chatbot-client-detail", "chatbot-orders", "chatbot-activation"] as NavLevel[]).includes(activeView)
-    ? "chatbot"
-    : (["automations", "prospection", "content", "followup", "agents", "automationHub"] as string[]).includes(activeView as string)
-      ? "automations"
-      : (["assistant", "chat", "memory", "knowledge", "prompts", "files"] as string[]).includes(activeView as string)
-        ? "assistant"
-        : activeView === ("admin" as NavLevel)
-          ? "admin"
-          : null;
+  const activeMainItem = (
+    [
+      "chatbot",
+      "facebook",
+      "google",
+      "chatbot-personnalisation",
+      "chatbot-parametres",
+      "chatbot-dashboard",
+      "chatbot-clients",
+      "chatbot-client-detail",
+      "chatbot-orders",
+      "chatbot-activation",
+      "automations",
+      "prospection",
+      "content",
+      "followup",
+      "agents",
+      "automationHub",
+    ] as string[]
+  ).includes(activeView as string)
+    ? "automations"
+    : (["memory", "knowledge", "prompts", "files", "assistant", "chat"] as string[]).includes(activeView as string)
+      ? "assistant"
+      : activeView === ("admin" as NavLevel)
+        ? "admin"
+        : null;
 
   const navigate = (level: NavLevel) => {
     setProfileMenuOpen(false);

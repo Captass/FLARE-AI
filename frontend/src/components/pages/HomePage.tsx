@@ -2,7 +2,20 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { MessageCircle, Bot, CheckCircle2, AlertTriangle, MessageSquare, Users } from "lucide-react";
+import {
+  Bot,
+  CheckCircle2,
+  AlertTriangle,
+  MessageSquare,
+  Users,
+  Facebook,
+  Search,
+  Radio,
+  Instagram,
+  Linkedin,
+  Globe,
+  type LucideIcon,
+} from "lucide-react";
 import { getChatbotOverview, getDashboardStats, type ChatbotOverview, type DashboardStats } from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { SkeletonCard } from "@/components/SkeletonLoader";
@@ -27,7 +40,7 @@ function KpiCard({
 }: {
   label: string;
   value: string | number;
-  icon: typeof MessageCircle;
+  icon: LucideIcon;
   accent?: "navy" | "orange";
   loading?: boolean;
   delay: number;
@@ -42,14 +55,12 @@ function KpiCard({
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ scale: 1.02 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="flex-1 min-w-0 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-4"
+      className="min-w-0 flex-1 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-4"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1 min-w-0">
-          <span className="text-sm text-[var(--text-secondary)] font-medium leading-tight">{label}</span>
-          <span className="text-2xl font-bold text-[var(--text-primary)] leading-tight tracking-tight">
-            {value}
-          </span>
+        <div className="min-w-0 space-y-1">
+          <span className="text-sm font-medium leading-tight text-[var(--text-secondary)]">{label}</span>
+          <span className="text-2xl font-bold leading-tight tracking-tight text-[var(--text-primary)]">{value}</span>
         </div>
         <div
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${
@@ -61,14 +72,14 @@ function KpiCard({
           <Icon size={17} />
         </div>
       </div>
-      {value === "Actif" && (
-        <div className="mt-3 flex items-center gap-1.5 text-sm text-navy-500 font-medium">
+      {value === "En ligne" && (
+        <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-navy-500">
           <CheckCircle2 size={13} />
-          <span>Actif</span>
+          <span>Operationnel</span>
         </div>
       )}
-      {value === "Inactif" && (
-        <div className="mt-3 flex items-center gap-1.5 text-sm text-orange-500 font-medium">
+      {value === "A configurer" && (
+        <div className="mt-3 flex items-center gap-1.5 text-sm font-medium text-orange-500">
           <AlertTriangle size={13} />
           <span>Action requise</span>
         </div>
@@ -77,48 +88,72 @@ function KpiCard({
   );
 }
 
-function QuickCard({
+function PlatformTile({
   icon: Icon,
   iconColor,
   title,
   description,
+  availability,
+  cta,
+  locked = false,
   onClick,
   delay,
 }: {
-  icon: typeof MessageCircle;
+  icon: LucideIcon;
   iconColor: string;
   title: string;
   description: string;
-  onClick: () => void;
+  availability: string;
+  cta: string;
+  locked?: boolean;
+  onClick?: () => void;
   delay: number;
 }) {
+  const CardTag = locked ? "div" : "button";
+
   return (
-    <motion.button
+    <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={locked ? undefined : { scale: 1.02 }}
+      whileTap={locked ? undefined : { scale: 0.98 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
-      onClick={onClick}
-      className="flex-1 min-w-0 cursor-pointer group flex flex-col items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-5 text-left transition-all duration-250 hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)]"
-      aria-label={title}
+      className="min-w-0"
     >
-      <div
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl
-                    ${iconColor} transition-transform duration-300 group-hover:scale-105`}
+      <CardTag
+        onClick={locked ? undefined : onClick}
+        className={`group flex h-full w-full flex-col items-start gap-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-5 text-left transition-all duration-250 ${
+          locked
+            ? "cursor-not-allowed opacity-75"
+            : "cursor-pointer hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)]"
+        }`}
+        aria-label={title}
       >
-        <Icon size={22} strokeWidth={1.8} />
-      </div>
-      <div className="space-y-1.5">
-        <h3 className="text-lg font-semibold text-[var(--text-primary)] tracking-tight">{title}</h3>
-        <p className="text-sm text-[var(--text-secondary)] leading-relaxed max-w-[22rem]">{description}</p>
-      </div>
-    </motion.button>
+        <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${iconColor} transition-transform duration-300 group-hover:scale-105`}>
+          <Icon size={22} strokeWidth={1.8} />
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">{title}</h3>
+            <span
+              className={`rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.07em] ${
+                locked
+                  ? "bg-[var(--surface-subtle)] text-[var(--text-muted)]"
+                  : "bg-orange-500/12 text-orange-500"
+              }`}
+            >
+              {availability}
+            </span>
+          </div>
+          <p className="max-w-[22rem] text-sm leading-relaxed text-[var(--text-secondary)]">{description}</p>
+        </div>
+        <span className="mt-auto text-xs font-semibold uppercase tracking-[0.08em] text-[var(--text-muted)]">{cta}</span>
+      </CardTag>
+    </motion.div>
   );
 }
 
 export default function HomePage({
-  displayName,
   orgName,
   token,
   currentScopeType = "personal",
@@ -186,34 +221,35 @@ export default function HomePage({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-8">
-
-        {/* Header */}
+      <div className="mx-auto flex w-full max-w-[980px] flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-1"
+          className="space-y-3"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">
-            Bonjour, {displayName || "vous"}
+          <span className="inline-flex items-center rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+            Facebook - Google - TikTok - Instagram - LinkedIn
+          </span>
+          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)] md:text-4xl">
+            Automatise tes plateformes. Vends plus sans complexite.
           </h1>
-          <p className="text-lg text-[var(--text-muted)]">
-            {orgName ? (
-              <>{orgName} - </>
-            ) : null}
+          <p className="max-w-[780px] text-base text-[var(--text-secondary)] md:text-lg">
+            FLARE AI centralise tes automatisations marketing et commerciales. Tu lances, tu suis, tu optimises depuis un seul espace.
+          </p>
+          <p className="text-sm text-[var(--text-muted)]">
+            {orgName ? `${orgName} - ` : ""}
             <span className="capitalize">{today}</span>
           </p>
         </motion.header>
 
-        {/* KPI row */}
         <section aria-label="Indicateurs cles">
           {!isOrganizationScope && (
             <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3">
               <div>
                 <p className="text-sm font-medium text-[var(--text-primary)]">Aucun espace de travail actif</p>
                 <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                  Creez votre espace pour connecter Facebook et lancer le chatbot.
+                  Active ton espace pour lancer les automatisations multi-plateformes.
                 </p>
               </div>
               {onCreateWorkspace && (
@@ -221,28 +257,27 @@ export default function HomePage({
                   onClick={onCreateWorkspace}
                   className="shrink-0 rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-[rgb(24,11,2)]"
                 >
-                  Creer mon espace
+                  Activer mon espace
                 </button>
               )}
             </div>
           )}
           {lastKpiUpdate && (
-            <p className="text-sm text-[var(--text-secondary)] mb-3">
-              Indicateurs synchronises avec le serveur - actualisation automatique toutes les{" "}
-              {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
+            <p className="mb-3 text-sm text-[var(--text-secondary)]">
+              Indicateurs synchronises avec le serveur - actualisation automatique toutes les {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
             </p>
           )}
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <KpiCard
-              label="Statut chatbot"
-              value={loadingKpi ? "..." : isActive ? "Actif" : overview ? "Inactif" : "--"}
+              label="Automatisations en ligne"
+              value={loadingKpi ? "..." : isActive ? "En ligne" : overview ? "A configurer" : "--"}
               icon={Bot}
               accent={isActive ? "navy" : "orange"}
               loading={loadingKpi}
               delay={0.05}
             />
             <KpiCard
-              label="Messages traites ce mois"
+              label="Actions executees ce mois"
               value={loadingKpi ? "..." : String(messagesCount)}
               icon={MessageSquare}
               accent="navy"
@@ -250,7 +285,7 @@ export default function HomePage({
               delay={0.1}
             />
             <KpiCard
-              label="Contacts / leads captes"
+              label="Leads captes"
               value={loadingKpi ? "..." : String(contactsCount)}
               icon={Users}
               accent="orange"
@@ -260,46 +295,79 @@ export default function HomePage({
           </div>
         </section>
 
-        {/* Acces rapide */}
-        <section aria-label="Acces rapide">
+        <section aria-label="Plateformes d'automatisation">
           <motion.h2
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
             className="mb-4 text-sm font-medium uppercase tracking-[0.08em] text-[var(--text-muted)]"
           >
-            Acces rapide
+            Plateformes d'automatisation
           </motion.h2>
-          <div className="flex flex-col sm:flex-row gap-4">
-            <QuickCard
-              icon={MessageCircle}
-              iconColor="bg-orange-500/15 text-orange-500"
-              title="Chatbot Facebook"
-              description="Ouvrez le module métier principal pour piloter la page, les messages et les clients."
-              onClick={() => onPush("chatbot")}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <PlatformTile
+              icon={Facebook}
+              iconColor="bg-blue-600/12 text-blue-600"
+              title="Facebook"
+              description="Automatise les messages, capte les leads et gere les conversations a grande echelle."
+              availability="Disponible"
+              cta="Ouvrir Facebook"
+              onClick={() => onPush("facebook")}
               delay={0.22}
             />
-            <QuickCard
-              icon={Bot}
-              iconColor="bg-navy-500/15 text-navy-400"
-              title="Assistant IA"
-              description="Posez des questions, preparez du contenu et travaillez avec votre assistant intelligent."
-              onClick={() => onPush("assistant")}
+            <PlatformTile
+              icon={Search}
+              iconColor="bg-[var(--accent-navy)]/15 text-[var(--accent-navy)]"
+              title="Google"
+              description="Centralise acquisition, campagnes et suivi de performance dans un flux clair."
+              availability="Disponible"
+              cta="Ouvrir Google"
+              onClick={() => onPush("google")}
               delay={0.28}
             />
-            <QuickCard
-              icon={MessageSquare}
-              iconColor="bg-[rgba(28,60,168,0.10)] text-navy-500"
-              title="Automatisations"
-              description="Consultez les autres modules et automatismes disponibles dans votre espace."
-              onClick={() => onPush("automations")}
+            <PlatformTile
+              icon={Radio}
+              iconColor="bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
+              title="TikTok"
+              description="Automatise DM, qualification et reactivation des prospects TikTok."
+              availability="Bientot"
+              cta="Disponible bientot"
+              locked
               delay={0.34}
+            />
+            <PlatformTile
+              icon={Instagram}
+              iconColor="bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
+              title="Instagram"
+              description="Active reponses auto, tri des demandes et suivi des interactions."
+              availability="Bientot"
+              cta="Disponible bientot"
+              locked
+              delay={0.4}
+            />
+            <PlatformTile
+              icon={Linkedin}
+              iconColor="bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
+              title="LinkedIn"
+              description="Structure la prospection B2B avec sequences et relances automatisees."
+              availability="Bientot"
+              cta="Disponible bientot"
+              locked
+              delay={0.46}
+            />
+            <PlatformTile
+              icon={Globe}
+              iconColor="bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
+              title="Site web"
+              description="Capture les leads entrants avec formulaires et assistants connectes."
+              availability="Bientot"
+              cta="Disponible bientot"
+              locked
+              delay={0.52}
             />
           </div>
         </section>
-
       </div>
     </div>
   );
 }
-
