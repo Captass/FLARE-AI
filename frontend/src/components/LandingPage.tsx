@@ -723,12 +723,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 style={{ x: logoParallaxX, y: logoParallaxY }}
                 className="relative flex h-14 w-14 items-center justify-center transition-all duration-700 group-hover:scale-110 md:h-24 md:w-24"
               >
-                <div className="landing-mark-frame absolute inset-0 rounded-[30%] border border-white/10 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.12),rgba(255,255,255,0.03)_55%,transparent_100%)] shadow-[0_0_50px_rgba(255,255,255,0.08)]" />
-                <FlareMark tone="dark" className="w-8 md:w-14" priority />
+                <div className="landing-mark-frame absolute inset-0 rounded-[30%] border border-black/5 bg-[radial-gradient(circle_at_30%_30%,rgba(0,0,0,0.05),rgba(0,0,0,0.02)_55%,transparent_100%)] shadow-[0_0_50px_rgba(0,0,0,0.03)]" />
+                <FlareMark tone="light" className="w-8 md:w-14" priority />
               </motion.div>
               <div className="flex flex-col justify-center">
-                <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none font-black text-white">FLARE AI</span>
-                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3 font-bold text-white/80">Votre business en pilote automatique</span>
+                <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none font-black text-black">FLARE AI</span>
+                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3 font-bold text-black/60">Votre business en pilote automatique</span>
               </div>
             </div>
 
@@ -779,8 +779,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 <br />
                 <motion.span
                   style={{ 
-                    opacity: useTransform(scrollYProgress, [0.02, 0.12], [0, 1]),
-                    scale: useTransform(scrollYProgress, [0.02, 0.12], [0.8, 1])
+                    opacity: useTransform(scrollYProgress, [0, 0.1], [1, 1]),
+                    scale: useTransform(scrollYProgress, [0, 0.1], [1, 1.05])
                   }}
                   className="font-black tracking-tight text-orange-500 inline-block drop-shadow-xl"
                 >

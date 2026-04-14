@@ -93,8 +93,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    // À compléter avec la valeur fournie par Google Search Console
-    // google: "VOTRE_CODE_VERIFICATION_ICI",
+    google: "B7f6yC5e8lX5W5aAdPrjukLca7r66PEhUQboVeF1XZs",
   },
 };
 
