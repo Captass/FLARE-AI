@@ -24,8 +24,6 @@ import type { ChatbotSetupStatus } from "@/lib/api";
 interface ChatbotHomePageProps {
   token?: string | null;
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
-  currentScopeType?: "personal" | "organization";
-  currentUserRole?: string | null;
   onPush: (level: NavLevel) => void;
   /** Nombre de conversations necessitant une intervention humaine */
   pendingHumanCount?: number;
@@ -37,7 +35,6 @@ interface ChatbotHomePageProps {
   /** Statut du parcours d'installation (connexion -> preferences) */
   setupStatus?: ChatbotSetupStatus | null;
   onRefreshSetupStatus?: () => Promise<ChatbotSetupStatus | null>;
-  onRequestOrganizationSelection?: () => void;
 }
 
 const ENTRIES = [
@@ -84,7 +81,7 @@ const ENTRIES = [
 ];
 
 const META_BLOCKER_ALERT =
-  "Facebook a bloque la connexion avant le retour vers FLARE. Si la popup affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de votre espace FLARE.";
+  "Facebook a bloque la connexion avant le retour vers FLARE. Si la popup affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de votre compte FLARE.";
 
 type InlineFeedback = {
   tone: "info" | "success" | "warning" | "error";
@@ -99,21 +96,9 @@ type ActivationBanner = {
 };
 
 function getActivationBanner(
-  scopeType: "personal" | "organization",
   planId: string | null,
   ar: ActivationRequest | null,
-  onRequestOrganizationSelection?: () => void,
 ): ActivationBanner | null {
-  if (scopeType !== "organization") {
-    return {
-      label: "Creez votre espace",
-      description: "Creez ou choisissez un espace de travail pour activer votre chatbot.",
-      color: "orange",
-      cta: onRequestOrganizationSelection
-        ? { label: "Choisir ou creer un espace", action: onRequestOrganizationSelection }
-        : undefined,
-    };
-  }
   if (!ar) {
     if (!planId || planId === "free") {
       return {
@@ -178,8 +163,6 @@ function getActivationBanner(
 export default function ChatbotHomePage({
   token,
   getFreshToken,
-  currentScopeType = "personal",
-  currentUserRole = null,
   onPush,
   pendingHumanCount = 0,
   pages = [],
@@ -188,15 +171,12 @@ export default function ChatbotHomePage({
   onPagesChanged,
   setupStatus = null,
   onRefreshSetupStatus,
-  onRequestOrganizationSelection,
 }: ChatbotHomePageProps) {
   const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
   const [currentPlanId, setCurrentPlanId] = useState<string | null>(null);
   const [activationLoading, setActivationLoading] = useState(true);
 
-  // L'acces aux fonctionnalites chatbot est ouvert des qu'on est dans une organisation
-  // L'activation tunnel reste informative mais ne bloque plus l'UI
-  const canAccessChatbot = currentScopeType === "organization";
+  const canAccessChatbot = Boolean(token);
 
   const hasPageSelected = Boolean(selectedPageId && pages.some((page) => page.page_id === selectedPageId));
   const [dashData, setDashData] = useState<MessengerDashboardData | null>(null);
@@ -265,8 +245,7 @@ export default function ChatbotHomePage({
   }, [syncFacebookPages]);
 
   useEffect(() => {
-    const normalizedRole = String(currentUserRole || "").toLowerCase();
-    const canInspectMeta = currentScopeType === "organization" && (canManageFb || ["owner", "admin"].includes(normalizedRole));
+    const canInspectMeta = Boolean(canManageFb);
 
     if (!canInspectMeta || typeof window === "undefined") {
       setFacebookAuthDebug(null);
@@ -295,7 +274,7 @@ export default function ChatbotHomePage({
     return () => {
       cancelled = true;
     };
-  }, [canManageFb, currentScopeType, currentUserRole, resolveToken]);
+  }, [canManageFb, resolveToken]);
 
   const handleActivatePage = useCallback(
     async (pageId: string) => {
@@ -396,18 +375,6 @@ export default function ChatbotHomePage({
   );
 
   const handleConnectMetaPages = useCallback(async () => {
-    if (currentScopeType !== "organization") {
-      pushFeedback("warning", "Creez ou choisissez d'abord votre espace de travail pour connecter Facebook.");
-      onRequestOrganizationSelection?.();
-      return;
-    }
-
-    const normalizedRole = String(currentUserRole || "").toLowerCase();
-    if (!canManageFb && normalizedRole && !["owner", "admin"].includes(normalizedRole)) {
-      pushFeedback("error", "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.");
-      return;
-    }
-
     const t = await resolveToken();
     if (!t) {
       pushFeedback("error", "Session expiree. Reconnectez-vous a FLARE.");
@@ -421,11 +388,8 @@ export default function ChatbotHomePage({
       onPagesChanged?.(st.pages || []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connexion Meta interrompue.";
-      if (/organisation|espace|scope|selectionnez d'abord/i.test(msg)) {
-        onRequestOrganizationSelection?.();
-      }
       if (/403|forbidden|permission|owner|admin/i.test(msg)) {
-        pushFeedback("error", "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.");
+        pushFeedback("error", "Permissions insuffisantes pour connecter Facebook.");
         return;
       }
       if (msg === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) {
@@ -436,7 +400,7 @@ export default function ChatbotHomePage({
     } finally {
       setFbOauthBusy(false);
     }
-  }, [canManageFb, currentScopeType, currentUserRole, onPagesChanged, onRequestOrganizationSelection, pushFeedback, resolveToken]);
+  }, [canManageFb, onPagesChanged, pushFeedback, resolveToken]);
 
   const handleSyncPagesList = useCallback(async () => {
     const t = await resolveToken();
@@ -509,10 +473,8 @@ export default function ChatbotHomePage({
     );
 
   const activationBanner = getActivationBanner(
-    currentScopeType,
     currentPlanId,
-    activationRequest,
-    onRequestOrganizationSelection
+    activationRequest
   );
 
   // Etapes du guide d'onboarding
@@ -563,9 +525,7 @@ export default function ChatbotHomePage({
               Chatbot IA Facebook
             </h1>
             <p className="text-lg text-[var(--text-muted)] mb-6">
-              {canAccessChatbot
-                ? "Connectez et configurez votre page Facebook Messenger."
-                : "Creez un espace de travail pour commencer."}
+              Connectez et configurez votre page Facebook Messenger.
             </p>
 
             {/* -- Activation status banner -- */}
@@ -664,7 +624,7 @@ export default function ChatbotHomePage({
               </motion.div>
             )}
 
-            {/* PageSelector visible for any organization member */}
+            {/* PageSelector visible for any account member */}
             {canAccessChatbot && (
               <PageSelector
                 pages={pages}

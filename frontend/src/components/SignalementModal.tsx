@@ -19,7 +19,7 @@ const CATEGORY_OPTIONS = [
   { value: "ui_bug", label: "Bug interface" },
   { value: "chatbot_issue", label: "Probleme chatbot" },
   { value: "activation_payment", label: "Paiement / activation" },
-  { value: "account_workspace", label: "Compte / espace" },
+  { value: "account_workspace", label: "Compte" },
   { value: "data_problem", label: "Donnees incorrectes" },
   { value: "other", label: "Autre" },
 ];
@@ -253,7 +253,7 @@ export default function SignalementModal({
             </div>
 
             <div className="flex items-center justify-between gap-3 border-t border-[var(--border-default)] px-5 py-4 md:px-6">
-              <p className="text-xs text-[var(--text-muted)]">Le signalement arrive dans l&apos;espace admin FLARE.</p>
+              <p className="text-xs text-[var(--text-muted)]">Le signalement arrive dans l&apos;admin FLARE.</p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"

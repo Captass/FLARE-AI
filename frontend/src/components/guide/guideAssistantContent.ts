@@ -66,7 +66,6 @@ export interface GuideContentEntry {
 }
 
 export interface GuideContext {
-  hasOrganizationScope: boolean;
   userRole: string | null;
   hasSelectedFacebookPage: boolean;
   hasConnectedFacebookPage: boolean;
@@ -87,7 +86,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
     title: "Accueil",
     summary: "Ici tu vois ou aller ensuite pour avancer sans te perdre dans l'application.",
     steps: [
-      { id: "scope", label: "Verifie ton espace actif", status: "next" },
+      { id: "scope", label: "Verifie ton compte actif", status: "next" },
       { id: "offer", label: "Choisis ou verifie ton offre", status: "todo" },
       { id: "chatbot", label: "Passe sur Chatbot Facebook pour continuer", status: "todo" },
     ],
@@ -248,10 +247,9 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   settings: {
     audience: "user",
     title: "Parametres",
-    summary: "Ici tu regles ton profil, ton espace et les options generales de l'application.",
+    summary: "Ici tu regles ton profil et les options generales de l'application.",
     steps: [
       { id: "profile", label: "Mettre a jour le profil", status: "next" },
-      { id: "org", label: "Verifier l'identite de l'espace", status: "todo" },
       { id: "guide", label: "Activer ou couper le guide IA", status: "todo" },
     ],
     warnings: [],
@@ -334,7 +332,7 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   dashboard: {
     audience: "user",
     title: "Dashboard",
-    summary: "Ici tu vois les indicateurs principaux de ton espace.",
+    summary: "Ici tu vois les indicateurs principaux de ton compte.",
     steps: [{ id: "kpi", label: "Lire les KPI", status: "next" }],
     warnings: [],
     ctas: [{ id: "to-chatbot-dashboard", label: "Dashboard chatbot", target: "chatbot-dashboard", tone: "primary" }],
@@ -429,21 +427,6 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
   },
 };
 
-const ORG_REQUIRED_VIEWS = new Set<GuideViewKey>([
-  "chatbot",
-  "chatbot-activation",
-  "chatbot-parametres",
-  "chatbot-personnalisation",
-  "chatbot-dashboard",
-  "chatbot-clients",
-  "chatbot-client-detail",
-  "chatbot-orders",
-  "leads",
-  "conversations",
-  "expenses",
-  "chatbotFiles",
-]);
-
 export function resolveGuideViewKey(activeView: string): GuideViewKey {
   if (activeView === "chat") return "assistant";
   if ((activeView as GuideViewKey) in GUIDE_CONTENT_BY_VIEW) {
@@ -457,10 +440,6 @@ export function resolveGuideContent(view: GuideViewKey, context: GuideContext): 
   const steps = base.steps.map((step) => ({ ...step }));
   const warnings = [...base.warnings];
   let stageCard: GuideStageCard | null = null;
-
-  if (ORG_REQUIRED_VIEWS.has(view) && !context.hasOrganizationScope) {
-    warnings.unshift("Aucun espace organisation actif. Connecte un espace pour continuer ce module.");
-  }
 
   if (!context.hasConnectedFacebookPage && (view === "chatbot" || view === "chatbot-parametres")) {
     warnings.unshift("Aucune page Facebook connectee. Connecte Meta puis importe une page.");

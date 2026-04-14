@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Settings2, Save, RotateCcw, Info, Sparkles, Monitor, Moon, Sun, Smartphone, Check, Crown, Zap, TrendingUp, BookOpen, Loader2, Brain, FileText, Lightbulb, Layers, Bot } from "lucide-react";
+import { X, Settings2, Save, RotateCcw, Sparkles, Monitor, Moon, Sun, Smartphone, Check, Crown, Zap, TrendingUp, BookOpen, Loader2, Brain, FileText, Lightbulb, Layers, Bot } from "lucide-react";
 import { WorkspaceIdentity, getUserPreferences, updateUserPreferences, resetUserPreferences, getUserPlan, UserPlan, createCustomerPortalSession } from "@/lib/api";
 import {
   DEFAULT_CHATBOT_PREFERENCES,
@@ -13,7 +13,6 @@ import { type ActivationPlanId } from "@/lib/activationFlow";
 import KnowledgePanel from "./KnowledgePanel";
 import ChatbotPreferencesForm from "./ChatbotPreferencesForm";
 import IdentitySettingsSection from "./IdentitySettingsSection";
-import FlareMark from "./FlareMark";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -25,8 +24,6 @@ interface SettingsModalProps {
   userEmail?: string | null;
   fallbackDisplayName?: string;
   fallbackPhotoUrl?: string | null;
-  hasSharedOrganizations?: boolean;
-  onOpenOrganizationAccess?: () => void;
   onIdentitySaved?: (next: WorkspaceIdentity) => void;
   onOpenActivationFlow?: (planId: ActivationPlanId) => void;
 }
@@ -110,8 +107,6 @@ export default function SettingsModal({
   userEmail,
   fallbackDisplayName,
   fallbackPhotoUrl,
-  hasSharedOrganizations = false,
-  onOpenOrganizationAccess,
   onIdentitySaved,
   onOpenActivationFlow,
 }: SettingsModalProps) {
@@ -122,7 +117,7 @@ export default function SettingsModal({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [viewMode, setViewMode] = useState<"pc" | "mobile">("pc");
-  const [activeSection, setActiveSection] = useState<"identity" | "interface" | "agent" | "chatbot" | "plan" | "about">("identity");
+  const [activeSection, setActiveSection] = useState<"identity" | "interface" | "agent" | "chatbot" | "plan">("identity");
   const [confirmDialog, setConfirmDialog] = useState<{ message: string; onConfirm: () => void } | null>(null);
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null);
   const [planLoading, setPlanLoading] = useState(false);
@@ -184,23 +179,18 @@ export default function SettingsModal({
         .catch(() => setUserPlan(null))
         .finally(() => setPlanLoading(false));
 
-      if (workspaceIdentity?.current_branding.scope_type === "organization") {
-        setChatbotLoading(true);
-        setChatbotError(null);
-        getChatbotPreferences(token)
-          .then((prefs) => setChatbotPreferences(prefs))
-          .catch((err) => {
-            console.error("Erreur chargement preferences chatbot:", err);
-            setChatbotPreferences(DEFAULT_CHATBOT_PREFERENCES);
-            setChatbotError(err instanceof Error ? err.message : "Impossible de charger les preferences du chatbot.");
-          })
-          .finally(() => setChatbotLoading(false));
-      } else {
-        setChatbotPreferences(DEFAULT_CHATBOT_PREFERENCES);
-        setChatbotError(null);
-      }
+      setChatbotLoading(true);
+      setChatbotError(null);
+      getChatbotPreferences(token)
+        .then((prefs) => setChatbotPreferences(prefs))
+        .catch((err) => {
+          console.error("Erreur chargement preferences chatbot:", err);
+          setChatbotPreferences(DEFAULT_CHATBOT_PREFERENCES);
+          setChatbotError(err instanceof Error ? err.message : "Impossible de charger les preferences du chatbot.");
+        })
+        .finally(() => setChatbotLoading(false));
     }
-  }, [isOpen, token, workspaceIdentity?.current_branding.scope_type]);
+  }, [isOpen, token]);
 
   // Sync guided inputs to the master userPreferences string
   useEffect(() => {
@@ -224,8 +214,7 @@ export default function SettingsModal({
     return () => window.removeEventListener("keydown", handleEsc);
   }, [isOpen, onClose]);
 
-  const isOrganizationScope = workspaceIdentity?.current_branding.scope_type === "organization";
-  const canEditChatbot = Boolean(workspaceIdentity?.can_edit_organization);
+  const canEditChatbot = true;
 
   if (!isOpen) return null;
 
@@ -251,7 +240,7 @@ export default function SettingsModal({
   };
 
   const handleSaveChatbot = async () => {
-    if (!token || !isOrganizationScope) return;
+    if (!token) return;
     setChatbotSaving(true);
     setChatbotError(null);
     try {
@@ -273,7 +262,6 @@ export default function SettingsModal({
     { id: "agent" as const, label: "Agent IA", icon: <Sparkles size={16} /> },
     { id: "chatbot" as const, label: "Chatbot", icon: <Bot size={16} /> },
     { id: "plan" as const, label: "Mon Abonnement", icon: <Crown size={16} /> },
-    { id: "about" as const, label: "À propos", icon: <Info size={16} /> },
   ];
 
   return (
@@ -332,8 +320,6 @@ export default function SettingsModal({
               userEmail={userEmail}
               fallbackDisplayName={fallbackDisplayName}
               fallbackPhotoUrl={fallbackPhotoUrl}
-              hasSharedOrganizations={hasSharedOrganizations}
-              onOpenOrganizationAccess={onOpenOrganizationAccess}
               onSaved={onIdentitySaved}
             />
           )}
@@ -520,32 +506,14 @@ export default function SettingsModal({
             <div className="animate-fade-in-up space-y-6">
               <div className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-5">
                 <h3 className="text-[14px] font-bold uppercase tracking-[0.05em] text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">
-                  Chatbot de l&apos;organisation active
+                  Chatbot Facebook
                 </h3>
                 <p className="mt-2 text-[13px] leading-relaxed text-[var(--text-muted)]">
-                  Ces reglages pilotent le bot Messenger de l&apos;espace actuellement actif. Ils sont separes des preferences de l&apos;assistant general.
+                  Ces reglages pilotent le bot Messenger de ton compte. Ils sont separes des preferences de l&apos;assistant general.
                 </p>
               </div>
 
-              {!isOrganizationScope ? (
-                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-6">
-                  <h4 className="text-[16px] font-semibold text-[var(--text-primary)]">
-                    Ouvrez d&apos;abord une organisation
-                  </h4>
-                  <p className="mt-2 max-w-[38rem] text-[13px] leading-6 text-[var(--text-muted)]">
-                    Le chatbot SaaS fonctionne dans un scope organisation. Choisissez votre organisation active, puis revenez ici pour modifier le ton, les offres et le message d&apos;accueil.
-                  </p>
-                  {onOpenOrganizationAccess && (
-                    <button
-                      type="button"
-                      onClick={onOpenOrganizationAccess}
-                      className="mt-4 rounded-xl bg-orange-600 px-4 py-2.5 text-[12px] font-semibold text-white transition-all hover:bg-orange-500"
-                    >
-                      Choisir mon organisation
-                    </button>
-                  )}
-                </div>
-              ) : chatbotLoading ? (
+              {chatbotLoading ? (
                 <div className="flex h-72 items-center justify-center rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)]">
                   <Loader2 size={22} className="animate-spin text-[var(--text-muted)]" />
                 </div>
@@ -554,12 +522,8 @@ export default function SettingsModal({
                   <div className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-card)] p-6">
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500/60">
-                          Espace cible
-                        </p>
-                        <h4 className="mt-2 text-[18px] font-semibold text-[var(--text-primary)]">
-                          {workspaceIdentity?.current_branding.brand_name || "Organisation"}
-                        </h4>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500/60">Profil chatbot</p>
+                        <h4 className="mt-2 text-[18px] font-semibold text-[var(--text-primary)]">Preferences Messenger</h4>
                       </div>
                       <span className="rounded-full border border-[var(--border-glass)] bg-[var(--bg-hover)] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
                         {canEditChatbot ? "Modifiable" : "Lecture seule"}
@@ -693,84 +657,6 @@ export default function SettingsModal({
             </div>
           )}
 
-          {activeSection === "about" && (
-            <div className="max-w-2xl animate-fade-in-up space-y-6">
-              <div className="p-8 rounded-3xl bg-[var(--bg-card)] border border-[var(--border-glass)] text-center">
-                <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-hover)]">
-                  <FlareMark tone="auto" className="w-9" />
-                </div>
-                <h3 className="text-[26px] font-bold text-[var(--text-primary)] tracking-tighter uppercase font-[family-name:var(--font-outfit)]">FLARE AI</h3>
-                <p className="text-[10px] text-orange-500 font-bold tracking-[0.3em] uppercase mt-2 font-[family-name:var(--font-outfit)] opacity-80">application business + IA</p>
-                <p className="text-[32px] font-bold text-[var(--text-primary)] mt-4 font-[family-name:var(--font-outfit)]">v2.0.0</p>
-                <p className="text-[12px] text-[var(--text-muted)] mt-1">Build Stable</p>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)] space-y-4">
-                <div className="space-y-3">
-                  {[
-                    { label: "Entree publique", value: "Landing FLARE AI" },
-                    { label: "Accueil connecte", value: "Choix d'espace" },
-                    { label: "Module principal", value: "Chatbot Facebook" },
-                    { label: "Acces partage", value: "Espace perso + organisations" },
-                    { label: "Roles d'espace", value: "Proprietaire, Admin, Membre, Lecture" },
-                    { label: "Auth", value: "Firebase Auth" },
-                    { label: "Backend", value: "Python FastAPI" },
-                    { label: "Infra", value: "Google Cloud" },
-                  ].map((item) => (
-                    <div key={item.label} className="flex items-center justify-between py-2 border-b border-[var(--border-glass)] last:border-b-0">
-                      <span className="text-[13px] text-[var(--text-muted)] font-light">{item.label}</span>
-                      <span className="text-[13px] text-[var(--text-primary)] font-medium">{item.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)] space-y-3">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.24em] text-orange-500/60 font-bold font-[family-name:var(--font-outfit)]">Espace actif</p>
-                    <h4 className="mt-2 text-[18px] font-semibold text-[var(--text-primary)]">
-                      {workspaceIdentity?.current_branding.workspace_name || "FLARE AI"}
-                    </h4>
-                  </div>
-                  <span className="rounded-full border border-[var(--border-glass)] bg-[var(--bg-hover)] px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">
-                    {workspaceIdentity?.current_branding.scope_type === "organization" ? "Organisation" : "Personnel"}
-                  </span>
-                </div>
-                <p className="text-[13px] text-[var(--text-muted)] leading-relaxed">
-                  {workspaceIdentity?.current_branding.brand_name || "FLARE AI"}
-                  {workspaceIdentity?.current_branding.workspace_description
-                    ? ` - ${workspaceIdentity.current_branding.workspace_description}`
-                    : " - espace de travail actuellement charge dans l'application."}
-                </p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  <div className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-hover)] p-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Ce que change l&apos;espace</p>
-                    <p className="mt-2 text-[13px] text-[var(--text-primary)] leading-relaxed">
-                      L&apos;espace actif decide le nom affiche, le logo, l&apos;offre et les modules visibles dans l&apos;app.
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-[var(--border-glass)] bg-[var(--bg-hover)] p-4">
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Vos droits</p>
-                    <p className="mt-2 text-[13px] text-[var(--text-primary)] leading-relaxed">
-                      {workspaceIdentity?.organization_role_label
-                        ? `Dans cet espace, votre role est ${workspaceIdentity.organization_role_label}.`
-                        : "Dans votre espace personnel, vous gardez la main sur vos reglages et votre profil."}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5 rounded-2xl bg-[var(--bg-hover)] border border-[var(--border-glass)] text-center">
-                <p className="text-[12px] text-[var(--text-muted)] font-light leading-relaxed">
-                  L&apos;app separe maintenant la landing publique, l&apos;accueil connecte et chaque espace metier.<br/>
-                  Le but est simple : moins de surcharge, plus de clarte, et un espace adapte a l&apos;organisation active.<br/>
-                  Le chatbot garde des droits sensibles plus stricts que les simples roles d&apos;organisation.<br/>
-                  <span className="text-[10px] opacity-30 mt-1 block">documentation integree mise a jour le 28 mars 2026</span>
-                </p>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Footer */}
@@ -819,7 +705,7 @@ export default function SettingsModal({
                 )}
               </button>
             )}
-            {activeSection === "chatbot" && isOrganizationScope && (
+            {activeSection === "chatbot" && (
               <button
                 onClick={handleSaveChatbot}
                 disabled={chatbotLoading || chatbotSaving || !canEditChatbot}
@@ -899,13 +785,13 @@ export default function SettingsModal({
                 <h3 className="text-[22px] font-bold text-orange-400 font-[family-name:var(--font-outfit)]">Introduction</h3>
                 <div className="space-y-4 text-[15px] text-[var(--text-primary)] font-light leading-relaxed">
                   <p>
-                    <strong>FLARE AI</strong> separe maintenant clairement la vitrine publique et l&apos;application de travail. Avant connexion, l&apos;utilisateur voit la landing. Apres connexion, il entre dans une app simple qui sert a choisir un espace metier.
+                    <strong>FLARE AI</strong> separe maintenant clairement la vitrine publique et l&apos;application de travail. Avant connexion, l&apos;utilisateur voit la landing. Apres connexion, il entre dans une app simple qui sert a ouvrir le bon module.
                   </p>
                   <p>
-                    L&apos;objectif est de reduire la surcharge : choisir vite, ouvrir le bon espace, puis agir sans lire des ecrans trop denses.
+                    L&apos;objectif est de reduire la surcharge : choisir vite, ouvrir le bon module, puis agir sans lire des ecrans trop denses.
                   </p>
                   <p>
-                    L&apos;ordre est volontairement simple : compte FLARE d&apos;abord, espace actif ensuite, module metier ensuite.
+                    L&apos;ordre est volontairement simple : compte FLARE d&apos;abord, module metier ensuite.
                   </p>
                 </div>
               </section>
@@ -926,33 +812,33 @@ export default function SettingsModal({
                       <Layers size={16} className="text-orange-400" /> Accueil connecte
                     </h4>
                     <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      Il sert a choisir un espace. Le menu lateral reste volontairement leger.
+                      Il sert a ouvrir les modules principaux. Le menu lateral reste volontairement leger.
                     </p>
                   </div>
                   <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
                     <h4 className="font-bold text-[var(--text-primary)] mb-2 flex items-center gap-2">
-                      <Sparkles size={16} className="text-orange-400" /> Espaces internes
+                      <Sparkles size={16} className="text-orange-400" /> Modules internes
                     </h4>
                     <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      Chaque espace a ensuite sa propre navigation et ses propres actions.
+                      Chaque module a sa propre navigation et ses propres actions.
                     </p>
                   </div>
                 </div>
               </section>
 
               <section className="space-y-6">
-                <h3 className="text-[22px] font-bold text-orange-400 font-[family-name:var(--font-outfit)]">2. Les espaces disponibles</h3>
+                <h3 className="text-[22px] font-bold text-orange-400 font-[family-name:var(--font-outfit)]">2. Les modules disponibles</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
                     <h4 className="font-bold text-[var(--text-primary)] mb-2">Chatbot Facebook</h4>
                     <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      C&apos;est l&apos;espace metier principal. Il montre les priorites, les discussions a reprendre et le budget du bot.
+                      C&apos;est le module metier principal. Il montre les priorites, les discussions a reprendre et le budget du bot.
                     </p>
                   </div>
                   <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
                     <h4 className="font-bold text-[var(--text-primary)] mb-2">Assistant IA</h4>
                     <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      C&apos;est l&apos;espace de travail general pour discuter, produire, organiser et utiliser vos contenus.
+                      C&apos;est le module general pour discuter, produire, organiser et utiliser vos contenus.
                     </p>
                   </div>
                   <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
@@ -989,52 +875,12 @@ export default function SettingsModal({
               </section>
 
               <section className="space-y-6">
-                <h3 className="text-[22px] font-bold text-orange-400 font-[family-name:var(--font-outfit)]">4. Espace de travail et organisation</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
-                    <h4 className="font-bold text-[var(--text-primary)] mb-2 flex items-center gap-2">
-                      <Brain size={16} className="text-orange-400" /> Espace personnel
-                    </h4>
-                    <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      Chaque compte garde son profil, sa photo et son espace personnel.
-                    </p>
-                  </div>
-                  <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
-                    <h4 className="font-bold text-[var(--text-primary)] mb-2 flex items-center gap-2">
-                      <Layers size={16} className="text-orange-400" /> Organisation partagee
-                    </h4>
-                    <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      Une organisation peut etre partagee entre plusieurs comptes et afficher son propre nom, logo et espace de travail.
-                    </p>
-                  </div>
-                </div>
-                <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
-                  <h4 className="font-bold text-[var(--text-primary)] mb-3">Espace actuellement charge</h4>
-                  <div className="space-y-2 text-[13px] text-[var(--text-muted)] font-light">
-                    <p>Nom affiche : <span className="text-[var(--text-primary)] font-medium">{workspaceIdentity?.current_branding.brand_name || "FLARE AI"}</span></p>
-                    <p>Espace : <span className="text-[var(--text-primary)] font-medium">{workspaceIdentity?.current_branding.workspace_name || "FLARE AI"}</span></p>
-                    <p>Type : <span className="text-[var(--text-primary)] font-medium">{workspaceIdentity?.current_branding.scope_type === "organization" ? "Organisation" : "Personnel"}</span></p>
-                    <p>Role : <span className="text-[var(--text-primary)] font-medium">{workspaceIdentity?.organization_role_label || "Proprietaire de l'espace personnel"}</span></p>
-                    <p>Partage : <span className="text-[var(--text-primary)] font-medium">{hasSharedOrganizations ? "au moins une organisation partagee disponible" : "aucune organisation partagee detectee"}</span></p>
-                  </div>
-                </div>
-                <div className="p-6 rounded-2xl bg-[var(--bg-active)] border border-[var(--border-glass)]">
-                  <h4 className="font-bold text-[var(--text-primary)] mb-3">Ce que change le role</h4>
-                  <div className="space-y-2 text-[13px] text-[var(--text-muted)] font-light">
-                    <p>`Proprietaire` et `Admin` peuvent changer le nom, le logo et la presentation de l&apos;organisation.</p>
-                    <p>`Membre` et `Lecture` utilisent l&apos;espace sans pouvoir changer son identite.</p>
-                    <p>Les droits sensibles du chatbot restent separes et plus stricts que ce role d&apos;organisation.</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="space-y-6">
                 <h3 className="text-[22px] font-bold text-orange-400 font-[family-name:var(--font-outfit)]">5. Les reglages utiles</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
                     <h4 className="font-bold text-[var(--text-primary)] mb-2">Identite</h4>
                     <p className="text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                      Changez le nom, le logo, la photo et la presentation de l&apos;espace actif.
+                      Changez le nom, la photo et le nom du compte affiche.
                     </p>
                   </div>
                   <div className="p-5 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
@@ -1062,8 +908,8 @@ export default function SettingsModal({
                 <h3 className="text-[22px] font-bold text-orange-400 font-[family-name:var(--font-outfit)]">6. Bon ordre pour commencer</h3>
                 <div className="p-6 rounded-2xl bg-[var(--bg-card)] border border-[var(--border-glass)]">
                   <div className="space-y-3 text-[13px] text-[var(--text-muted)] font-light leading-relaxed">
-                    <p>1. connectez-vous et choisissez l&apos;espace qui correspond a votre besoin</p>
-                    <p>2. verifiez le nom, le logo et le role affiches dans l&apos;espace actif</p>
+                    <p>1. connectez-vous et verifiez votre compte</p>
+                    <p>2. verifiez le nom et la photo affiches dans l&apos;app</p>
                     <p>3. si vous pilotez un business Messenger, ouvrez d&apos;abord `Chatbot Facebook`</p>
                     <p>4. si vous voulez travailler avec l&apos;IA de facon generale, ouvrez `Assistant IA`</p>
                     <p>5. laissez les modules verrouilles tant qu&apos;ils ne sont pas actifs pour votre offre</p>
@@ -1074,7 +920,7 @@ export default function SettingsModal({
               <section className="bg-orange-500/5 p-8 rounded-[32px] border border-orange-500/10">
                 <h3 className="text-[20px] font-bold text-[var(--text-primary)] mb-4 font-[family-name:var(--font-outfit)]">A retenir</h3>
                 <p className="text-[14px] text-[var(--text-muted)] font-light leading-relaxed mb-6">
-                  FLARE AI est maintenant organise par espaces. La landing vend le produit, l&apos;accueil connecte fait choisir le bon espace, puis chaque espace garde sa propre logique. Le chatbot Facebook reste l&apos;outil metier principal aujourd&apos;hui, mais il applique aussi les regles de l&apos;organisation active.
+                  FLARE AI reste simple : la landing vend le produit, puis l&apos;app connectee te guide vers le bon module. Le chatbot Facebook reste l&apos;outil metier principal aujourd&apos;hui.
                 </p>
                 <button 
                   onClick={() => setViewingFullGuide(false)}

@@ -34,7 +34,6 @@ interface ChatbotSetupWizardProps {
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   onComplete?: () => Promise<void> | void;
   onSkip?: () => void;
-  onRequestOrganizationSelection?: () => void;
   onRefreshSetupStatus?: () => Promise<ChatbotSetupStatus | null>;
 }
 
@@ -69,7 +68,6 @@ export default function ChatbotSetupWizard({
   getFreshToken,
   onComplete,
   onSkip,
-  onRequestOrganizationSelection,
   onRefreshSetupStatus,
 }: ChatbotSetupWizardProps) {
   const [localStatus, setLocalStatus] = useState<ChatbotSetupStatus>(setupStatus);
@@ -226,15 +224,6 @@ export default function ChatbotSetupWizard({
   }, [localStatus.step, resolveAccessToken]);
 
   useEffect(() => {
-    if (localStatus.step === "need_org") {
-      setFacebookStatus(null);
-      setFacebookError(null);
-      setFacebookAuthDebug(null);
-      setFacebookAuthDebugError(null);
-      setFacebookAuthDebugLoading(false);
-      setFacebookLoading(false);
-      return;
-    }
     void refreshFacebookState();
   }, [localStatus.step, refreshFacebookState, token]);
 
@@ -271,7 +260,7 @@ export default function ChatbotSetupWizard({
     if (!canManagePages) {
       setFacebookError(
         facebookStatus?.facebook_access_message ||
-          "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook."
+          "Seuls le proprietaire ou un admin du compte peuvent connecter Facebook."
       );
       return;
     }
@@ -308,7 +297,7 @@ export default function ChatbotSetupWizard({
     if (!canManagePages) {
       setFacebookError(
         facebookStatus?.facebook_access_message ||
-          "Seuls le proprietaire ou un admin de cet espace peuvent activer Facebook."
+          "Seuls le proprietaire ou un admin du compte peuvent activer Facebook."
       );
       return;
     }
@@ -489,23 +478,7 @@ export default function ChatbotSetupWizard({
               <ArrowRight size={16} />
             </button>
           </Panel>
-        ) : localStatus.step === "need_org" ? (
-          <Panel>
-            <h2 className="text-[26px] font-semibold text-white">Creez ou choisissez votre espace</h2>
-            <p className="mt-2 text-[14px] leading-7 text-white/42">
-              Le chatbot Facebook fonctionne uniquement dans un espace de travail actif.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <button
-                onClick={() => onRequestOrganizationSelection?.()}
-                className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-[13px] font-semibold uppercase tracking-[0.12em] text-[#140b02] hover:bg-orange-400"
-              >
-                Choisir mon espace
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </Panel>
-        ) : localStatus.step === "connect_page" ? (
+        ) : localStatus.step === "connect_page" || localStatus.step === "need_org" ? (
           <Panel>
             <h2 className="text-[26px] font-semibold text-white">Etape 1 - Connexion page Facebook</h2>
             <p className="mt-2 text-[14px] leading-7 text-white/42">
@@ -883,4 +856,3 @@ function PageRow({
     </div>
   );
 }
-

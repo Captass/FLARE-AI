@@ -249,7 +249,7 @@ export default function LoginScreen({
                 {mode === "pin" && "Vérification email"}
               </h1>
               <p className="text-sm text-[var(--text-muted)] mt-1">
-                {mode === "login" && "Accédez à votre espace FLARE AI"}
+                {mode === "login" && "Accédez à votre compte FLARE AI"}
                 {mode === "signup" && "Rejoignez FLARE AI gratuitement"}
                 {mode === "magic" && !emailSent && "Connectez-vous sans mot de passe"}
                 {mode === "magic" && emailSent && `Cliquez sur le lien envoyé à ${email}`}

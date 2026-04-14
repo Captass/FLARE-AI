@@ -7,6 +7,7 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header
@@ -16,7 +17,6 @@ from core.database import (
     get_user_subscription,
 )
 from core.encryption_service import encryption_service
-from core.organizations import get_organization, organization_scope_id, user_can_access_organization, user_can_edit_organization
 from routers.facebook_pages import (
     _serialize_chatbot_preferences_for_direct_service,
     _status_for_sync_error,
@@ -57,9 +57,10 @@ def _clean_text(value: Optional[str], limit: int, default: str = "") -> str:
     return str(value or "").strip()[:limit] or default
 
 
-def _default_preferences(organization_slug: Optional[str] = None) -> dict[str, Any]:
+def _default_preferences(organization_slug: Optional[str] = None, user_id: Optional[str] = None) -> dict[str, Any]:
     return {
         "organization_slug": str(organization_slug or "").strip().lower(),
+        "user_id": str(user_id or "").strip(),
         "bot_name": "L'assistant",
         "primary_role": "mixte",
         "tone": "amical",
@@ -85,9 +86,9 @@ def _default_preferences(organization_slug: Optional[str] = None) -> dict[str, A
     }
 
 
-def _serialize_preferences(row: Optional[ChatbotPreferences], organization_slug: Optional[str] = None) -> dict[str, Any]:
+def _serialize_preferences(row: Optional[ChatbotPreferences], organization_slug: Optional[str] = None, user_id: Optional[str] = None) -> dict[str, Any]:
     if not row:
-        return _default_preferences(organization_slug)
+        return _default_preferences(organization_slug, user_id)
 
     try:
         handoff_keywords = _json.loads(row.handoff_keywords or "[]")
@@ -96,6 +97,7 @@ def _serialize_preferences(row: Optional[ChatbotPreferences], organization_slug:
 
     return {
         "organization_slug": row.organization_slug,
+        "user_id": row.user_id,
         "bot_name": row.bot_name or "L'assistant",
         "primary_role": row.primary_role or "mixte",
         "tone": row.tone or "amical",
@@ -161,28 +163,13 @@ def _organization_context(
     if scoped_user_id == "anonymous":
         raise HTTPException(status_code=401, detail="Authentification requise.")
 
-    if not scoped_user_id.startswith("org:"):
-        if allow_missing_scope:
-            return None
-        raise HTTPException(status_code=400, detail="Selectionnez d'abord une organisation active.")
-
-    organization_slug = scoped_user_id.split(":", 1)[1].strip().lower()
-    organization = get_organization(organization_slug)
-    if not organization or not user_can_access_organization(user_email, organization_slug):
-        if allow_missing_scope:
-            return None
-        raise HTTPException(status_code=404, detail="Organisation introuvable ou inaccessible.")
-
-    can_edit = user_can_edit_organization(user_email, organization_slug, organization)
-    if require_edit and not can_edit:
-        raise HTTPException(status_code=403, detail="Seuls le proprietaire ou un admin peuvent modifier le chatbot.")
-
     return {
-        "organization_slug": organization_slug,
-        "organization_scope_id": organization_scope_id(organization_slug),
-        "organization": organization,
+        "organization_slug": scoped_user_id,
+        "organization_scope_id": scoped_user_id,
+        "user_id": scoped_user_id,
+        "organization": None,
         "user_email": user_email,
-        "can_edit": can_edit,
+        "can_edit": True,
     }
 
 
@@ -190,7 +177,10 @@ def _active_page_for_org(db: Session, organization_slug: str) -> Optional[Facebo
     return (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == organization_slug,
+            or_(
+                FacebookPageConnection.user_id == organization_slug,
+                FacebookPageConnection.organization_slug == organization_slug,
+            ),
             FacebookPageConnection.is_active == "true",
         )
         .order_by(FacebookPageConnection.updated_at.desc())
@@ -202,7 +192,10 @@ def _active_pages_for_org(db: Session, organization_slug: str) -> list[FacebookP
     return (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == organization_slug,
+            or_(
+                FacebookPageConnection.user_id == organization_slug,
+                FacebookPageConnection.organization_slug == organization_slug,
+            ),
             FacebookPageConnection.is_active == "true",
         )
         .order_by(FacebookPageConnection.updated_at.desc())
@@ -222,7 +215,12 @@ async def _sync_active_pages_for_org(
 
     preferences = (
         db.query(ChatbotPreferences)
-        .filter(ChatbotPreferences.organization_slug == organization_slug)
+        .filter(
+            or_(
+                ChatbotPreferences.user_id == organization_slug,
+                ChatbotPreferences.organization_slug == organization_slug,
+            )
+        )
         .first()
     )
     direct_service_payload = _serialize_chatbot_preferences_for_direct_service(preferences)
@@ -286,7 +284,13 @@ def get_chatbot_preferences(
     db: Session = Depends(get_db),
 ):
     context = _organization_context(authorization)
-    query = db.query(ChatbotPreferences).filter(ChatbotPreferences.organization_slug == context["organization_slug"])
+    user_id = context["user_id"]
+    query = db.query(ChatbotPreferences).filter(
+        or_(
+            ChatbotPreferences.user_id == user_id,
+            ChatbotPreferences.organization_slug == user_id,
+        )
+    )
 
     if page_id:
         row = query.filter(ChatbotPreferences.page_id == page_id).first()
@@ -297,7 +301,7 @@ def get_chatbot_preferences(
         if not row:
             row = query.first()
 
-    return _serialize_preferences(row, context["organization_slug"])
+    return _serialize_preferences(row, context["organization_slug"], user_id)
 
 
 @router.put("/chatbot-preferences")
@@ -308,7 +312,13 @@ async def upsert_chatbot_preferences(
     db: Session = Depends(get_db),
 ):
     context = _organization_context(authorization, require_edit=True)
-    query = db.query(ChatbotPreferences).filter(ChatbotPreferences.organization_slug == context["organization_slug"])
+    user_id = context["user_id"]
+    query = db.query(ChatbotPreferences).filter(
+        or_(
+            ChatbotPreferences.user_id == user_id,
+            ChatbotPreferences.organization_slug == user_id,
+        )
+    )
 
     if page_id:
         row = query.filter(ChatbotPreferences.page_id == page_id).first()
@@ -318,6 +328,7 @@ async def upsert_chatbot_preferences(
     if not row:
         row = ChatbotPreferences(
             organization_slug=context["organization_slug"],
+            user_id=user_id,
             page_id=page_id,
             created_at=datetime.utcnow(),
         )
@@ -359,7 +370,7 @@ async def upsert_chatbot_preferences(
         context["organization_slug"],
         warning_prefix="Preferences enregistrees",
     )
-    response = _serialize_preferences(row)
+    response = _serialize_preferences(row, context["organization_slug"], user_id)
     if sync_warning:
         response["sync_warning"] = sync_warning
     return response
@@ -387,7 +398,12 @@ def get_chatbot_setup_status(
     active_page = _active_page_for_org(db, context["organization_slug"])
     prefs = (
         db.query(ChatbotPreferences)
-        .filter(ChatbotPreferences.organization_slug == context["organization_slug"])
+        .filter(
+            or_(
+                ChatbotPreferences.user_id == context["user_id"],
+                or_(ChatbotPreferences.user_id == context["organization_slug"], ChatbotPreferences.organization_slug == context["organization_slug"]),
+            )
+        )
         .first()
     )
 
@@ -425,7 +441,10 @@ def get_chatbot_setup_status(
     all_pages = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == context["organization_slug"],
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                or_(FacebookPageConnection.user_id == context["organization_slug"], FacebookPageConnection.organization_slug == context["organization_slug"]),
+            ),
             FacebookPageConnection.status.in_(visible_statuses),
         )
         .order_by(FacebookPageConnection.updated_at.desc())
@@ -474,14 +493,22 @@ async def get_chatbot_overview(
     active_page = None
     if page_id:
         active_page = db.query(FacebookPageConnection).filter(
-            FacebookPageConnection.organization_slug == org_slug,
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                or_(FacebookPageConnection.user_id == org_slug, FacebookPageConnection.organization_slug == org_slug),
+            ),
             FacebookPageConnection.page_id == page_id
         ).first()
 
     if not active_page:
         active_page = _active_page_for_org(db, org_slug)
 
-    prefs_query = db.query(ChatbotPreferences).filter(ChatbotPreferences.organization_slug == org_slug)
+    prefs_query = db.query(ChatbotPreferences).filter(
+        or_(
+            ChatbotPreferences.user_id == context["user_id"],
+            or_(ChatbotPreferences.user_id == org_slug, ChatbotPreferences.organization_slug == org_slug),
+        )
+    )
     prefs = None
     if active_page:
         prefs = prefs_query.filter(ChatbotPreferences.page_id == active_page.page_id).first()
@@ -504,7 +531,10 @@ async def get_chatbot_overview(
     all_pages = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == org_slug,
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                or_(FacebookPageConnection.user_id == org_slug, FacebookPageConnection.organization_slug == org_slug),
+            ),
             FacebookPageConnection.status.in_(visible_statuses),
         )
         .order_by(FacebookPageConnection.updated_at.desc())
@@ -554,7 +584,7 @@ async def get_chatbot_overview(
         "has_business_profile": has_business_profile,
         "configure_stage": configure_stage,
         "active_page": _serialize_page(active_page) if active_page else None,
-        "preferences": _serialize_preferences(prefs, org_slug) if prefs else None,
+        "preferences": _serialize_preferences(prefs, org_slug, context["user_id"]) if prefs else None,
         "all_pages": [_serialize_page(p) for p in all_pages],
         "total_pages": len(all_pages),
         "pending_human_count": pending_human_count,
@@ -630,6 +660,7 @@ def _serialize_catalogue_item(item: ChatbotCatalogueItem) -> dict:
     return {
         "id": item.id,
         "organization_slug": item.organization_slug,
+        "user_id": item.user_id or item.organization_slug,
         "name": item.name,
         "description": item.description or "",
         "price": item.price,
@@ -650,7 +681,13 @@ def list_catalogue(
     db: Session = Depends(get_db),
 ):
     context = _organization_context(authorization)
-    query = db.query(ChatbotCatalogueItem).filter(ChatbotCatalogueItem.organization_slug == context["organization_slug"])
+    user_id = context["user_id"]
+    query = db.query(ChatbotCatalogueItem).filter(
+        or_(
+            ChatbotCatalogueItem.user_id == user_id,
+            ChatbotCatalogueItem.organization_slug == user_id,
+        )
+    )
     if page_id:
         query = query.filter(ChatbotCatalogueItem.page_id == page_id)
     else:
@@ -671,7 +708,13 @@ async def create_catalogue_item(
     _plan_id, features = _resolve_plan_features(context)
     limit = features.get("catalogue_items_limit", 5)
     if limit != -1:
-        query = db.query(ChatbotCatalogueItem).filter(ChatbotCatalogueItem.organization_slug == context["organization_slug"])
+        user_id = context["user_id"]
+        query = db.query(ChatbotCatalogueItem).filter(
+            or_(
+                ChatbotCatalogueItem.user_id == user_id,
+                ChatbotCatalogueItem.organization_slug == user_id,
+            )
+        )
         if page_id:
             query = query.filter(ChatbotCatalogueItem.page_id == page_id)
         else:
@@ -687,6 +730,7 @@ async def create_catalogue_item(
 
     item = ChatbotCatalogueItem(
         organization_slug=context["organization_slug"],
+        user_id=context["user_id"],
         page_id=page_id,
         name=_clean_text(payload.name, 120, "Article"),
         description=_clean_text(payload.description, 1000),
@@ -725,7 +769,10 @@ async def update_catalogue_item(
         db.query(ChatbotCatalogueItem)
         .filter(
             ChatbotCatalogueItem.id == item_id,
-            ChatbotCatalogueItem.organization_slug == context["organization_slug"],
+            or_(
+                ChatbotCatalogueItem.user_id == context["user_id"],
+                ChatbotCatalogueItem.organization_slug == context["organization_slug"],
+            ),
         )
         .first()
     )
@@ -765,7 +812,10 @@ async def delete_catalogue_item(
         db.query(ChatbotCatalogueItem)
         .filter(
             ChatbotCatalogueItem.id == item_id,
-            ChatbotCatalogueItem.organization_slug == context["organization_slug"],
+            or_(
+                ChatbotCatalogueItem.user_id == context["user_id"],
+                ChatbotCatalogueItem.organization_slug == context["organization_slug"],
+            ),
         )
         .first()
     )
@@ -798,6 +848,7 @@ def _serialize_portfolio_item(item: ChatbotPortfolioItem) -> dict:
     return {
         "id": item.id,
         "organization_slug": item.organization_slug,
+        "user_id": item.user_id or item.organization_slug,
         "title": item.title,
         "description": item.description or "",
         "video_url": item.video_url or "",
@@ -819,7 +870,12 @@ def list_portfolio(
     context = _organization_context(authorization)
     _require_feature(context, "has_portfolio", "Portfolio")
     
-    query = db.query(ChatbotPortfolioItem).filter(ChatbotPortfolioItem.organization_slug == context["organization_slug"])
+    query = db.query(ChatbotPortfolioItem).filter(
+        or_(
+            ChatbotPortfolioItem.user_id == context["user_id"],
+            ChatbotPortfolioItem.organization_slug == context["organization_slug"],
+        )
+    )
     if page_id:
         query = query.filter(ChatbotPortfolioItem.page_id == page_id)
     else:
@@ -840,6 +896,7 @@ async def create_portfolio_item(
     _require_feature(context, "has_portfolio", "Portfolio")
     item = ChatbotPortfolioItem(
         organization_slug=context["organization_slug"],
+        user_id=context["user_id"],
         page_id=page_id,
         title=_clean_text(payload.title, 120, "Réalisation"),
         description=_clean_text(payload.description, 1000),
@@ -878,7 +935,10 @@ async def update_portfolio_item(
         db.query(ChatbotPortfolioItem)
         .filter(
             ChatbotPortfolioItem.id == item_id,
-            ChatbotPortfolioItem.organization_slug == context["organization_slug"],
+            or_(
+                ChatbotPortfolioItem.user_id == context["user_id"],
+                ChatbotPortfolioItem.organization_slug == context["organization_slug"],
+            ),
         )
         .first()
     )
@@ -917,7 +977,10 @@ async def delete_portfolio_item(
         db.query(ChatbotPortfolioItem)
         .filter(
             ChatbotPortfolioItem.id == item_id,
-            ChatbotPortfolioItem.organization_slug == context["organization_slug"],
+            or_(
+                ChatbotPortfolioItem.user_id == context["user_id"],
+                ChatbotPortfolioItem.organization_slug == context["organization_slug"],
+            ),
         )
         .first()
     )
@@ -960,6 +1023,7 @@ def _serialize_sales_config(row: Optional[ChatbotSalesConfig], org_slug: str) ->
     if not row:
         return {
             "organization_slug": org_slug,
+            "user_id": org_slug,
             "qualification_steps": [],
             "objections": [],
             "cta_type": "contact",
@@ -972,6 +1036,7 @@ def _serialize_sales_config(row: Optional[ChatbotSalesConfig], org_slug: str) ->
         }
     return {
         "organization_slug": row.organization_slug,
+        "user_id": row.user_id or org_slug,
         "qualification_steps": _load(row.qualification_steps),
         "objections": _load(row.objections),
         "cta_type": row.cta_type or "contact",
@@ -993,7 +1058,12 @@ def get_sales_config(
     context = _organization_context(authorization)
     _require_feature(context, "has_sales_script", "Script de vente")
     
-    query = db.query(ChatbotSalesConfig).filter(ChatbotSalesConfig.organization_slug == context["organization_slug"])
+    query = db.query(ChatbotSalesConfig).filter(
+        or_(
+            ChatbotSalesConfig.user_id == context["user_id"],
+            ChatbotSalesConfig.organization_slug == context["organization_slug"],
+        )
+    )
     
     if page_id:
         row = query.filter(ChatbotSalesConfig.page_id == page_id).first()
@@ -1015,7 +1085,12 @@ async def upsert_sales_config(
     context = _organization_context(authorization, require_edit=True)
     _require_feature(context, "has_sales_script", "Script de vente")
     
-    query = db.query(ChatbotSalesConfig).filter(ChatbotSalesConfig.organization_slug == context["organization_slug"])
+    query = db.query(ChatbotSalesConfig).filter(
+        or_(
+            ChatbotSalesConfig.user_id == context["user_id"],
+            ChatbotSalesConfig.organization_slug == context["organization_slug"],
+        )
+    )
     
     if page_id:
         row = query.filter(ChatbotSalesConfig.page_id == page_id).first()
@@ -1025,6 +1100,7 @@ async def upsert_sales_config(
     if not row:
         row = ChatbotSalesConfig(
             organization_slug=context["organization_slug"],
+            user_id=context["user_id"],
             page_id=page_id,
             created_at=datetime.utcnow()
         )

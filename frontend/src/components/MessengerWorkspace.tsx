@@ -902,8 +902,8 @@ function FacebookConnectionPanel({
         <p className="text-[10px] uppercase tracking-[0.14em] text-white/25">Connexion Facebook</p>
         <h2 className="mt-2 text-[20px] font-semibold text-white">Connectez votre page dans FLARE AI</h2>
         <p className="mt-2 max-w-[42rem] text-[13px] leading-6 text-white/38">
-          Connectez-vous d&apos;abord a FLARE AI puis activez votre organisation. La connexion
-          Facebook se fera ensuite depuis ce cockpit, sans manipuler les secrets ni le webhook.
+          Connectez-vous d&apos;abord a FLARE AI. La connexion Facebook se fera ensuite depuis ce cockpit,
+          sans manipuler les secrets ni le webhook.
         </p>
         <button
           onClick={onRequestAccess}
@@ -929,7 +929,7 @@ function FacebookConnectionPanel({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-[44rem]">
           <p className="text-[10px] uppercase tracking-[0.14em] text-white/25">Connexion Facebook</p>
-          <h2 className="mt-2 text-[20px] font-semibold text-white">Pages Messenger de l&apos;organisation</h2>
+          <h2 className="mt-2 text-[20px] font-semibold text-white">Pages Messenger du compte</h2>
           <p className="mt-2 text-[13px] leading-6 text-white/38">
             FLARE gere l&apos;OAuth Meta, l&apos;abonnement webhook et la synchro vers le service
             direct. Il ne reste qu&apos;a charger puis activer les pages.
@@ -937,7 +937,7 @@ function FacebookConnectionPanel({
           {status ? (
             <div className="mt-4 flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.12em] text-white/26">
               <span className="rounded-full border border-white/[0.08] px-2.5 py-1">
-                {status.organization_name}
+                Compte FLARE
               </span>
               <span className={`rounded-full border px-2.5 py-1 ${status.has_active_page ? "border-emerald-400/20 text-emerald-100" : "border-orange-400/20 text-orange-100"}`}>
                 {status.has_active_page ? `${activePages.length} page(s) active(s)` : "Aucune page active"}
@@ -1531,12 +1531,12 @@ export default function MessengerWorkspace({
   const handleConnectFacebook = async () => {
     const t = await resolveToken(true);
     if (!t) {
-      setFacebookError("Connectez-vous et activez votre organisation avant de lancer Facebook.");
+      setFacebookError("Connectez-vous et activez votre compte avant de lancer Facebook.");
       onRequestAccess?.();
       return;
     }
     if (facebookStatus && !(facebookStatus.can_manage_pages ?? facebookStatus.can_edit)) {
-      setFacebookError("Vous n'avez pas les droits requis pour connecter une page Facebook sur cette organisation.");
+      setFacebookError("Vous n'avez pas les droits requis pour connecter une page Facebook sur cette compte.");
       return;
     }
 
@@ -1623,7 +1623,7 @@ export default function MessengerWorkspace({
     const t = await resolveToken(true);
     if (!t) return;
     if (facebookStatus && !(facebookStatus.can_manage_pages ?? facebookStatus.can_edit)) {
-      setFacebookError("Vous n'avez pas les droits requis pour activer une page Facebook sur cette organisation.");
+      setFacebookError("Vous n'avez pas les droits requis pour activer une page Facebook sur cette compte.");
       return;
     }
     setFacebookBusyPageId(pageId);
@@ -1649,7 +1649,7 @@ export default function MessengerWorkspace({
     const t = await resolveToken(true);
     if (!t) return;
     if (facebookStatus && !(facebookStatus.can_manage_pages ?? facebookStatus.can_edit)) {
-      setFacebookError("Vous n'avez pas les droits requis pour deconnecter une page Facebook sur cette organisation.");
+      setFacebookError("Vous n'avez pas les droits requis pour deconnecter une page Facebook sur cette compte.");
       return;
     }
     setFacebookBusyPageId(pageId);

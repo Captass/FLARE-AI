@@ -7,14 +7,7 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 
 from core.config import settings
-from core.organizations import (
-    ACTIVE_ORGANIZATION_KEY,
-    decode_active_organization,
-    get_organization,
-    is_active_organization_session_valid,
-    organization_scope_id,
-    user_can_access_organization,
-)
+# Organization scopes removed: FLARE AI is now user-scoped only.
 
 logger = logging.getLogger(__name__)
 
@@ -81,38 +74,10 @@ _firebase_apps = _initialize_firebase_apps()
 
 
 def _resolve_active_scope_id(raw_user_id: str, user_email: str) -> str:
+    """Organization scopes removed: always return the raw user id."""
     if not raw_user_id or raw_user_id == "anonymous":
         return "anonymous"
-
-    try:
-        from core.database import SessionLocal, SystemSetting
-
-        db = SessionLocal()
-        try:
-            setting = db.query(SystemSetting).filter(
-                SystemSetting.user_id == raw_user_id,
-                SystemSetting.key == ACTIVE_ORGANIZATION_KEY,
-            ).first()
-        finally:
-            db.close()
-    except Exception as exc:
-        logger.warning("Organisation lookup failed for %s: %s", raw_user_id, exc)
-        return raw_user_id
-
-    if not setting or not setting.value:
-        return raw_user_id
-
-    slug, connected_at = decode_active_organization(setting.value)
-    if not slug or not get_organization(slug):
-        return raw_user_id
-
-    if not user_can_access_organization(user_email, slug):
-        return raw_user_id
-
-    if not is_active_organization_session_valid(connected_at):
-        return raw_user_id
-
-    return organization_scope_id(slug)
+    return raw_user_id
 
 
 def _decode_token(authorization: Optional[str]) -> Optional[dict]:

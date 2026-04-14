@@ -1316,7 +1316,7 @@ function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => v
                   className="w-full p-4 flex items-center gap-4 text-left hover:bg-[var(--surface-subtle)] transition-colors">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-[var(--text-primary)] truncate">{ar.business_name || ar.organization_slug}</span>
+                      <span className="font-semibold text-[var(--text-primary)] truncate">{ar.business_name || ar.contact_full_name || ar.contact_email || "Client"}</span>
                       <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${ACTIVATION_STATUS_COLORS[ar.status] || "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
                         {ACTIVATION_STATUS_LABELS[ar.status] || ar.status}
                       </span>
@@ -1642,7 +1642,7 @@ function AdminPaymentsTab({ token, onBack }: { token: string; onBack: () => void
                   </p>
                   <p className="text-[10px] text-[var(--text-secondary)] mt-1">
                     Soumis : {pay.submitted_at ? new Date(pay.submitted_at).toLocaleString("fr-FR") : "-"}
-                    {pay.organization_scope_id ? ` \u00b7 ${pay.organization_scope_id}` : ""}
+                    {pay.user_id ? ` · ${pay.user_id}` : ""}
                   </p>
                   {pay.activation_summary ? (
                     <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-3">
@@ -1855,7 +1855,7 @@ function AdminOrdersTab({ token, onBack }: { token: string; onBack: () => void }
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${order.source === "signal" ? "bg-orange-500/10 text-orange-500" : "bg-[var(--surface-subtle)] text-[var(--text-primary)]"}`}>
                       {order.source === "signal" ? "Signal IA" : "Manuel"}
                     </span>
-                    <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded-full">{order.page_name || order.organization_slug}</span>
+                    <span className="text-[10px] text-[var(--text-secondary)] bg-[var(--surface-subtle)] px-2 py-0.5 rounded-full">{order.page_name || order.facebook_page_id || "Commande"}</span>
                   </div>
                   <p className="text-xs text-[var(--text-primary)] mt-1">{order.product_summary || "-"}</p>
                   <p className="text-[10px] text-[var(--text-secondary)] mt-1">

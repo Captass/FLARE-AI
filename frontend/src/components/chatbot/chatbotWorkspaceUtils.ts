@@ -104,7 +104,6 @@ export const EMPTY_PORTFOLIO_INPUT: PortfolioItemInput = {
 };
 
 export const EMPTY_SALES_CONFIG: SalesConfig = {
-  organization_slug: "",
   qualification_steps: [],
   objections: [],
   cta_type: "quote",

@@ -843,7 +843,6 @@ export type ChatbotHandoffMode = "auto" | "manual" | "disabled";
 export type ChatbotSetupStep = "need_org" | "connect_page" | "configure" | "complete";
 
 export interface ChatbotPreferences {
-  organization_slug?: string | null;
   bot_name: string;
   primary_role: ChatbotPrimaryRole;
   tone: ChatbotTone;
@@ -1034,7 +1033,6 @@ export async function getBillingFeatures(authToken?: string | null): Promise<Bil
 
 export interface CatalogueItem {
   id: string;
-  organization_slug: string;
   name: string;
   description: string;
   price: string | null;
@@ -1089,7 +1087,6 @@ export async function deleteCatalogueItem(id: string, authToken?: string | null)
 
 export interface PortfolioItem {
   id: string;
-  organization_slug: string;
   title: string;
   description: string;
   video_url: string;
@@ -1146,7 +1143,6 @@ export interface SalesObjectionPair {
 }
 
 export interface SalesConfig {
-  organization_slug: string;
   qualification_steps: string[];
   objections: SalesObjectionPair[];
   cta_type: string;
@@ -1191,7 +1187,7 @@ export async function getSalesConfig(authToken?: string | null, pageId?: string 
 }
 
 export async function updateSalesConfig(
-  payload: Omit<SalesConfig, "organization_slug" | "updated_at">,
+  payload: Omit<SalesConfig, "updated_at">,
   authToken?: string | null,
   pageId?: string | null
 ): Promise<SalesConfig> {
@@ -1222,29 +1218,8 @@ export interface UserProfileSettings {
   guide_assistant_enabled: boolean;
 }
 
-export interface OrganizationBrandingSettings {
-  organization_name: string;
-  logo_url: string;
-  workspace_name: string;
-  workspace_description: string;
-}
-
-export interface CurrentWorkspaceBranding {
-  scope_type: "personal" | "organization";
-  organization_slug?: string | null;
-  brand_name: string;
-  workspace_name: string;
-  workspace_description: string;
-  logo_url: string;
-}
-
 export interface WorkspaceIdentity {
   user_profile: UserProfileSettings;
-  organization_branding: OrganizationBrandingSettings | null;
-  current_branding: CurrentWorkspaceBranding;
-  can_edit_organization: boolean;
-  organization_role?: string | null;
-  organization_role_label?: string | null;
 }
 
 export async function getWorkspaceIdentity(authToken?: string | null): Promise<WorkspaceIdentity> {
@@ -1265,23 +1240,9 @@ export async function updateUserProfileSettings(
   );
 }
 
-export async function updateOrganizationBrandingSettings(
-  payload: Partial<OrganizationBrandingSettings>,
-  authToken?: string | null
-): Promise<WorkspaceIdentity> {
-  return apiRequest<WorkspaceIdentity>(
-    "/api/settings/organization-branding",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-    authToken
-  );
-}
-
 export async function uploadIdentityAsset(
   payload: {
-    target: "user_avatar" | "organization_logo";
+    target: "user_avatar";
     file_name: string;
     mime_type: string;
     data_url: string;
@@ -1323,129 +1284,6 @@ export async function syncUser(authToken?: string | null): Promise<{ status: str
   return apiRequest<{ status: string; plan: string }>("/api/auth/sync", {
     method: "POST",
   }, authToken);
-}
-
-export interface OrganizationScope {
-  type: "personal" | "organization";
-  scope_id: string;
-  label: string;
-  description: string;
-  offer_name: string;
-  plan_id: string;
-  security_label: string;
-  organization_slug?: string;
-  workspace_name?: string;
-  organization_name?: string;
-  logo_url?: string;
-  enabled_modules?: string[];
-  current_user_role?: string | null;
-  current_user_role_label?: string | null;
-  can_edit_branding?: boolean;
-  can_manage_facebook?: boolean;
-  requires_workspace_for_chatbot?: boolean;
-  facebook_access_code?: string;
-  facebook_access_message?: string;
-  connected_at?: string | null;
-  expires_at?: string | null;
-  session_ttl_hours?: number | null;
-  remaining_minutes?: number | null;
-}
-
-export interface OrganizationMemberSummary {
-  email: string;
-  display_name: string;
-  role: string;
-  role_label: string;
-}
-
-export interface OrganizationSummary {
-  slug: string;
-  name: string;
-  offer_name: string;
-  plan_id: string;
-  security_label: string;
-  description: string;
-  enabled_modules: string[];
-  member_count: number;
-  workspace_name?: string;
-  workspace_description?: string;
-  logo_url?: string;
-  members?: OrganizationMemberSummary[];
-  current_user_role?: string | null;
-  current_user_role_label?: string | null;
-  can_edit_branding?: boolean;
-  can_manage_facebook?: boolean;
-  facebook_access_code?: string;
-  facebook_access_message?: string;
-  is_dynamic?: boolean;
-  can_delete?: boolean;
-}
-
-export interface OrganizationAccessResponse {
-  user_email: string;
-  current_scope: OrganizationScope;
-  organizations: OrganizationSummary[];
-  has_shared_access: boolean;
-  requires_connection_flow: boolean;
-  can_connect_facebook?: boolean;
-  facebook_access_code?: string;
-  facebook_access_message?: string;
-  session_ttl_hours?: number;
-}
-
-export async function getOrganizationAccess(authToken?: string | null): Promise<OrganizationAccessResponse> {
-  return apiRequest<OrganizationAccessResponse>("/api/organizations/access", {}, authToken);
-}
-
-export async function connectToOrganization(
-  organizationSlug: string,
-  authToken?: string | null
-): Promise<{ status: string; current_scope: OrganizationScope; organization: OrganizationSummary }> {
-  return apiRequest<{ status: string; current_scope: OrganizationScope; organization: OrganizationSummary }>(
-    "/api/organizations/connect",
-    {
-      method: "POST",
-      body: JSON.stringify({ organization_slug: organizationSlug }),
-    },
-    authToken
-  );
-}
-
-export async function createOrganization(
-  name: string,
-  authToken?: string | null
-): Promise<{ status: string; current_scope: OrganizationScope; organization: OrganizationSummary }> {
-  return apiRequest<{ status: string; current_scope: OrganizationScope; organization: OrganizationSummary }>(
-    "/api/organizations",
-    {
-      method: "POST",
-      body: JSON.stringify({ name }),
-    },
-    authToken
-  );
-}
-
-export async function deleteOrganization(
-  organizationSlug: string,
-  authToken?: string | null
-): Promise<{ status: string; current_scope: OrganizationScope; organization_slug: string }> {
-  return apiRequest<{ status: string; current_scope: OrganizationScope; organization_slug: string }>(
-    `/api/organizations/${organizationSlug}`,
-    {
-      method: "DELETE",
-    },
-    authToken
-  );
-}
-
-export async function returnToPersonalScope(
-  authToken?: string | null
-): Promise<{ status: string; current_scope: OrganizationScope }> {
-  return apiRequest<{ status: string; current_scope: OrganizationScope }>(
-    "/api/organizations/personal",
-    { method: "POST" },
-    authToken
-  );
 }
 
 /** Retourne le plan actuel et l'usage mensuel de l'utilisateur. */
@@ -1795,8 +1633,6 @@ export interface ActivationRequestPage {
 
 export interface ActivationRequest {
   id: string;
-  organization_slug: string;
-  organization_scope_id: string;
   selected_plan_id: string;
   status: string;
   payment_status: string;
@@ -1862,7 +1698,6 @@ export async function updateActivationRequest(updates: Record<string, unknown>, 
 
 export interface ChatbotOrder {
   id: string;
-  organization_slug: string;
   facebook_page_id: string | null;
   page_name: string;
   contact_psid: string;
@@ -1975,8 +1810,6 @@ export async function adminUpdateOrder(orderId: string, updates: { status?: stri
 
 export interface UserReport {
   id: string;
-  organization_slug?: string | null;
-  organization_scope_id?: string | null;
   user_id: string;
   user_email: string;
   category: string;

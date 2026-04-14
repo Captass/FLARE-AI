@@ -62,7 +62,6 @@ interface ChatbotWorkspaceProps {
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   initialTab?: ChatbotWorkspaceTab;
   onRequestAccess?: () => void;
-  onRequestOrganizationSelection?: () => void;
   onRequestUpgrade?: () => void;
 }
 
@@ -115,7 +114,6 @@ export default function ChatbotWorkspace({
   getFreshToken,
   initialTab = "status",
   onRequestAccess,
-  onRequestOrganizationSelection,
   onRequestUpgrade,
 }: ChatbotWorkspaceProps) {
   const [activeTab, setActiveTab] = useState<ChatbotWorkspaceTab>(initialTab);
@@ -153,7 +151,6 @@ export default function ChatbotWorkspace({
 
   const planFeatures = billing?.features || null;
   const activePage = overview?.active_page || null;
-  const hasOrgScope = overview?.step !== "need_org";
   // Fail-closed si statut Facebook indisponible (aligné avec ChatbotParametresPage)
   const canEdit = facebookStatus?.can_edit ?? false;
   const canManagePages = facebookStatus?.can_manage_pages ?? false;
@@ -210,7 +207,6 @@ export default function ChatbotWorkspace({
           ? await getSalesConfig(accessToken)
           : {
               ...EMPTY_SALES_CONFIG,
-              organization_slug: nextPrefs.organization_slug || "",
               handoff_mode: nextPrefs.handoff_mode,
               handoff_keywords: nextPrefs.handoff_keywords,
             }
@@ -242,7 +238,7 @@ export default function ChatbotWorkspace({
     if (!canManagePages) {
       setFacebookError(
         facebookStatus?.facebook_access_message ||
-          "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook."
+          "Seuls le proprietaire ou un admin du compte peuvent connecter Facebook."
       );
       return;
     }
@@ -355,26 +351,6 @@ export default function ChatbotWorkspace({
   }
 
   const renderTab = () => {
-    if (!hasOrgScope) {
-      return (
-        <SectionCard
-          title="Organisation requise"
-          description="Les pages Facebook et la configuration du chatbot sont rattachees a une organisation active."
-          action={
-            <button
-              onClick={onRequestOrganizationSelection}
-              className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#140b02]"
-            >
-              Choisir une organisation
-              <ArrowUpRight size={14} />
-            </button>
-          }
-        >
-          <p className="text-[14px] leading-7 text-[var(--text-secondary)]">Activez d&apos;abord votre espace d&apos;organisation pour partager la configuration du chatbot.</p>
-        </SectionCard>
-      );
-    }
-
     if (activeTab === "status") {
       return (
         <ChatbotStatusTab

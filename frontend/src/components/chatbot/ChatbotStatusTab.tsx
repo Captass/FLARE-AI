@@ -61,7 +61,7 @@ function buildSetupGuide({
       tone: "warning",
       eyebrow: "Lecture seule",
       title: "Configuration réservée aux administrateurs",
-      body: "Seuls les administrateurs de l’organisation peuvent modifier la connexion Facebook.",
+      body: "Seuls les administrateurs de l’compte peuvent modifier la connexion Facebook.",
       bullets: [],
     };
   }

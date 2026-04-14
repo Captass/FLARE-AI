@@ -14,7 +14,6 @@ import {
   Send,
   KeyRound,
   UserCircle,
-  Building2,
   Palette,
   AlertCircle,
   Bot,
@@ -22,7 +21,6 @@ import {
 import {
   WorkspaceIdentity,
   updateUserProfileSettings,
-  updateOrganizationBrandingSettings,
   uploadIdentityAsset,
 } from "@/lib/api";
 import type { User as FirebaseUser } from "firebase/auth";
@@ -52,28 +50,6 @@ interface SettingsPageProps {
 const T = {
   fr: {
     title: "Paramètres",
-    subtitle: "Gérez votre compte, votre espace et vos préférences",
-    profile: "Mon Profil",
-    displayName: "Nom affiché",
-    displayNameHint: "Visible dans toute l'application",
-    fullName: "Nom complet",
-    fullNameHint: "Votre prénom et nom de famille",
-    email: "Email",
-    save: "Enregistrer",
-    saving: "Sauvegarde…",
-    saved: "Sauvegardé !",
-    security: "Sécurité",
-    passwordLabel: "Mot de passe",
-    sendReset: "Envoyer un lien de réinitialisation",
-    sending: "Envoi en cours…",
-    resetSent: "Lien envoyé à",
-    organisation: "Organisation",
-    orgName: "Nom de l'organisation",
-    orgDesc: "Description",
-    orgLogo: "Logo",
-    orgLogoHint: "PNG, JPG · max 3 MB",
-    orgReadonly: "Seuls les administrateurs peuvent modifier l'organisation.",
-    roleLabel: "Rôle",
     appearance: "Apparence",
     dark: "Sombre",
     light: "Clair",
@@ -91,7 +67,7 @@ const T = {
     errorAuth: "Vous devez être connecté pour sauvegarder.",
     errorPwd: "Impossible d'envoyer l'email. Vérifiez votre connexion.",
     errorPwdEmail: "Aucun email associé à ce compte.",
-    orgRoleHint: "Pour modifier l'organisation, contactez un administrateur.",
+    accountRoleHint: "Pour modifier le compte, contactez un admin.",
     guideAssistant: "Assistant d'aide",
     guideAssistantDesc:
       "Affiche un petit assistant en bas a droite pour t'expliquer chaque page et te dire quoi faire ensuite.",
@@ -99,7 +75,7 @@ const T = {
   },
   en: {
     title: "Settings",
-    subtitle: "Manage your account, workspace and preferences",
+    subtitle: "Manage your account and preferences",
     profile: "My Profile",
     displayName: "Display name",
     displayNameHint: "Visible across the whole application",
@@ -114,13 +90,7 @@ const T = {
     sendReset: "Send a reset link",
     sending: "Sending…",
     resetSent: "Link sent to",
-    organisation: "Organisation",
-    orgName: "Organisation name",
-    orgDesc: "Description",
-    orgLogo: "Logo",
-    orgLogoHint: "PNG, JPG · max 3 MB",
-    orgReadonly: "Only administrators can edit the organisation.",
-    roleLabel: "Role",
+    compte: "Compte",
     appearance: "Appearance",
     dark: "Dark",
     light: "Light",
@@ -138,7 +108,7 @@ const T = {
     errorAuth: "You must be logged in to save.",
     errorPwd: "Unable to send the email. Check your connection.",
     errorPwdEmail: "No email associated with this account.",
-    orgRoleHint: "Contact an administrator to modify the organisation.",
+    accountRoleHint: "Contact an administrator to modify the compte.",
     guideAssistant: "Help assistant",
     guideAssistantDesc:
       "Show a small helper in the bottom-right corner to explain each page and what to do next.",
@@ -411,23 +381,6 @@ export default function SettingsPage({
   const [guideAssistantSaving, setGuideAssistantSaving] = useState(false);
   const [guideAssistantError, setGuideAssistantError] = useState<string | null>(null);
 
-  // Organisation state
-  const canEditOrg = workspaceIdentity?.can_edit_organization ?? false;
-  const [orgName, setOrgName] = useState(
-    workspaceIdentity?.organization_branding?.organization_name || ""
-  );
-  const [orgDesc, setOrgDesc] = useState(
-    workspaceIdentity?.organization_branding?.workspace_description || ""
-  );
-  const [orgLogoPreview, setOrgLogoPreview] = useState<string | undefined>(
-    workspaceIdentity?.organization_branding?.logo_url || undefined
-  );
-  const [pendingOrgLogoFile, setPendingOrgLogoFile] = useState<File | null>(null);
-  const [savingOrg, setSavingOrg] = useState(false);
-  const [savedOrg, setSavedOrg] = useState(false);
-  const [orgError, setOrgError] = useState<string | null>(null);
-  const orgLogoInputRef = useRef<HTMLInputElement>(null);
-
   // Password
   const [resettingPwd, setResettingPwd] = useState(false);
   const [pwdResetSent, setPwdResetSent] = useState(false);
@@ -439,9 +392,6 @@ export default function SettingsPage({
   useEffect(() => {
     if (workspaceIdentity) {
       setFullName(workspaceIdentity.user_profile?.full_name || "");
-      setOrgName(workspaceIdentity.organization_branding?.organization_name || "");
-      setOrgDesc(workspaceIdentity.organization_branding?.workspace_description || "");
-      setOrgLogoPreview(workspaceIdentity.organization_branding?.logo_url || undefined);
       setGuideAssistantEnabled(
         workspaceIdentity.user_profile?.guide_assistant_enabled ?? true
       );
@@ -493,7 +443,7 @@ export default function SettingsPage({
           full_name: fullName.trim(),
           avatar_url: finalAvatarUrl,
           workspace_name:
-            workspaceIdentity?.user_profile?.workspace_name || "Mon espace",
+            workspaceIdentity?.user_profile?.workspace_name || "Mon compte",
         },
         t
       );
@@ -506,57 +456,6 @@ export default function SettingsPage({
       setProfileError(tx.errorSave);
     } finally {
       setSavingProfile(false);
-    }
-  };
-
-  // ── Handle org logo file ──
-  const handleOrgLogoFileSelected = (file: File) => {
-    setPendingOrgLogoFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setOrgLogoPreview(String(reader.result));
-    reader.readAsDataURL(file);
-  };
-
-  // ── Save organisation ──
-  const handleSaveOrg = async () => {
-    const t = await getToken();
-    if (!t) { setOrgError(tx.errorAuth); return; }
-    setSavingOrg(true);
-    setOrgError(null);
-    try {
-      let finalLogoUrl =
-        workspaceIdentity?.organization_branding?.logo_url || "";
-
-      if (pendingOrgLogoFile && orgLogoPreview) {
-        const uploadResult = await uploadIdentityAsset(
-          {
-            target: "organization_logo",
-            file_name: pendingOrgLogoFile.name,
-            mime_type: pendingOrgLogoFile.type,
-            data_url: orgLogoPreview,
-          },
-          t
-        );
-        finalLogoUrl = uploadResult.url;
-      }
-
-      const nextIdentity = await updateOrganizationBrandingSettings(
-        {
-          organization_name: orgName.trim(),
-          workspace_description: orgDesc.trim(),
-          logo_url: finalLogoUrl,
-        },
-        t
-      );
-
-      setPendingOrgLogoFile(null);
-      setSavedOrg(true);
-      onIdentitySaved?.(nextIdentity);
-      setTimeout(() => setSavedOrg(false), 3000);
-    } catch {
-      setOrgError(tx.errorSave);
-    } finally {
-      setSavingOrg(false);
     }
   };
 
@@ -711,100 +610,6 @@ export default function SettingsPage({
           </FieldRow>
         </SectionCard>
 
-        {/* ── Organisation ── */}
-        {workspaceIdentity && (
-          <SectionCard icon={Building2} title={tx.organisation} delay={0.15}>
-            {canEditOrg ? (
-              <>
-                <FieldRow label={tx.orgName}>
-                  <TextInput
-                    id="settings-org-name"
-                    value={orgName}
-                    onChange={setOrgName}
-                    placeholder="Nom de l'organisation"
-                  />
-                </FieldRow>
-
-                <FieldRow label={tx.orgDesc}>
-                  <textarea
-                    id="settings-org-desc"
-                    value={orgDesc}
-                    onChange={(e) => setOrgDesc(e.target.value)}
-                    rows={3}
-                    placeholder="Une description courte de votre organisation…"
-                    className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)]
-                               px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-                               focus:outline-none focus:border-orange-500/40 focus:bg-[var(--surface-raised)]
-                               resize-none transition-all duration-150"
-                  />
-                </FieldRow>
-
-                <FieldRow label={tx.orgLogo} hint={tx.orgLogoHint}>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className="relative group cursor-pointer h-16 w-16 rounded-xl overflow-hidden
-                                 border border-[var(--border-default)] bg-[var(--surface-subtle)] flex items-center justify-center"
-                      onClick={() => orgLogoInputRef.current?.click()}
-                    >
-                      {orgLogoPreview ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={orgLogoPreview} alt="Logo org" className="h-full w-full object-cover" />
-                      ) : (
-                        <Building2 size={22} className="text-[var(--text-muted)]" />
-                      )}
-                      <div className="absolute inset-0 flex items-center justify-center bg-[var(--surface-base)]/92 opacity-0 transition-opacity group-hover:opacity-100">
-                        <Camera size={16} className="text-[var(--text-primary)]" />
-                      </div>
-                    </div>
-                    <input
-                      ref={orgLogoInputRef}
-                      type="file"
-                      className="hidden"
-                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                      onChange={(e) => {
-                        const f = e.target.files?.[0];
-                        if (f) { handleOrgLogoFileSelected(f); e.target.value = ""; }
-                      }}
-                    />
-                    <p className="text-xs text-[var(--text-secondary)]">{tx.orgLogoHint}</p>
-                  </div>
-                </FieldRow>
-
-                {orgError && <ErrorBanner message={orgError} />}
-
-                <div className="flex justify-end pt-1">
-                  <SaveBtn
-                    saving={savingOrg}
-                    saved={savedOrg}
-                    onClick={handleSaveOrg}
-                    label={savedOrg ? tx.saved : tx.save}
-                  />
-                </div>
-              </>
-            ) : (
-              <>
-                <FieldRow label={tx.orgName}>
-                  <TextInput
-                    id="settings-org-name-readonly"
-                    value={
-                      workspaceIdentity?.organization_branding?.organization_name ||
-                      workspaceIdentity?.current_branding?.workspace_name ||
-                      "—"
-                    }
-                    disabled
-                  />
-                </FieldRow>
-                <FieldRow label={tx.roleLabel}>
-                  <p className="text-sm text-[var(--text-secondary)] py-2.5">
-                    {workspaceIdentity.organization_role_label || "Membre"}
-                  </p>
-                </FieldRow>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">{tx.orgReadonly}</p>
-              </>
-            )}
-          </SectionCard>
-        )}
-
         {/* ── Apparence (Dark/Light) ── */}
         {/* Appearance (info only) */}
         <SectionCard icon={Palette} title={tx.appearance} delay={0.2}>
@@ -917,5 +722,6 @@ export default function SettingsPage({
     </div>
   );
 }
+
 
 

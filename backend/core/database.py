@@ -299,6 +299,7 @@ class FacebookPageConnection(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
     organization_scope_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     page_id = Column(String, index=True, nullable=False)
     page_name = Column(String, nullable=False)
     page_picture_url = Column(String, nullable=True)
@@ -325,6 +326,7 @@ class ChatbotPreferences(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     page_id = Column(String, index=True, nullable=True)
     
     __table_args__ = (
@@ -361,6 +363,7 @@ class ChatbotCatalogueItem(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     page_id = Column(String, index=True, nullable=True)
     name = Column(String, nullable=False)
     description = Column(Text, default="")
@@ -380,6 +383,7 @@ class ChatbotPortfolioItem(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     page_id = Column(String, index=True, nullable=True)
     title = Column(String, nullable=False)
     description = Column(Text, default="")
@@ -398,6 +402,7 @@ class ChatbotSalesConfig(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     page_id = Column(String, index=True, nullable=True)
     __table_args__ = (
         UniqueConstraint('organization_slug', 'page_id', name='uq_chatbot_sales_org_page'),
@@ -439,12 +444,13 @@ REPORT_STATUSES = ["new", "in_review", "resolved", "dismissed"]
 
 
 class ActivationRequest(Base):
-    """Demande d'activation assistee par organisation."""
+    """Demande d'activation assistee par utilisateur."""
     __tablename__ = "activation_requests"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
     organization_scope_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     requester_user_id = Column(String, nullable=False)
     selected_plan_id = Column(String, default="starter")
     status = Column(String, default="draft")
@@ -516,6 +522,7 @@ class ActivationRequestEvent(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     activation_request_id = Column(String, ForeignKey("activation_requests.id"), index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     actor_type = Column(String, default="system")  # client | admin | system
     actor_id = Column(String, default="")
     event_type = Column(String, nullable=False)
@@ -530,6 +537,7 @@ class ManualPaymentSubmission(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
     organization_scope_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     activation_request_id = Column(String, ForeignKey("activation_requests.id"), nullable=True)
     selected_plan_id = Column(String, default="starter")
     method_code = Column(String, nullable=False)
@@ -558,6 +566,7 @@ class UserReport(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
     organization_scope_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     reporter_user_id = Column(String, nullable=False)
     reporter_email = Column(String, default="")
     current_view = Column(String, default="")
@@ -584,6 +593,7 @@ class ChatbotOrder(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_slug = Column(String, index=True, nullable=False)
     organization_scope_id = Column(String, index=True, nullable=False)
+    user_id = Column(String, index=True, nullable=True)
     facebook_page_id = Column(String, nullable=True)
     page_name = Column(String, default="")
     contact_psid = Column(String, index=True, default="")
@@ -860,6 +870,37 @@ def init_db():
     except Exception as e:
         db.rollback()
         _logger.warning("⚠️ Migration activation_requests ignorée: %s", e)
+    finally:
+        db.close()
+
+    # Migrations user_id (scope utilisateur unique)
+    db = SessionLocal()
+    try:
+        user_id_tables = {
+            "facebook_page_connections": "VARCHAR(255)",
+            "chatbot_preferences": "VARCHAR(255)",
+            "chatbot_catalogue_items": "VARCHAR(255)",
+            "chatbot_portfolio_items": "VARCHAR(255)",
+            "chatbot_sales_config": "VARCHAR(255)",
+            "activation_requests": "VARCHAR(255)",
+            "activation_request_events": "VARCHAR(255)",
+            "manual_payment_submissions": "VARCHAR(255)",
+            "user_reports": "VARCHAR(255)",
+            "chatbot_orders": "VARCHAR(255)",
+        }
+        for table_name, column_sql in user_id_tables.items():
+            existing_cols = {
+                str(c.get("name", "")).strip().lower()
+                for c in inspect(engine).get_columns(table_name)
+            }
+            if "user_id" in existing_cols:
+                continue
+            db.execute(text(f"ALTER TABLE {table_name} ADD COLUMN user_id {column_sql}"))
+            _logger.info("✅ Migration %s: colonne 'user_id' ajoutée.", table_name)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        _logger.warning("⚠️ Migration user_id ignorée: %s", e)
     finally:
         db.close()
 

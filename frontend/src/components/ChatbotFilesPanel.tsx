@@ -276,7 +276,7 @@ export default function ChatbotFilesPanel({ token }: ChatbotFilesPanelProps) {
 
   const handleImportLibraryItem = async (item: ChatbotLibraryItem) => {
     if (!token) {
-      setError("Connectez votre espace pour importer la bibliotheque FLARE AI.");
+      setError("Connectez votre compte pour importer la bibliotheque FLARE AI.");
       return;
     }
 
@@ -301,7 +301,7 @@ export default function ChatbotFilesPanel({ token }: ChatbotFilesPanelProps) {
 
   const handleImportCategory = async () => {
     if (!token) {
-      setError("Connectez votre espace pour importer la bibliotheque FLARE AI.");
+      setError("Connectez votre compte pour importer la bibliotheque FLARE AI.");
       return;
     }
     if (pendingLibraryItems.length === 0) return;
@@ -595,7 +595,7 @@ export default function ChatbotFilesPanel({ token }: ChatbotFilesPanelProps) {
               ) : null}
 
               <div className="rounded-2xl bg-white/[0.02] px-5 py-4">
-                <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-white/50">
+                <p className="whitcompte-pre-wrap text-[13px] leading-relaxed text-white/50">
                   {selectedDoc.content || "Aucun contenu textuel."}
                 </p>
               </div>

@@ -60,56 +60,6 @@ function parseApiError(e: unknown, fallback = "Une erreur est survenue."): strin
   return raw || fallback;
 }
 
-function isMissingOrganizationScopeError(message: string): boolean {
-  return /organisation|espace|scope|selectionnez d'abord/i.test(message);
-}
-
-type ActivationContextPage = {
-  page_id: string;
-  page_name: string;
-  is_active?: boolean;
-  is_selected?: boolean;
-};
-
-type ActivationPageContext = {
-  imported_pages: ActivationContextPage[];
-  selected_page_id: string | null;
-  target_page_id: string | null;
-  target_page_name: string | null;
-  target_page_url: string | null;
-};
-
-function normalizePageList(
-  pages: Array<{
-    page_id?: string | null;
-    page_name?: string | null;
-    is_active?: boolean;
-    is_selected?: boolean;
-  }> = []
-): ActivationContextPage[] {
-  return pages
-    .filter((p) => Boolean(p.page_id))
-    .map((p) => ({
-      page_id: String(p.page_id),
-      page_name: p.page_name || String(p.page_id),
-      is_active: Boolean(p.is_active),
-      is_selected: Boolean(p.is_selected),
-    }));
-}
-
-function getSnapshotSelectedPageId(
-  pages: ActivationContextPage[] = [],
-  fallbackIds: Array<string | null | undefined> = []
-): string | null {
-  const explicit = pages.find((page) => page.is_selected)?.page_id;
-  if (explicit) return explicit;
-
-  for (const fallbackId of fallbackIds) {
-    if (fallbackId && pages.some((page) => page.page_id === fallbackId)) {
-      return fallbackId;
-    }
-  }
-
   const active = pages.find((page) => page.is_active);
   if (active) return active.page_id;
   return pages[0]?.page_id ?? null;
@@ -141,8 +91,6 @@ interface ChatbotActivationPageProps {
   token?: string | null;
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
   onPush: (level: NavLevel) => void;
-  currentScopeType?: "personal" | "organization";
-  onRequestOrganizationSelection?: () => void;
   availablePages?: FacebookMessengerPage[];
   selectedPageId?: string | null;
 }
@@ -363,37 +311,6 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function OrganizationScopeRequiredPanel({
-  onSelectWorkspace,
-}: {
-  onSelectWorkspace?: () => void;
-}) {
-  return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-2xl px-4 py-10 md:px-8 md:py-14">
-        <div className={`${glass} p-6 md:p-8 text-center flex flex-col items-center gap-4`}>
-          <div className="h-12 w-12 rounded-xl bg-orange-500/15 text-orange-500 flex items-center justify-center">
-            <Building2 size={22} />
-          </div>
-          <h2 className="text-xl font-semibold text-[var(--text-primary)]">Choisissez d&apos;abord votre espace de travail</h2>
-          <p className="max-w-lg text-sm leading-relaxed text-[var(--text-secondary)]">
-            L&apos;activation du chatbot et le paiement sont rattaches a une organisation.
-            Ouvrez le selecteur d&apos;espace puis choisissez une organisation active.
-          </p>
-          <button
-            type="button"
-            onClick={() => onSelectWorkspace?.()}
-            className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600"
-          >
-            Choisir mon espace
-            <ArrowRight size={16} />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
@@ -402,8 +319,6 @@ export default function ChatbotActivationPage({
   token,
   getFreshToken,
   onPush,
-  currentScopeType = "personal",
-  onRequestOrganizationSelection,
   availablePages = [],
   selectedPageId = null,
 }: ChatbotActivationPageProps) {
@@ -491,11 +406,7 @@ export default function ChatbotActivationPage({
 
     void (async () => {
       setLoading(true);
-      if (currentScopeType !== "organization") {
-        setLoading(false);
-        return;
-      }
-      const t = await resolveToken();
+            const t = await resolveToken();
       if (!t || cancelled) {
         setLoading(false);
         return;
@@ -600,11 +511,11 @@ export default function ChatbotActivationPage({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentScopeType, resolveToken]);
+  }, [resolveToken]);
 
   // ---- polling (awaiting step) ----
   useEffect(() => {
-    if (currentScopeType !== "organization" || step !== "awaiting") {
+    if (step !== "awaiting") {
       if (pollRef.current) {
         clearInterval(pollRef.current);
         pollRef.current = null;
@@ -638,7 +549,7 @@ export default function ChatbotActivationPage({
         pollRef.current = null;
       }
     };
-  }, [currentScopeType, step, resolveToken]);
+  }, [step, resolveToken]);
 
   useEffect(() => {
     if (!ar) return;
@@ -710,12 +621,7 @@ export default function ChatbotActivationPage({
 
   // ---- actions ----
   const handleChoosePlan = async () => {
-    if (currentScopeType !== "organization") {
-      setError("Selectionnez d'abord une organisation active.");
-      onRequestOrganizationSelection?.();
-      return;
-    }
-    setBusy(true);
+        setBusy(true);
     setError(null);
     try {
       const t = await resolveToken();
@@ -729,30 +635,22 @@ export default function ChatbotActivationPage({
       setStep("payment");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la creation");
-      if (isMissingOrganizationScopeError(msg)) {
-        // In org scope, this is usually a stale scoped token: retry once with a forced refresh.
-        if (currentScopeType === "organization" && getFreshToken) {
-          try {
-            const refreshedToken = await getFreshToken(true);
-            if (refreshedToken) {
-              const retry = await createActivationRequest(
-                { selected_plan_id: selectedPlanId } as Partial<ActivationRequest>,
-                refreshedToken
-              );
-              setAr(retry.activation_request);
-              setStep("payment");
-              return;
-            }
-          } catch {
-            // Fall through to user-facing error below.
+      if (getFreshToken && /token|session|expire/i.test(msg)) {
+        try {
+          const refreshedToken = await getFreshToken(true);
+          if (refreshedToken) {
+            const retry = await createActivationRequest(
+              { selected_plan_id: selectedPlanId } as Partial<ActivationRequest>,
+              refreshedToken
+            );
+            setAr(retry.activation_request);
+            setStep("payment");
+            return;
           }
-          setError("Session organisation indisponible. Rechargez la page puis reessayez.");
-          return;
+        } catch {
+          // Fall through to user-facing error below.
         }
-        setError("Selectionnez d'abord une organisation active.");
-        if (currentScopeType !== "organization") {
-          onRequestOrganizationSelection?.();
-        }
+        setError("Session indisponible. Rechargez la page puis reessayez.");
         return;
       }
       // If an AR already exists, load it and resume from the correct step
@@ -778,12 +676,7 @@ export default function ChatbotActivationPage({
   };
 
   const handleSubmitPayment = async () => {
-    if (currentScopeType !== "organization") {
-      setError("Selectionnez d'abord une organisation active.");
-      onRequestOrganizationSelection?.();
-      return;
-    }
-    if (!txRef.trim()) {
+        if (!txRef.trim()) {
       setError("Veuillez indiquer la reference de transaction.");
       return;
     }
@@ -811,11 +704,6 @@ export default function ChatbotActivationPage({
       setStep("awaiting");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la soumission du paiement");
-      if (isMissingOrganizationScopeError(msg)) {
-        setError("Selectionnez d'abord une organisation active.");
-        onRequestOrganizationSelection?.();
-        return;
-      }
       setError(msg);
     } finally {
       setBusy(false);
@@ -823,12 +711,7 @@ export default function ChatbotActivationPage({
   };
 
   const handleSaveConfig = async () => {
-    if (currentScopeType !== "organization") {
-      setError("Selectionnez d'abord une organisation active.");
-      onRequestOrganizationSelection?.();
-      return;
-    }
-
+    
     if (importedPages.length > 0 && !targetPageId) {
       setError("Choisissez la page Facebook a activer.");
       return;
@@ -879,11 +762,6 @@ export default function ChatbotActivationPage({
       setStep("flare_admin");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la sauvegarde");
-      if (isMissingOrganizationScopeError(msg)) {
-        setError("Selectionnez d'abord une organisation active.");
-        onRequestOrganizationSelection?.();
-        return;
-      }
       setError(msg);
     } finally {
       setBusy(false);
@@ -891,12 +769,7 @@ export default function ChatbotActivationPage({
   };
 
   const handleConfirmAdmin = async () => {
-    if (currentScopeType !== "organization") {
-      setError("Selectionnez d'abord une organisation active.");
-      onRequestOrganizationSelection?.();
-      return;
-    }
-    setBusy(true);
+        setBusy(true);
     setError(null);
     try {
       const t = await resolveToken();
@@ -909,11 +782,6 @@ export default function ChatbotActivationPage({
       setStep("awaiting");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la confirmation");
-      if (isMissingOrganizationScopeError(msg)) {
-        setError("Selectionnez d'abord une organisation active.");
-        onRequestOrganizationSelection?.();
-        return;
-      }
       setError(msg);
     } finally {
       setBusy(false);
@@ -1040,14 +908,7 @@ export default function ChatbotActivationPage({
     );
   }
 
-  if (currentScopeType !== "organization") {
-    return (
-      <OrganizationScopeRequiredPanel
-        onSelectWorkspace={onRequestOrganizationSelection}
-      />
-    );
-  }
-
+  
   // ---- render ----
   return (
     <div className="flex-1 overflow-y-auto">

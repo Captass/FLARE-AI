@@ -15,19 +15,9 @@ from core.auth import get_user_id_from_header, get_user_identity
 from core.database import SystemSetting, get_db
 from core.firebase_client import firebase_storage as storage
 from core.identity import (
-    ORGANIZATION_BRANDING_KEY,
     USER_PROFILE_KEY,
-    load_organization_branding,
     load_user_profile,
     save_setting_json,
-)
-from core.organizations import (
-    get_organization,
-    get_user_role_in_organization,
-    get_user_role_label,
-    organization_scope_id,
-    user_can_access_organization,
-    user_can_edit_organization,
 )
 
 logger = logging.getLogger(__name__)
@@ -47,24 +37,11 @@ class UserProfileRequest(BaseModel):
     guide_assistant_enabled: Optional[bool] = None
 
 
-class OrganizationBrandingRequest(BaseModel):
-    organization_name: Optional[str] = None
-    logo_url: Optional[str] = None
-    workspace_name: Optional[str] = None
-    workspace_description: Optional[str] = None
-
-
 class IdentityAssetUploadRequest(BaseModel):
-    target: Literal["user_avatar", "organization_logo"]
+    target: Literal["user_avatar"]
     file_name: str
     mime_type: str
     data_url: str
-
-
-def _extract_org_slug(scoped_user_id: str) -> Optional[str]:
-    if not scoped_user_id.startswith("org:"):
-        return None
-    return scoped_user_id.split(":", 1)[1].strip() or None
 
 
 def _clean_text(value: Optional[str], *, limit: int, fallback: Optional[str] = None) -> str:
@@ -113,49 +90,10 @@ def _build_identity_response(
     db: Session,
     raw_user_id: str,
     user_email: str,
-    scoped_user_id: str,
 ) -> dict:
     user_profile = load_user_profile(db, raw_user_id, user_email)
-    org_slug = _extract_org_slug(scoped_user_id)
-    organization = get_organization(org_slug) if org_slug else None
-    organization_role = get_user_role_in_organization(user_email, organization=organization)
-    has_organization_access = bool(
-        organization and user_can_access_organization(user_email, organization["slug"])
-    )
-    can_edit_organization = bool(
-        organization and user_can_edit_organization(user_email, organization=organization)
-    )
-
-    organization_branding = (
-        load_organization_branding(db, scoped_user_id, organization)
-        if organization and has_organization_access
-        else None
-    )
-
-    current_branding = {
-        "scope_type": "organization" if organization_branding else "personal",
-        "organization_slug": organization["slug"] if organization else None,
-        "brand_name": organization_branding["organization_name"] if organization_branding else "FLARE AI",
-        "workspace_name": (
-            organization_branding["workspace_name"]
-            if organization_branding
-            else user_profile["workspace_name"]
-        ),
-        "workspace_description": (
-            organization_branding["workspace_description"]
-            if organization_branding
-            else "Votre espace de travail personnel."
-        ),
-        "logo_url": organization_branding["logo_url"] if organization_branding else "",
-    }
-
     return {
         "user_profile": user_profile,
-        "organization_branding": organization_branding,
-        "current_branding": current_branding,
-        "can_edit_organization": can_edit_organization,
-        "organization_role": organization_role,
-        "organization_role_label": get_user_role_label(organization_role) if organization else None,
     }
 
 
@@ -225,8 +163,7 @@ def get_workspace_identity(
     if raw_user_id == "anonymous":
         raise HTTPException(status_code=401, detail="Authentification requise.")
 
-    scoped_user_id = get_user_id_from_header(authorization)
-    return _build_identity_response(db, raw_user_id, user_email, scoped_user_id)
+    return _build_identity_response(db, raw_user_id, user_email)
 
 
 @router.post("/user-profile")
@@ -254,56 +191,7 @@ def update_user_profile(
     save_setting_json(db, USER_PROFILE_KEY, raw_user_id, next_value)
     db.commit()
 
-    return _build_identity_response(
-        db,
-        raw_user_id,
-        user_email,
-        get_user_id_from_header(authorization),
-    )
-
-
-@router.post("/organization-branding")
-def update_organization_branding(
-    req: OrganizationBrandingRequest,
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-):
-    raw_user_id, user_email = get_user_identity(authorization)
-    if raw_user_id == "anonymous":
-        raise HTTPException(status_code=401, detail="Authentification requise.")
-
-    scoped_user_id = get_user_id_from_header(authorization)
-    org_slug = _extract_org_slug(scoped_user_id)
-    organization = get_organization(org_slug)
-    if not org_slug or not organization or not user_can_edit_organization(user_email, org_slug):
-        raise HTTPException(status_code=403, detail="Organisation active requise.")
-
-    next_value = load_organization_branding(db, scoped_user_id, organization)
-    if req.organization_name is not None:
-        next_value["organization_name"] = _clean_text(
-            req.organization_name,
-            limit=100,
-            fallback=next_value["organization_name"],
-        )
-    if req.logo_url is not None:
-        next_value["logo_url"] = _clean_text(req.logo_url, limit=2048)
-    if req.workspace_name is not None:
-        next_value["workspace_name"] = _clean_text(
-            req.workspace_name,
-            limit=100,
-            fallback=next_value["workspace_name"],
-        )
-    if req.workspace_description is not None:
-        next_value["workspace_description"] = _clean_text(
-            req.workspace_description,
-            limit=220,
-            fallback=next_value["workspace_description"],
-        )
-
-    save_setting_json(db, ORGANIZATION_BRANDING_KEY, scoped_user_id, next_value)
-    db.commit()
-
-    return _build_identity_response(db, raw_user_id, user_email, scoped_user_id)
+    return _build_identity_response(db, raw_user_id, user_email)
 
 
 @router.post("/identity-asset")
@@ -316,21 +204,10 @@ def upload_identity_asset(
     if raw_user_id == "anonymous":
         raise HTTPException(status_code=401, detail="Authentification requise.")
 
-    scoped_user_id = get_user_id_from_header(authorization)
     file_bytes = _decode_image_data_url(req.data_url, req.mime_type)
     safe_name = _safe_filename(req.file_name)
 
-    if req.target == "user_avatar":
-        storage_path = f"identity/users/{raw_user_id}/avatar/{uuid.uuid4().hex}-{safe_name}"
-    else:
-        org_slug = _extract_org_slug(scoped_user_id)
-        organization = get_organization(org_slug)
-        if not org_slug or not organization or not user_can_edit_organization(user_email, org_slug):
-            raise HTTPException(status_code=403, detail="Organisation active requise.")
-        storage_path = (
-            f"identity/organizations/{organization_scope_id(org_slug)}/logo/"
-            f"{uuid.uuid4().hex}-{safe_name}"
-        )
+    storage_path = f"identity/users/{raw_user_id}/avatar/{uuid.uuid4().hex}-{safe_name}"
 
     public_url = storage.upload_file(
         bucket_name="",

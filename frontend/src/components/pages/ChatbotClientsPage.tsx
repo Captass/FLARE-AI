@@ -75,7 +75,7 @@ export default function ChatbotClientsPage({
     if (!canSwitchMode) {
       setError(
         accessMessage ||
-          "Seuls le proprietaire ou un admin de cet espace peuvent changer le mode bot/humain."
+          "Seuls le proprietaire ou un admin du compte peuvent changer le mode bot/humain."
       );
       return;
     }

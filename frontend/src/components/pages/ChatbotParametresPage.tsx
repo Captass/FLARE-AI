@@ -18,7 +18,6 @@ import {
 interface ChatbotParametresPageProps {
   token?: string | null;
   getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
-  onRequestOrganizationSelection?: () => void;
   selectedPageId?: string | null;
   onSelectPage?: (pageId: string) => void;
   onPagesChanged?: (pages: import("@/lib/facebookMessenger").FacebookMessengerPage[]) => void;
@@ -27,7 +26,6 @@ interface ChatbotParametresPageProps {
 export default function ChatbotParametresPage({
   token,
   getFreshToken,
-  onRequestOrganizationSelection,
   selectedPageId,
   onSelectPage,
   onPagesChanged,
@@ -105,7 +103,7 @@ export default function ChatbotParametresPage({
     if (!canManagePages) {
       setFacebookError(
         facebookStatus?.facebook_access_message ||
-          "Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook."
+          "Seuls le proprietaire ou un admin du compte peuvent connecter Facebook."
       );
       return;
     }
@@ -201,20 +199,10 @@ export default function ChatbotParametresPage({
   }
 
   if (error) {
-    const needsWorkspaceSelection = /organisation|espace|workspace/i.test(error);
     return (
       <div className="flex flex-1 items-center justify-center py-20">
         <div className="flex max-w-xl flex-col items-center gap-4 text-center">
           <p className="text-[var(--text-primary)]">{error}</p>
-          {needsWorkspaceSelection && onRequestOrganizationSelection ? (
-            <button
-              type="button"
-              onClick={onRequestOrganizationSelection}
-              className="rounded-lg border border-[var(--border-strong)] bg-[var(--surface-subtle)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] hover:bg-[var(--surface-raised)]"
-            >
-              Choisir un espace de travail
-            </button>
-          ) : null}
         </div>
       </div>
     );

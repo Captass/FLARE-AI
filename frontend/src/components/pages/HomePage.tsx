@@ -1,5 +1,4 @@
 "use client";
-
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -20,16 +19,11 @@ import { getChatbotOverview, getDashboardStats, type ChatbotOverview, type Dashb
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { SkeletonCard } from "@/components/SkeletonLoader";
 import type { NavLevel } from "@/components/NavBreadcrumb";
-
 interface HomePageProps {
   displayName: string;
-  orgName?: string;
   token?: string | null;
-  currentScopeType?: "personal" | "organization";
   onPush: (level: NavLevel) => void;
-  onCreateWorkspace?: () => void;
 }
-
 function KpiCard({
   label,
   value,
@@ -48,7 +42,6 @@ function KpiCard({
   if (loading) {
     return <SkeletonCard />;
   }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -87,7 +80,6 @@ function KpiCard({
     </motion.div>
   );
 }
-
 function PlatformTile({
   icon: Icon,
   iconColor,
@@ -110,7 +102,6 @@ function PlatformTile({
   delay: number;
 }) {
   const CardTag = locked ? "div" : "button";
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -152,23 +143,18 @@ function PlatformTile({
     </motion.div>
   );
 }
-
 export default function HomePage({
-  orgName,
+  displayName,
   token,
-  currentScopeType = "personal",
   onPush,
-  onCreateWorkspace,
 }: HomePageProps) {
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
   const [loadingKpi, setLoadingKpi] = useState(false);
   const [lastKpiUpdate, setLastKpiUpdate] = useState<Date | null>(null);
-  const isOrganizationScope = currentScopeType === "organization";
-
   const fetchKpis = useCallback(
     async (silent = false) => {
-      if (!token || !isOrganizationScope) {
+      if (!token) {
         setOverview(null);
         setDashStats(null);
         setLastKpiUpdate(null);
@@ -188,11 +174,10 @@ export default function HomePage({
         if (!silent) setLoadingKpi(false);
       }
     },
-    [isOrganizationScope, token]
+    [token]
   );
-
   useEffect(() => {
-    if (!token || !isOrganizationScope) {
+    if (!token) {
       setOverview(null);
       setDashStats(null);
       setLastKpiUpdate(null);
@@ -209,16 +194,13 @@ export default function HomePage({
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [fetchKpis, isOrganizationScope, token]);
-
+  }, [fetchKpis, token]);
   const today = new Date().toLocaleDateString("fr-FR", {
     weekday: "long", day: "numeric", month: "long",
   });
-
-  const isActive = isOrganizationScope && overview?.step === "complete";
-  const messagesCount = isOrganizationScope ? (dashStats?.period?.messages ?? dashStats?.messages?.total ?? 0) : 0;
-  const contactsCount = isOrganizationScope ? (dashStats?.conversations?.messenger ?? dashStats?.conversations?.total ?? 0) : 0;
-
+  const isActive = overview?.step === "complete";
+  const messagesCount = dashStats?.period?.messages ?? dashStats?.messages?.total ?? 0;
+  const contactsCount = dashStats?.conversations?.messenger ?? dashStats?.conversations?.total ?? 0;
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="mx-auto flex w-full max-w-[980px] flex-col gap-8 px-4 py-8 md:px-8 md:py-12">
@@ -235,33 +217,13 @@ export default function HomePage({
             Automatise tes plateformes. Vends plus sans complexite.
           </h1>
           <p className="max-w-[780px] text-base text-[var(--text-secondary)] md:text-lg">
-            FLARE AI centralise tes automatisations marketing et commerciales. Tu lances, tu suis, tu optimises depuis un seul espace.
+            FLARE AI centralise tes automatisations marketing et commerciales. Tu lances, tu suis, tu optimises depuis un seul compte.
           </p>
           <p className="text-sm text-[var(--text-muted)]">
-            {orgName ? `${orgName} - ` : ""}
-            <span className="capitalize">{today}</span>
+            Compte {displayName || "FLARE AI"} · <span className="capitalize">{today}</span>
           </p>
         </motion.header>
-
         <section aria-label="Indicateurs cles">
-          {!isOrganizationScope && (
-            <div className="mb-4 flex items-center justify-between gap-3 rounded-2xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3">
-              <div>
-                <p className="text-sm font-medium text-[var(--text-primary)]">Aucun espace de travail actif</p>
-                <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                  Active ton espace pour lancer les automatisations multi-plateformes.
-                </p>
-              </div>
-              {onCreateWorkspace && (
-                <button
-                  onClick={onCreateWorkspace}
-                  className="shrink-0 rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-[rgb(24,11,2)]"
-                >
-                  Activer mon espace
-                </button>
-              )}
-            </div>
-          )}
           {lastKpiUpdate && (
             <p className="mb-3 text-sm text-[var(--text-secondary)]">
               Indicateurs synchronises avec le serveur - actualisation automatique toutes les {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
@@ -294,7 +256,6 @@ export default function HomePage({
             />
           </div>
         </section>
-
         <section aria-label="Plateformes d'automatisation">
           <motion.h2
             initial={{ opacity: 0 }}

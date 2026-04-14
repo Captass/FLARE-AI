@@ -99,7 +99,7 @@ export default function PageSelector({
             type="button"
             onClick={() => onConnectMetaPages()}
             disabled={metaDisabled}
-            title={!canManagePages ? "Reserve au proprietaire ou a un admin de l'espace." : undefined}
+            title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
             className="mt-2 flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/15 px-6 py-2.5 font-medium text-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all hover:bg-orange-500/25 hover:shadow-[0_0_25px_rgba(249,115,22,0.2)] disabled:pointer-events-none disabled:opacity-45 dark:text-orange-300"
           >
             {connectMetaBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
@@ -138,7 +138,7 @@ export default function PageSelector({
             type="button"
             onClick={() => onConnectMetaPages()}
             disabled={metaDisabled}
-            title={!canManagePages ? "Reserve au proprietaire ou a un admin de l'espace." : undefined}
+            title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
             className="inline-flex items-center gap-2 rounded-lg border border-[#1877F2]/20 bg-[#1877F2]/10 px-3 py-1.5 text-xs font-medium text-[#1877F2] transition-colors hover:bg-[#1877F2]/15 disabled:pointer-events-none disabled:opacity-40"
           >
             {connectMetaBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
@@ -149,7 +149,7 @@ export default function PageSelector({
 
       {!canManagePages ? (
         <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-snug text-[var(--text-primary)]">
-          Seuls le proprietaire ou un admin de cet espace peuvent gerer Facebook.
+          Seuls le proprietaire ou un admin du compte peuvent gerer Facebook.
         </div>
       ) : null}
 

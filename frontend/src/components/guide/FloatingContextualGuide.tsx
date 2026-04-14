@@ -54,9 +54,6 @@ function readNextAction(content: ReturnType<typeof resolveGuideContent>) {
 }
 
 function readBlocker(content: ReturnType<typeof resolveGuideContent>, context: GuideContext) {
-  if (!context.hasOrganizationScope) {
-    return "Tu n'as pas encore d'espace organisation actif. Active un espace pour continuer.";
-  }
   if (!context.hasSelectedFacebookPage && content.title.toLowerCase().includes("chatbot")) {
     return "Tu n'as pas encore choisi de page Facebook dans FLARE. Choisis la page cible d'abord.";
   }

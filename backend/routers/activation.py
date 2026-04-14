@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header, get_user_identity
@@ -24,12 +25,6 @@ from core.database import (
     UserSubscription,
     get_db,
 )
-from core.organizations import (
-    get_organization,
-    organization_scope_id,
-    user_can_access_organization,
-    user_can_edit_organization,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -38,28 +33,15 @@ router = APIRouter(tags=["activation"])
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
-def _get_active_scope(authorization: Optional[str]) -> tuple[str, str, str, dict]:
-    """Return (user_id, user_email, org_slug, organization) or raise."""
-    scoped_user_id = get_user_id_from_header(authorization)
+def _get_user_context(authorization: Optional[str]) -> tuple[str, str]:
+    """Return (user_id, user_email) or raise."""
+    user_id = get_user_id_from_header(authorization)
     user_email = get_user_email_from_header(authorization).strip().lower()
 
-    if scoped_user_id == "anonymous":
+    if user_id == "anonymous":
         raise HTTPException(status_code=401, detail="Authentification requise.")
 
-    if not scoped_user_id.startswith("org:"):
-        raise HTTPException(status_code=400, detail="Selectionnez d'abord une organisation active.")
-
-    org_slug = scoped_user_id.split(":", 1)[1].strip().lower()
-    organization = get_organization(org_slug)
-    if not organization or not user_can_access_organization(user_email, org_slug):
-        raise HTTPException(status_code=404, detail="Organisation introuvable ou inaccessible.")
-
-    return scoped_user_id, user_email, org_slug, organization
-
-
-def _require_edit_permission(user_email: str, org_slug: str) -> None:
-    if not user_can_edit_organization(user_email, org_slug):
-        raise HTTPException(status_code=403, detail="Seuls le proprietaire ou un admin peuvent effectuer cette action.")
+    return user_id, user_email
 
 
 def _check_admin(authorization: Optional[str]) -> tuple[str, str]:
@@ -70,9 +52,23 @@ def _check_admin(authorization: Optional[str]) -> tuple[str, str]:
     return user_id, user_email
 
 
-def _add_event(db: Session, request_id: str, event_type: str, actor_type: str, actor_id: str, payload: Optional[dict] = None) -> None:
+def _add_event(
+    db: Session,
+    request_id: str,
+    event_type: str,
+    actor_type: str,
+    actor_id: str,
+    payload: Optional[dict] = None,
+    user_id: Optional[str] = None,
+) -> None:
+    resolved_user_id = user_id
+    if not resolved_user_id:
+        ar = db.query(ActivationRequest).filter(ActivationRequest.id == request_id).first()
+        if ar:
+            resolved_user_id = ar.user_id or ar.requester_user_id
     db.add(ActivationRequestEvent(
         activation_request_id=request_id,
+        user_id=resolved_user_id,
         event_type=event_type,
         actor_type=actor_type,
         actor_id=actor_id,
@@ -222,6 +218,7 @@ def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, A
     return {
         "id": ar.id,
         "organization_scope_id": ar.organization_scope_id,
+        "user_id": ar.user_id or ar.requester_user_id,
         "selected_plan_id": ar.selected_plan_id,
         "status": ar.status,
         "payment_status": ar.payment_status,
@@ -347,10 +344,8 @@ def submit_manual_payment(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    _require_edit_permission(user_email, org_slug)
-
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     # Validate method
     methods = _get_manual_payment_methods()
@@ -370,8 +365,9 @@ def submit_manual_payment(
             raise HTTPException(status_code=409, detail="Cette reference de transaction a deja ete soumise.")
 
     submission = ManualPaymentSubmission(
-        organization_slug=org_slug,
+        organization_slug=user_id,
         organization_scope_id=scope_id,
+        user_id=user_id,
         activation_request_id=req.activation_request_id,
         selected_plan_id=req.selected_plan_id,
         method_code=req.method_code,
@@ -392,7 +388,7 @@ def submit_manual_payment(
     # Update activation request payment status if linked
     if req.activation_request_id:
         ar = db.query(ActivationRequest).filter(ActivationRequest.id == req.activation_request_id).first()
-        if ar and ar.organization_slug == org_slug:
+        if ar and (ar.user_id == user_id or ar.requester_user_id == user_id):
             ar.payment_status = "submitted"
             if ar.status == "awaiting_payment":
                 ar.status = "payment_submitted"
@@ -405,7 +401,7 @@ def submit_manual_payment(
     db.commit()
     db.refresh(submission)
 
-    logger.info(f"[activation] Payment submitted: {submission.id} by {user_email} for {org_slug}")
+    logger.info(f"[activation] Payment submitted: {submission.id} by {user_email} for {user_id}")
     return {"id": submission.id, "status": submission.status}
 
 
@@ -414,11 +410,14 @@ def get_my_manual_payments(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     submissions = db.query(ManualPaymentSubmission).filter(
-        ManualPaymentSubmission.organization_scope_id == scope_id,
+        or_(
+            ManualPaymentSubmission.user_id == user_id,
+            ManualPaymentSubmission.organization_scope_id == scope_id,
+        )
     ).order_by(ManualPaymentSubmission.created_at.desc()).all()
 
     return {
@@ -477,11 +476,15 @@ def get_my_activation_request(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     ar = db.query(ActivationRequest).filter(
-        ActivationRequest.organization_scope_id == scope_id,
+        or_(
+            ActivationRequest.user_id == user_id,
+            ActivationRequest.requester_user_id == user_id,
+            ActivationRequest.organization_scope_id == scope_id,
+        ),
         ~ActivationRequest.status.in_(ACTIVATION_TERMINAL_STATUSES - {"active"}),
     ).order_by(ActivationRequest.created_at.desc()).first()
 
@@ -497,17 +500,20 @@ def create_activation_request(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    _require_edit_permission(user_email, org_slug)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
-    # Only one non-terminal request per org
+    # Only one non-terminal request per user
     existing = db.query(ActivationRequest).filter(
-        ActivationRequest.organization_scope_id == scope_id,
+        or_(
+            ActivationRequest.user_id == user_id,
+            ActivationRequest.requester_user_id == user_id,
+            ActivationRequest.organization_scope_id == scope_id,
+        ),
         ~ActivationRequest.status.in_(ACTIVATION_TERMINAL_STATUSES),
     ).first()
     if existing:
-        raise HTTPException(status_code=409, detail="Une demande d'activation est deja en cours pour cet espace.")
+        raise HTTPException(status_code=409, detail="Une demande d'activation est deja en cours pour ce compte.")
 
     selected_pages_context = _normalize_facebook_pages_context(req.selected_facebook_pages)
     flare_selected_page_id, flare_selected_page_name = _resolve_flare_selected_page(
@@ -523,8 +529,9 @@ def create_activation_request(
     legacy_page_name = (req.facebook_page_name or target_page_name or flare_selected_page_name or "").strip()
 
     ar = ActivationRequest(
-        organization_slug=org_slug,
+        organization_slug=user_id,
         organization_scope_id=scope_id,
+        user_id=user_id,
         requester_user_id=user_id,
         selected_plan_id=req.selected_plan_id,
         status="awaiting_payment",
@@ -576,11 +583,14 @@ def create_activation_request(
 
     # Initialize chatbot preferences from the form data
     prefs = db.query(ChatbotPreferences).filter(
-        ChatbotPreferences.organization_slug == org_slug,
+        or_(
+            ChatbotPreferences.user_id == user_id,
+            ChatbotPreferences.organization_slug == user_id,
+        ),
         ChatbotPreferences.page_id.is_(None),
     ).first()
     if not prefs:
-        prefs = ChatbotPreferences(organization_slug=org_slug)
+        prefs = ChatbotPreferences(organization_slug=user_id, user_id=user_id)
         db.add(prefs)
 
     prefs.bot_name = req.bot_name or prefs.bot_name
@@ -598,7 +608,7 @@ def create_activation_request(
     db.commit()
     db.refresh(ar)
 
-    logger.info(f"[activation] Request created: {ar.id} for {org_slug} by {user_email}")
+    logger.info(f"[activation] Request created: {ar.id} for {user_id} by {user_email}")
     return {"activation_request": _serialize_activation_request(ar)}
 
 
@@ -608,12 +618,15 @@ def update_activation_request(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    _require_edit_permission(user_email, org_slug)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     ar = db.query(ActivationRequest).filter(
-        ActivationRequest.organization_scope_id == scope_id,
+        or_(
+            ActivationRequest.user_id == user_id,
+            ActivationRequest.requester_user_id == user_id,
+            ActivationRequest.organization_scope_id == scope_id,
+        ),
         ~ActivationRequest.status.in_(ACTIVATION_TERMINAL_STATUSES),
     ).first()
     if not ar:
@@ -723,6 +736,7 @@ def admin_list_payments(
                 "id": s.id,
                 "organization_slug": s.organization_slug,
                 "organization_scope_id": s.organization_scope_id,
+                "user_id": s.user_id,
                 "activation_request_id": s.activation_request_id,
                 "selected_plan_id": s.selected_plan_id,
                 "method_code": s.method_code,
@@ -763,6 +777,7 @@ def admin_get_payment(
         "id": s.id,
         "organization_slug": s.organization_slug,
         "organization_scope_id": s.organization_scope_id,
+        "user_id": s.user_id,
         "activation_request_id": s.activation_request_id,
         "selected_plan_id": s.selected_plan_id,
         "method_code": s.method_code,
@@ -807,13 +822,21 @@ def admin_verify_payment(
     s.verified_at = datetime.utcnow()
     s.verified_by = admin_email
 
-    # Upgrade org plan
-    scope_id = s.organization_scope_id
-    sub = db.query(UserSubscription).filter(UserSubscription.user_id == scope_id).first()
+    # Upgrade user plan
+    target_user_id = s.user_id
+    if not target_user_id and s.activation_request_id:
+        ar_target = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
+        if ar_target:
+            target_user_id = ar_target.user_id or ar_target.requester_user_id
+            if not s.user_id and target_user_id:
+                s.user_id = target_user_id
+    if not target_user_id:
+        target_user_id = s.organization_scope_id
+    sub = db.query(UserSubscription).filter(UserSubscription.user_id == target_user_id).first()
     if sub:
         sub.plan_id = s.selected_plan_id
         sub.status = "active"
-        logger.info(f"[activation] Plan upgraded to {s.selected_plan_id} for {scope_id}")
+        logger.info(f"[activation] Plan upgraded to {s.selected_plan_id} for {target_user_id}")
 
     # Update activation request if linked
     if s.activation_request_id:
@@ -1081,13 +1104,10 @@ def create_user_report(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    scoped_user_id = get_user_id_from_header(authorization)
     user_id, user_email = get_user_identity(authorization)
 
-    if scoped_user_id == "anonymous":
+    if user_id == "anonymous":
         raise HTTPException(status_code=401, detail="Authentification requise.")
-
-    org_slug = scoped_user_id.split(":", 1)[1].strip().lower() if scoped_user_id.startswith("org:") else "personal"
     preferred_contact = (req.preferred_contact or ("phone" if req.contact_phone.strip() else "email")).strip().lower()
     normalized_title = (req.subject or req.title or "").strip()
     normalized_description = (req.message or req.details or req.description or "").strip()
@@ -1103,8 +1123,9 @@ def create_user_report(
         severity = "normal"
 
     report = UserReport(
-        organization_slug=org_slug,
-        organization_scope_id=scoped_user_id,
+        organization_slug=user_id,
+        organization_scope_id=user_id,
+        user_id=user_id,
         reporter_user_id=user_id,
         reporter_email=user_email,
         current_view=normalized_view,
@@ -1121,7 +1142,7 @@ def create_user_report(
     db.commit()
     db.refresh(report)
 
-    logger.info(f"[reports] Report created: {report.id} by {user_email} ({scoped_user_id})")
+    logger.info(f"[reports] Report created: {report.id} by {user_email} ({user_id})")
     return {"report": _serialize_report(report)}
 
 
@@ -1210,11 +1231,14 @@ def get_my_orders(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     orders = db.query(ChatbotOrder).filter(
-        ChatbotOrder.organization_scope_id == scope_id,
+        or_(
+            ChatbotOrder.user_id == user_id,
+            ChatbotOrder.organization_scope_id == scope_id,
+        ),
     ).order_by(ChatbotOrder.created_at.desc()).limit(200).all()
 
     return {"orders": [_serialize_order(o) for o in orders]}
@@ -1226,13 +1250,13 @@ def create_order(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    _require_edit_permission(user_email, org_slug)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     order = ChatbotOrder(
-        organization_slug=org_slug,
+        organization_slug=user_id,
         organization_scope_id=scope_id,
+        user_id=user_id,
         facebook_page_id=req.facebook_page_id,
         page_name=req.page_name,
         contact_psid=req.contact_psid,
@@ -1253,7 +1277,7 @@ def create_order(
     db.commit()
     db.refresh(order)
 
-    logger.info(f"[orders] Order created: {order.id} for {org_slug}")
+    logger.info(f"[orders] Order created: {order.id} for {user_id}")
     return {"order": _serialize_order(order)}
 
 
@@ -1270,13 +1294,15 @@ def update_order(
     authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    user_id, user_email, org_slug, organization = _get_active_scope(authorization)
-    _require_edit_permission(user_email, org_slug)
-    scope_id = organization_scope_id(org_slug)
+    user_id, user_email = _get_user_context(authorization)
+    scope_id = user_id
 
     order = db.query(ChatbotOrder).filter(
         ChatbotOrder.id == order_id,
-        ChatbotOrder.organization_scope_id == scope_id,
+        or_(
+            ChatbotOrder.user_id == user_id,
+            ChatbotOrder.organization_scope_id == scope_id,
+        ),
     ).first()
     if not order:
         raise HTTPException(status_code=404, detail="Commande introuvable.")
@@ -1362,6 +1388,7 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
         "id": ar.id,
         "organization_slug": ar.organization_slug,
         "organization_scope_id": ar.organization_scope_id,
+        "user_id": ar.user_id or ar.requester_user_id,
         "requester_user_id": ar.requester_user_id,
         "selected_plan_id": ar.selected_plan_id,
         "status": ar.status,
@@ -1418,9 +1445,9 @@ def _serialize_report(report: UserReport) -> Dict[str, Any]:
         "id": report.id,
         "organization_slug": report.organization_slug,
         "organization_scope_id": report.organization_scope_id,
+        "user_id": report.user_id or report.reporter_user_id,
         "reporter_user_id": report.reporter_user_id,
         "reporter_email": report.reporter_email,
-        "user_id": report.reporter_user_id,
         "user_email": report.reporter_email,
         "current_view": report.current_view,
         "screen_source": report.current_view,
@@ -1452,6 +1479,7 @@ def _serialize_order(o: ChatbotOrder) -> Dict[str, Any]:
     return {
         "id": o.id,
         "organization_slug": o.organization_slug,
+        "user_id": o.user_id or o.organization_scope_id,
         "facebook_page_id": o.facebook_page_id,
         "page_name": o.page_name,
         "contact_psid": o.contact_psid,

@@ -12,20 +12,13 @@ import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header
 from core.config import settings
 from core.database import ChatbotPreferences, FacebookPageConnection, SessionLocal, get_db
 from core.encryption_service import encryption_service
-from core.organizations import (
-    get_organization,
-    get_user_role_in_organization,
-    get_user_role_label,
-    organization_scope_id,
-    user_can_access_organization,
-    user_can_edit_organization,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -48,8 +41,8 @@ class FacebookPageActivationPayload(BaseModel):
 
 
 class FacebookAuthDebugResponse(BaseModel):
-    organization_slug: str
-    organization_name: str
+    user_id: str
+    user_email: str
     workspace_role: str | None = None
     workspace_role_label: str | None = None
     client_id: str
@@ -61,19 +54,13 @@ class FacebookAuthDebugResponse(BaseModel):
     backend_url: str
 
 
-def _facebook_access_context(scope_type: str, workspace_role: str | None) -> dict[str, Any]:
+def _facebook_access_context(workspace_role: str | None) -> dict[str, Any]:
     normalized_role = str(workspace_role or "").strip().lower()
-    if scope_type != "organization":
-        return {
-            "can_connect_facebook": False,
-            "access_code": "organization_required",
-            "access_message": "Selectionnez d'abord un espace de travail FLARE.",
-        }
-    if normalized_role not in FACEBOOK_MANAGE_ROLES:
+    if normalized_role and normalized_role not in FACEBOOK_MANAGE_ROLES:
         return {
             "can_connect_facebook": False,
             "access_code": "workspace_role_forbidden",
-            "access_message": "Seuls le proprietaire ou un admin de cet espace peuvent connecter et activer Facebook.",
+            "access_message": "Seuls le proprietaire ou un admin peuvent connecter et activer Facebook.",
         }
     return {
         "can_connect_facebook": True,
@@ -208,49 +195,31 @@ def _graph_token_params(access_token: str) -> dict[str, str]:
     return params
 
 
-def _organization_context_from_authorization(
+def _user_context_from_authorization(
     authorization: str | None,
     require_edit: bool = False,
 ) -> dict[str, Any]:
-    resolved_scope_id = get_user_id_from_header(authorization)
+    user_id = get_user_id_from_header(authorization)
     user_email = get_user_email_from_header(authorization).strip().lower()
 
-    if resolved_scope_id == "anonymous":
+    if user_id == "anonymous":
         raise HTTPException(status_code=401, detail="Connexion requise.")
 
-    if not resolved_scope_id.startswith("org:"):
-        raise HTTPException(
-            status_code=400,
-            detail="Selectionnez d'abord une organisation active dans FLARE AI.",
-        )
-
-    organization_slug = resolved_scope_id.split(":", 1)[1].strip().lower()
-    organization = get_organization(organization_slug)
-    if not organization:
-        raise HTTPException(status_code=404, detail="Organisation introuvable.")
-
-    can_access = user_can_access_organization(user_email, organization_slug)
-    if not can_access:
-        raise HTTPException(status_code=403, detail="Cette organisation n'est pas accessible pour cet utilisateur.")
-
-    workspace_role = get_user_role_in_organization(user_email, organization=organization)
-    can_edit = user_can_edit_organization(user_email, organization_slug, organization)
-    access_context = _facebook_access_context("organization", workspace_role)
+    workspace_role = "owner"
+    access_context = _facebook_access_context(workspace_role)
     if require_edit and not access_context["can_connect_facebook"]:
-        raise HTTPException(status_code=403, detail="Seuls le proprietaire ou un admin de cet espace peuvent connecter Facebook.")
+        raise HTTPException(status_code=403, detail="Acces refuse.")
 
     return {
-        "organization_slug": organization_slug,
-        "organization_scope_id": organization_scope_id(organization_slug),
-        "organization": organization,
+        "user_id": user_id,
         "user_email": user_email,
         "workspace_role": workspace_role,
-        "workspace_role_label": get_user_role_label(workspace_role),
+        "workspace_role_label": "Proprietaire",
         "facebook_access_code": access_context["access_code"],
         "facebook_access_message": access_context["access_message"],
         "can_connect_facebook": access_context["can_connect_facebook"],
         "can_manage_pages": access_context["can_connect_facebook"],
-        "can_edit": can_edit,
+        "can_edit": True,
     }
 
 
@@ -271,6 +240,7 @@ def _serialize_connection(row: FacebookPageConnection) -> dict[str, Any]:
     has_required_page_tasks = bool(metadata.get("has_required_page_tasks", _page_has_required_tasks({"tasks": tasks})))
     return {
         "id": row.id,
+        "user_id": row.user_id or row.organization_slug,
         "page_id": row.page_id,
         "page_name": row.page_name,
         "page_picture_url": getattr(row, "page_picture_url", ""),
@@ -499,7 +469,7 @@ async def _fetch_facebook_pages(user_access_token: str) -> list[dict[str, Any]]:
 
 def _upsert_facebook_page_connections(
     db: Session,
-    organization_slug: str,
+    user_id: str,
     user_email: str,
     user_access_token: str,
     pages: list[dict[str, Any]],
@@ -507,7 +477,6 @@ def _upsert_facebook_page_connections(
 ) -> None:
     """Met à jour ou crée les lignes FacebookPageConnection pour chaque page Meta (OAuth ou resync)."""
     encrypted_user_token = encryption_service.encrypt(user_access_token)
-    organization_scope = organization_scope_id(organization_slug)
     now = _utcnow()
 
     for page in pages:
@@ -519,7 +488,10 @@ def _upsert_facebook_page_connections(
         connection = (
             db.query(FacebookPageConnection)
             .filter(
-                FacebookPageConnection.organization_slug == organization_slug,
+                or_(
+                    FacebookPageConnection.user_id == user_id,
+                    FacebookPageConnection.organization_slug == user_id,
+                ),
                 FacebookPageConnection.page_id == page_id,
             )
             .first()
@@ -527,8 +499,9 @@ def _upsert_facebook_page_connections(
         is_new_connection = connection is None
         if not connection:
             connection = FacebookPageConnection(
-                organization_slug=organization_slug,
-                organization_scope_id=organization_scope,
+                organization_slug=user_id,
+                organization_scope_id=user_id,
+                user_id=user_id,
                 page_id=page_id,
                 connected_at=now,
                 created_at=now,
@@ -640,7 +613,8 @@ async def _sync_page_to_direct_service(
     payload = {
         "page_id": connection.page_id,
         "page_name": connection.page_name,
-        "organization_slug": connection.organization_slug,
+        "organization_slug": connection.user_id or connection.organization_slug,
+        "user_id": connection.user_id or connection.organization_slug,
         "page_access_token": page_access_token,
         "is_active": True,
         "status": connection.status or "active",
@@ -775,10 +749,15 @@ async def get_facebook_pages_status(
     db: Session = Depends(get_db),
 ):
     # Lecture pour tout membre de l'org : la connexion / activation reste réservée aux editors.
-    context = _organization_context_from_authorization(authorization, require_edit=False)
+    context = _user_context_from_authorization(authorization, require_edit=False)
     rows = (
         db.query(FacebookPageConnection)
-        .filter(FacebookPageConnection.organization_slug == context["organization_slug"])
+        .filter(
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                FacebookPageConnection.organization_slug == context["user_id"],
+            )
+        )
         .order_by(FacebookPageConnection.updated_at.desc())
         .all()
     )
@@ -793,8 +772,8 @@ async def get_facebook_pages_status(
         if not bool((page.get("metadata") or {}).get("has_required_page_tasks", True))
     ]
     return {
-        "organization_slug": context["organization_slug"],
-        "organization_name": context["organization"]["name"],
+        "organization_slug": context["user_id"],
+        "organization_name": "Compte personnel",
         "workspace_role": context["workspace_role"],
         "workspace_role_label": context["workspace_role_label"],
         "can_connect_facebook": context["can_connect_facebook"],
@@ -816,10 +795,15 @@ async def resync_facebook_pages(
     db: Session = Depends(get_db),
 ):
     """Rafraîchit la liste des pages depuis Meta sans refaire tout le flux OAuth (token utilisateur stocké)."""
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    context = _user_context_from_authorization(authorization, require_edit=True)
     rows = (
         db.query(FacebookPageConnection)
-        .filter(FacebookPageConnection.organization_slug == context["organization_slug"])
+        .filter(
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                FacebookPageConnection.organization_slug == context["user_id"],
+            )
+        )
         .all()
     )
     user_token = ""
@@ -860,7 +844,7 @@ async def resync_facebook_pages(
         )
     _upsert_facebook_page_connections(
         db,
-        context["organization_slug"],
+        context["user_id"],
         context["user_email"],
         user_token,
         pages,
@@ -868,7 +852,12 @@ async def resync_facebook_pages(
     )
     refreshed = (
         db.query(FacebookPageConnection)
-        .filter(FacebookPageConnection.organization_slug == context["organization_slug"])
+        .filter(
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                FacebookPageConnection.organization_slug == context["user_id"],
+            )
+        )
         .order_by(FacebookPageConnection.updated_at.desc())
         .all()
     )
@@ -879,7 +868,7 @@ async def resync_facebook_pages(
     }
 
 
-async def _revoke_facebook_app_permissions(organization_slug: str) -> bool:
+async def _revoke_facebook_app_permissions(user_id: str) -> bool:
     """Revoke all Facebook app permissions for this org's stored user token.
 
     This forces Meta to show the full page-selection OAuth screen
@@ -890,7 +879,12 @@ async def _revoke_facebook_app_permissions(organization_slug: str) -> bool:
     try:
         rows = (
             db.query(FacebookPageConnection)
-            .filter(FacebookPageConnection.organization_slug == organization_slug)
+            .filter(
+                or_(
+                    FacebookPageConnection.user_id == user_id,
+                    FacebookPageConnection.organization_slug == user_id,
+                )
+            )
             .all()
         )
         user_token = ""
@@ -913,17 +907,17 @@ async def _revoke_facebook_app_permissions(organization_slug: str) -> bool:
                 params=_graph_token_params(user_token),
             )
         if response.status_code < 400:
-            logger.info("Facebook permissions revoked for org=%s", organization_slug)
+            logger.info("Facebook permissions revoked for user=%s", user_id)
             return True
 
         logger.warning(
             "Facebook permission revocation returned %s for org=%s: %s",
-            response.status_code, organization_slug, response.text[:300],
+            response.status_code, user_id, response.text[:300],
         )
         # Token may already be expired/invalid — that's fine, OAuth will still work fresh
         return True
     except Exception as exc:
-        logger.warning("Failed to revoke Facebook permissions for org=%s: %s", organization_slug, exc)
+        logger.warning("Failed to revoke Facebook permissions for user=%s: %s", user_id, exc)
         return True  # non-blocking — OAuth will still work
     finally:
         db.close()
@@ -937,7 +931,7 @@ async def start_facebook_auth(
     dashboard_access_key: str | None = Header(default=None, alias=DASHBOARD_ACCESS_HEADER),
     authorization: str | None = Header(None),
 ):
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    context = _user_context_from_authorization(authorization, require_edit=True)
     _require_meta_oauth_configured()
     callback_url = _facebook_callback_url(request)
 
@@ -952,13 +946,14 @@ async def start_facebook_auth(
         and hmac.compare_digest(str(dashboard_access_key).strip(), support_key)
     )
     if force_reauth and not allow_force_reauth:
-        logger.warning("Ignoring force_reauth without valid support key (org=%s)", context["organization_slug"])
+        logger.warning("Ignoring force_reauth without valid support key (user=%s)", context["user_id"])
     if allow_force_reauth:
-        await _revoke_facebook_app_permissions(context["organization_slug"])
+        await _revoke_facebook_app_permissions(context["user_id"])
 
     state = _build_state(
         {
-            "organization_slug": context["organization_slug"],
+            "user_id": context["user_id"],
+            "organization_slug": context["user_id"],
             "user_email": context["user_email"],
             "frontend_origin": _normalize_frontend_origin(frontend_origin),
             "issued_at": _utcnow().isoformat(),
@@ -974,7 +969,7 @@ async def start_facebook_auth(
     }
     return {
         "authorization_url": f"https://www.facebook.com/{_graph_version()}/dialog/oauth?{urlencode(params)}",
-        "organization_slug": context["organization_slug"],
+        "organization_slug": context["user_id"],
         "oauth_redirect_uri": callback_url,
         "meta_graph_version": _graph_version(),
     }
@@ -986,12 +981,12 @@ async def get_facebook_auth_debug(
     frontend_origin: str | None = Query(default=None),
     authorization: str | None = Header(None),
 ):
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    context = _user_context_from_authorization(authorization, require_edit=True)
     callback_url = _facebook_callback_url(request)
     backend_public = _public_backend_url(request)
     return FacebookAuthDebugResponse(
-        organization_slug=context["organization_slug"],
-        organization_name=str(context["organization"]["name"]),
+        user_id=context["user_id"],
+        user_email=context["user_email"],
         workspace_role=context["workspace_role"],
         workspace_role_label=context["workspace_role_label"],
         client_id=str(settings.META_APP_ID or "").strip(),
@@ -1023,11 +1018,10 @@ async def facebook_auth_callback(
     if not code:
         return _callback_page(frontend_origin, "error", "Code Facebook manquant.")
 
-    organization_slug = str(state_payload.get("organization_slug") or "").strip().lower()
+    user_id = str(state_payload.get("user_id") or state_payload.get("organization_slug") or "").strip()
     user_email = str(state_payload.get("user_email") or "").strip().lower()
-    organization = get_organization(organization_slug)
-    if not organization or not user_can_edit_organization(user_email, organization_slug, organization):
-        return _callback_page(frontend_origin, "error", "L'organisation n'est plus autorisee pour cette connexion.")
+    if not user_id:
+        return _callback_page(frontend_origin, "error", "Utilisateur introuvable pour cette connexion.")
 
     try:
         token_payload = await _exchange_facebook_code_for_token(
@@ -1049,14 +1043,14 @@ async def facebook_auth_callback(
             "Aucune page Facebook avec les droits Messenger necessaires n'a ete retournee par Meta.",
         )
 
-    _upsert_facebook_page_connections(
-        db,
-        organization_slug,
-        user_email,
-        user_access_token,
-        pages,
-        token_payload,
-    )
+        _upsert_facebook_page_connections(
+            db,
+            user_id,
+            user_email,
+            user_access_token,
+            pages,
+            token_payload,
+        )
     success_detail = (
         f"{len(pages)} page(s) enregistree(s). "
         "Aucune page n'est activee automatiquement. "
@@ -1073,7 +1067,7 @@ async def facebook_auth_callback(
 
 async def _activate_facebook_page_core(
     db: Session,
-    organization_slug: str,
+    user_id: str,
     target_page_id: str,
     *,
     actor_email: str,
@@ -1085,7 +1079,10 @@ async def _activate_facebook_page_core(
     connection = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == organization_slug,
+            or_(
+                FacebookPageConnection.user_id == user_id,
+                FacebookPageConnection.organization_slug == user_id,
+            ),
             FacebookPageConnection.page_id == target_page_id,
         )
         .first()
@@ -1117,30 +1114,29 @@ async def _activate_facebook_page_core(
         db.query(FacebookPageConnection)
         .filter(
             FacebookPageConnection.page_id == target_page_id,
-            FacebookPageConnection.organization_slug != organization_slug,
             FacebookPageConnection.is_active == "true",
             FacebookPageConnection.status == "active",
         )
         .all()
     )
-    transferable_elsewhere = [
-        row for row in active_elsewhere
-        if user_can_edit_organization(actor_email, slug=row.organization_slug)
-    ]
     blocking_elsewhere = [
-        row for row in active_elsewhere
-        if row.organization_slug not in {candidate.organization_slug for candidate in transferable_elsewhere}
+        row
+        for row in active_elsewhere
+        if str(row.user_id or row.organization_slug or "").strip() != str(user_id).strip()
     ]
     if blocking_elsewhere:
         raise HTTPException(
             status_code=409,
-            detail="Cette page Facebook est deja active sur une autre organisation.",
+            detail="Cette page Facebook est deja active sur un autre compte.",
         )
 
     other_active_connections = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == organization_slug,
+            or_(
+                FacebookPageConnection.user_id == user_id,
+                FacebookPageConnection.organization_slug == user_id,
+            ),
             FacebookPageConnection.page_id != target_page_id,
             FacebookPageConnection.is_active == "true",
         )
@@ -1150,9 +1146,9 @@ async def _activate_facebook_page_core(
     page_access_token = encryption_service.decrypt(connection.page_access_token_encrypted or "")
     if not page_access_token:
         logger.error(
-            "Activation page=%s org=%s : token de page indisponible (encrypted=%s)",
+            "Activation page=%s user=%s : token de page indisponible (encrypted=%s)",
             target_page_id,
-            organization_slug,
+            user_id,
             "present" if connection.page_access_token_encrypted else "vide",
         )
         connection.status = "reconnect_required"
@@ -1169,7 +1165,12 @@ async def _activate_facebook_page_core(
     try:
         chatbot_preferences = _serialize_chatbot_preferences_for_direct_service(
             db.query(ChatbotPreferences)
-            .filter(ChatbotPreferences.organization_slug == organization_slug)
+            .filter(
+                or_(
+                    ChatbotPreferences.user_id == user_id,
+                    ChatbotPreferences.organization_slug == user_id,
+                )
+            )
             .first()
         )
         await _subscribe_page_to_app(target_page_id, page_access_token)
@@ -1206,15 +1207,6 @@ async def _activate_facebook_page_core(
             other.direct_service_synced = "false"
             other.updated_at = now
 
-        for transferred in transferable_elsewhere:
-            transferred.status = "disconnected"
-            transferred.is_active = "false"
-            transferred.webhook_subscribed = "false"
-            transferred.direct_service_synced = "false"
-            transferred.last_error = (
-                f"Activation transferee vers l'organisation {organization_slug}."
-            )
-            transferred.updated_at = now
         db.commit()
     except HTTPException as exc:
         if subscribed_target:
@@ -1242,14 +1234,14 @@ async def activate_facebook_page(
     authorization: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    context = _user_context_from_authorization(authorization, require_edit=True)
     target_page_id = str(payload.page_id or page_id or "").strip()
     if target_page_id != str(page_id or "").strip():
         raise HTTPException(status_code=400, detail="Page Facebook incoherente.")
 
     return await _activate_facebook_page_core(
         db,
-        context["organization_slug"],
+        context["user_id"],
         target_page_id,
         actor_email=context["user_email"],
     )
@@ -1262,13 +1254,16 @@ async def deactivate_facebook_page(
     db: Session = Depends(get_db),
 ):
     """Désactive le bot sur cette page (désinscrit le webhook) sans supprimer la connexion."""
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    context = _user_context_from_authorization(authorization, require_edit=True)
     resolved_page_id = str(page_id or "").strip()
 
     connection = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == context["organization_slug"],
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                FacebookPageConnection.organization_slug == context["user_id"],
+            ),
             FacebookPageConnection.page_id == resolved_page_id,
         )
         .first()
@@ -1308,11 +1303,14 @@ async def disconnect_facebook_page(
     authorization: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    context = _organization_context_from_authorization(authorization, require_edit=True)
+    context = _user_context_from_authorization(authorization, require_edit=True)
     connection = (
         db.query(FacebookPageConnection)
         .filter(
-            FacebookPageConnection.organization_slug == context["organization_slug"],
+            or_(
+                FacebookPageConnection.user_id == context["user_id"],
+                FacebookPageConnection.organization_slug == context["user_id"],
+            ),
             FacebookPageConnection.page_id == str(page_id or "").strip(),
         )
         .first()
@@ -1345,3 +1343,4 @@ async def disconnect_facebook_page(
         "page": None,
         "detail": direct_service_error or unsubscribe_error or "Page déconnectée avec succès."
     }
+

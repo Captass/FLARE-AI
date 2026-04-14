@@ -111,7 +111,7 @@ export default function AdminReportsTab({ token, onBack }: { token: string; onBa
                   </div>
                   <p className="mt-1 text-xs text-[var(--text-muted)]">
                     {report.user_email || report.user_id}
-                    {report.organization_slug ? ` · ${report.organization_slug}` : ""}
+                    
                     {report.page_context ? ` · ${report.page_context}` : ""}
                   </p>
                 </div>

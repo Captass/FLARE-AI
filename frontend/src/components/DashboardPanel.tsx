@@ -1,17 +1,14 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   AlertCircle,
-  ArrowRight,
   ArrowUpRight,
   Bot,
   CheckCircle2,
   ChevronRight,
   MessageCircle,
   MessageSquare,
-  Plug,
   RefreshCw,
   Settings,
   Sparkles,
@@ -23,15 +20,12 @@ import {
 } from "lucide-react";
 import FlareMark from "@/components/FlareMark";
 import { getChatbotOverview, getDashboardStats, type ChatbotOverview, type DashboardStats } from "@/lib/api";
-
 const PERIOD_OPTIONS = [
   { key: "today", label: "Auj.", days: 0 },
   { key: "7d", label: "7 j", days: 7 },
   { key: "30d", label: "30 j", days: 30 },
 ] as const;
-
 type PeriodKey = typeof PERIOD_OPTIONS[number]["key"];
-
 function getPeriodDates(key: PeriodKey): { from_date: string; to_date: string } {
   const now = new Date();
   const to = now.toISOString();
@@ -44,7 +38,6 @@ function getPeriodDates(key: PeriodKey): { from_date: string; to_date: string } 
   const from = new Date(now.getTime() - opt.days * 24 * 60 * 60 * 1000);
   return { from_date: from.toISOString(), to_date: to };
 }
-
 function StatCard({
   label,
   value,
@@ -59,7 +52,6 @@ function StatCard({
   if (loading) {
     return <div className="h-[72px] animate-pulse rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)]" />;
   }
-
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
       <div className="flex items-center gap-1.5">
@@ -72,36 +64,26 @@ function StatCard({
     </div>
   );
 }
-
 interface DashboardPanelProps {
   onNavigate?: (view: string) => void;
-  currentScopeLabel?: string;
-  currentScopeOffer?: string;
-  hasSharedOrganizations?: boolean;
-  organizationConnectionRequired?: boolean;
-  onOpenScopeChooser?: () => void;
-  brandName?: string;
   workspaceName?: string;
   brandLogoUrl?: string;
   userDisplayName?: string;
   userAvatarUrl?: string;
   token?: string | null;
 }
-
 function getGreeting(): string {
   const h = new Date().getHours();
   if (h < 12) return "Bonjour";
   if (h < 18) return "Bon apres-midi";
   return "Bonsoir";
 }
-
 function statusColor(status: string) {
   if (status === "active") return "text-orange-500 dark:text-orange-300";
   if (status === "sync_error" || status === "reconnect_required") return "text-orange-400";
   if (status === "disconnected") return "text-red-400";
   return "text-[var(--text-muted)]";
 }
-
 function statusLabel(status: string) {
   if (status === "active") return "Actif";
   if (status === "sync_error") return "Erreur de sync";
@@ -110,49 +92,15 @@ function statusLabel(status: string) {
   if (status === "pending") return "En attente";
   return status;
 }
-
 function ChatbotStatusCard({
   overview,
   loading,
   onNavigate,
-  isOrgRequired,
-  onOpenScopeChooser,
 }: {
   overview: ChatbotOverview | null;
   loading: boolean;
   onNavigate?: (view: string) => void;
-  isOrgRequired?: boolean;
-  onOpenScopeChooser?: () => void;
 }) {
-  if (isOrgRequired) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5"
-      >
-        <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-subtle)] text-[var(--text-muted)]">
-            <Bot size={18} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h3 className="text-[15px] font-medium text-[var(--text-primary)]">Chatbot Facebook</h3>
-            <p className="mt-1 text-[13px] leading-relaxed text-[var(--text-secondary)]">
-              Connectez votre organisation pour activer votre chatbot.
-            </p>
-            <button
-              onClick={onOpenScopeChooser}
-              className="mt-3 flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-2 text-[11px] font-medium uppercase tracking-widest text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
-            >
-              <Plug size={11} />
-              Choisir mon espace
-            </button>
-          </div>
-        </div>
-      </motion.div>
-    );
-  }
-
   if (loading) {
     return (
       <div className="animate-pulse rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5">
@@ -167,13 +115,10 @@ function ChatbotStatusCard({
       </div>
     );
   }
-
   if (!overview) return null;
-
   const { step, active_page, preferences, total_pages } = overview;
   const isComplete = step === "complete";
   const isConnected = step !== "connect_page" && step !== "need_org";
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -192,7 +137,6 @@ function ChatbotStatusCard({
         >
           <Bot size={18} />
         </div>
-
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-[15px] font-medium text-[var(--text-primary)]">Chatbot Facebook</h3>
@@ -211,7 +155,6 @@ function ChatbotStatusCard({
               </span>
             )}
           </div>
-
           {active_page && (
             <p className="mt-1 text-[12px] text-[var(--text-secondary)]">
               Page:{" "}
@@ -221,20 +164,17 @@ function ChatbotStatusCard({
               )}
             </p>
           )}
-
           {preferences && (
             <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
               {preferences.bot_name} � Ton {preferences.tone}
             </p>
           )}
-
           {active_page?.last_error && (
             <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-orange-500/10 px-3 py-2">
               <AlertCircle size={11} className="mt-0.5 shrink-0 text-orange-400/80" />
               <p className="text-[11px] leading-relaxed text-orange-500 dark:text-orange-300">{active_page.last_error}</p>
             </div>
           )}
-
           <div className="mt-3 flex flex-wrap gap-2">
             {!isComplete && (
               <button
@@ -272,7 +212,6 @@ function ChatbotStatusCard({
             )}
           </div>
         </div>
-
         {total_pages > 0 && (
           <p className="mt-0.5 shrink-0 text-[11px] text-[var(--text-muted)]">
             {total_pages} page{total_pages > 1 ? "s" : ""}
@@ -282,7 +221,6 @@ function ChatbotStatusCard({
     </motion.div>
   );
 }
-
 const QUICK_ACTIONS = [
   {
     id: "chatbot",
@@ -291,7 +229,6 @@ const QUICK_ACTIONS = [
     view: "chatbot",
     icon: Bot,
     color: "bg-orange-500/12 text-orange-500 dark:text-orange-300",
-    requiresOrg: true,
   },
   {
     id: "assistant",
@@ -300,7 +237,6 @@ const QUICK_ACTIONS = [
     view: "chat",
     icon: Sparkles,
     color: "bg-[rgba(12,32,74,0.12)] text-[var(--accent-navy)] dark:bg-[rgba(122,158,255,0.16)] dark:text-[rgb(183,203,255)]",
-    requiresOrg: false,
   },
   {
     id: "conversations",
@@ -309,7 +245,6 @@ const QUICK_ACTIONS = [
     view: "conversations",
     icon: MessageCircle,
     color: "bg-orange-500/12 text-orange-500 dark:text-orange-300",
-    requiresOrg: true,
   },
   {
     id: "leads",
@@ -318,7 +253,6 @@ const QUICK_ACTIONS = [
     view: "leads",
     icon: Users,
     color: "bg-[rgba(12,32,74,0.12)] text-[var(--accent-navy)] dark:bg-[rgba(122,158,255,0.16)] dark:text-[rgb(183,203,255)]",
-    requiresOrg: true,
   },
   {
     id: "automations",
@@ -327,7 +261,6 @@ const QUICK_ACTIONS = [
     view: "automationHub",
     icon: Workflow,
     color: "bg-orange-500/12 text-orange-500 dark:text-orange-300",
-    requiresOrg: true,
   },
   {
     id: "expenses",
@@ -336,29 +269,21 @@ const QUICK_ACTIONS = [
     view: "expenses",
     icon: Wallet,
     color: "bg-[rgba(12,32,74,0.12)] text-[var(--accent-navy)] dark:bg-[rgba(122,158,255,0.16)] dark:text-[rgb(183,203,255)]",
-    requiresOrg: true,
   },
 ] as const;
-
 export default function DashboardPanel({
   onNavigate,
-  currentScopeLabel,
-  currentScopeOffer,
-  organizationConnectionRequired = false,
-  onOpenScopeChooser,
   userDisplayName = "Utilisateur",
   brandLogoUrl,
-  brandName,
+  workspaceName,
   token,
 }: DashboardPanelProps) {
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [loadingOverview, setLoadingOverview] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-
   const [period, setPeriod] = useState<PeriodKey>("7d");
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
-
   useEffect(() => {
     if (!token) return;
     setLoadingOverview(true);
@@ -367,7 +292,6 @@ export default function DashboardPanel({
       .catch(() => setOverview(null))
       .finally(() => setLoadingOverview(false));
   }, [token, refreshKey]);
-
   useEffect(() => {
     if (!token) return;
     setLoadingStats(true);
@@ -377,11 +301,9 @@ export default function DashboardPanel({
       .catch(() => setStats(null))
       .finally(() => setLoadingStats(false));
   }, [token, period, refreshKey]);
-
   const greeting = getGreeting();
   const firstName = userDisplayName.split(" ")[0];
-  const scopeIsOrg = !organizationConnectionRequired && Boolean(currentScopeLabel);
-
+  const scopeLabel = workspaceName || "FLARE AI";
   return (
     <div className="flex-1 overflow-y-auto bg-[var(--background)]">
       <div className="mx-auto flex w-full max-w-[860px] flex-col gap-7 px-4 py-8 md:px-6 md:py-12">
@@ -397,54 +319,20 @@ export default function DashboardPanel({
               <FlareMark tone="auto" className="w-5" />
             )}
             <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
-              {currentScopeLabel || brandName || "FLARE AI"}
+              {scopeLabel}
             </p>
           </div>
-
           <h1 className="text-[27px] font-semibold tracking-[-0.03em] text-[var(--text-primary)] md:text-[34px]">
             {greeting}, {firstName}.
           </h1>
           <p className="mt-1.5 text-[14px] font-light text-[var(--text-secondary)]">
-            {scopeIsOrg
-              ? `Espace ${currentScopeLabel}${currentScopeOffer ? ` � ${currentScopeOffer}` : ""}`
-              : "Connectez votre organisation pour acceder a tous vos outils."}
+            Voici l'etat de ton compte et de tes automatisations.
           </p>
         </motion.section>
-
-        <AnimatePresence>
-          {organizationConnectionRequired && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-5"
-            >
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
-                  <Plug size={15} />
-                </div>
-                <div className="flex-1">
-                  <p className="text-[14px] font-medium text-[var(--text-primary)]">Connectez votre espace de travail</p>
-                  <p className="mt-0.5 text-[12px] leading-relaxed text-[var(--text-secondary)]">
-                    Selectionnez votre organisation pour activer le chatbot, les conversations et tous vos outils automatises.
-                  </p>
-                  <button
-                    onClick={onOpenScopeChooser}
-                    className="mt-3 flex items-center gap-2 rounded-lg bg-orange-500/15 px-4 py-2.5 text-[11px] font-medium uppercase tracking-widest text-orange-500 transition-all hover:bg-orange-500/25 dark:text-orange-300"
-                  >
-                    Choisir mon espace
-                    <ArrowRight size={12} />
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
         <section>
           <div className="mb-3 flex items-center justify-between px-0.5">
             <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Chatbot</p>
-            {!organizationConnectionRequired && token && (
+            {token && (
               <button
                 onClick={() => setRefreshKey((k) => k + 1)}
                 className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
@@ -458,12 +346,9 @@ export default function DashboardPanel({
             overview={overview}
             loading={loadingOverview}
             onNavigate={onNavigate}
-            isOrgRequired={organizationConnectionRequired}
-            onOpenScopeChooser={onOpenScopeChooser}
           />
         </section>
-
-        {!organizationConnectionRequired && token && (
+        {token && (
           <section>
             <div className="mb-3 flex items-center justify-between px-0.5">
               <div className="flex items-center gap-1.5">
@@ -493,25 +378,19 @@ export default function DashboardPanel({
             </div>
           </section>
         )}
-
         <section>
           <p className="mb-3 px-0.5 text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Acces rapide</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3">
             {QUICK_ACTIONS.map((action, i) => {
               const Icon = action.icon;
-              const isLocked = action.requiresOrg && organizationConnectionRequired;
               return (
                 <motion.button
                   key={action.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
-                  onClick={() => (isLocked ? onOpenScopeChooser?.() : onNavigate?.(action.view))}
-                  className={`group flex flex-col items-start gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
-                    isLocked
-                      ? "cursor-default border-[var(--border-default)] bg-[var(--surface-subtle)] opacity-50"
-                      : "cursor-pointer border-[var(--border-default)] bg-[var(--surface-base)] hover:bg-[var(--surface-subtle)]"
-                  }`}
+                  onClick={() => onNavigate?.(action.view)}
+                  className="group flex flex-col items-start gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4 text-left transition-all duration-200 hover:bg-[var(--surface-subtle)]"
                 >
                   <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${action.color}`}>
                     <Icon size={14} />
@@ -525,8 +404,6 @@ export default function DashboardPanel({
             })}
           </div>
         </section>
-
-        {!organizationConnectionRequired && (
           <section>
             <div className="mb-3 flex items-center justify-between px-0.5">
               <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Modules</p>
@@ -567,7 +444,6 @@ export default function DashboardPanel({
                   <ArrowUpRight size={13} className="mt-0.5 shrink-0 text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-primary)]" />
                 </div>
               </motion.div>
-
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -590,7 +466,6 @@ export default function DashboardPanel({
               </motion.div>
             </div>
           </section>
-        )}
       </div>
     </div>
   );

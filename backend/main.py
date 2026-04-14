@@ -35,7 +35,6 @@ from routers.billing import router as billing_router
 from routers.google_auth import router as google_auth_router
 from routers.facebook_pages import router as facebook_pages_router
 from routers.chatbot import router as chatbot_router
-from routers.organizations import router as organizations_router
 from routers.users import router as users_router
 from routers.content_studio import router as content_studio_router
 from routers.activation import router as activation_router
@@ -141,6 +140,16 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE chatbot_portfolio_items ADD COLUMN IF NOT EXISTS page_id TEXT",
             "ALTER TABLE chatbot_sales_config DROP CONSTRAINT IF EXISTS chatbot_sales_config_organization_slug_key",
             "ALTER TABLE chatbot_sales_config ADD COLUMN IF NOT EXISTS page_id TEXT",
+            "ALTER TABLE facebook_page_connections ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE chatbot_preferences ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE chatbot_catalogue_items ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE chatbot_portfolio_items ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE chatbot_sales_config ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE activation_requests ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE activation_request_events ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE manual_payment_submissions ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE user_reports ADD COLUMN IF NOT EXISTS user_id TEXT",
+            "ALTER TABLE chatbot_orders ADD COLUMN IF NOT EXISTS user_id TEXT",
         ]
 
         # SQLite ne supporte pas IF NOT EXISTS sur ALTER TABLE — try/except par colonne
@@ -162,6 +171,16 @@ async def lifespan(app: FastAPI):
             "ALTER TABLE chatbot_catalogue_items ADD COLUMN page_id TEXT",
             "ALTER TABLE chatbot_portfolio_items ADD COLUMN page_id TEXT",
             "ALTER TABLE chatbot_sales_config ADD COLUMN page_id TEXT",
+            "ALTER TABLE facebook_page_connections ADD COLUMN user_id TEXT",
+            "ALTER TABLE chatbot_preferences ADD COLUMN user_id TEXT",
+            "ALTER TABLE chatbot_catalogue_items ADD COLUMN user_id TEXT",
+            "ALTER TABLE chatbot_portfolio_items ADD COLUMN user_id TEXT",
+            "ALTER TABLE chatbot_sales_config ADD COLUMN user_id TEXT",
+            "ALTER TABLE activation_requests ADD COLUMN user_id TEXT",
+            "ALTER TABLE activation_request_events ADD COLUMN user_id TEXT",
+            "ALTER TABLE manual_payment_submissions ADD COLUMN user_id TEXT",
+            "ALTER TABLE user_reports ADD COLUMN user_id TEXT",
+            "ALTER TABLE chatbot_orders ADD COLUMN user_id TEXT",
         ]
 
         migrations = pg_migrations if is_postgres else (sqlite_migrations if is_sqlite else [])
@@ -254,7 +273,6 @@ app.include_router(billing_router)
 app.include_router(google_auth_router)
 app.include_router(facebook_pages_router)
 app.include_router(chatbot_router)
-app.include_router(organizations_router)
 app.include_router(users_router)
 app.include_router(content_studio_router)
 app.include_router(activation_router)

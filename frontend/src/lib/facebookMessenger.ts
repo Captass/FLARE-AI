@@ -22,10 +22,6 @@ export interface FacebookMessengerPage {
 }
 
 export interface FacebookMessengerStatus {
-  organization_slug: string;
-  organization_name: string;
-  workspace_role?: string | null;
-  workspace_role_label?: string | null;
   can_connect_facebook?: boolean;
   facebook_access_code?: string;
   facebook_access_message?: string;
@@ -42,10 +38,6 @@ export const META_PUBLIC_ACCESS_BLOCKED_MESSAGE =
   "La connexion Meta n'a pas abouti. Si Facebook affiche 'Fonctionnalite indisponible', le blocage vient de l'app Meta et non de FLARE.";
 
 export interface FacebookAuthDebugInfo {
-  organization_slug: string;
-  organization_name: string;
-  workspace_role?: string | null;
-  workspace_role_label?: string | null;
   client_id: string;
   redirect_uri: string;
   frontend_origin: string;
@@ -323,4 +315,3 @@ export async function disconnectFacebookMessengerPage(
   const payload = await response.json();
   return payload.page as FacebookMessengerPage;
 }
-

@@ -8,7 +8,7 @@ import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
 import { SkeletonPanel } from "@/components/SkeletonLoader";
 import FlareMark from "@/components/FlareMark";
 
-// Code splitting : panels secondaires chargÃƒÂ©s ÃƒÂ  la demande
+// Code splitting : panels secondaires chargÃ©s Ã  la demande
 const MemoryPanel = dynamic(() => import("@/components/MemoryPanel"), { ssr: false, loading: () => <SkeletonPanel /> });
 const DashboardPanel = dynamic(() => import("@/components/DashboardPanel"), { ssr: false, loading: () => <SkeletonPanel /> });
 const ChatbotSetupWizard = dynamic(() => import("@/components/ChatbotSetupWizard"), { ssr: false, loading: () => <SkeletonPanel /> });
@@ -21,12 +21,9 @@ const PromptsPanel = dynamic(() => import("@/components/PromptsPanel"), { ssr: f
 const KnowledgePanel = dynamic(() => import("@/components/KnowledgePanel"), { ssr: false, loading: () => <SkeletonPanel /> });
 const FilesPanel = dynamic(() => import("@/components/FilesPanel"), { ssr: false, loading: () => <SkeletonPanel /> });
 import AdminPanel from "@/components/AdminPanel";
-import OrganizationAccessPanel from "@/components/OrganizationAccessPanel";
 import ArtifactViewer, { Artifact } from "@/components/ArtifactViewer";
-// Lazy-load modals Ã¢â‚¬â€ jamais nÃƒÂ©cessaires au premier rendu
+// Lazy-load modals â€” jamais nÃ©cessaires au premier rendu
 const SettingsModal = dynamic(() => import("@/components/SettingsModal"), { ssr: false });
-const SpaceModal = dynamic(() => import("@/components/SpaceModal"), { ssr: false });
-const SpaceManagerModal = dynamic(() => import("@/components/SpaceManagerModal"), { ssr: false });
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useFolders } from "@/hooks/useFolders";
@@ -64,16 +61,10 @@ import {
   ChatMode,
   ActivationRequest,
   FileAttachment,
-  OrganizationAccessResponse,
   WorkspaceIdentity,
-  connectToOrganization,
-  createOrganization,
-  deleteOrganization,
   getApiBaseUrl,
-  getOrganizationAccess,
   getWorkspaceIdentity,
   healthCheck,
-  returnToPersonalScope,
   saveTrackedFile,
   syncUser,
   trackClientEvent,
@@ -169,21 +160,6 @@ function resolvePreferredFacebookPageId(
 }
 
 const GUEST_LOCKED_VIEWS: ActiveView[] = ["chat", "memory", "prompts", "knowledge", "files", "admin"];
-const ORGANIZATION_REQUIRED_VIEWS: ActiveView[] = [
-  "facebook",
-  "google",
-  "chatbot",
-  "leads",
-  "conversations",
-  "expenses",
-  "chatbotFiles",
-  "automationHub",
-  "prospection",
-  "content",
-  "followup",
-  "agents",
-];
-
 const ADMIN_EMAILS = ["cptskevin@gmail.com"];
 
 type LockedModuleView = "prospection" | "content" | "followup" | "agents";
@@ -244,7 +220,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
     title: "Prospection automatique",
     summary: "Quand cette page sera ouverte, elle trouvera, classera et relancera de nouveaux clients dans FLARE AI.",
     blockedReason: "Cette page n'est pas encore disponible. Elle reste bloquee pour eviter un faux parcours qui ne fait rien.",
-    upgradeMessage: "Veuillez ameliorer votre offre pour debloquer cette automatisation des qu'elle sera disponible sur votre espace.",
+    upgradeMessage: "Veuillez ameliorer votre offre pour debloquer cette automatisation des qu'elle sera disponible sur votre compte.",
     highlights: [
       {
         title: "Trouver les bonnes cibles",
@@ -283,7 +259,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
     title: "Studio contenu FLARE",
     summary: "Cette page preparera vos posts, vos visuels et vos campagnes au meme endroit.",
     blockedReason: "Le studio n'est pas encore disponible. Il reste bloque pour eviter un ecran vide ou des boutons inutiles.",
-    upgradeMessage: "Veuillez ameliorer votre offre pour debloquer ce studio quand il sera lance dans votre espace.",
+    upgradeMessage: "Veuillez ameliorer votre offre pour debloquer ce studio quand il sera lance dans votre compte.",
     highlights: [
       {
         title: "Ecrire plus vite",
@@ -361,7 +337,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
     title: "Agents FLARE",
     summary: "Les agents arriveront ici quand ils pourront vous rendre un vrai resultat, pas juste ouvrir une autre page.",
     blockedReason: "Les agents restent bloques tant qu'ils n'apportent pas un vrai resultat utile.",
-    upgradeMessage: "Veuillez ameliorer votre offre pour acceder aux agents des qu'ils seront ouverts sur votre espace.",
+    upgradeMessage: "Veuillez ameliorer votre offre pour acceder aux agents des qu'ils seront ouverts sur votre compte.",
     highlights: [
       {
         title: "Executer une mission complete",
@@ -410,8 +386,6 @@ export default function Home() {
   const sessionIdentityRef = useRef(sessionIdentity);
   const [showFilesPanel, setShowFilesPanel] = useState(false);
   const [activeArtifact, setActiveArtifact] = useState<Artifact | null>(null);
-  const [isSpaceModalOpen, setIsSpaceModalOpen] = useState(false);
-  const [isSpaceManagerOpen, setIsSpaceManagerOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -421,10 +395,6 @@ export default function Home() {
   const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [displayName, setDisplayName] = useState<string>('');
   const [chatMode, setChatMode] = useState<'raisonnement' | 'rapide'>('raisonnement');
-  const [organizationAccess, setOrganizationAccess] = useState<OrganizationAccessResponse | null>(null);
-  const [organizationLoading, setOrganizationLoading] = useState(false);
-  const [showOrganizationAccess, setShowOrganizationAccess] = useState(false);
-  const [pendingOrganizationTarget, setPendingOrganizationTarget] = useState<AppView | null>(null);
   const [workspaceIdentity, setWorkspaceIdentity] = useState<WorkspaceIdentity | null>(null);
   const [setupStatus, setSetupStatus] = useState<ChatbotSetupStatus | null>(null);
   const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
@@ -479,7 +449,7 @@ export default function Home() {
     };
   }, []);
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Force Cache Clear (v2.7.0) Ã¢â€â‚¬Ã¢â€â‚¬
+  // â”€â”€ Force Cache Clear (v2.7.0) â”€â”€
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const currentVersion = "3.7.0";
@@ -491,7 +461,7 @@ export default function Home() {
               registration.unregister();
             }
             localStorage.setItem("flare-app-version", currentVersion);
-            // On attend un peu que les SW soient dÃƒÂ©senregistrÃƒÂ©s avant de reload
+            // On attend un peu que les SW soient dÃ©senregistrÃ©s avant de reload
           });
         } else {
           localStorage.setItem("flare-app-version", currentVersion);
@@ -503,7 +473,7 @@ export default function Home() {
       return () => window.removeEventListener('open-sidebar-tour', handleOpenSidebar);
     }
   }, []);
-  // Texte + piÃƒÂ¨ce jointe ÃƒÂ  restaurer dans l'input aprÃƒÂ¨s annulation d'un message
+  // Texte + piÃ¨ce jointe Ã  restaurer dans l'input aprÃ¨s annulation d'un message
   const [pendingRestore, setPendingRestore] = useState("");
   const [pendingRestoreAttachment, setPendingRestoreAttachment] = useState<FileAttachment | null>(null);
   const lastSentAttachmentRef = useRef<FileAttachment | null>(null);
@@ -513,7 +483,7 @@ export default function Home() {
 
   // Compteur pour forcer le refresh du KnowledgePanel quand l'agent sauvegarde
   const [knowledgeRefreshToken, setKnowledgeRefreshToken] = useState(0);
-  // Toast notification quand la base de connaissances est mise ÃƒÂ  jour par l'agent
+  // Toast notification quand la base de connaissances est mise Ã  jour par l'agent
   const [knowledgeToast, setKnowledgeToast] = useState<string[] | null>(null);
   const [appNotice, setAppNotice] = useState<{ tone: "error" | "info"; message: string } | null>(null);
 
@@ -603,7 +573,7 @@ export default function Home() {
     return versions.reverse();
   }, [messages, activeArtifact]);
 
-  // Wrapper d'envoi : capture la piÃƒÂ¨ce jointe pour restauration ÃƒÂ©ventuelle + sauvegarde dans le tracker
+  // Wrapper d'envoi : capture la piÃ¨ce jointe pour restauration Ã©ventuelle + sauvegarde dans le tracker
   const handleSend = useCallback((text: string, attachment?: FileAttachment, deepResearch?: boolean, quality?: string, mode?: ChatMode) => {
     lastSentAttachmentRef.current = attachment ?? null;
     if (attachment) {
@@ -681,38 +651,6 @@ export default function Home() {
   useEffect(() => {
     sessionIdentityRef.current = sessionIdentity;
   }, [sessionIdentity]);
-
-  const loadOrganizationState = useCallback(async () => {
-    const requestIdentity = sessionIdentityRef.current;
-    const accessToken = await resolveAccessToken();
-    if (!user || !accessToken) {
-      setOrganizationAccess(null);
-      return null;
-    }
-
-    try {
-      const next = await getOrganizationAccess(accessToken);
-      if (sessionIdentityRef.current !== requestIdentity) {
-        return null;
-      }
-      const expectedEmail = (user.email || "").trim().toLowerCase();
-      const responseEmail = (next.user_email || "").trim().toLowerCase();
-      if (expectedEmail && responseEmail && expectedEmail !== responseEmail) {
-        console.warn("Ignoring organization payload for another user", { expectedEmail, responseEmail });
-        setOrganizationAccess(null);
-        return null;
-      }
-      setOrganizationAccess(next);
-      return next;
-    } catch (err) {
-      if (sessionIdentityRef.current !== requestIdentity) {
-        return null;
-      }
-      console.error("Erreur chargement organisation:", err);
-      setOrganizationAccess(null);
-      return null;
-    }
-  }, [resolveAccessToken, user]);
 
   const loadWorkspaceIdentity = useCallback(async () => {
     const requestIdentity = sessionIdentityRef.current;
@@ -830,12 +768,10 @@ export default function Home() {
     return () => clearInterval(healthInterval);
   }, [refresh]);
 
-  // Synchronisation avec le backend (crÃƒÂ©ation plan/clÃƒÂ© GCP automatique pour les nouveaux)
+  // Synchronisation avec le backend (crÃ©ation plan/clÃ© GCP automatique pour les nouveaux)
   useEffect(() => {
     // Clear workspace/chatbot state immediately when the authenticated identity changes
-    // so a new account never sees the previous account's organizations during reload.
-    setOrganizationAccess(null);
-    setShowOrganizationAccess(false);
+    // so a new account never sees the previous account's state during reload.
     setWorkspaceIdentity(null);
     setSetupStatus(null);
     setActivationRequest(null);
@@ -865,7 +801,6 @@ export default function Home() {
       if (!accessToken || cancelled) return;
 
       syncUser(accessToken).catch((err) => console.error("Erreur sync user:", err));
-      loadOrganizationState().catch(() => null);
       loadWorkspaceIdentity().catch(() => null);
       loadSetupStatus().catch(() => null);
       loadActivationRequest().catch(() => null);
@@ -891,7 +826,7 @@ export default function Home() {
       if (pingInterval) clearInterval(pingInterval);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, resolveAccessToken, user]);
+  }, [loadActivationRequest, loadSetupStatus, loadWorkspaceIdentity, resolveAccessToken, user]);
 
   useEffect(() => {
     if (!user) return;
@@ -914,7 +849,7 @@ export default function Home() {
     }
     setAuthMode("signup");
     setShowAuth(true);
-    logout().catch((err) => console.error("Erreur lors de la dÃƒÂ©connexion utilisateur non vÃƒÂ©rifiÃƒÂ©:", err));
+    logout().catch((err) => console.error("Erreur lors de la dÃ©connexion utilisateur non vÃ©rifiÃ©:", err));
   }, [user, logout]);
 
   // Cleanup toast timer
@@ -930,18 +865,13 @@ export default function Home() {
     newConversation();
   }, [newConversation]);
 
-  const handleCreateSpace = async (name: string) => {
-    await addFolder(name);
-    setIsSpaceModalOpen(false);
-  };
-
   const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
 
   useEffect(() => {
     if (token && initialPrompt && activeView === "assistant") {
       // Small delay to ensure ChatWindow is ready
       setTimeout(() => {
-        // Envoi automatique ou prÃƒÂ©-remplissage via un event ou state
+        // Envoi automatique ou prÃ©-remplissage via un event ou state
         window.dispatchEvent(new CustomEvent('initial-prompt', { detail: initialPrompt }));
         setInitialPrompt(null);
       }, 500);
@@ -954,12 +884,6 @@ export default function Home() {
     if (prompt) setInitialPrompt(prompt);
   }, []);
 
-  const hasSharedOrganizations = Boolean(organizationAccess?.organizations.length);
-  const organizationConnectionRequired = Boolean(
-    user &&
-    organizationAccess &&
-    organizationAccess.current_scope.type !== "organization"
-  );
   const resolvedUserDisplayName =
     workspaceIdentity?.user_profile.display_name ||
     displayName ||
@@ -970,12 +894,9 @@ export default function Home() {
     workspaceIdentity?.user_profile.avatar_url || user?.photoURL || undefined
   );
   const resolvedWorkspaceName =
-    workspaceIdentity?.current_branding.workspace_name ||
-    organizationAccess?.current_scope.label ||
-    "Mon espace";
-  const resolvedBrandName = workspaceIdentity?.current_branding.brand_name || "FLARE AI";
+    workspaceIdentity?.user_profile.workspace_name || "Mon compte";
   const resolvedBrandLogoUrl = toRenderableMediaUrl(
-    workspaceIdentity?.current_branding.logo_url || undefined
+    workspaceIdentity?.user_profile.avatar_url || undefined
   );
   const canAccessAdmin = Boolean(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
   const selectedFacebookPage =
@@ -985,8 +906,6 @@ export default function Home() {
   const guideAssistantEnabled = workspaceIdentity?.user_profile?.guide_assistant_enabled ?? true;
   const guideContext = useMemo<GuideContext>(
     () => ({
-      hasOrganizationScope: organizationAccess?.current_scope.type === "organization",
-      userRole: organizationAccess?.current_scope.current_user_role ?? null,
       hasSelectedFacebookPage: Boolean(selectedFacebookPageId),
       hasConnectedFacebookPage: facebookPages.length > 0,
       isBotActive: Boolean(selectedFacebookPage?.is_active || setupStatus?.has_connected_page),
@@ -1000,8 +919,6 @@ export default function Home() {
       activationRequest?.payment_status,
       activationRequest?.status,
       facebookPages.length,
-      organizationAccess?.current_scope.current_user_role,
-      organizationAccess?.current_scope.type,
       selectedFacebookPage?.is_active,
       selectedFacebookPageId,
       setupStatus?.has_connected_page,
@@ -1017,196 +934,29 @@ export default function Home() {
   const guideVisible =
     !sidebarOpen &&
     !isSettingsModalOpen &&
-    !isSpaceModalOpen &&
-    !isSpaceManagerOpen &&
-    !showOrganizationAccess &&
     !isReportModalOpen &&
     !(activeView === "assistant" && showFilesPanel) &&
     !activeArtifact;
-
-  const openOrganizationAccess = useCallback(async (targetView?: AppView) => {
-    if (!user) {
-      handleStart("login");
-      return;
-    }
-    if (targetView) {
-      setPendingOrganizationTarget(targetView);
-    }
-    if (!organizationAccess) {
-      const next = await loadOrganizationState().catch(() => null);
-      if (!next) {
-        pushAppNotice("Impossible de charger les espaces. Rechargez la page puis reessayez.");
-        return;
-      }
-    }
-    setShowOrganizationAccess(true);
-  }, [handleStart, loadOrganizationState, organizationAccess, user]);
-
-  const openChatbotOrganizationAccess = useCallback(() => {
-    void openOrganizationAccess("chatbot");
-  }, [openOrganizationAccess]);
 
   const openActivationFlow = useCallback((planId: ActivationPlanId) => {
     rememberActivationPlan(planId);
     onPush("chatbot-activation");
   }, [onPush]);
 
-  const closeOrganizationAccess = useCallback(() => {
-    setShowOrganizationAccess(false);
-    setPendingOrganizationTarget(null);
-  }, []);
-
   const handleWorkspaceIdentitySaved = useCallback(
-    async (next: WorkspaceIdentity) => {
+    (next: WorkspaceIdentity) => {
       setWorkspaceIdentity(next);
       if (next.user_profile.display_name) {
         setDisplayName(next.user_profile.display_name);
         localStorage.setItem("flare-user-name", next.user_profile.display_name);
       }
-      await loadOrganizationState().catch(() => null);
     },
-    [loadOrganizationState]
+    []
   );
-
-  const handleConnectOrganizationScope = useCallback(
-    async (organizationSlug: string) => {
-      const accessToken = await resolveAccessToken(true);
-      if (!accessToken) {
-        pushAppNotice("Session invalide. Reconnectez-vous puis reessayez.");
-        return;
-      }
-
-      const alreadyActive = organizationAccess?.current_scope.organization_slug === organizationSlug;
-      if (alreadyActive) {
-        setShowOrganizationAccess(false);
-        const targetView = pendingOrganizationTarget;
-        setPendingOrganizationTarget(null);
-        if (targetView) {
-          setNavStack(resolveDefaultNavStack(targetView));
-        }
-        return;
-      }
-
-      setOrganizationLoading(true);
-      try {
-        await connectToOrganization(organizationSlug, accessToken);
-        await Promise.all([
-          loadOrganizationState(),
-          loadWorkspaceIdentity().catch(() => null),
-          loadSetupStatus().catch(() => null),
-          loadActivationRequest().catch(() => null),
-        ]);
-        setShowOrganizationAccess(false);
-        const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
-        setPendingOrganizationTarget(null);
-        setNavStack(resolveDefaultNavStack(targetView));
-      } catch (err) {
-        console.error("Erreur connexion organisation:", err);
-        pushAppNotice(err instanceof Error ? err.message : "Impossible d'ouvrir cet espace pour le moment.");
-      } finally {
-        setOrganizationLoading(false);
-      }
-    },
-    [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, pendingOrganizationTarget, resolveAccessToken]
-  );
-
-  const handleCreateOrganizationScope = useCallback(async (name: string) => {
-    const accessToken = await resolveAccessToken(true);
-    if (!accessToken) {
-      pushAppNotice("Session invalide. Reconnectez-vous puis reessayez.");
-      return false;
-    }
-
-    setOrganizationLoading(true);
-    try {
-      await createOrganization(name, accessToken);
-      await Promise.all([
-        loadOrganizationState(),
-        loadWorkspaceIdentity().catch(() => null),
-        loadSetupStatus().catch(() => null),
-        loadActivationRequest().catch(() => null),
-      ]);
-      setShowOrganizationAccess(false);
-      const targetView = pendingOrganizationTarget ?? ("chatbot" as NavLevel);
-      setPendingOrganizationTarget(null);
-      setNavStack(resolveDefaultNavStack(targetView));
-      return true;
-    } catch (err) {
-      console.error("Erreur creation organisation:", err);
-      const message =
-        err instanceof Error
-          ? err.message
-          : "Creation de l'espace impossible pour le moment.";
-      pushAppNotice(message);
-      return false;
-    } finally {
-      setOrganizationLoading(false);
-    }
-  }, [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, pendingOrganizationTarget, resolveAccessToken]);
-
-  const handleDeleteOrganizationScope = useCallback(async (organizationSlug: string) => {
-    if (!token) return;
-
-    setOrganizationLoading(true);
-    try {
-      await deleteOrganization(organizationSlug, token);
-      await loadOrganizationState();
-      setNavStack(resolveDefaultNavStack("home"));
-    } catch (err) {
-      console.error("Erreur suppression organisation:", err);
-      pushAppNotice(err instanceof Error ? err.message : "Suppression de l'espace impossible pour le moment.");
-    } finally {
-      setOrganizationLoading(false);
-    }
-  }, [loadOrganizationState, token]);
-
-  const handleQuickCreateWorkspace = useCallback(async () => {
-    if (!user) {
-      handleStart("login");
-      return;
-    }
-    await openOrganizationAccess("chatbot");
-  }, [handleStart, openOrganizationAccess, user]);
-
-  const handleUsePersonalScope = useCallback(async () => {
-    const accessToken = await resolveAccessToken(true);
-    if (!accessToken) return;
-
-    if (organizationAccess?.current_scope.type === "personal") {
-      setShowOrganizationAccess(false);
-      setPendingOrganizationTarget(null);
-      return;
-    }
-
-    setOrganizationLoading(true);
-    try {
-      await returnToPersonalScope(accessToken);
-      await Promise.all([
-        loadOrganizationState(),
-        loadWorkspaceIdentity().catch(() => null),
-        loadSetupStatus().catch(() => null),
-        loadActivationRequest().catch(() => null),
-      ]);
-      setShowOrganizationAccess(false);
-      setPendingOrganizationTarget(null);
-      setNavStack(resolveDefaultNavStack("home"));
-    } catch (err) {
-      console.error("Erreur retour espace personnel:", err);
-      pushAppNotice(err instanceof Error ? err.message : "Impossible de revenir a l'espace personnel.");
-    } finally {
-      setOrganizationLoading(false);
-    }
-  }, [loadActivationRequest, loadOrganizationState, loadSetupStatus, loadWorkspaceIdentity, organizationAccess, resolveAccessToken]);
 
   const logoutWithScopeReset = useCallback(async () => {
-    try {
-      if (token && organizationAccess?.current_scope.type === "organization") {
-        await returnToPersonalScope(token).catch(() => null);
-      }
-    } finally {
-      await logout();
-    }
-  }, [logout, organizationAccess, token]);
+    await logout();
+  }, [logout]);
 
   const requestAuth = useCallback(
     (mode: "login" | "signup" = "login") => {
@@ -1225,17 +975,13 @@ export default function Home() {
         requestAuth("login");
         return;
       }
-      if (user && organizationConnectionRequired && ORGANIZATION_REQUIRED_VIEWS.includes(view as ActiveView)) {
-        void openOrganizationAccess(view as AppView);
-        return;
-      }
       if ((view as AppView) === "admin" && !canAccessAdmin) {
         pushAppNotice("Cette vue est reservee a l'equipe FLARE.");
         return;
       }
       setNavStack(resolveDefaultNavStack(view as AppView));
     },
-    [canAccessAdmin, openOrganizationAccess, organizationConnectionRequired, pushAppNotice, requestAuth, user]
+    [canAccessAdmin, pushAppNotice, requestAuth, user]
   );
 
   const handleGuideNavigate = useCallback(
@@ -1299,7 +1045,7 @@ export default function Home() {
   }, [activeView, hasHistoryBack, onPop]);
 
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ Landing page publique, connexion, puis application Ã¢â€â‚¬Ã¢â€â‚¬
+  // â”€â”€ Landing page publique, connexion, puis application â”€â”€
   if (!user && !showAuth && authLoading) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--background)] px-6">
@@ -1399,7 +1145,7 @@ export default function Home() {
   const resolvedViewTitle = resolvedViewTitleMap[activeView] ?? viewTitle;
 
   const resolvedViewSubtitleMap: Partial<Record<AppView, string>> = {
-    home: "Votre espace FLARE actif",
+    home: "Votre compte FLARE actif",
     automations: "Modules disponibles et verrouilles",
     facebook: "Connexion et statut Facebook",
     google: "Connexion Google",
@@ -1407,7 +1153,7 @@ export default function Home() {
     guide: "Reperes rapides pour demarrer",
     billing: "Offre et modules actifs",
     contact: "Besoin d'aide ou de support",
-    settings: "Reglages du compte et de l'espace",
+    settings: "Reglages du compte",
     "chatbot-personnalisation": "Identite, ton et entreprise pour Facebook",
     "chatbot-parametres": "Pages Facebook, catalogue et options",
     "chatbot-dashboard": "Stats et verification Facebook",
@@ -1476,15 +1222,15 @@ export default function Home() {
         ? "automations"
         : (activeView as NavLevel);
 
-  // Variables supprimÃƒÂ©es Ã¢â‚¬â€ la navigation assistant est maintenant dans la sidebar uniquement
+  // Variables supprimÃ©es â€” la navigation assistant est maintenant dans la sidebar uniquement
 
   return (
     <>
-      <div className={`h-[100dvh] w-full flex flex-row bg-[var(--background)] overflow-hidden font-sans selection:bg-[rgba(28,60,168,0.16)] selection:text-[var(--text-primary)] relative z-0 transition-all duration-500 ${(isSpaceModalOpen || isSpaceManagerOpen || isSettingsModalOpen) ? 'blur-sm scale-[0.995]' : ''}`}>
+      <div className={`h-[100dvh] w-full flex flex-row bg-[var(--background)] overflow-hidden font-sans selection:bg-[rgba(28,60,168,0.16)] selection:text-[var(--text-primary)] relative z-0 transition-all duration-500 ${isSettingsModalOpen ? 'blur-sm scale-[0.995]' : ''}`}>
           {/* Background futuriste sobre */}
           <div className="absolute inset-0 bg-[var(--background)] -z-20"></div>
 
-          {/* Toast Ã¢â‚¬â€ Base de connaissances mise ÃƒÂ  jour */}
+          {/* Toast â€” Base de connaissances mise Ã  jour */}
           {appNotice && (
             <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 flex w-[calc(100vw-24px)] max-w-[460px] items-center gap-3 rounded-2xl border px-4 py-3 shadow-[var(--shadow-card)] animate-msg-pop md:w-auto ${
               appNotice.tone === "error"
@@ -1515,8 +1261,8 @@ export default function Home() {
                 <p className="text-[10px] font-medium text-[var(--text-muted)] uppercase tracking-widest mb-0.5">Base de connaissances</p>
                 <p className="text-[13px] text-[var(--text-primary)] font-light truncate max-w-[320px]">
                   {knowledgeToast.length === 1
-                    ? `"${knowledgeToast[0]}" sauvegardÃƒÂ©`
-                    : `${knowledgeToast.length} documents sauvegardÃƒÂ©s`}
+                    ? `"${knowledgeToast[0]}" sauvegardÃ©`
+                    : `${knowledgeToast.length} documents sauvegardÃ©s`}
                 </p>
               </div>
               <button
@@ -1632,7 +1378,7 @@ export default function Home() {
           </div>
 
 
-          {/* Droite : Actions SystÃƒÂ¨me & Account */}
+          {/* Droite : Actions SystÃ¨me & Account */}
           <div className="flex items-center justify-end gap-1.5 md:gap-6">
              {/* Indicateur Online/Offline */}
              <div className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5">
@@ -1653,31 +1399,24 @@ export default function Home() {
                      compact
                    />
                  ) : null}
-                 {user && organizationAccess ? (
-                   <button
-                      onClick={() => { void openOrganizationAccess(); }}
-                     className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-2 text-left transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-overlay)] md:gap-3 md:px-3"
-                     title="Choisir l'espace"
-                   >
+                 {user ? (
+                   <div className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-2 text-left md:gap-3 md:px-3">
                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
-                       {resolvedBrandLogoUrl ? (
-                         <img src={resolvedBrandLogoUrl} alt={resolvedBrandName} className="h-full w-full object-cover" />
+                       {resolvedUserAvatarUrl ? (
+                         <img src={resolvedUserAvatarUrl} alt={resolvedUserDisplayName} className="h-full w-full object-cover" />
                        ) : (
                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]">
-                           {resolvedBrandName.slice(0, 1)}
+                           {resolvedUserDisplayName.slice(0, 1)}
                          </span>
                        )}
                      </div>
                      <div className={`min-w-0 ${activeView === "home" ? "" : "max-w-[120px] md:max-w-[160px]"}`}>
-                       <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">
-                         {organizationAccess.current_scope.type === "organization" ? "Organisation" : "Personnel"}
-                       </p>
+                       <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Compte</p>
                        <p className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
                          {resolvedWorkspaceName}
                        </p>
                      </div>
-                     <ChevronDown size={16} className="hidden text-[var(--text-muted)] md:block" />
-                   </button>
+                   </div>
                  ) : null}
                  {!user && (
                    <>
@@ -1685,7 +1424,7 @@ export default function Home() {
                        Se connecter
                      </button>
                      <button onClick={() => handleStart("signup")} className="ui-btn ui-btn-primary !min-h-0 !px-3 !py-2 text-xs">
-                       CrÃƒÂ©er un compte
+                       CrÃ©er un compte
                      </button>
                    </>
                  )}
@@ -1698,7 +1437,7 @@ export default function Home() {
         <AnimatePresence mode="wait">
 
         {activeView === "home" ? (
-          <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} orgName={resolvedWorkspaceName} token={token} currentScopeType={organizationAccess?.current_scope.type} onCreateWorkspace={handleQuickCreateWorkspace} /></motion.div>
+          <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} token={token} /></motion.div>
         ) : activeView === "automations" ? (
           <motion.div key="automations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><AutomationsPage onPush={onPush} /></motion.div>
         ) : activeView === "facebook" ? (
@@ -1710,15 +1449,12 @@ export default function Home() {
               onPush={onPush}
               token={token}
               getFreshToken={getFreshToken}
-              currentScopeType={organizationAccess?.current_scope.type ?? "personal"}
-              currentUserRole={organizationAccess?.current_scope.current_user_role ?? null}
               pages={facebookPages}
               selectedPageId={selectedFacebookPageId}
               onSelectPage={setSelectedFacebookPageId}
               onPagesChanged={handlePagesChanged}
               setupStatus={setupStatus}
               onRefreshSetupStatus={loadSetupStatus}
-              onRequestOrganizationSelection={openChatbotOrganizationAccess}
             /></motion.div>
         ) : activeView === "chatbot-personnalisation" ? (
           <motion.div key="chatbot-personnalisation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotPersonnalisationPage
@@ -1743,7 +1479,7 @@ export default function Home() {
         ) : activeView === "chatbot-orders" ? (
            <motion.div key="chatbot-orders" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotOrdersPage token={token} getFreshToken={getFreshToken} onPush={onPush} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbot-activation" ? (
-           <motion.div key="chatbot-activation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotActivationPage token={token} getFreshToken={getFreshToken} onPush={onPush} currentScopeType={organizationAccess?.current_scope.type ?? "personal"} onRequestOrganizationSelection={openChatbotOrganizationAccess} availablePages={facebookPages} selectedPageId={selectedFacebookPageId} /></motion.div>
+           <motion.div key="chatbot-activation" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotActivationPage token={token} getFreshToken={getFreshToken} onPush={onPush} availablePages={facebookPages} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "settings" ? (
            <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
         ) : activeView === "billing" ? (
@@ -1798,11 +1534,10 @@ export default function Home() {
                 onSkip={() => {
                   setNavStack(resolveDefaultNavStack("chatbot"));
                 }}
-                onRequestOrganizationSelection={openChatbotOrganizationAccess}
                 onRefreshSetupStatus={loadSetupStatus}
               />
             ) : (
-              <DashboardPanel onNavigate={(v) => navigateWithAccess(v as ActiveView)} currentScopeLabel={organizationAccess?.current_scope.label} currentScopeOffer={organizationAccess?.current_scope.offer_name} hasSharedOrganizations={hasSharedOrganizations} organizationConnectionRequired={organizationConnectionRequired} onOpenScopeChooser={openOrganizationAccess} brandName={resolvedBrandName} workspaceName={resolvedWorkspaceName} brandLogoUrl={resolvedBrandLogoUrl} userDisplayName={resolvedUserDisplayName} userAvatarUrl={resolvedUserAvatarUrl} token={token} />
+              <DashboardPanel onNavigate={(v) => navigateWithAccess(v as ActiveView)} workspaceName={resolvedWorkspaceName} brandLogoUrl={resolvedBrandLogoUrl} userDisplayName={resolvedUserDisplayName} userAvatarUrl={resolvedUserAvatarUrl} token={token} />
             )}
           </motion.div>
         ) : activeView === "leads" ? (
@@ -1812,7 +1547,7 @@ export default function Home() {
         ) : activeView === "expenses" ? (
           <motion.div key="expenses" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><MessengerWorkspace initialTab="expenses" initialConversationId={selectedMessengerConversationId} onOpenAssistant={openAssistantWithAccess} onNavigate={(view) => navigateWithAccess(view as ActiveView)} onOpenConversation={openMessengerConversation} onRequestAccess={() => requestAuth("login")} authToken={token} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "chatbotFiles" ? (
-          <motion.div key="chatbotFiles" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotWorkspace token={token} getFreshToken={getFreshToken} initialTab="content" onRequestAccess={() => requestAuth("login")} onRequestOrganizationSelection={openChatbotOrganizationAccess} onRequestUpgrade={openSettingsWithAccess} /></motion.div>
+          <motion.div key="chatbotFiles" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotWorkspace token={token} getFreshToken={getFreshToken} initialTab="content" onRequestAccess={() => requestAuth("login")} onRequestUpgrade={openSettingsWithAccess} /></motion.div>
         ) : activeView === "automationHub" ? (
           <motion.div key="automationHub" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><AutomationHubPanel onNavigate={(v) => navigateWithAccess(v as ActiveView)} token={token} /></motion.div>
         ) : activeView === "prospection" ? (
@@ -1854,25 +1589,6 @@ export default function Home() {
       />
     </div>
 
-    <SpaceModal 
-        isOpen={isSpaceModalOpen} 
-        onClose={() => setIsSpaceModalOpen(false)} 
-        onConfirm={handleCreateSpace} 
-      />
-
-      <SpaceManagerModal
-        isOpen={isSpaceManagerOpen}
-        onClose={() => setIsSpaceManagerOpen(false)}
-        folders={folders}
-        conversations={conversations}
-        onAddFolder={async (name) => { await addFolder(name); }}
-        onRemoveFolder={removeFolder}
-        onMoveConversation={(convId, folderId) => {
-          const c = conversations.find(x => x.id === convId);
-          if (c) return rename(convId, c.title, folderId);
-          return Promise.resolve();
-        }}
-      />
 
       <SettingsModal
         isOpen={isSettingsModalOpen}
@@ -1883,24 +1599,11 @@ export default function Home() {
         userEmail={user?.email || ""}
         fallbackDisplayName={resolvedUserDisplayName}
         fallbackPhotoUrl={user?.photoURL || ""}
-        hasSharedOrganizations={hasSharedOrganizations}
-        onOpenOrganizationAccess={openOrganizationAccess}
         onOpenActivationFlow={openActivationFlow}
         onIdentitySaved={handleWorkspaceIdentitySaved}
         onStartTour={() => {}}
       />
 
-      <OrganizationAccessPanel
-        key={organizationAccess?.user_email || "no-user"}
-        open={showOrganizationAccess}
-        data={organizationAccess}
-        loading={organizationLoading}
-        onClose={closeOrganizationAccess}
-        onUsePersonal={handleUsePersonalScope}
-        onConnectOrganization={handleConnectOrganizationScope}
-        onCreateOrganization={handleCreateOrganizationScope}
-        onDeleteOrganization={handleDeleteOrganizationScope}
-      />
     </>
   );
 }

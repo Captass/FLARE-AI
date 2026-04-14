@@ -147,7 +147,7 @@ const TOUR_STEPS: TourStep[] = [
     target: "tour-top-actions",
     title: "Profil",
     content:
-      "Retrouvez ici votre compte, vos integrations, vos acces rapides et la deconnexion. C'est votre espace personnel en haut de l'application.",
+      "Retrouvez ici votre compte, vos integrations, vos acces rapides et la deconnexion. C'est votre compte personnel en haut de l'application.",
     position: "left",
     padding: 8,
   },
