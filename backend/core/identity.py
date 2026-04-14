@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from core.database import SystemSetting
 
 USER_PROFILE_KEY = "user_profile_v1"
-ORGANIZATION_BRANDING_KEY = "organization_branding_v1"
 
 
 def _compact_text(value: Optional[str], fallback: str = "", limit: int = 120) -> str:
@@ -65,7 +64,7 @@ def default_user_profile(email: Optional[str] = None) -> Dict[str, Any]:
         "display_name": _pretty_name_from_email(email),
         "full_name": "",
         "avatar_url": "",
-        "workspace_name": "Mon espace",
+        "workspace_name": "Mon compte",
         "guide_assistant_enabled": True,
     }
 
@@ -88,42 +87,5 @@ def load_user_profile(db: Session, user_id: str, email: Optional[str] = None) ->
     )
     payload["guide_assistant_enabled"] = bool(
         stored.get("guide_assistant_enabled", payload["guide_assistant_enabled"])
-    )
-    return payload
-
-
-def default_organization_branding(organization: Optional[Dict[str, Any]] = None) -> Dict[str, str]:
-    name = _compact_text((organization or {}).get("name"), fallback="Organisation", limit=100)
-    return {
-        "organization_name": name,
-        "logo_url": "",
-        "workspace_name": name,
-        "workspace_description": "Espace partage entre membres verifies.",
-    }
-
-
-def load_organization_branding(
-    db: Session,
-    organization_scope: str,
-    organization: Optional[Dict[str, Any]] = None,
-) -> Dict[str, str]:
-    payload = default_organization_branding(organization)
-    stored = _load_setting_json(db, ORGANIZATION_BRANDING_KEY, organization_scope)
-
-    payload["organization_name"] = _compact_text(
-        stored.get("organization_name"),
-        fallback=payload["organization_name"],
-        limit=100,
-    )
-    payload["logo_url"] = _compact_text(stored.get("logo_url"), fallback="", limit=2048)
-    payload["workspace_name"] = _compact_text(
-        stored.get("workspace_name"),
-        fallback=payload["workspace_name"],
-        limit=100,
-    )
-    payload["workspace_description"] = _compact_text(
-        stored.get("workspace_description"),
-        fallback=payload["workspace_description"],
-        limit=220,
     )
     return payload

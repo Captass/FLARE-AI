@@ -60,6 +60,7 @@ function parseApiError(e: unknown, fallback = "Une erreur est survenue."): strin
   return raw || fallback;
 }
 
+function getDefaultSelectedPageId(pages: ActivationContextPage[]): string | null {
   const active = pages.find((page) => page.is_active);
   if (active) return active.page_id;
   return pages[0]?.page_id ?? null;

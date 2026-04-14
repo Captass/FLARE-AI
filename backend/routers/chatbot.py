@@ -59,7 +59,6 @@ def _clean_text(value: Optional[str], limit: int, default: str = "") -> str:
 
 def _default_preferences(organization_slug: Optional[str] = None, user_id: Optional[str] = None) -> dict[str, Any]:
     return {
-        "organization_slug": str(organization_slug or "").strip().lower(),
         "user_id": str(user_id or "").strip(),
         "bot_name": "L'assistant",
         "primary_role": "mixte",
@@ -96,7 +95,6 @@ def _serialize_preferences(row: Optional[ChatbotPreferences], organization_slug:
         handoff_keywords = []
 
     return {
-        "organization_slug": row.organization_slug,
         "user_id": row.user_id,
         "bot_name": row.bot_name or "L'assistant",
         "primary_role": row.primary_role or "mixte",
@@ -659,7 +657,6 @@ def _serialize_catalogue_item(item: ChatbotCatalogueItem) -> dict:
     primary_image = product_images[0] if product_images else ""
     return {
         "id": item.id,
-        "organization_slug": item.organization_slug,
         "user_id": item.user_id or item.organization_slug,
         "name": item.name,
         "description": item.description or "",
@@ -847,7 +844,6 @@ class PortfolioItemPayload(BaseModel):
 def _serialize_portfolio_item(item: ChatbotPortfolioItem) -> dict:
     return {
         "id": item.id,
-        "organization_slug": item.organization_slug,
         "user_id": item.user_id or item.organization_slug,
         "title": item.title,
         "description": item.description or "",
@@ -1022,7 +1018,6 @@ def _serialize_sales_config(row: Optional[ChatbotSalesConfig], org_slug: str) ->
 
     if not row:
         return {
-            "organization_slug": org_slug,
             "user_id": org_slug,
             "qualification_steps": [],
             "objections": [],
@@ -1035,7 +1030,6 @@ def _serialize_sales_config(row: Optional[ChatbotSalesConfig], org_slug: str) ->
             "updated_at": None,
         }
     return {
-        "organization_slug": row.organization_slug,
         "user_id": row.user_id or org_slug,
         "qualification_steps": _load(row.qualification_steps),
         "objections": _load(row.objections),

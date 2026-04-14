@@ -1,5 +1,5 @@
 """
-Router Settings - Parametres utilisateur et identite de l'espace FLARE AI.
+Router Settings - Parametres utilisateur et identite du compte FLARE AI.
 """
 import base64
 import logging
@@ -184,7 +184,7 @@ def update_user_profile(
     if req.avatar_url is not None:
         next_value["avatar_url"] = _clean_text(req.avatar_url, limit=2048)
     if req.workspace_name is not None:
-        next_value["workspace_name"] = _clean_text(req.workspace_name, limit=100, fallback="Mon espace")
+        next_value["workspace_name"] = _clean_text(req.workspace_name, limit=100, fallback="Mon compte")
     if req.guide_assistant_enabled is not None:
         next_value["guide_assistant_enabled"] = bool(req.guide_assistant_enabled)
 

@@ -23,7 +23,6 @@ from core.database import (
     SessionLocal, Conversation, Message,
     CoreMemoryFact, ProspectingCampaign, ProspectLead, Skill
 )
-from core.organizations import user_can_edit_organization
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
@@ -549,10 +548,13 @@ def _messenger_operator_emails() -> set[str]:
 
 
 def _active_organization_slug(authorization: str | None) -> str | None:
+    """Retourne l'identifiant de scope pour Messenger Direct (user_id par defaut)."""
     resolved_scope_id = get_user_id_from_header(authorization)
-    if not resolved_scope_id.startswith("org:"):
+    if resolved_scope_id == "anonymous":
         return None
-    return resolved_scope_id.split(":", 1)[1].strip().lower() or None
+    if resolved_scope_id.startswith("org:"):
+        return resolved_scope_id.split(":", 1)[1].strip().lower() or None
+    return resolved_scope_id
 
 
 def _messenger_dashboard_access_scope(authorization: str | None) -> str:
@@ -563,9 +565,6 @@ def _messenger_dashboard_access_scope(authorization: str | None) -> str:
     if normalized_email in _messenger_operator_emails():
         return "operator"
 
-    organization_slug = _active_organization_slug(authorization)
-    if organization_slug and user_can_edit_organization(normalized_email, organization_slug):
-        return "operator"
     return "authenticated"
 
 
@@ -858,7 +857,7 @@ def _empty_messenger_payload(access_scope: str) -> dict[str, Any]:
             "canViewSensitive": access_scope == "operator",
             "canExport": False,
             "canSwitchMode": False,
-            "message": "Selectionnez d'abord un espace de travail pour acceder aux donnees Messenger.",
+            "message": "Connectez-vous pour acceder aux donnees Messenger.",
         },
         "urls": {
             "json24h": "",
@@ -1013,4 +1012,3 @@ async def update_messenger_contact_mode(
         raise HTTPException(status_code=502, detail=f"Le changement de mode Messenger a echoue : {err_detail}")
 
     return {"status": "ok", "psid": psid, "mode": mode}
-

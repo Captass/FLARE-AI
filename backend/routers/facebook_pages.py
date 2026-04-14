@@ -772,7 +772,7 @@ async def get_facebook_pages_status(
         if not bool((page.get("metadata") or {}).get("has_required_page_tasks", True))
     ]
     return {
-        "organization_slug": context["user_id"],
+        "user_id": context["user_id"],
         "organization_name": "Compte personnel",
         "workspace_role": context["workspace_role"],
         "workspace_role_label": context["workspace_role_label"],
@@ -969,7 +969,7 @@ async def start_facebook_auth(
     }
     return {
         "authorization_url": f"https://www.facebook.com/{_graph_version()}/dialog/oauth?{urlencode(params)}",
-        "organization_slug": context["user_id"],
+        "user_id": context["user_id"],
         "oauth_redirect_uri": callback_url,
         "meta_graph_version": _graph_version(),
     }

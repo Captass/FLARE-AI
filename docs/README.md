@@ -17,20 +17,17 @@ Le but est simple :
 - eviter de reflechir trop longtemps avant d'agir
 - permettre a une autre IA de dev de reprendre le projet sans perdre le contexte
 
-## Etat produit au 28 mars 2026
+## Etat produit au 14 avril 2026
 
 - la page publique affiche la landing FLARE AI avant connexion
-- apres connexion, l'app ouvre un accueil simple qui sert a choisir un espace
+- apres connexion, l'app ouvre un accueil simple en mode compte personnel unique
 - `Chatbot Facebook` est le module metier principal aujourd'hui
 - `Assistant IA` reste disponible comme espace de travail separe
 - `Automatisations` et les autres agents non prets restent visibles mais verrouilles honnetement
-- chaque compte peut travailler dans son espace personnel ou dans une organisation partagee
-- le choix d'organisation se fait apres connexion quand un compte partage plusieurs espaces
-- un compte connecte peut maintenant creer son propre workspace FLARE depuis l'app, puis ouvrir directement `Chatbot Facebook`
-- chaque organisation peut afficher son propre nom, logo, offre et modules actifs
-- les droits suivent maintenant le role dans l'organisation : `Proprietaire`, `Admin`, `Membre`, `Lecture`
-- l'identite visuelle de l'espace actif se regle dans `Parametres > Identite`
-- pour le cockpit chatbot, seuls `Proprietaire` et `Admin` peuvent connecter Facebook, activer le bot, modifier la personnalisation et changer le mode bot/humain d'un contact
+- le systeme d'espaces / organisations n'est plus le modele actif de l'app connectee
+- chaque utilisateur pilote maintenant un seul compte personnel FLARE AI
+- le compte connecte peut modifier son nom, son avatar et son nom de compte dans `Parametres`
+- pour le cockpit chatbot, les actions sensibles sont maintenant attachees directement au compte connecte
 - les KPI, conversations et messages du dashboard chatbot proviennent du service `messenger-direct` et peuvent etre restreints selon le role du compte
 - le dashboard chatbot embarque maintenant un graph temps reel anime, branche sur `periodStats` avec fallback sur l'activite recente quand les periodes sont encore peu remplies
 
@@ -110,10 +107,10 @@ Pour le chatbot Facebook FLARE AI et son cockpit dans FLARE AI :
 
 ## Ce qu'il faut retenir maintenant
 
-- le compte ouvre FLARE, puis l'utilisateur choisit l'espace a utiliser
-- le chatbot Facebook reste le premier espace metier a ouvrir pour piloter les ventes entrantes
-- les actions sensibles du chatbot restent plus strictes que les simples roles d'organisation
-- `Parametres > Identite` sert a verifier rapidement quel espace est charge, quel branding est actif et qui peut le modifier
+- le compte ouvre FLARE AI sans selection d'espace ni d'organisation
+- le chatbot Facebook reste le premier module metier pour piloter les ventes entrantes
+- le plan actif et l'activation sont rattaches directement au compte utilisateur
+- `Parametres > Identite` sert a gerer le profil, l'avatar et le nom de compte affiches dans l'app
 
 ## Lancement v1 - 4 avril 2026
 

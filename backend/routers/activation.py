@@ -217,7 +217,6 @@ def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, A
     selected_pages = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
     return {
         "id": ar.id,
-        "organization_scope_id": ar.organization_scope_id,
         "user_id": ar.user_id or ar.requester_user_id,
         "selected_plan_id": ar.selected_plan_id,
         "status": ar.status,
@@ -734,8 +733,6 @@ def admin_list_payments(
         "payments": [
             {
                 "id": s.id,
-                "organization_slug": s.organization_slug,
-                "organization_scope_id": s.organization_scope_id,
                 "user_id": s.user_id,
                 "activation_request_id": s.activation_request_id,
                 "selected_plan_id": s.selected_plan_id,
@@ -775,8 +772,6 @@ def admin_get_payment(
         activation = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
     return {
         "id": s.id,
-        "organization_slug": s.organization_slug,
-        "organization_scope_id": s.organization_scope_id,
         "user_id": s.user_id,
         "activation_request_id": s.activation_request_id,
         "selected_plan_id": s.selected_plan_id,
@@ -831,7 +826,7 @@ def admin_verify_payment(
             if not s.user_id and target_user_id:
                 s.user_id = target_user_id
     if not target_user_id:
-        target_user_id = s.organization_scope_id
+        raise HTTPException(status_code=400, detail="Paiement sans utilisateur cible.")
     sub = db.query(UserSubscription).filter(UserSubscription.user_id == target_user_id).first()
     if sub:
         sub.plan_id = s.selected_plan_id
@@ -1386,8 +1381,6 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
     selected_pages = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
     return {
         "id": ar.id,
-        "organization_slug": ar.organization_slug,
-        "organization_scope_id": ar.organization_scope_id,
         "user_id": ar.user_id or ar.requester_user_id,
         "requester_user_id": ar.requester_user_id,
         "selected_plan_id": ar.selected_plan_id,
@@ -1443,8 +1436,6 @@ def _serialize_report(report: UserReport) -> Dict[str, Any]:
         normalized_priority = "high"
     return {
         "id": report.id,
-        "organization_slug": report.organization_slug,
-        "organization_scope_id": report.organization_scope_id,
         "user_id": report.user_id or report.reporter_user_id,
         "reporter_user_id": report.reporter_user_id,
         "reporter_email": report.reporter_email,
@@ -1478,8 +1469,7 @@ def _serialize_report(report: UserReport) -> Dict[str, Any]:
 def _serialize_order(o: ChatbotOrder) -> Dict[str, Any]:
     return {
         "id": o.id,
-        "organization_slug": o.organization_slug,
-        "user_id": o.user_id or o.organization_scope_id,
+        "user_id": o.user_id,
         "facebook_page_id": o.facebook_page_id,
         "page_name": o.page_name,
         "contact_psid": o.contact_psid,

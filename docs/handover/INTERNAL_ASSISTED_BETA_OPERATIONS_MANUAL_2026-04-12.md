@@ -50,7 +50,7 @@ En pratique :
 
 - `App connectee`
   - shell apres connexion
-  - gestion de l'espace actif
+  - gestion du compte actif
   - navigation principale
 
 - `Chatbot Facebook`
@@ -62,7 +62,7 @@ En pratique :
   - clients / commandes / conversations
 
 - `Assistant IA`
-  - espace de travail secondaire
+  - module secondaire
   - non critique pour l'activation du chatbot Facebook
 
 - `Administration`
@@ -74,12 +74,10 @@ En pratique :
 
 ### 2. Roles
 
-Roles organisation cote client :
+Roles cote client :
 
-- `owner`
-- `admin`
-- `member`
-- `viewer`
+- `user`
+- `admin interne` si le compte est explicitement autorise
 
 Roles operations :
 
@@ -89,7 +87,7 @@ Roles operations :
 Regle pratique :
 
 - seules les personnes FLARE traitent paiements, verification, activation, tests finaux
-- seul `owner/admin` peut piloter les actions sensibles de l'espace cote client
+- cote client, le compte connecte pilote directement son activation et son chatbot
 
 ## Sources de verite
 
@@ -151,8 +149,7 @@ Regle interne :
 
 1. visiteur sur la landing
 2. creation de compte / connexion
-3. creation ou selection d'un espace
-4. espace en plan `free`
+3. compte en plan `free`
 5. choix d'une offre payante
 6. paiement manuel hors FLARE
 7. envoi de la preuve
@@ -219,7 +216,7 @@ Regles backend notables :
 
 ### Realite produit
 
-Un espace nouvellement cree demarre en `free`.
+Un nouveau compte demarre en `free`.
 
 Le client n'est pas considere payant au simple clic sur une offre.
 Le passage reel a un plan payant se produit apres validation humaine de la preuve.
@@ -231,7 +228,7 @@ Le backend applique le plan payant au moment de la verification admin du paiemen
 Quand l'admin appelle la verification du paiement :
 
 - le `manual_payment_submission` passe a `verified`
-- l'abonnement organisation est mis a jour avec `selected_plan_id`
+- l'abonnement utilisateur est mis a jour avec `selected_plan_id`
 - `UserSubscription.status` devient `active`
 - la demande d'activation liee met `payment_status = verified`
 

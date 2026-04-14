@@ -220,7 +220,7 @@ export default function HomePage({
             FLARE AI centralise tes automatisations marketing et commerciales. Tu lances, tu suis, tu optimises depuis un seul compte.
           </p>
           <p className="text-sm text-[var(--text-muted)]">
-            Compte {displayName || "FLARE AI"} · <span className="capitalize">{today}</span>
+            Compte {displayName || "FLARE AI"} - <span className="capitalize">{today}</span>
           </p>
         </motion.header>
         <section aria-label="Indicateurs cles">
