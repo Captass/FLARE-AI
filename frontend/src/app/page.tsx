@@ -449,10 +449,10 @@ export default function Home() {
     };
   }, []);
 
-  // â”€â”€ Force Cache Clear (v2.7.0) â”€â”€
+  // ── Force Cache Clear (v4.0.0 — Landing Overhaul) ──
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const currentVersion = "3.7.0";
+      const currentVersion = "4.0.0";
       const savedVersion = localStorage.getItem("flare-app-version");
       if (savedVersion !== currentVersion) {
         if ('serviceWorker' in navigator) {
@@ -461,7 +461,6 @@ export default function Home() {
               registration.unregister();
             }
             localStorage.setItem("flare-app-version", currentVersion);
-            // On attend un peu que les SW soient dÃ©senregistrÃ©s avant de reload
           });
         } else {
           localStorage.setItem("flare-app-version", currentVersion);
@@ -1081,7 +1080,7 @@ export default function Home() {
   }
 
   if (!user) {
-    return <LandingPage onStart={handleStart} theme={theme} onToggleTheme={handleThemeToggle} />;
+    return <LandingPage onStart={handleStart} />;
   }
 
   const viewTitleMap: Partial<Record<AppView, string>> = {

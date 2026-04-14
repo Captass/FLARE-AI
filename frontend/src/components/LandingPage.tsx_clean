@@ -1,0 +1,279 @@
+"use client";
+
+import { useState, useEffect, useRef, Suspense } from "react";
+import { ArrowDown, ArrowRight, Zap, MessageSquare, BarChart3, Bot, Menu, X, Download } from "lucide-react";
+import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import Spline from "@splinetool/react-spline";
+import React from "react";
+import FlareMark from "./FlareMark";
+import { ThemePreference } from "@/lib/theme";
+
+/* Tiny error boundary so a Spline crash doesn't kill the page */
+class SplineBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err: Error) { console.warn("[Spline]", err.message); }
+  render() {
+    if (this.state.hasError) return <div className="landing-spline-fallback w-full h-full bg-[#020305]" />;
+    return this.props.children;
+  }
+}
+
+interface LandingPageProps {
+  onStart: (mode: "login" | "signup", prompt?: string) => void;
+}
+
+export default function LandingPage({ onStart }: LandingPageProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [splineApp, setSplineApp] = useState<any>(null);
+  const [canInstall, setCanInstall] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const { scrollY, scrollYProgress } = useScroll();
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    const frame = window.requestAnimationFrame(() => setIsLoaded(true));
+    if (window.innerWidth < 1024) {
+      setIsLoaded(true);
+    }
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setIsScrolled(latest > 100);
+  });
+
+  useEffect(() => {
+    if ((window as any).deferredPrompt) {
+      setCanInstall(true);
+    }
+
+    const handlePrompt = () => setCanInstall(true);
+    const handleCustomPrompt = () => setCanInstall(true);
+
+    window.addEventListener("beforeinstallprompt", handlePrompt);
+    window.addEventListener("pwa-prompt-ready", handleCustomPrompt);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handlePrompt);
+      window.removeEventListener("pwa-prompt-ready", handleCustomPrompt);
+    };
+  }, []);
+
+  useEffect(() => {
+    document.body.classList.add("is-public-landing");
+    return () => {
+      document.body.classList.remove("is-public-landing");
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    const prompt = (window as any).deferredPrompt;
+    if (prompt) {
+      prompt.prompt();
+      const { outcome } = await prompt.userChoice;
+      if (outcome === 'accepted') {
+        (window as any).deferredPrompt = null;
+        setCanInstall(false);
+      }
+    } else {
+      alert("Pour installer FLARE AI :\n• Sur mobile : utilisez Ajouter a l ecran d accueil.\n• Sur PC : utilisez l option d installation dans la barre d adresse.");
+    }
+  };
+
+  const springX = useSpring(0, { stiffness: 150, damping: 20 });
+  const springY = useSpring(0, { stiffness: 150, damping: 20 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      const x = (e.clientX / window.innerWidth - 0.5) * 2;
+      const y = (e.clientY / window.innerHeight - 0.5) * 2;
+      springX.set(x);
+      springY.set(y);
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [springX, springY]);
+
+  useEffect(() => {
+    const updateSpline = () => {
+      const x = springX.get();
+      const y = springY.get();
+
+      if (splineApp) {
+        const head = splineApp.findObjectByName("Head");
+        const eyeL = splineApp.findObjectByName("Eye_L") || splineApp.findObjectByName("Eye Left");
+        const eyeR = splineApp.findObjectByName("Eye_R") || splineApp.findObjectByName("Eye Right");
+
+        if (head) {
+          head.rotation.y = x * 0.8;
+          head.rotation.x = y * 0.4;
+        }
+        if (eyeL) {
+          eyeL.rotation.y = x * 0.4;
+          eyeL.rotation.x = y * 0.2;
+        }
+        if (eyeR) {
+          eyeR.rotation.y = x * 0.4;
+          eyeR.rotation.x = y * 0.2;
+        }
+      }
+    };
+
+    const unsubX = springX.on("change", updateSpline);
+    const unsubY = springY.on("change", updateSpline);
+
+    return () => {
+      unsubX();
+      unsubY();
+    };
+  }, [springX, springY, splineApp]);
+
+  const rotateX = useTransform(springY, (v) => v * -1.5);
+  const rotateY = useTransform(springX, (v) => v * 1.5);
+  const mousePosX = useTransform(springX, (v) => (v + 1) * 50 + "%");
+  const mousePosY = useTransform(springY, (v) => (v + 1) * 50 + "%");
+
+  const logoParallaxX = useTransform(springX, (v) => v * 6);
+  const logoParallaxY = useTransform(springY, (v) => v * 6);
+
+  function onLoad(app: any) {
+    if (!app) return;
+    setSplineApp(app);
+    try {
+      if (isMobile && app.renderer) {
+        app.renderer.setPixelRatio(0.75);
+      }
+
+      const allObjects = app.getAllObjects();
+      if (allObjects) {
+        allObjects.forEach((obj: any) => {
+          if (isMobile && obj.shadow) {
+            obj.castShadow = false;
+            obj.receiveShadow = false;
+          }
+          if (obj && obj.text !== undefined) obj.visible = false;
+        });
+      }
+    } catch (e) {
+      console.warn("Spline onLoad manipulation failed:", e);
+    }
+    setIsLoaded(true);
+  }
+
+  /* -- Metrics visibles sur le hero -- */
+  const METRICS = [
+    { value: "50k+", label: "messages automatisés" },
+    { value: "15 min", label: "pour l'activer" },
+    { value: "0", label: "technicien requis" },
+  ];
+
+  /* -- Témoignages pour la confiance -- */
+  const REVIEWS = [
+    { 
+      name: "Andry T.", 
+      role: "E-commerçant", 
+      text: "Depuis FLARE, mon bot répond à mes clients à 2h du mat. Je ne rate plus aucune vente.",
+      initials: "AT"
+    },
+    { 
+      name: "Sarah R.", 
+      role: "Agence Digitale", 
+      text: "L'automatisation des factures et devis nous a fait gagner 10h par semaine. Indispensable.",
+      initials: "SR"
+    },
+    { 
+      name: "Mamy L.", 
+      role: "Boutique en ligne", 
+      text: "Activation en 15 minutes chrono. Le support est local et ultra réactif.",
+      initials: "ML"
+    },
+  ];
+
+  /* -- Cas d'usage orientés business -- */
+  const USE_CASES = [
+    {
+      icon: MessageSquare,
+      title: "Automatisez vos Ventes",
+      description: "Un chatbot Messenger qui répond à vos prospects 24/7 et qualifie les leads. Ne ratez plus aucune vente, même la nuit.",
+      cta: "Activer mon assistant",
+      prompt: "Configure mon chatbot Facebook pour répondre aux clients automatiquement",
+    },
+    {
+      icon: Zap,
+      title: "Automatisez vos Contenus",
+      description: "Générez vos visuels et vidéos TikTok/Facebook en un clic. FLARE s'occupe de la création pour vous rendre visible.",
+      cta: "Créer un visuel",
+      prompt: "Rédige un post Facebook accrocheur avec un visuel pour promouvoir mes services",
+    },
+    {
+      icon: BarChart3,
+      title: "Automatisez votre Gestion",
+      description: "Édition automatique de devis, factures et rapports. Libérez votre temps pour vous concentrer sur vos clients.",
+      cta: "Automatiser mes docs",
+      prompt: "Génère un modèle de devis professionnel pour mes services",
+    },
+  ];
+
+  /* -- Avantages concrets -- */
+  const ADVANTAGES = [
+    { number: "01", title: "Zéro technique", text: "Pas de code, pas de formation. L'équipe FLARE active votre plateforme pour vous en 15 minutes." },
+    { number: "02", title: "Accompagnement", text: "Nous configurons vos premières automatisations avec vous pour garantir vos résultats." },
+    { number: "03", title: "Mémoire Intelligente", text: "FLARE apprend vos prix et votre ton. Chaque action est parfaitement alignée sur votre marque." },
+    { number: "04", title: "Pilote Automatique", text: "Pendant que vous dormez, votre système répond, produit et relance. Votre business ne s'arrête jamais." },
+  ];
+
+  /* -- Variants for staggered animations -- */
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
+
+  return (
+    <div
+      ref={containerRef}
+      id="hero"
+      className="landing-theme-scope landing-shell relative w-full h-screen overflow-y-auto no-scrollbar font-sans select-none"
+    >
+      {/* -- Sticky Navbar -- */}
+      <AnimatePresence>
+        {isScrolled && (
+          <motion.nav
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className="landing-nav fixed top-0 left-0 right-0 z-[60] mx-4 mt-4 flex items-center justify-between rounded-3xl border-b border-white/5 px-6 py-4 glass"
+          >
+            <div className="flex items-center gap-2 cursor-pointer" onClick={() => document.getElementById('hero')?.scrollTo({ top: 0, behavior: 'smooth' })}>
+              <div className="landing-mark-chip flex h-8 w-8 items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-md">
+                

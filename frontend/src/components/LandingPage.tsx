@@ -6,8 +6,7 @@ import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, Animat
 import Spline from "@splinetool/react-spline";
 import React from "react";
 import FlareMark from "./FlareMark";
-import ThemeToggle from "@/components/ui/ThemeToggle";
-import type { ThemePreference } from "@/lib/theme";
+import { ThemePreference } from "@/lib/theme";
 
 /* Tiny error boundary so a Spline crash doesn't kill the page */
 class SplineBoundary extends React.Component<
@@ -25,11 +24,9 @@ class SplineBoundary extends React.Component<
 
 interface LandingPageProps {
   onStart: (mode: "login" | "signup", prompt?: string) => void;
-  theme: ThemePreference;
-  onToggleTheme: () => void;
 }
 
-export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPageProps) {
+export default function LandingPage({ onStart }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -181,43 +178,86 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
 
   /* ── Metrics visibles sur le hero ── */
   const METRICS = [
-    { value: "24/7", label: "ton bot répond" },
+    { value: "50k+", label: "messages automatisés" },
     { value: "15 min", label: "pour l'activer" },
     { value: "0", label: "technicien requis" },
+  ];
+
+  /* ── Témoignages pour la confiance ── */
+  const REVIEWS = [
+    { 
+      name: "Andry T.", 
+      role: "E-commerçant", 
+      text: "Depuis FLARE, mon bot répond à mes clients à 2h du mat. Je ne rate plus aucune vente.",
+      initials: "AT"
+    },
+    { 
+      name: "Sarah R.", 
+      role: "Agence Digitale", 
+      text: "L'automatisation des factures et devis nous a fait gagner 10h par semaine. Indispensable.",
+      initials: "SR"
+    },
+    { 
+      name: "Mamy L.", 
+      role: "Boutique en ligne", 
+      text: "Activation en 15 minutes chrono. Le support est local et ultra réactif.",
+      initials: "ML"
+    },
   ];
 
   /* ── Cas d'usage orientés business ── */
   const USE_CASES = [
     {
       icon: MessageSquare,
-      title: "Tu réponds à tes prospects 24/7",
-      description: "FLARE AI répond aux messages Facebook, qualifie les prospects et relance automatiquement. Tu rates moins de ventes.",
-      cta: "Activer le chatbot",
+      title: "Automatisez vos Ventes",
+      description: "Un chatbot Messenger qui répond à vos prospects 24/7 et qualifie les leads. Ne ratez plus aucune vente, même la nuit.",
+      cta: "Activer mon assistant",
       prompt: "Configure mon chatbot Facebook pour répondre aux clients automatiquement",
     },
     {
       icon: Zap,
-      title: "Tu crées tes contenus en quelques minutes",
-      description: "Posts, emails, propositions et visuels : tu demandes, FLARE AI génère. Tu publies plus vite, sans blocage.",
-      cta: "Créer maintenant",
-      prompt: "Rédige un post Facebook accrocheur pour promouvoir mes services",
+      title: "Automatisez vos Contenus",
+      description: "Générez vos visuels et vidéos TikTok/Facebook en un clic. FLARE s'occupe de la création pour vous rendre visible.",
+      cta: "Créer un visuel",
+      prompt: "Rédige un post Facebook accrocheur avec un visuel pour promouvoir mes services",
     },
     {
       icon: BarChart3,
-      title: "Tu vois ce qui rapporte en temps réel",
-      description: "Leads, conversions, coût et revenus au même endroit. Tu décides vite, avec des chiffres clairs.",
-      cta: "Voir les chiffres",
-      prompt: "Montre-moi un résumé de mes performances commerciales",
+      title: "Automatisez votre Gestion",
+      description: "Édition automatique de devis, factures et rapports. Libérez votre temps pour vous concentrer sur vos clients.",
+      cta: "Automatiser mes docs",
+      prompt: "Génère un modèle de devis professionnel pour mes services",
     },
   ];
 
   /* ── Avantages concrets ── */
   const ADVANTAGES = [
-    { number: "01", title: "Zéro configuration", text: "Tu connectes ta page Facebook et c'est parti. Pas de code, pas de formation." },
-    { number: "02", title: "Ton IA, ton ton", text: "Elle apprend ta façon de parler, ton offre et tes prix. Chaque réponse sonne comme toi." },
-    { number: "03", title: "Résultats mesurables", text: "Tu suis tes leads, tes ventes et ton ROI en temps réel depuis un seul écran." },
-    { number: "04", title: "Fonctionne non-stop", text: "Pendant que tu dors, ton IA répond, qualifie et relance. 24h/24, 7j/7." },
+    { number: "01", title: "Zéro technique", text: "Pas de code, pas de formation. L'équipe FLARE active votre plateforme pour vous en 15 minutes." },
+    { number: "02", title: "Accompagnement", text: "Nous configurons vos premières automatisations avec vous pour garantir vos résultats." },
+    { number: "03", title: "Mémoire Intelligente", text: "FLARE apprend vos prix et votre ton. Chaque action est parfaitement alignée sur votre marque." },
+    { number: "04", title: "Pilote Automatique", text: "Pendant que vous dormez, votre système répond, produit et relance. Votre business ne s'arrête jamais." },
   ];
+
+  /* ── Variants for staggered animations ── */
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1, 
+      y: 0,
+      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+    }
+  };
 
   return (
     <div
@@ -262,7 +302,6 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             </div>
 
             <div className="flex items-center gap-4">
-              <ThemeToggle theme={theme} onToggle={onToggleTheme} className="landing-theme-toggle" />
               <button
                 onClick={() => onStart("login")}
                 className="landing-plain-button text-[10px] uppercase font-medium hidden sm:block"
@@ -316,7 +355,6 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               ))}
             </nav>
             <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
-               <ThemeToggle theme={theme} onToggle={onToggleTheme} className="landing-theme-toggle-mobile justify-center" />
                <button onClick={() => onStart("login")} className="landing-mobile-secondary w-full py-4 uppercase border rounded-2xl">Se connecter</button>
                <button onClick={() => onStart("signup")} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Commencer gratuitement</button>
             </div>
@@ -398,12 +436,11 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               </motion.div>
               <div className="flex flex-col justify-center">
                 <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none">FLARE AI</span>
-                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3">Ton business, en pilote automatique</span>
+                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3">Votre business en pilote automatique</span>
               </div>
             </div>
 
             <div className="flex items-center gap-2 md:gap-5 cursor-auto pointer-events-auto">
-              <ThemeToggle theme={theme} onToggle={onToggleTheme} className="landing-theme-toggle" />
               <button
                 onClick={() => onStart("login")}
                 className="landing-plain-button transition-colors text-[10px] md:text-xs uppercase font-medium hidden xs:block"
@@ -422,31 +459,41 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
           {/* ── Hero Content ── */}
           <main className="flex-1 flex flex-col justify-center min-h-[70vh]">
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ duration: 1.5, delay: 0.8 }}
+              variants={containerVariants}
+              initial="hidden"
+              animate={isLoaded ? "visible" : "hidden"}
               className="max-w-4xl pt-10 md:pt-20"
             >
               {/* Badge */}
-              <div className="landing-badge mb-8 inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 backdrop-blur-md">
+              <motion.div 
+                variants={itemVariants}
+                className="landing-badge mb-8 inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 backdrop-blur-md"
+              >
                 <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
                 <span className="landing-kicker text-[10px] md:text-xs font-medium uppercase">🔥 Bêta ouverte · Chatbot Facebook · Madagascar</span>
-              </div>
+              </motion.div>
 
               <motion.h1
+                variants={itemVariants}
                 style={{ rotateX, rotateY }}
                 className="landing-headline text-[32px] sm:text-[52px] md:text-[78px] leading-[1.1] md:leading-[1] perspective-1000 font-[family-name:var(--font-outfit)]"
               >
-                Ton bot répond.<br />
-                <span className="font-bold tracking-tight">Tu vends plus.</span>
+                Simplifiez. Produisez.<br />
+                <span className="font-bold tracking-tight">Automatisez.</span>
               </motion.h1>
 
-              <p className="landing-copy mt-8 mb-10 text-sm md:text-xl max-w-xl leading-relaxed">
-                Ton chatbot Facebook IA répond à tes clients, qualifie tes prospects et capture tes leads — même quand tu dors.
+              <motion.p 
+                variants={itemVariants}
+                className="landing-copy mt-8 mb-10 text-sm md:text-xl max-w-xl leading-relaxed"
+              >
+                La plateforme tout-en-un qui exécute vos <strong>ventes</strong>, vos <strong>contenus</strong> et vos <strong>documents</strong> pour vous.
                 Activé en <strong>15 min</strong> par l&apos;équipe FLARE. À partir de <strong>30 000 Ar/mois</strong>.
-              </p>
+              </motion.p>
 
-              <div className="flex flex-col sm:flex-row items-start gap-4">
+              <motion.div 
+                variants={itemVariants}
+                className="flex flex-col sm:flex-row items-start gap-4"
+              >
                 <button
                   onClick={() => onStart("signup")}
                   className="landing-cta-hero group flex items-center gap-3 rounded-full bg-orange-500 px-10 py-5 text-[13px] font-bold uppercase tracking-widest transition-all duration-300 shadow-2xl shadow-orange-500/20 hover:scale-105 hover:bg-orange-600"
@@ -464,24 +511,75 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                     Installer l&apos;app
                   </button>
                 )}
-              </div>
+              </motion.div>
 
               {/* ── Hero Metrics ── */}
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-                transition={{ duration: 1.2, delay: 1.5 }}
+                variants={containerVariants}
                 className="mt-16 flex gap-10 md:gap-16"
               >
                 {METRICS.map((m, i) => (
-                  <div key={i} className="flex flex-col">
+                  <motion.div key={i} variants={itemVariants} className="flex flex-col">
                     <span className="landing-metric-value text-2xl md:text-4xl font-bold tracking-tight font-[family-name:var(--font-outfit)]">{m.value}</span>
                     <span className="landing-metric-label mt-1 text-[10px] md:text-xs uppercase">{m.label}</span>
-                  </div>
+                  </motion.div>
                 ))}
               </motion.div>
             </motion.div>
           </main>
+        </div>
+
+        {/* ── Social Proof / Trusted Tech Band ── */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="relative z-10 w-full border-y border-white/5 bg-white/[0.02] backdrop-blur-sm py-8"
+        >
+          <div className="max-w-6xl mx-auto px-6 flex flex-wrap justify-center items-center gap-8 md:gap-16 grayscale opacity-40">
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-white/40">Propulsé par les meilleures technologies</span>
+            <div className="flex items-center gap-2">
+              <Bot size={16} />
+              <span className="text-sm font-bold">Google Cloud</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap size={16} />
+              <span className="text-sm font-bold">Next.js 14</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <MessageSquare size={16} />
+              <span className="text-sm font-bold">Meta API</span>
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ── Trust / Reviews Section ── */}
+      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24">
+        <div className="max-w-6xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {REVIEWS.map((rev, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className="group relative p-8 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all duration-500"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-xs border border-orange-500/20">
+                    {rev.initials}
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{rev.name}</h4>
+                    <span className="text-[10px] uppercase text-white/40">{rev.role}</span>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed text-white/70 italic">&quot;{rev.text}&quot;</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -499,42 +597,45 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             viewport={{ once: true }}
             className="mb-16 md:mb-24 max-w-2xl"
           >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Ce que FLARE AI fait pour toi</span>
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">L&apos;IA qui exécute pour vous</span>
             <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              3 services concrets pour <span className="font-semibold">vendre plus</span>.
+              3 piliers pour <span className="font-semibold">automatiser votre business</span>.
             </h2>
             <p className="landing-copy mt-4 max-w-xl text-sm md:text-lg leading-relaxed">
-              Tu actives, FLARE AI exécute.
+              Ne vous souciez plus du &quot;comment&quot;. FLARE AI s&apos;occupe de l&apos;exécution technique.
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 gap-6">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-100px" }}
+            className="grid grid-cols-1 gap-6"
+          >
             {USE_CASES.map((item, index) => {
               const Icon = item.icon;
               return (
                 <motion.button
                   key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
+                  variants={itemVariants}
                   onClick={() => onStart("signup", item.prompt)}
-                className="landing-card group relative w-full overflow-hidden rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-8 text-left transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.04] md:p-10"
+                  className="landing-card group relative w-full overflow-hidden rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-8 text-left transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.04] md:p-10"
                 >
                   {/* Subtle glow on hover */}
-                  <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-orange-500/[0.04] rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 -translate-y-1/2 translate-x-1/3" />
+                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-500/[0.04] rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -translate-y-1/2 translate-x-1/3" />
 
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
-                    <div className="landing-icon-panel flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] transition-all duration-500 group-hover:border-orange-500/30 group-hover:bg-orange-500/10">
-                      <Icon className="landing-solution-icon landing-solution-icon-strong transition-colors" size={26} strokeWidth={2.2} />
+                    <div className="landing-icon-panel flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] transition-all duration-500 group-hover:border-orange-500/30 group-hover:bg-orange-500/10 group-hover:scale-110">
+                      <Icon className="landing-solution-icon landing-solution-icon-strong transition-colors" size={28} strokeWidth={2} />
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="landing-card-title mb-3 text-xl md:text-2xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{item.title}</h3>
-                      <p className="landing-card-copy text-sm md:text-base leading-relaxed max-w-2xl">{item.description}</p>
+                      <h3 className="landing-card-title mb-3 text-xl md:text-3xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{item.title}</h3>
+                      <p className="landing-card-copy text-sm md:text-lg leading-relaxed max-w-2xl opacity-70 group-hover:opacity-100 transition-opacity">{item.description}</p>
                     </div>
 
-                    <div className="landing-card-cta flex items-center gap-2 text-[10px] font-medium uppercase tracking-widest transition-colors shrink-0">
+                    <div className="landing-card-cta hidden md:flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all shrink-0 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0">
                       {item.cta}
                       <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
                     </div>
@@ -542,7 +643,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
                 </motion.button>
               );
             })}
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -570,7 +671,13 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
             {[
               {
                 name: "Starter",
@@ -599,50 +706,49 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             ].map((plan, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className={`relative rounded-[24px] border p-8 md:p-10 flex flex-col gap-6 transition-all duration-300 ${
+                variants={itemVariants}
+                className={`relative rounded-[32px] border p-8 md:p-10 flex flex-col gap-6 transition-all duration-500 ${
                   plan.highlight
-                    ? "border-orange-500/40 bg-orange-500/5 shadow-xl shadow-orange-500/10 scale-[1.02]"
-                    : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                    ? "border-orange-500/40 bg-orange-500/[0.03] shadow-2xl shadow-orange-500/10 scale-[1.02] z-10"
+                    : "border-black/[0.06] bg-black/[0.01] hover:border-black/[0.12] hover:bg-white/50"
                 }`}
               >
                 {plan.highlight && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-4 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg">
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-6 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white shadow-xl">
                     Le plus populaire
                   </div>
                 )}
                 <div>
-                  <span className="landing-section-kicker text-[10px] uppercase font-medium">{plan.name}</span>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="landing-headline text-4xl md:text-5xl font-bold font-[family-name:var(--font-outfit)]">{plan.price}</span>
-                    <span className="landing-copy text-sm">Ar / mois</span>
+                  <span className="landing-section-kicker text-[10px] uppercase font-bold text-orange-600">{plan.name}</span>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="landing-headline text-5xl md:text-6xl font-bold font-[family-name:var(--font-outfit)]">{plan.price}</span>
+                    <span className="landing-copy text-sm opacity-60">Ar / mois</span>
                   </div>
-                  <p className="landing-card-copy mt-2 text-xs">{plan.subtitle}</p>
+                  <p className="landing-card-copy mt-2 text-xs font-semibold">{plan.subtitle}</p>
                 </div>
-                <ul className="flex flex-col gap-3 flex-1">
+                <ul className="flex flex-col gap-4 flex-1 my-4">
                   {plan.features.map((f, fi) => (
-                    <li key={fi} className="flex items-start gap-2 landing-card-copy text-sm">
-                      <span className="text-orange-500 mt-0.5 shrink-0">✓</span>
+                    <li key={fi} className="flex items-start gap-3 landing-card-copy text-sm font-medium">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                        <span className="text-orange-600 text-[10px]">✓</span>
+                      </div>
                       {f}
                     </li>
                   ))}
                 </ul>
                 <button
                   onClick={() => onStart("signup")}
-                  className={`w-full rounded-full py-4 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                  className={`w-full rounded-2xl py-5 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
                     plan.highlight
-                      ? "bg-orange-500 shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:scale-105"
-                      : "border border-white/10 hover:border-white/30 landing-card-title"
+                      ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:scale-[1.02]"
+                      : "border border-black/10 hover:border-black/30 hover:bg-black/5"
                   }`}
                 >
                   {plan.cta}
                 </button>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
@@ -676,21 +782,59 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             </h2>
           </motion.div>
 
-          <div className="landing-divider grid grid-cols-1 gap-px overflow-hidden rounded-[24px] bg-white/[0.06] md:grid-cols-2">
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="landing-divider grid grid-cols-1 gap-px overflow-hidden rounded-[32px] bg-white/[0.08] md:grid-cols-2 lg:grid-cols-4"
+          >
             {ADVANTAGES.map((adv, index) => (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.08 }}
-                className="landing-card-muted group bg-[#060607] p-8 md:p-10"
+                variants={itemVariants}
+                className="landing-card-muted group bg-[#020305] p-8 md:p-10 transition-colors hover:bg-white/[0.02]"
               >
-                <span className="landing-card-index text-[11px] font-mono font-bold tracking-widest">{adv.number}</span>
-                <h3 className="landing-card-title mt-4 text-lg md:text-xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{adv.title}</h3>
-                <p className="landing-card-copy mt-3 text-sm leading-relaxed">{adv.text}</p>
+                <div className="flex items-center justify-between mb-8">
+                  <span className="landing-card-index text-[14px] font-mono font-bold tracking-widest text-orange-500/40">{adv.number}</span>
+                  <div className="w-1 h-8 bg-orange-500/10 rounded-full group-hover:bg-orange-500/40 transition-colors" />
+                </div>
+                <h3 className="landing-card-title text-xl md:text-2xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{adv.title}</h3>
+                <p className="landing-card-copy mt-4 text-sm md:text-base leading-relaxed opacity-60 group-hover:opacity-100 transition-opacity">{adv.text}</p>
               </motion.div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── Security / Reliability Section ── */}
+      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24 bg-gradient-to-b from-transparent to-white/[0.01]">
+        <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="w-16 h-16 rounded-full bg-orange-500/10 flex items-center justify-center mb-8 border border-orange-500/20"
+          >
+            <Bot size={32} className="text-orange-500" />
+          </motion.div>
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">Votre sécurité est notre priorité</h2>
+          <p className="text-sm md:text-lg text-white/60 max-w-2xl">
+            Données chiffrées, hébergement Google Cloud sécurisé et conformité Meta API. Votre business est entre de bonnes mains.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-6 opacity-60">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="text-[10px] uppercase font-bold tracking-wider">SSL Encrypted</span>
+             </div>
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="text-[10px] uppercase font-bold tracking-wider">GDPR Comply</span>
+             </div>
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                <span className="text-[10px] uppercase font-bold tracking-wider">Meta Verified API</span>
+             </div>
           </div>
         </div>
       </section>
@@ -727,42 +871,44 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
             </h2>
           </motion.div>
 
-          <div className="flex flex-col md:flex-row gap-12 items-start">
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row gap-12 items-start"
+          >
             {/* Photo Kévin à gauche */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="shrink-0"
+              variants={itemVariants}
+              className="shrink-0 group"
             >
-              <div className="w-40 h-52 md:w-48 md:h-64 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="w-40 h-52 md:w-48 md:h-64 rounded-[32px] overflow-hidden shadow-2xl grayscale group-hover:grayscale-0 transition-all duration-700">
                 <img src="/kevin.png" alt="Kévin — Fondateur" className="w-full h-full object-cover" />
               </div>
-              <div className="mt-4">
-                <p className="landing-card-title text-sm font-medium">Kévin</p>
-                <p className="landing-card-copy text-xs">Fondateur & Architecte</p>
-                <p className="landing-card-copy text-xs">FLARE AI — Madagascar</p>
+              <div className="mt-6">
+                <p className="landing-card-title text-sm font-bold uppercase tracking-tight">Kévin</p>
+                <p className="landing-card-copy text-xs font-bold text-orange-600/60 mt-1">Fondateur & Architecte</p>
+                <p className="landing-card-copy text-xs font-bold text-black/40 uppercase tracking-widest mt-2">FLARE AI — Madagascar</p>
               </div>
             </motion.div>
 
             {/* Texte à droite */}
             <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              className="flex flex-col gap-6 max-w-xl"
+              variants={containerVariants}
+              className="flex flex-col gap-8 max-w-xl"
             >
-              <p className="landing-copy text-base md:text-lg leading-relaxed">
-                FLARE AI est né d&apos;un constat simple : les petites entreprises perdent un temps fou sur des tâches que l&apos;IA peut faire mieux et plus vite.
-              </p>
-              <p className="landing-copy text-base md:text-lg leading-relaxed">
-                Notre mission est de rendre l&apos;intelligence artificielle accessible, sans code, sans jargon et sans prise de tête.
-              </p>
-              <p className="landing-copy text-base md:text-lg leading-relaxed">
-                Chaque fonctionnalité est conçue pour un seul objectif : te faire gagner du temps et de l&apos;argent, dès le premier jour.
-              </p>
+              <motion.p variants={itemVariants} className="landing-copy text-lg md:text-2xl leading-snug font-medium text-black">
+                FLARE AI est né d&apos;une vision : permettre à chaque entrepreneur de posséder son propre <span className="text-orange-600">pilote digital intelligent</span>.
+              </motion.p>
+              <motion.p variants={itemVariants} className="landing-copy text-base md:text-lg leading-relaxed opacity-70">
+                Nous ne construisons pas de simples outils, nous bâtissons la technologie qui automatise votre travail quotidien pour vous laisser vous concentrer sur votre croissance.
+              </motion.p>
+              <motion.p variants={itemVariants} className="landing-copy text-base md:text-lg leading-relaxed opacity-70">
+                Notre mission est de rendre l&apos;automatisation digitale accessible à tous, sans barrière technique et sans jargon complexe.
+              </motion.p>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -832,40 +978,45 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
       <section className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-5xl font-light text-white tracking-tighter font-[family-name:var(--font-outfit)]">
-              Prêt à automatiser <span className="font-semibold">ton business</span> ?
-            </h2>
-            <p className="landing-copy mt-6 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+            <motion.h2 variants={itemVariants} className="text-4xl md:text-7xl font-bold text-black tracking-tighter font-[family-name:var(--font-outfit)] leading-[0.9]">
+              Prêt à automatiser <br />
+              <span className="text-orange-500">ton business ?</span>
+            </motion.h2>
+            <motion.p variants={itemVariants} className="landing-copy mt-8 text-lg md:text-2xl max-w-xl mx-auto leading-relaxed font-medium">
               Tu choisis ton plan, tu paies par <strong>MVola ou Orange Money</strong>, l&apos;équipe FLARE active ton bot.
               Des résultats visibles dès le premier jour.
-            </p>
+            </motion.p>
 
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+            <motion.div 
+              variants={itemVariants}
+              className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-6"
+            >
               <button
                 onClick={() => onStart("signup")}
-                className="landing-cta-hero group px-10 py-5 bg-orange-500 rounded-full font-bold text-[13px] uppercase tracking-widest hover:bg-orange-600 hover:scale-105 transition-all duration-300 shadow-2xl shadow-orange-500/20 flex items-center gap-3"
+                className="landing-cta-hero group px-12 py-6 bg-orange-500 rounded-2xl font-bold text-[14px] uppercase tracking-widest hover:bg-orange-600 hover:scale-[1.05] transition-all duration-500 shadow-2xl shadow-orange-500/30 flex items-center gap-4 text-white"
               >
                 Créer mon compte
-                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>
               <button
                 onClick={() => onStart("login")}
-                className="landing-plain-button rounded-full px-8 py-5 text-[12px] uppercase transition-colors"
+                className="landing-plain-button rounded-2xl px-10 py-6 text-[13px] font-bold uppercase tracking-widest border border-black/5 hover:bg-black/5 hover:text-black transition-all"
               >
                 J&apos;ai déjà un compte
               </button>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
 
         {/* Footer minimal */}
         <div className="landing-footer mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 sm:flex-row">
           <div className="flex items-center gap-3">
-            <FlareMark tone="auto" className="w-5" />
+            <FlareMark tone="dark" className="w-5" />
             <span className="landing-brand-title text-xs uppercase">FLARE AI</span>
           </div>
           <div className="flex items-center gap-6">
@@ -890,217 +1041,134 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
         html { scroll-behavior: smooth; }
 
         .landing-shell {
-          background:
-            radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.12), transparent 24%),
-            radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.09), transparent 28%),
-            linear-gradient(135deg, #f6f0e7 0%, #fcfcfd 44%, #f0f4fb 100%);
+          background: #fbf7f0;
+          color: #000000;
         }
-        .landing-spline-fallback {
-          background:
-            radial-gradient(circle at center, rgba(255, 255, 255, 0.55), transparent 55%),
-            linear-gradient(135deg, #f6f0e7 0%, #fcfcfd 44%, #f0f4fb 100%);
-        }
-        .landing-nav,
-        .landing-mobile-menu {
-          background: rgba(255, 255, 255, 0.92);
-          border-color: rgba(15, 23, 42, 0.12);
-          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
-          backdrop-filter: blur(20px);
-        }
-        .landing-mobile-actions,
-        .landing-footer {
-          border-color: rgba(15, 23, 42, 0.1);
-        }
-        .landing-theme-toggle,
-        .landing-theme-toggle-mobile {
-          background: rgba(255, 247, 237, 0.98) !important;
-          color: #000000 !important;
-          border: 1px solid rgba(249, 115, 22, 0.45) !important;
-          box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-          min-height: 42px;
-        }
-        .landing-theme-toggle span,
-        .landing-theme-toggle-mobile span {
-          color: #000 !important;
-        }
-        .landing-theme-toggle > span:first-child,
-        .landing-theme-toggle-mobile > span:first-child {
-          background: rgba(249, 115, 22, 0.18) !important;
-          border-color: rgba(249, 115, 22, 0.55) !important;
-          color: #000 !important;
-        }
-        .landing-theme-toggle > span:last-child,
-        .landing-theme-toggle-mobile > span:last-child {
+        
+        .landing-shell strong {
+          color: #f97316;
           font-weight: 700;
-          letter-spacing: 0.04em !important;
         }
-        .landing-theme-toggle svg,
-        .landing-theme-toggle-mobile svg,
-        .landing-mobile-trigger,
-        .landing-scroll-fill,
-        .landing-scroll-track,
-        .landing-solution-icon,
-        .landing-scroll-arrow {
-          color: rgb(234 88 12) !important;
-          stroke: currentColor !important;
+
+        .landing-nav {
+          background: rgba(251, 247, 240, 0.8);
+          border-color: rgba(0, 0, 0, 0.05);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+          backdrop-filter: blur(16px);
+          -webkit-backdrop-filter: blur(16px);
         }
-        .landing-theme-toggle:hover,
-        .landing-theme-toggle-mobile:hover {
-          background: rgba(255, 247, 237, 1) !important;
-          border-color: rgba(249, 115, 22, 0.75) !important;
+
+        .landing-mobile-menu {
+          background: #fbf7f0;
+          z-index: 100;
         }
+
+        .landing-mobile-link {
+          color: #000000;
+        }
+
+        .landing-nav-link {
+          color: rgba(0, 0, 0, 0.6);
+          position: relative;
+        }
+        
+        .landing-nav-link:hover {
+          color: #000000;
+        }
+
+        .landing-plain-button {
+          color: rgba(0, 0, 0, 0.6) !important;
+          transition: color 0.2s;
+        }
+        
+        .landing-plain-button:hover {
+          color: #000000 !important;
+        }
+
         .landing-hero-scene {
-          opacity: 0.94;
-          filter: grayscale(0.1);
+          opacity: 0.8;
+          filter: contrast(1.1);
         }
+
         .landing-mark-chip,
         .landing-mark-frame,
-        .landing-icon-panel,
         .landing-badge,
-        .landing-secondary-button,
         .landing-card,
-        .landing-card-muted {
-          background: rgba(255, 255, 255, 0.82);
-          border-color: rgba(15, 23, 42, 0.1);
-          box-shadow: 0 18px 42px rgba(15, 23, 42, 0.04);
-        }
-        .landing-secondary-button {
-          color: #000 !important;
-        }
-        .landing-icon-panel {
-          background: rgba(255, 237, 213, 0.95);
-          border-color: rgba(249, 115, 22, 0.42);
-          box-shadow: 0 10px 24px rgba(249, 115, 22, 0.12);
-        }
-        .landing-card:hover {
-          background: rgba(255, 255, 255, 0.96);
-          border-color: rgba(15, 23, 42, 0.14);
-        }
-        .landing-card:hover .landing-solution-icon {
-          color: rgba(194, 65, 12, 1) !important;
-        }
-        .landing-solution-icon-strong {
-          color: rgb(234 88 12) !important;
-          stroke: currentColor !important;
-        }
-        .landing-divider {
-          background: rgba(15, 23, 42, 0.08);
-        }
-        .landing-section-base {
-          background: linear-gradient(180deg, #fcfcfd 0%, #f8f4ec 100%);
-        }
-        .landing-section-muted {
-          background: linear-gradient(180deg, #f4eee3 0%, #fcfcfd 100%);
-          border-color: rgba(15, 23, 42, 0.08);
-        }
-        .landing-story-overlay {
-          background: linear-gradient(to right, rgba(252,252,253,0.94), rgba(252,252,253,0.82), rgba(252,252,253,0.46));
+        .landing-adv-card {
+          background: rgba(0, 0, 0, 0.02);
+          border-color: rgba(0, 0, 0, 0.05);
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .landing-brand-title {
-          color: #000 !important;
-          font-weight: 700;
-          letter-spacing: 0.015em;
+        .landing-card:hover {
+          background: #ffffff;
+          border-color: rgba(0, 0, 0, 0.1);
+          box-shadow: 0 24px 64px rgba(0, 0, 0, 0.08);
+          transform: translateY(-4px);
         }
-        .landing-brand-subtitle {
-          color: #000 !important;
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.045em;
+
+        .landing-nav-cta:hover {
+          filter: brightness(1.05);
+          box-shadow: 0 4px 20px rgba(249, 115, 22, 0.3);
         }
-        .landing-nav-link,
-        .landing-plain-button,
-        .landing-mobile-link,
-        .landing-mobile-secondary,
-        .landing-mobile-cta,
-        .landing-kicker,
-        .landing-headline,
-        .landing-copy,
-        .landing-metric-value,
-        .landing-metric-label,
-        .landing-section-kicker,
-        .landing-section-title,
-        .landing-card-index,
-        .landing-card-title,
-        .landing-card-copy,
-        .landing-footer-link {
-          color: #000 !important;
+
+        .landing-cta-hero:hover {
+          box-shadow: 0 20px 60px rgba(249, 115, 22, 0.25);
         }
-        .landing-nav-link,
-        .landing-section-kicker,
-        .landing-kicker,
-        .landing-metric-label,
-        .landing-footer-link,
-        .landing-mobile-secondary,
-        .landing-mobile-cta,
-        .landing-plain-button {
-          letter-spacing: 0.05em;
+
+        .landing-secondary-button {
+          background: transparent;
+          border-color: rgba(0, 0, 0, 0.1);
+          color: #000000 !important;
         }
-        .landing-headline,
-        .landing-section-title {
-          font-weight: 700;
+        
+        .landing-secondary-button:hover {
+          background: rgba(0, 0, 0, 0.03);
+          border-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .landing-headline {
+          color: #000000;
           letter-spacing: -0.04em;
+          line-height: 0.95;
         }
-        .landing-copy,
+
+        .landing-copy {
+          color: rgba(0, 0, 0, 0.7);
+        }
+
+        .landing-kicker,
+        .landing-metric-label,
+        .landing-section-kicker,
+        .landing-card-index,
+        .landing-card-cta {
+          color: #f97316;
+          font-weight: 700;
+          letter-spacing: 0.1em;
+        }
+
+        .landing-metric-value,
+        .landing-section-title,
+        .landing-card-title {
+          color: #000000;
+          font-weight: 700;
+        }
+
         .landing-card-copy {
+          color: rgba(0, 0, 0, 0.6);
           font-weight: 500;
         }
-        .landing-card-cta {
-          color: #000 !important;
-        }
-        .landing-card:hover .landing-card-cta {
-          color: rgb(234 88 12) !important;
-        }
-        .landing-nav-cta,
-        .landing-mobile-cta {
-          color: #000 !important;
-        }
-        .landing-theme-scope [class*="text-"],
-        .landing-theme-scope [class*="text_"],
-        .landing-theme-scope p,
-        .landing-theme-scope h1,
-        .landing-theme-scope h2,
-        .landing-theme-scope h3,
-        .landing-theme-scope span,
-        .landing-theme-scope a,
-        .landing-theme-scope button {
-          color: #000 !important;
-        }
-        .landing-theme-scope svg,
-        .landing-theme-scope svg * {
-          color: #000 !important;
-          stroke: currentColor !important;
-        }
-        .landing-cta-hero,
-        .landing-cta-hero * {
-          color: #fff !important;
+
+        .landing-theme-scope * {
+          border-color: rgba(0, 0, 0, 0.06);
         }
 
-        html.dark .landing-shell {
-          background:
-            radial-gradient(circle at 12% 18%, rgba(249, 115, 22, 0.1), transparent 24%),
-            radial-gradient(circle at 78% 22%, rgba(28, 58, 106, 0.07), transparent 28%),
-            linear-gradient(135deg, #efebe5 0%, #f7f3ed 44%, #ecefed 100%);
+        .landing-section-muted {
+          background: linear-gradient(180deg, #fbf7f0 0%, #f4eee2 100%);
         }
-        html.dark .landing-theme-scope [class*="text-"],
-        html.dark .landing-theme-scope [class*="text_"],
-        html.dark .landing-theme-scope p,
-        html.dark .landing-theme-scope h1,
-        html.dark .landing-theme-scope h2,
-        html.dark .landing-theme-scope h3,
-        html.dark .landing-theme-scope span,
-        html.dark .landing-theme-scope a,
-        html.dark .landing-theme-scope button {
-          color: #000 !important;
-        }
-        html.dark .landing-theme-scope svg,
-        html.dark .landing-theme-scope svg * {
-          color: #000 !important;
-          stroke: currentColor !important;
-        }
-        html.dark .landing-theme-scope .landing-cta-hero,
-        html.dark .landing-theme-scope .landing-cta-hero * {
-          color: #fff !important;
+
+        .landing-story-overlay {
+          background: linear-gradient(to right, #fbf7f0 0%, rgba(251, 247, 240, 0.9) 60%, rgba(251, 247, 240, 0.4) 100%);
         }
       `}</style>
     </div>
