@@ -181,9 +181,9 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
 
   /* ── Metrics visibles sur le hero ── */
   const METRICS = [
-    { value: "10x", label: "plus rapide" },
-    { value: "24/7", label: "sans pause" },
-    { value: "0", label: "compétence technique requise" },
+    { value: "24/7", label: "ton bot répond" },
+    { value: "15 min", label: "pour l'activer" },
+    { value: "0", label: "technicien requis" },
   ];
 
   /* ── Cas d'usage orientés business ── */
@@ -245,7 +245,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               {[
                 { label: "Accueil", id: "hero" },
                 { label: "Solutions", id: "solutions" },
-                { label: "Avantages", id: "advantages" },
+                { label: "Offres", id: "pricing" },
                 { label: "Notre histoire", id: "story" },
               ].map((link) => (
                 <button
@@ -299,7 +299,7 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               {[
                 { label: "Accueil", id: "hero" },
                 { label: "Solutions", id: "solutions" },
-                { label: "Avantages", id: "advantages" },
+                { label: "Offres", id: "pricing" },
                 { label: "Notre histoire", id: "story" },
               ].map((link) => (
                 <button
@@ -430,20 +430,20 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               {/* Badge */}
               <div className="landing-badge mb-8 inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 backdrop-blur-md">
                 <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                <span className="landing-kicker text-[10px] md:text-xs font-medium uppercase">Automatisation intelligente</span>
+                <span className="landing-kicker text-[10px] md:text-xs font-medium uppercase">🔥 Bêta ouverte · Chatbot Facebook · Madagascar</span>
               </div>
 
               <motion.h1
                 style={{ rotateX, rotateY }}
                 className="landing-headline text-[32px] sm:text-[52px] md:text-[78px] leading-[1.1] md:leading-[1] perspective-1000 font-[family-name:var(--font-outfit)]"
               >
-                Vendez plus.<br />
-                <span className="font-bold tracking-tight">Travaillez moins.</span>
+                Ton bot répond.<br />
+                <span className="font-bold tracking-tight">Tu vends plus.</span>
               </motion.h1>
 
               <p className="landing-copy mt-8 mb-10 text-sm md:text-xl max-w-xl leading-relaxed">
-                Ton IA répond à tes clients, crée tes contenus et suit tes ventes.
-                Tu gardes le contrôle, elle fait le travail.
+                Ton chatbot Facebook IA répond à tes clients, qualifie tes prospects et capture tes leads — même quand tu dors.
+                Activé en <strong>15 min</strong> par l&apos;équipe FLARE. À partir de <strong>30 000 Ar/mois</strong>.
               </p>
 
               <div className="flex flex-col sm:flex-row items-start gap-4">
@@ -543,6 +543,116 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          PRICING SECTION
+         ══════════════════════════════════════════════════════ */}
+      <section
+        id="pricing"
+        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
+      >
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 md:mb-24 max-w-2xl"
+          >
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Offres bêta</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
+              Un prix clair en <span className="font-semibold">Ariary</span>.<br />
+              Payez par MVola ou Orange Money.
+            </h2>
+            <p className="landing-copy mt-4 text-sm md:text-base leading-relaxed">
+              Pas de Stripe. Pas de carte étrangère. Tu paies localement, FLARE active ton bot.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                name: "Starter",
+                price: "30 000",
+                subtitle: "Boutique, artisan, indépendant",
+                features: ["1 page Facebook", "Bot actif 24h/24", "Réponses automatiques", "Dashboard basique", "Support FLARE inclus"],
+                cta: "Commencer",
+                highlight: false,
+              },
+              {
+                name: "Pro",
+                price: "60 000",
+                subtitle: "Commerce actif, plusieurs produits",
+                features: ["Tout Starter +", "Catalogue produits", "Script de vente IA", "Portfolio client", "Dashboard avancé"],
+                cta: "Choisir Pro",
+                highlight: true,
+              },
+              {
+                name: "Business",
+                price: "120 000",
+                subtitle: "PME, équipe commerciale",
+                features: ["Tout Pro +", "Plusieurs utilisateurs", "Rôles & permissions", "Rapports détaillés", "Support prioritaire"],
+                cta: "Choisir Business",
+                highlight: false,
+              },
+            ].map((plan, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                className={`relative rounded-[24px] border p-8 md:p-10 flex flex-col gap-6 transition-all duration-300 ${
+                  plan.highlight
+                    ? "border-orange-500/40 bg-orange-500/5 shadow-xl shadow-orange-500/10 scale-[1.02]"
+                    : "border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12]"
+                }`}
+              >
+                {plan.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-4 py-1 text-[10px] font-bold uppercase tracking-widest text-white shadow-lg">
+                    Le plus populaire
+                  </div>
+                )}
+                <div>
+                  <span className="landing-section-kicker text-[10px] uppercase font-medium">{plan.name}</span>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="landing-headline text-4xl md:text-5xl font-bold font-[family-name:var(--font-outfit)]">{plan.price}</span>
+                    <span className="landing-copy text-sm">Ar / mois</span>
+                  </div>
+                  <p className="landing-card-copy mt-2 text-xs">{plan.subtitle}</p>
+                </div>
+                <ul className="flex flex-col gap-3 flex-1">
+                  {plan.features.map((f, fi) => (
+                    <li key={fi} className="flex items-start gap-2 landing-card-copy text-sm">
+                      <span className="text-orange-500 mt-0.5 shrink-0">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => onStart("signup")}
+                  className={`w-full rounded-full py-4 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                    plan.highlight
+                      ? "bg-orange-500 shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:scale-105"
+                      : "border border-white/10 hover:border-white/30 landing-card-title"
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-10 text-center landing-card-copy text-xs"
+          >
+            Paiement par <strong>MVola</strong> · <strong>Orange Money</strong> · <strong>Airtel Money</strong> · Virement · Cash.<br />
+            Activation manuelle par l&apos;équipe FLARE sous 15 min après vérification du paiement.
+          </motion.p>
         </div>
       </section>
 
@@ -730,7 +840,8 @@ export default function LandingPage({ onStart, theme, onToggleTheme }: LandingPa
               Prêt à automatiser <span className="font-semibold">ton business</span> ?
             </h2>
             <p className="landing-copy mt-6 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
-              Tu commences gratuitement. Aucune carte bancaire requise. Des résultats visibles dès le premier jour.
+              Tu choisis ton plan, tu paies par <strong>MVola ou Orange Money</strong>, l&apos;équipe FLARE active ton bot.
+              Des résultats visibles dès le premier jour.
             </p>
 
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
