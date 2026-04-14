@@ -291,7 +291,7 @@ export default function NewSidebar({
       </AnimatePresence>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col border-r border-[var(--border-default)] bg-[var(--surface-base)] shadow-[0_28px_90px_rgba(0,0,0,0.30)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 md:bg-[var(--bg-sidebar)] md:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col border-r border-[var(--border-default)] bg-[var(--surface-raised)] shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 md:bg-[var(--bg-sidebar)] md:shadow-none ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

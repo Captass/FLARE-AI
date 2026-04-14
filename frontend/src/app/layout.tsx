@@ -25,12 +25,6 @@ export const metadata: Metadata = {
   publisher: "FLARE AI",
   metadataBase: new URL("https://flareaios.ramsflare.com"),
   manifest: "/manifest.json",
-  /* appleWebApp: {
-    capable: true,
-    statusBarStyle: "default",
-    title: "FLARE AI",
-    startupImage: "/br-symbol-v4-512.png",
-  }, */
   icons: {
     icon: [
       { url: "/app-icon.svg", type: "image/svg+xml" }
@@ -76,7 +70,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="fr" className="h-full light" data-theme="light" suppressHydrationWarning>
+    <html lang="fr" className="h-full" suppressHydrationWarning>
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <script
@@ -112,14 +106,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               window.deferredPrompt = null;
-              console.log('🔍 PWA Status: Waiting for signal...');
-              if (window.matchMedia('(display-mode: standalone)').matches) {
-                console.log('📱 PWA Status: Already running in standalone mode.');
-              }
               window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 window.deferredPrompt = e;
-                console.log('💚 PWA EVENT: beforeinstallprompt received!');
                 window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
               });
             `,
@@ -129,41 +118,7 @@ export default function RootLayout({
       <body className={`${instrumentSans.className} ${outfit.variable} h-full`}>
         <GlobalBackground />
         {children}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (async function() {
-                if (!('serviceWorker' in navigator)) return;
-                var SW_VERSION = 'v14';
-                var lastVersion = localStorage.getItem('flare-sw-version');
-                if (lastVersion !== SW_VERSION) {
-                  console.log('🔄 SW version changed, cleaning...');
-                  var regs = await navigator.serviceWorker.getRegistrations();
-                  for (var i = 0; i < regs.length; i++) await regs[i].unregister();
-                  var cacheNames = await caches.keys();
-                  await Promise.all(cacheNames.map(function(n) { return caches.delete(n); }));
-                  localStorage.setItem('flare-sw-version', SW_VERSION);
-                  console.log('✅ SW cache cleaned, reloading...');
-                  if (lastVersion) { window.location.reload(); return; }
-                }
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js').then(function(reg) {
-                    if (reg && typeof reg.update === 'function') {
-                      reg.update().catch(function(error) {
-                        console.warn('SW update skipped', error);
-                      });
-                    }
-                    console.log('✅ SW Registered ('+SW_VERSION+')');
-                  }).catch(function(error) {
-                    console.warn('SW registration skipped', error);
-                  });
-                });
-              })();
-            `,
-          }}
-        />
       </body>
     </html>
   );
 }
-

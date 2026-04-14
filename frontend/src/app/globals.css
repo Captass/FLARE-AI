@@ -3,58 +3,118 @@
 @tailwind utilities;
 
 :root {
-  --fg: 255 255 255;
-  --foreground-rgb: 255, 255, 255;
-  --background: 16, 17, 19;
-  --bg-sidebar: rgba(14, 15, 17, 0.98);
-  --bg-glass: rgba(26, 26, 28, 0.5);
-  --bg-glass-dark: rgba(19, 19, 20, 0.95);
-  --bg-input: rgba(255, 255, 255, 0.05);
-  --border-glass: rgba(255, 255, 255, 0.08);
-  --border-subtle: rgba(255, 255, 255, 0.14);
-  --dot-grid: #131314;
-  --zinc-900: rgb(12, 12, 15);
-  --zinc-950: rgb(1, 1, 2);
-  --text-muted: rgb(255, 255, 255);
-  --text-primary: rgb(255, 255, 255);
-  --bg-card: rgba(255, 255, 255, 0.025);
-  --bg-card-hover: rgba(255, 255, 255, 0.05);
-  --bg-active: rgba(255, 255, 255, 0.07);
-  --bg-active-border: rgba(255, 255, 255, 0.14);
-  --bg-hover: rgba(255, 255, 255, 0.04);
-  --bg-modal: rgba(8, 8, 10, 0.98);
-  --bg-overlay: rgba(0, 0, 0, 0.8);
-  --icon-muted: rgb(255, 255, 255);
-  --icon-active: rgb(255, 255, 255);
-  --shadow-card: 0 10px 28px rgba(0, 0, 0, 0.28);
-  --scrollbar-thumb: rgba(255, 255, 255, 0.12);
-  --scrollbar-hover: rgba(255, 255, 255, 0.22);
-  --indicator-active: rgba(255, 255, 255, 0.5);
-  --accent: rgba(255, 255, 255, 0.9);
-  --accent-soft: rgba(83, 120, 255, 0.16);
-  --accent-strong: rgba(111, 141, 255, 0.9);
-  --surface-elevated: rgba(255, 255, 255, 0.04);
-  --surface-floating: rgba(12, 12, 15, 0.84);
-  --brand-orange-soft: 255, 163, 82;
-  --brand-orange-bright: 255, 194, 130;
+  --fg: 0 0 0;
+  --foreground-rgb: 0, 0, 0;
+  --background: 249, 247, 242; /* #F9F7F2 */
+  --bg-sidebar: 255, 255, 255;
+  --bg-glass: rgba(255, 255, 255, 0.95);
+  --bg-glass-dark: rgba(244, 244, 248, 0.98);
+  --bg-input: rgba(0, 0, 0, 0.03);
+  --border-glass: rgba(0, 0, 0, 0.05);
+  --border-subtle: rgba(0, 0, 0, 0.1);
+  --dot-grid: #f9f7f2;
+  --zinc-900: rgb(235, 235, 242);
+  --zinc-950: rgb(220, 220, 232);
+  --text-muted: rgba(0, 0, 0, 0.6);
+  --text-primary: #000000;
+  --bg-card: rgba(255, 255, 255, 1);
+  --bg-card-hover: rgba(255, 255, 255, 0.9);
+  --bg-active: rgba(249, 115, 22, 0.05);
+  --bg-active-border: rgba(249, 115, 22, 0.2);
+  --bg-hover: rgba(0, 0, 0, 0.03);
+  --bg-modal: #ffffff;
+  --bg-overlay: rgba(0, 0, 0, 0.15);
+  --icon-muted: #000000;
+  --icon-active: #000000;
+  --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.02);
+  --scrollbar-thumb: #d0d0dc;
+  --scrollbar-hover: #a0a0b8;
+  --indicator-active: rgba(249, 115, 22, 1);
+  --accent: #000000;
+  --accent-soft: rgba(249, 115, 22, 0.1);
+  --accent-strong: #f97316;
+  --surface-elevated: #ffffff;
+  --surface-floating: rgba(255, 255, 255, 0.9);
+  --brand-orange-soft: 255, 237, 213;
+  --brand-orange-bright: 249, 115, 22;
   --brand-blue-soft: 139, 170, 236;
   --brand-blue-strong: 63, 94, 170;
   /* Semantic text tokens */
-  --text-secondary: rgb(255, 255, 255);
-  --text-tertiary: rgb(255, 255, 255);
-  --text-quaternary: rgb(255, 255, 255);
-  --text-placeholder: rgb(255, 255, 255);
+  --text-secondary: #000000;
+  --text-tertiary: rgba(0, 0, 0, 0.8);
+  --text-quaternary: rgba(0, 0, 0, 0.6);
+  --text-placeholder: rgba(0, 0, 0, 0.4);
   /* Semantic surface tokens */
-  --surface-base: rgb(18, 19, 22);
+  --surface-base: rgb(249, 247, 242);
+  --surface-subtle: rgba(255, 255, 255, 1);
+  --surface-raised: rgba(255, 255, 255, 1);
+  --surface-overlay: rgba(255, 255, 255, 0.95);
+  /* Semantic border tokens */
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-muted: rgba(0, 0, 0, 0.05);
+  --border-faint: rgba(0, 0, 0, 0.03);
+  /* Divider */
+  --divide-default: rgba(0, 0, 0, 0.05);
+}
+
+/* ── Dark Mode ── */
+html.dark {
+  --fg: 255 255 255;
+  --foreground-rgb: 255, 255, 255;
+  --background: 10, 10, 14;
+  --bg-sidebar: 14, 14, 19;
+  --bg-glass: rgba(18, 18, 24, 0.92);
+  --bg-glass-dark: rgba(14, 14, 19, 0.98);
+  --bg-input: rgba(255, 255, 255, 0.06);
+  --border-glass: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --dot-grid: #0a0a0e;
+  --zinc-900: rgb(22, 22, 28);
+  --zinc-950: rgb(14, 14, 19);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-primary: #ffffff;
+  --bg-card: rgba(20, 20, 26, 0.95);
+  --bg-card-hover: rgba(28, 28, 36, 0.95);
+  --bg-active: rgba(249, 115, 22, 0.1);
+  --bg-active-border: rgba(249, 115, 22, 0.25);
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --bg-modal: #16161c;
+  --bg-overlay: rgba(0, 0, 0, 0.55);
+  --icon-muted: rgba(255, 255, 255, 0.55);
+  --icon-active: #ffffff;
+  --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  --scrollbar-thumb: #2a2a36;
+  --scrollbar-hover: #3a3a48;
+  --indicator-active: rgba(249, 115, 22, 1);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.12);
+  --accent-strong: #fb923c;
+  --surface-elevated: #1a1a22;
+  --surface-floating: rgba(22, 22, 30, 0.92);
+  --brand-orange-soft: 255, 237, 213;
+  --brand-orange-bright: 249, 115, 22;
+  --brand-blue-soft: 139, 170, 236;
+  --brand-blue-strong: 63, 94, 170;
+  /* Semantic text tokens */
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-tertiary: rgba(255, 255, 255, 0.55);
+  --text-quaternary: rgba(255, 255, 255, 0.4);
+  --text-placeholder: rgba(255, 255, 255, 0.3);
+  /* Semantic surface tokens */
+  --surface-base: rgb(10, 10, 14);
   --surface-subtle: rgba(255, 255, 255, 0.04);
   --surface-raised: rgba(255, 255, 255, 0.06);
   --surface-overlay: rgba(255, 255, 255, 0.08);
+  --surface-selected: rgba(249, 115, 22, 0.12);
   /* Semantic border tokens */
-  --border-default: rgba(255, 255, 255, 0.12);
-  --border-muted: rgba(255, 255, 255, 0.08);
-  --border-faint: rgba(255, 255, 255, 0.05);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-muted: rgba(255, 255, 255, 0.05);
+  --border-faint: rgba(255, 255, 255, 0.03);
+  --border-strong: rgba(255, 255, 255, 0.18);
   /* Divider */
   --divide-default: rgba(255, 255, 255, 0.06);
+  --divider: rgba(255, 255, 255, 0.06);
+  --accent-navy: #6b8cff;
 }
 
 html.light {
@@ -70,92 +130,50 @@ html.light {
   --dot-grid: #fafafc;
   --zinc-900: rgb(235, 235, 242);
   --zinc-950: rgb(220, 220, 232);
-  --text-muted: #000000;
-  --text-primary: #000000;
+  --text-muted: rgba(15, 15, 20, 0.55);
+  --text-primary: #0a0a0e;
   --bg-card: rgba(255, 255, 255, 0.95);
   --bg-card-hover: rgba(255, 255, 255, 1);
-  --bg-active: rgba(0, 0, 0, 0.08);
-  --bg-active-border: rgba(0, 0, 0, 0.15);
-  --bg-hover: rgba(0, 0, 0, 0.05);
+  --bg-active: rgba(249, 115, 22, 0.08);
+  --bg-active-border: rgba(249, 115, 22, 0.22);
+  --bg-hover: rgba(15, 15, 20, 0.04);
   --bg-modal: #ffffff;
-  --bg-overlay: rgba(0, 0, 0, 0.1);
-  --icon-muted: #000000;
-  --icon-active: #000000;
-  --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  --bg-overlay: rgba(15, 15, 20, 0.1);
+  --icon-muted: rgba(15, 15, 20, 0.45);
+  --icon-active: #0a0a0e;
+  --shadow-card: 0 8px 30px -4px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
   --scrollbar-thumb: #d0d0dc;
   --scrollbar-hover: #a0a0b8;
-  --indicator-active: rgba(0, 0, 0, 0.5);
-  --accent: #000000;
-  --accent-soft: rgba(32, 76, 201, 0.12);
-  --accent-strong: #1c3ca8;
+  --indicator-active: rgba(249, 115, 22, 1);
+  --accent: #f97316;
+  --accent-soft: rgba(249, 115, 22, 0.10);
+  --accent-strong: #ea6c0a;
   --surface-elevated: #ffffff;
-  --surface-floating: rgba(255, 255, 255, 0.9);
-  --brand-orange-soft: 210, 110, 31;
-  --brand-orange-bright: 178, 84, 10;
-  --brand-blue-soft: 52, 84, 158;
-  --brand-blue-strong: 31, 57, 122;
-  /* Semantic text tokens */
-  --text-secondary: #000000;
-  --text-tertiary: #1a1a1a;
-  --text-quaternary: #333333;
-  --text-placeholder: #666666;
+  --surface-floating: rgba(255, 255, 255, 0.92);
+  --brand-orange-soft: 255, 237, 213;
+  --brand-orange-bright: 249, 115, 22;
+  --brand-blue-soft: 139, 170, 236;
+  --brand-blue-strong: 63, 94, 170;
+  /* Semantic text tokens — proper hierarchy */
+  --text-secondary: rgba(15, 15, 20, 0.75);
+  --text-tertiary: rgba(15, 15, 20, 0.55);
+  --text-quaternary: rgba(15, 15, 20, 0.4);
+  --text-placeholder: rgba(15, 15, 20, 0.35);
   /* Semantic surface tokens */
-  --surface-base: rgb(255, 255, 255);
-  --surface-subtle: rgba(15, 15, 20, 0.04);
-  --surface-raised: rgba(15, 15, 20, 0.06);
+  --surface-base: rgb(250, 250, 252);
+  --surface-subtle: rgba(15, 15, 20, 0.03);
+  --surface-raised: rgba(15, 15, 20, 0.05);
   --surface-overlay: rgba(15, 15, 20, 0.08);
+  --surface-selected: rgba(249, 115, 22, 0.08);
   /* Semantic border tokens */
-  --border-default: rgba(15, 15, 20, 0.14);
-  --border-muted: rgba(15, 15, 20, 0.10);
-  --border-faint: rgba(15, 15, 20, 0.06);
+  --border-default: rgba(15, 15, 20, 0.10);
+  --border-muted: rgba(15, 15, 20, 0.06);
+  --border-faint: rgba(15, 15, 20, 0.04);
+  --border-strong: rgba(15, 15, 20, 0.22);
   /* Divider */
-  --divide-default: rgba(15, 15, 20, 0.08);
-}
-
-html.light body:not(.is-public-landing),
-html.light body:not(.is-public-landing) * {
-  color: rgb(0, 0, 0) !important;
-}
-
-html.light body:not(.is-public-landing) input::placeholder,
-html.light body:not(.is-public-landing) textarea::placeholder,
-html.light body:not(.is-public-landing) [class*="placeholder:"]::placeholder {
-  color: rgb(0, 0, 0) !important;
-  opacity: 1 !important;
-}
-
-html.light body:not(.is-public-landing) [class*="text-"],
-html.light body:not(.is-public-landing) [class*="text_"] {
-  color: rgb(0, 0, 0) !important;
-}
-
-html.light body:not(.is-public-landing) svg,
-html.light body:not(.is-public-landing) svg * {
-  color: rgb(0, 0, 0) !important;
-  stroke: currentColor;
-}
-
-html.dark body:not(.is-public-landing),
-html.dark body:not(.is-public-landing) * {
-  color: rgb(255, 255, 255) !important;
-}
-
-html.dark body:not(.is-public-landing) input::placeholder,
-html.dark body:not(.is-public-landing) textarea::placeholder,
-html.dark body:not(.is-public-landing) [class*="placeholder:"]::placeholder {
-  color: rgb(255, 255, 255) !important;
-  opacity: 1 !important;
-}
-
-html.dark body:not(.is-public-landing) [class*="text-"],
-html.dark body:not(.is-public-landing) [class*="text_"] {
-  color: rgb(255, 255, 255) !important;
-}
-
-html.dark body:not(.is-public-landing) svg,
-html.dark body:not(.is-public-landing) svg * {
-  color: rgb(255, 255, 255) !important;
-  stroke: currentColor;
+  --divide-default: rgba(15, 15, 20, 0.06);
+  --divider: rgba(15, 15, 20, 0.06);
+  --accent-navy: #3b5bdb;
 }
 
 html.light .landing-theme-scope [class*="text-"],
@@ -164,27 +182,50 @@ html.light .landing-theme-scope .landing-copy,
 html.light .landing-theme-scope .landing-card-title,
 html.light .landing-theme-scope .landing-card-copy,
 html.light .landing-theme-scope .landing-section-title,
+html.light .landing-theme-scope .landing-brand-subtitle,
+html.light .landing-theme-scope .landing-metric-label,
 html.light .landing-theme-scope svg,
 html.light .landing-theme-scope svg * {
   color: #000000 !important;
   stroke: #000000 !important;
+  opacity: 1 !important;
+}
+
+/* Force dark sections to render text in white */
+html.light .landing-theme-scope .theme-dark-override [class*="text-"],
+html.light .landing-theme-scope .theme-dark-override .landing-copy,
+html.light .landing-theme-scope .theme-dark-override svg,
+html.light .landing-theme-scope .theme-dark-override svg * {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+html.light .landing-theme-scope .theme-dark-override .text-orange-500,
+html.light .landing-theme-scope .theme-dark-override .text-orange-500 * {
+  color: #f97316 !important;
 }
 
 html.light .landing-theme-scope .landing-plain-button,
 html.light .landing-theme-scope .landing-nav-link {
   color: #000000 !important;
-  font-weight: 600;
+  font-weight: 700 !important;
+  opacity: 1 !important;
 }
 
 html.light .landing-theme-scope input::placeholder,
-html.light .landing-theme-scope textarea::placeholder,
-html.light .landing-theme-scope [class*="placeholder:"]::placeholder {
-  color: revert !important;
-  opacity: revert !important;
+html.light .landing-theme-scope textarea::placeholder {
+  color: #000000;
+  opacity: 0.6;
 }
 
 body.is-public-landing .global-app-background {
   display: none;
+}
+
+/* ── Base body background for theme ── */
+html, body {
+  background-color: rgb(var(--background));
+  color: var(--text-primary);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 html.light .landing-shell {
@@ -446,13 +487,13 @@ body {
 
 .ui-btn-secondary {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--surface-raised);
+  border-color: var(--border-default);
 }
 
 .ui-btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--surface-overlay);
+  border-color: var(--border-subtle);
 }
 
 .ui-btn-ghost {
@@ -463,13 +504,13 @@ body {
 
 .ui-btn-ghost:hover {
   color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--surface-subtle);
+  border-color: var(--border-faint);
 }
 
 .ui-segment {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-default);
   box-shadow: none;
 }
 
@@ -543,8 +584,8 @@ body {
 
 /* ── Focus ring ──────────────────────────────────────── */
 .focus-ring:focus-within {
-  border-color: rgba(255, 255, 255, 0.18) !important;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+  border-color: var(--border-subtle) !important;
+  box-shadow: 0 0 0 1px var(--border-faint);
 }
 
 /* ── Message bubble animation ─────────────────────────── */

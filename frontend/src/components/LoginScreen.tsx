@@ -216,11 +216,11 @@ export default function LoginScreen({
   // ── Rendu ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[rgb(var(--background))] p-4">
+    <div className="min-h-screen flex items-center justify-center bg-[#F9F7F2] p-4 font-sans selection:bg-orange-500 selection:text-white">
       {/* Fond animé — tons neutres */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-white/[0.03] blur-[120px]" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-[rgba(39,77,178,0.06)] blur-[100px]" />
+        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-orange-500/10 blur-[120px]" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-white/80 blur-[100px]" />
       </div>
 
       <AnimatePresence mode="wait">
@@ -230,18 +230,18 @@ export default function LoginScreen({
           initial="enter"
           animate="center"
           exit="exit"
-          transition={{ duration: 0.2, ease: "easeOut" }}
+          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
           className="relative w-full max-w-sm"
         >
           {/* Card */}
-          <div className="bg-[var(--bg-glass-dark)] border border-[var(--border-glass)] rounded-2xl shadow-[var(--shadow-card)] overflow-hidden">
+          <div className="bg-white border border-black/5 rounded-[32px] shadow-2xl shadow-orange-500/10 overflow-hidden">
 
             {/* Header */}
-            <div className="px-8 pt-8 pb-6 text-center border-b border-[var(--border-glass)]">
-              <div className="relative mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04]">
-                <FlareMark tone="dark" className="w-7" priority />
+            <div className="px-8 pt-8 pb-6 text-center border-b border-black/5">
+              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-black/5 bg-black/[0.02] shadow-sm">
+                <FlareMark tone="auto" className="w-8" priority />
               </div>
-              <h1 className="text-lg font-semibold text-[var(--text-primary)]">
+              <h1 className="text-xl font-black text-black font-[family-name:var(--font-outfit)] tracking-tight">
                 {mode === "login" && "Connexion"}
                 {mode === "signup" && "Créer un compte"}
                 {mode === "magic" && (emailSent ? "Email envoyé !" : "Lien magique")}
@@ -380,10 +380,10 @@ export default function LoginScreen({
                         placeholder="vous@exemple.com"
                         required
                         autoFocus
-                        className="w-full pl-9 pr-4 py-2.5 rounded-xl text-sm
-                          bg-[var(--bg-input)] border border-[var(--border-glass)]
-                          text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-                          focus:outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10
+                          className="w-full pl-9 pr-4 py-3 rounded-xl text-sm font-medium
+                          bg-black/[0.03] border border-black/5
+                          text-black placeholder:text-black/40
+                          focus:outline-none focus:border-orange-500/50 focus:ring-4 focus:ring-orange-500/10
                           transition-all"
                       />
                     </div>
@@ -414,16 +414,16 @@ export default function LoginScreen({
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder={mode === "signup" ? "Minimum 6 caractères" : "Votre mot de passe"}
                           required
-                          className="w-full pl-9 pr-10 py-2.5 rounded-xl text-sm
-                            bg-[var(--bg-input)] border border-[var(--border-glass)]
-                            text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-                            focus:outline-none focus:border-white/30 focus:ring-2 focus:ring-white/10
+                          className="w-full pl-9 pr-10 py-3 rounded-xl text-sm font-medium
+                            bg-black/[0.03] border border-black/5
+                            text-black placeholder:text-black/40
+                            focus:outline-none focus:border-orange-500/50 focus:ring-4 focus:ring-orange-500/10
                             transition-all"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--icon-muted)] hover:text-[var(--icon-active)] transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-black/40 hover:text-black transition-colors"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -435,9 +435,9 @@ export default function LoginScreen({
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm
-                      bg-white text-black hover:bg-white/90 transition-colors
-                      disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold uppercase tracking-widest text-[11px]
+                      bg-orange-500 text-white hover:bg-orange-600 shadow-xl shadow-orange-500/20 transition-all
+                      disabled:opacity-50 disabled:cursor-not-allowed border border-orange-400"
                   >
                     {isLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -463,9 +463,9 @@ export default function LoginScreen({
                         type="button"
                         onClick={onLoginWithGoogle}
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2.5 py-2.5 rounded-xl text-sm font-medium
-                          bg-[var(--bg-input)] border border-[var(--border-glass)]
-                          text-[var(--text-primary)] hover:bg-[var(--bg-card-hover)]
+                        className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-bold
+                          bg-white border border-black/10 shadow-sm
+                          text-black hover:bg-black/5
                           transition-colors disabled:opacity-50"
                       >
                         <Chrome className="w-4 h-4" />
@@ -501,20 +501,20 @@ export default function LoginScreen({
 
             {/* Footer liens */}
             {mode !== "pin" && !emailSent && (
-              <div className="px-8 pb-6 flex flex-col items-center gap-2.5">
+              <div className="px-8 pb-6 flex flex-col items-center gap-3">
                 {mode === "login" && (
                   <>
                     <button
                       onClick={() => switchMode("reset")}
-                      className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors"
+                      className="text-xs text-black/60 hover:text-black font-medium transition-colors"
                     >
                       Mot de passe oublié ?
                     </button>
-                    <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                    <div className="flex items-center gap-1.5 text-xs text-black/50">
                       <span>Pas encore de compte ?</span>
                       <button
                         onClick={() => switchMode("signup")}
-                        className="text-white/70 hover:text-white font-medium transition-colors"
+                        className="text-orange-500 hover:text-orange-600 font-bold transition-colors"
                       >
                         S&apos;inscrire
                       </button>
@@ -522,11 +522,11 @@ export default function LoginScreen({
                   </>
                 )}
                 {mode === "signup" && (
-                  <div className="flex items-center gap-1.5 text-xs text-[var(--text-muted)]">
+                  <div className="flex items-center gap-1.5 text-xs text-black/50">
                     <span>Déjà un compte ?</span>
                     <button
                       onClick={() => switchMode("login")}
-                      className="text-white/70 hover:text-white font-medium transition-colors"
+                      className="text-orange-500 hover:text-orange-600 font-bold transition-colors"
                     >
                       Se connecter
                     </button>

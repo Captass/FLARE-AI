@@ -50,6 +50,22 @@ interface SettingsPageProps {
 const T = {
   fr: {
     title: "Paramètres",
+    subtitle: "Gérez votre compte et vos préférences",
+    profile: "Mon Profil",
+    displayName: "Nom d'affichage",
+    displayNameHint: "Visible dans toute l'application",
+    fullName: "Nom complet",
+    fullNameHint: "Votre prénom et nom de famille",
+    email: "Email",
+    save: "Sauvegarder",
+    saving: "Sauvegarde en cours...",
+    saved: "Sauvegardé !",
+    security: "Sécurité",
+    passwordLabel: "Mot de passe",
+    sendReset: "Recevoir un lien",
+    sending: "Envoi...",
+    resetSent: "Lien envoyé à",
+    compte: "Compte",
     appearance: "Apparence",
     dark: "Sombre",
     light: "Clair",
@@ -69,9 +85,8 @@ const T = {
     errorPwdEmail: "Aucun email associé à ce compte.",
     accountRoleHint: "Pour modifier le compte, contactez un admin.",
     guideAssistant: "Assistant d'aide",
-    guideAssistantDesc:
-      "Affiche un petit assistant en bas a droite pour t'expliquer chaque page et te dire quoi faire ensuite.",
-    guideAssistantSaving: "Mise a jour...",
+    guideAssistantDesc: "Affiche un petit assistant en bas à droite pour t'expliquer chaque page et te dire quoi faire ensuite.",
+    guideAssistantSaving: "Mise à jour...",
   },
   en: {
     title: "Settings",
@@ -90,7 +105,7 @@ const T = {
     sendReset: "Send a reset link",
     sending: "Sending…",
     resetSent: "Link sent to",
-    compte: "Compte",
+    compte: "Account",
     appearance: "Appearance",
     dark: "Dark",
     light: "Light",
@@ -108,10 +123,9 @@ const T = {
     errorAuth: "You must be logged in to save.",
     errorPwd: "Unable to send the email. Check your connection.",
     errorPwdEmail: "No email associated with this account.",
-    accountRoleHint: "Contact an administrator to modify the compte.",
+    accountRoleHint: "Contact an administrator to modify the account.",
     guideAssistant: "Help assistant",
-    guideAssistantDesc:
-      "Show a small helper in the bottom-right corner to explain each page and what to do next.",
+    guideAssistantDesc: "Show a small helper in the bottom-right corner to explain each page and what to do next.",
     guideAssistantSaving: "Updating...",
   },
 } as const;
@@ -189,10 +203,10 @@ function TextInput({
       disabled={disabled}
       onChange={(e) => onChange?.(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)]
-                 px-4 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)]
-                 focus:outline-none focus:border-orange-500/40 focus:bg-[var(--surface-raised)]
-                 disabled:opacity-40 disabled:cursor-not-allowed
+      className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--bg-input)]
+                 px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] placeholder:text-[var(--text-placeholder)]
+                 focus:outline-none focus:border-orange-500/40 focus:bg-[var(--surface-raised)] focus:ring-4 focus:ring-orange-500/5
+                 disabled:opacity-60 disabled:cursor-not-allowed
                  transition-all duration-150"
     />
   );
@@ -375,9 +389,15 @@ export default function SettingsPage({
   const [savingProfile, setSavingProfile] = useState(false);
   const [savedProfile, setSavedProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
-  const [guideAssistantEnabled, setGuideAssistantEnabled] = useState(
-    workspaceIdentity?.user_profile?.guide_assistant_enabled ?? true
-  );
+  const [guideAssistantEnabled, setGuideAssistantEnabled] = useState(() => {
+    // Prefer localStorage so the toggle works even when backend is offline
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("flare-guide-assistant");
+      if (stored === "true") return true;
+      if (stored === "false") return false;
+    }
+    return workspaceIdentity?.user_profile?.guide_assistant_enabled ?? true;
+  });
   const [guideAssistantSaving, setGuideAssistantSaving] = useState(false);
   const [guideAssistantError, setGuideAssistantError] = useState<string | null>(null);
 
@@ -392,9 +412,13 @@ export default function SettingsPage({
   useEffect(() => {
     if (workspaceIdentity) {
       setFullName(workspaceIdentity.user_profile?.full_name || "");
-      setGuideAssistantEnabled(
-        workspaceIdentity.user_profile?.guide_assistant_enabled ?? true
-      );
+      // Only sync from server if localStorage has no override
+      const stored = typeof window !== "undefined" ? localStorage.getItem("flare-guide-assistant") : null;
+      if (stored === null) {
+        setGuideAssistantEnabled(
+          workspaceIdentity.user_profile?.guide_assistant_enabled ?? true
+        );
+      }
     }
   }, [workspaceIdentity]);
 
@@ -483,15 +507,16 @@ export default function SettingsPage({
 
   const handleGuideAssistantToggle = async () => {
     const nextEnabled = !guideAssistantEnabled;
+    // Update UI + persist to localStorage immediately (works even offline)
     setGuideAssistantEnabled(nextEnabled);
     setGuideAssistantError(null);
-
-    const t = await getToken();
-    if (!t) {
-      setGuideAssistantEnabled(!nextEnabled);
-      setGuideAssistantError(tx.errorAuth);
-      return;
+    if (typeof window !== "undefined") {
+      localStorage.setItem("flare-guide-assistant", String(nextEnabled));
     }
+
+    // Fire-and-forget sync to backend — won't block or revert the UI
+    const t = await getToken();
+    if (!t) return; // no token → keep local state, don't show error
 
     setGuideAssistantSaving(true);
     try {
@@ -501,8 +526,7 @@ export default function SettingsPage({
       );
       onIdentitySaved?.(nextIdentity);
     } catch {
-      setGuideAssistantEnabled(!nextEnabled);
-      setGuideAssistantError(tx.errorSave);
+      // Silent fail — local state already reflects choice
     } finally {
       setGuideAssistantSaving(false);
     }
@@ -703,18 +727,15 @@ export default function SettingsPage({
           <button
             id="settings-logout-btn"
             onClick={onLogout}
-            className="flex w-full items-center justify-between rounded-xl
-                       border border-red-500/15 bg-red-500/[0.04] px-5 py-3.5
-                       hover:bg-red-500/10 hover:border-red-500/25
-                       transition-all duration-150 group"
+            className="flex w-full items-center justify-center gap-3 rounded-xl
+                       bg-red-600 hover:bg-red-700 active:bg-red-800
+                       px-5 py-3.5 shadow-lg shadow-red-600/25
+                       transition-all duration-150"
           >
-            <div className="flex items-center gap-3">
-              <LogOut size={16} className="text-red-400/60 group-hover:text-red-400 transition-colors" />
-              <span className="text-sm font-medium text-red-400/60 group-hover:text-red-400 transition-colors">
-                {tx.logout}
-              </span>
-            </div>
-            <ChevronRight size={14} className="text-red-400/25 group-hover:text-red-400/60 transition-colors" />
+            <LogOut size={16} className="text-white" />
+            <span className="text-sm font-bold tracking-wide text-white">
+              {tx.logout}
+            </span>
           </button>
         </SectionCard>
 

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Crown, CheckCircle2, Lock, ArrowRight, Calendar, Zap, Sparkles, MessageSquare } from "lucide-react";
-import { getBillingFeatures, type BillingFeatures, type PlanFeatures } from "@/lib/api";
+import { Crown, CheckCircle2, ArrowRight, Sparkles, MessageSquare, Zap } from "lucide-react";
+import { getBillingFeatures, type BillingFeatures } from "@/lib/api";
 import { SkeletonCard } from "@/components/SkeletonLoader";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import { rememberActivationPlan, type ActivationPlanId } from "@/lib/activationFlow";
@@ -15,62 +15,37 @@ interface BillingPageProps {
   onPush?: (level: NavLevel) => void;
 }
 
-// Module display
-const MODULE_LIST = [
-  { key: "has_leads", label: "Gestion des leads" },
-  { key: "has_budget", label: "Suivi du budget" },
-  { key: "has_portfolio", label: "Portfolio" },
-  { key: "has_sales_script", label: "Script de vente" },
-  { key: "has_chatbot_content", label: "Contenu IA chatbot" },
-  { key: "has_multi_page", label: "Multi-pages Facebook" },
-  { key: "has_team", label: "Equipe & collaboration" },
-  { key: "has_image_generation", label: "Generation d'images" },
-  { key: "has_file_generation", label: "Generation de fichiers" },
-  { key: "has_advanced_analytics", label: "Analytics avances" },
-];
-
-type Plan = {
-  id: string;
-  name: string;
-  price: string;
-  priceNote?: string;
-  color: string;
-  accent: string;
-  popular?: boolean;
-  contact?: boolean;
-  features: string[];
-};
-
-const PLANS: Plan[] = [
+const PLANS = [
   {
     id: "starter",
     name: "Starter",
-    price: "30 000 Ar",
-    priceNote: "/mois",
-    color: "border-[var(--border-default)] bg-[var(--surface-base)]",
-    accent: "text-[var(--text-primary)]",
+    price: "30 000",
+    subtitle: "Boutique · Artisan · Indépendant",
+    highlight: false,
+    contact: false,
+    cta: "Commencer",
     features: [
+      "500 messages / mois",
       "1 page Facebook",
       "Chatbot IA 24h/24",
-      "Jusqu'a 500 conversations/mois",
-      "Personnalisation basique",
+      "Catalogue limité à 10 articles",
       "Support par email",
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    price: "60 000 Ar",
-    priceNote: "/mois",
-    color: "border-orange-500/25 bg-orange-500/[0.08]",
-    accent: "text-orange-500",
-    popular: true,
+    price: "60 000",
+    subtitle: "Commerce actif · Plusieurs produits",
+    highlight: true,
+    contact: false,
+    cta: "Choisir Pro",
     features: [
+      "2 000 messages / mois",
       "1 page Facebook",
-      "Chatbot IA 24h/24",
-      "Conversations illimitees",
-      "Personnalisation avancee",
-      "Catalogue produits",
+      "IA Vendeuse (Raisonnement)",
+      "Catalogue jusqu'à 50 articles",
+      "Script de vente IA inclus",
       "Gestion des commandes",
       "Support prioritaire",
     ],
@@ -78,36 +53,30 @@ const PLANS: Plan[] = [
   {
     id: "business",
     name: "Business",
-    price: "120 000 Ar",
-    priceNote: "/mois",
-    color: "border-[var(--accent-navy)]/25 bg-[var(--accent-navy)]/8",
-    accent: "text-[var(--text-primary)]",
+    price: "120 000",
+    subtitle: "PME · Équipe commerciale",
+    highlight: false,
+    contact: false,
+    cta: "Choisir Business",
     features: [
+      "5 000 messages / mois",
       "Multi-pages Facebook",
-      "Chatbot IA 24h/24",
-      "Conversations illimitees",
-      "Toutes les personnalisations",
-      "Equipe & collaboration",
-      "Analytics avances",
-      "Support dedie",
-    ],
-  },
-  {
-    id: "enterprise",
-    name: "Entreprise",
-    price: "Sur devis",
-    color: "border-[var(--border-default)] bg-[var(--surface-subtle)]",
-    accent: "text-[var(--text-primary)]",
-    contact: true,
-    features: [
-      "Solution sur mesure",
-      "Infrastructure dediee",
-      "Integrations personnalisees",
-      "SLA garanti",
-      "Accompagnement complet",
+      "IA Premium & avancée",
+      "Catalogue étendu (500 articles)",
+      "Rôles & permissions équipe",
+      "Analytics avancés",
+      "Support dédié",
     ],
   },
 ];
+
+const PLAN_LABEL: Record<string, string> = {
+  starter: "Starter",
+  pro: "Pro",
+  business: "Business",
+  enterprise: "Entreprise",
+  free: "Gratuit",
+};
 
 export default function BillingPage({ token, getFreshToken, planLabel: planLabelProp, onPush }: BillingPageProps) {
   const [billing, setBilling] = useState<BillingFeatures | null>(null);
@@ -127,221 +96,217 @@ export default function BillingPage({ token, getFreshToken, planLabel: planLabel
   }, [token, getFreshToken]);
 
   const currentPlanId = billing?.plan_id ?? null;
-  const planLabel = planLabelProp ?? (currentPlanId ? currentPlanId.charAt(0).toUpperCase() + currentPlanId.slice(1) : "Gratuit");
-  const expiresAt: string | null = null;
+  const resolvedPlanLabel =
+    planLabelProp ??
+    (currentPlanId ? (PLAN_LABEL[currentPlanId] ?? currentPlanId) : "Gratuit");
 
-  const handleActivate = (plan: Plan) => {
-    if (plan.contact) {
-      // Use href redirect (not window.open which causes blank page in web apps)
-      window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
-      return;
-    }
+  const handleActivate = (plan: (typeof PLANS)[0]) => {
     rememberActivationPlan(plan.id as ActivationPlanId);
     onPush?.("chatbot-activation" as NavLevel);
   };
 
+  const cardVariants = {
+    hidden: { opacity: 0, y: 32 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: 0.1 + i * 0.09, duration: 0.45, ease: [0.16, 1, 0.3, 1] },
+    }),
+  };
+
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[900px] px-4 py-8 md:px-8 md:py-12 flex flex-col gap-10">
+      <div className="mx-auto w-full max-w-[1020px] px-4 py-10 md:px-8 md:py-14 flex flex-col gap-12">
 
         {/* ── Header ── */}
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-2"
+          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          className="text-center space-y-2"
         >
-          <h1 className="text-3xl font-bold tracking-tight text-[var(--text-primary)]">Abonnements</h1>
-          <p className="text-lg text-[var(--text-secondary)]">Votre plan actuel et les offres disponibles</p>
+          <span className="inline-block text-[10px] font-bold uppercase tracking-[0.2em] text-orange-500">
+            Offres
+          </span>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">
+            Payez par <span className="text-orange-500">MVola</span> ou{" "}
+            <span className="text-orange-500">Orange Money</span>.
+          </h1>
+          <p className="text-base text-[var(--text-muted)] max-w-lg mx-auto">
+            Choisissez votre plan, l&apos;équipe FLARE active votre bot. Résultats visibles dès le premier jour.
+          </p>
         </motion.header>
 
-        {/* ── Plan card ── */}
+        {/* ── Plan actuel ── */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.06, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl bg-[var(--surface-base)]
-                     border border-[var(--border-default)] shadow-[var(--shadow-card)]
-                     px-6 py-6 flex flex-col gap-6"
+          transition={{ delay: 0.08, ease: [0.16, 1, 0.3, 1] }}
+          className="mx-auto w-full max-w-md rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-card)] shadow-sm px-6 py-4 flex items-center gap-4"
         >
           {loading ? (
-            <SkeletonCard lines={3} />
+            <SkeletonCard lines={1} />
           ) : (
             <>
-              <div className="flex items-center justify-between gap-4 flex-wrap">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10">
-                    <Crown size={20} className="text-orange-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-[var(--text-secondary)]">Plan actuel</p>
-                    <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{planLabel}</p>
-                  </div>
-                </div>
-
-                {expiresAt && (
-                  <div className="flex items-center gap-2 text-sm text-[var(--text-secondary)]">
-                    <Calendar size={13} />
-                    <span>Expire le {expiresAt}</span>
-                  </div>
-                )}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 shrink-0">
+                <Crown size={18} className="text-orange-500" />
               </div>
-
-              {/* Upgrade CTA */}
-              {(billing?.features?.upgrade_to || (!currentPlanId || currentPlanId === "free")) && onPush && (
-                <button
-                  type="button"
-                  onClick={() => onPush("chatbot-activation" as NavLevel)}
-                  className="flex items-center justify-between rounded-xl
-                             bg-orange-500/10 border border-orange-500/20
-                             px-5 py-4 hover:bg-orange-500/15 hover:border-orange-500/30
-                             transition-all duration-200 group text-left w-full"
-                >
-                  <div className="flex items-center gap-3">
-                    <Zap size={16} className="text-orange-500" />
-                    <span className="text-base font-semibold text-[var(--text-primary)]">
-                      {(!currentPlanId || currentPlanId === "free") ? "Choisir un plan" : "Changer de plan"}
-                    </span>
-                    {billing?.features?.upgrade_to && (
-                        <span className="text-sm text-[var(--text-secondary)]">
-                        Passer au plan {billing.features.upgrade_to}
-                      </span>
-                    )}
-                  </div>
-                  <ArrowRight size={16} className="text-[var(--text-secondary)] group-hover:translate-x-1 transition-transform" />
-                </button>
-              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">Votre plan actuel</p>
+                <p className="text-xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">
+                  {resolvedPlanLabel}
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full bg-orange-500 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white">
+                Actif
+              </span>
             </>
           )}
         </motion.div>
 
-        {/* ── Modules list ── */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="rounded-2xl bg-[var(--surface-base)]
-                     border border-[var(--border-default)] shadow-[var(--shadow-card)]
-                     px-6 py-6 flex flex-col gap-2"
-        >
-          <p className="mb-4 text-sm font-medium text-[var(--text-secondary)]">
-            Modules inclus dans votre plan
-          </p>
-          {loading ? (
-            <SkeletonCard lines={5} />
-          ) : (
-            MODULE_LIST.map((mod) => {
-              const features = billing?.features as PlanFeatures | undefined;
-              const active = features?.[mod.key as keyof PlanFeatures] ?? false;
-              return (
-                <div key={mod.key} className="flex items-center justify-between border-b border-[var(--divide-default)] py-2.5 last:border-0">
-                  <span className={`text-base ${active ? "text-[var(--text-primary)]" : "text-[var(--text-secondary)]"}`}>
-                    {mod.label}
-                  </span>
-                  {active ? (
-                    <CheckCircle2 size={16} className="shrink-0 text-orange-500" />
-                  ) : (
-                    <Lock size={14} className="shrink-0 text-[var(--text-muted)]" />
-                  )}
-                </div>
-              );
-            })
-          )}
-        </motion.div>
-
-        {/* ── Plans comparison ── */}
-        <motion.section
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15, ease: [0.16, 1, 0.3, 1] }}
-        >
-          <p className="mb-5 text-sm font-medium text-[var(--text-secondary)]">
-            Toutes les offres
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {PLANS.map((plan) => {
-              const isCurrent = currentPlanId === plan.id;
-              return (
-                <div
-                  key={plan.id}
-                  className={`relative flex flex-col rounded-2xl border px-5 py-5 gap-4 transition-all duration-200 ${plan.color} ${
-                    isCurrent ? "ring-1 ring-orange-500/40" : ""
-                  }`}
-                >
-                  {/* Popular badge */}
-                  {plan.popular && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full bg-orange-500 px-3 py-0.5 text-[11px] font-semibold text-black shadow-md">
-                      <Sparkles size={10} />
-                      Recommande
-                    </span>
-                  )}
-
-                  {/* Current badge */}
-                  {isCurrent && (
-                    <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1 rounded-full border border-[var(--accent-navy)]/30 bg-[var(--accent-navy)]/12 px-3 py-0.5 text-[11px] font-semibold text-[var(--text-primary)] shadow-md">
-                      <CheckCircle2 size={10} />
-                      Plan actuel
-                    </span>
-                  )}
-
-                  {/* Name & price */}
-                  <div>
-                    <p className={`text-base font-bold ${plan.accent}`}>{plan.name}</p>
-                    <p className="mt-1 text-2xl font-bold tracking-tight text-[var(--text-primary)]">
-                      {plan.price}
-                      {plan.priceNote && (
-                        <span className="ml-1 text-sm font-normal text-[var(--text-secondary)]">{plan.priceNote}</span>
-                      )}
-                    </p>
+        {/* ── Plans Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-stretch pt-8">
+          {PLANS.map((plan, i) => {
+            const isCurrent = currentPlanId === plan.id;
+            return (
+              <motion.div
+                key={plan.id}
+                custom={i}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                className={`relative rounded-[32px] border p-8 md:p-10 flex flex-col gap-6 transition-all duration-500 group ${
+                  plan.highlight
+                    ? "border-orange-500/40 bg-orange-500/[0.03] shadow-2xl shadow-orange-500/10 scale-[1.02] z-10"
+                    : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-subtle)] hover:bg-[var(--surface-overlay)] backdrop-blur-xl"
+                }`}
+              >
+                {/* Shimmer blur background */}
+                <div className="absolute inset-0 z-0 overflow-hidden rounded-[32px] pointer-events-none">
+                  <div
+                    className={`absolute inset-0 transition-opacity duration-700 blur-[30px] ${
+                      plan.highlight ? "opacity-20 group-hover:opacity-40" : "opacity-0 group-hover:opacity-10"
+                    }`}
+                  >
+                    <motion.div
+                      animate={{ x: ["-100%", "200%"], scale: [1, 1.2, 1] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      className={`absolute -inset-y-10 w-1/2 -skew-x-12 ${
+                        plan.highlight ? "bg-orange-500/50" : "bg-[var(--text-primary)]/20"
+                      }`}
+                    />
                   </div>
+                </div>
 
-                  {/* Features */}
-                  <ul className="flex flex-col gap-2 flex-1">
-                    {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
-                        <CheckCircle2 size={13} className="mt-0.5 shrink-0 text-orange-500" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
+                {/* Popular badge */}
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-6 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white shadow-xl z-20">
+                    Le plus populaire
+                  </div>
+                )}
 
-                  {/* CTA */}
+                {/* Current badge */}
+                {isCurrent && !plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-[var(--text-primary)] px-6 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--surface-base)] shadow-xl z-20">
+                    Plan actuel ✓
+                  </div>
+                )}
+                {isCurrent && plan.highlight && (
+                  <div className="absolute top-3 right-3 rounded-full bg-[var(--surface-overlay)] backdrop-blur px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-orange-500 z-20">
+                    Actuel ✓
+                  </div>
+                )}
+
+                {/* Name & Price */}
+                <div className="relative z-10">
+                  <span className="text-[10px] uppercase font-bold tracking-[0.15em] text-orange-500">
+                    {plan.name}
+                  </span>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="whitespace-nowrap text-5xl md:text-6xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">
+                      {plan.price}
+                    </span>
+                    <span className="text-sm font-bold text-[var(--text-muted)]">Ar / mois</span>
+                  </div>
+                  <p className="mt-2 text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">
+                    {plan.subtitle}
+                  </p>
+                </div>
+
+                {/* Features */}
+                <ul className="relative z-10 flex flex-col gap-3.5 flex-1 my-2">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-3 text-sm font-medium text-[var(--text-secondary)]">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 size={11} className="text-orange-500" />
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <div className="relative z-10">
                   {isCurrent ? (
-                    <div className="mt-auto pt-2 text-center text-sm font-medium text-[var(--text-primary)]">
-                      Plan actif
+                    <div className="w-full rounded-2xl border border-[var(--border-default)] py-4 text-center text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                      Plan actif ✓
                     </div>
-                  ) : plan.contact ? (
-                    <a
-                      href="mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI"
-                      className="mt-auto flex items-center justify-center gap-2 rounded-xl border border-[var(--border-default)]
-                                 bg-[var(--surface-subtle)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)]
-                                 hover:bg-[var(--surface-raised)] transition-all duration-150"
-                    >
-                      <MessageSquare size={13} />
-                      Nous contacter
-                    </a>
                   ) : (
                     <button
                       type="button"
                       onClick={() => handleActivate(plan)}
-                      className={`mt-auto flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 ${
-                        plan.popular
-                          ? "bg-orange-500 text-black hover:bg-orange-400 shadow-md"
-                          : "border border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-primary)] hover:bg-[var(--surface-raised)]"
+                      className={`w-full rounded-2xl py-5 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 ${
+                        plan.highlight
+                          ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:scale-[1.02]"
+                          : "border border-[var(--border-default)] text-[var(--text-primary)] hover:border-[var(--border-subtle)] hover:bg-[var(--surface-raised)]"
                       }`}
                     >
-                      Choisir ce plan
-                      <ArrowRight size={13} />
+                      {plan.highlight ? <Zap size={13} /> : <ArrowRight size={13} />}
+                      {plan.cta}
                     </button>
                   )}
                 </div>
-              );
-            })}
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* ── Entreprise card ── */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="rounded-[32px] border border-[var(--border-default)] bg-[var(--surface-subtle)] px-8 py-7 flex flex-col sm:flex-row items-start sm:items-center gap-6"
+        >
+          <div className="flex-1 min-w-0">
+            <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-orange-500">Entreprise</span>
+            <h3 className="mt-2 text-2xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">
+              Solution 100% sur mesure
+            </h3>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">
+              Infrastructure dédiée · Intégrations personnalisées · SLA garanti · Accompagnement complet
+            </p>
           </div>
-        </motion.section>
+          <a
+            href="mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI"
+            className="shrink-0 flex items-center gap-2 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-raised)] px-7 py-4 text-[11px] font-bold uppercase tracking-widest text-[var(--text-primary)] hover:border-[var(--border-subtle)] hover:bg-[var(--surface-overlay)] transition-all duration-200"
+          >
+            <MessageSquare size={13} />
+            Nous contacter
+          </a>
+        </motion.div>
+
+        {/* ── Note bas ── */}
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-center text-xs text-[var(--text-muted)] -mt-4"
+        >
+          Paiement par MVola ou Orange Money · Activation sous 24h · Résiliation à tout moment
+        </motion.p>
 
       </div>
     </div>
   );
 }
-

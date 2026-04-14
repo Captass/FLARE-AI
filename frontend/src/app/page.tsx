@@ -1044,19 +1044,90 @@ export default function Home() {
   }, [activeView, hasHistoryBack, onPop]);
 
 
-  // â”€â”€ Landing page publique, connexion, puis application â”€â”€
+  // ── Landing page publique, connexion, puis application ──
   if (!user && !showAuth && authLoading) {
     return (
-      <div className="flex min-h-[100dvh] items-center justify-center bg-[var(--background)] px-6">
-        <div className="flex items-center gap-4 text-[var(--text-secondary)]">
-          <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-[var(--border-default)] bg-[var(--surface-base)]">
-            <FlareMark tone="auto" className="w-6 animate-pulse" priority />
+      <div style={{
+          position: 'fixed',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#fbf7f0', // Flare Light Background
+          zIndex: 9999
+      }}>
+        {/* Expanding Cosmic Rings */}
+        <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: [0.8, 1.2, 1.5], opacity: [0, 0.5, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+            style={{
+                position: 'absolute',
+                width: '300px',
+                height: '300px',
+                border: '1px solid rgba(249, 115, 22, 0.2)',
+                borderRadius: '50%'
+            }}
+        />
+        <motion.div
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: [0.5, 1, 1.3], opacity: [0, 0.3, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeOut", delay: 0.5 }}
+            style={{
+                position: 'absolute',
+                width: '300px',
+                height: '300px',
+                border: '1px solid rgba(0, 0, 0, 0.05)',
+                borderRadius: '50%'
+            }}
+        />
+
+        <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1 }}
+            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px', position: 'relative', zIndex: 10 }}
+        >
+          <motion.div 
+            animate={{ 
+                rotate: [0, 5, -5, 0],
+                boxShadow: ["0 0 20px rgba(249,115,22,0)", "0 0 40px rgba(249,115,22,0.2)", "0 0 20px rgba(249,115,22,0)"]
+            }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+                display: 'flex',
+                height: '80px',
+                width: '80px',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: '28px',
+                backgroundColor: '#ffffff',
+                border: '1px solid rgba(0,0,0,0.05)',
+                boxShadow: '0 20px 40px rgba(0,0,0,0.05)'
+            }}
+          >
+            <FlareMark tone="auto" className="w-10" priority />
+          </motion.div>
+          
+          <div style={{ textAlign: 'center' }}>
+            <motion.p 
+                initial={{ opacity: 0, letterSpacing: '0.1em' }}
+                animate={{ opacity: 1, letterSpacing: '0.5em' }}
+                transition={{ duration: 1.5, ease: "easeOut" }}
+                style={{ margin: 0, fontSize: '18px', fontWeight: 900, textTransform: 'uppercase', color: '#000000' }}
+            >
+                FLARE AI
+            </motion.p>
+            <motion.div 
+                animate={{ opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                style={{ marginTop: '12px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: '#f97316', letterSpacing: '0.1em' }}
+            >
+                Initialisation du module organisationnel...
+            </motion.div>
           </div>
-          <div className="space-y-1">
-            <p className="text-sm font-medium uppercase tracking-[0.35em] text-[var(--text-primary)]">FLARE AI</p>
-            <p className="text-xs text-[var(--text-muted)]">Chargement</p>
-          </div>
-        </div>
+        </motion.div>
       </div>
     );
   }

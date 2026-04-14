@@ -104,18 +104,18 @@ export default function IdentitySettingsSection({
         <div className="rounded-[28px] border border-[var(--border-glass)] bg-[var(--bg-card)] p-5 md:p-6">
           <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-orange-500/60">Apercu</p>
           <div className="mt-5 grid gap-4 md:grid-cols-2">
-            <div className="rounded-[24px] border border-white/8 bg-black/20 p-4">
+            <div className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-subtle)] p-4 shadow-sm">
               <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Compte</p>
               <div className="mt-4 flex items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.06]">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full border border-[var(--border-default)] bg-[var(--surface-raised)]">
                   {userAvatarPreview ? (
                     <img src={userAvatarPreview} alt="Photo de profil" className="h-full w-full object-cover" />
                   ) : (
-                    <UserRound size={20} className="text-white/70" />
+                    <UserRound size={20} className="text-[var(--icon-muted)] opacity-60" />
                   )}
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-base font-semibold text-white">
+                  <p className="truncate text-base font-semibold text-[var(--text-primary)]">
                     {userProfile.display_name || fallbackDisplayName || "Utilisateur"}
                   </p>
                   <p className="mt-1 truncate text-sm text-[var(--text-muted)]">{userEmail || "Compte FLARE"}</p>
@@ -123,10 +123,10 @@ export default function IdentitySettingsSection({
               </div>
             </div>
 
-            <div className="rounded-[24px] border border-white/8 bg-black/20 p-4">
+            <div className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-subtle)] p-4 shadow-sm">
               <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-muted)]">Nom de compte</p>
               <div className="mt-4">
-                <p className="truncate text-base font-semibold text-white">{userProfile.workspace_name || "Mon compte"}</p>
+                <p className="truncate text-base font-semibold text-[var(--text-primary)]">{userProfile.workspace_name || "Mon compte"}</p>
                 <p className="mt-1 text-sm text-[var(--text-muted)]">Visible dans l&apos;app et les emails.</p>
               </div>
             </div>
@@ -163,11 +163,11 @@ export default function IdentitySettingsSection({
           </div>
 
           <div className="mt-5 flex items-center gap-4">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-white/10 bg-white/[0.04]">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] shadow-sm">
               {userAvatarPreview ? (
                 <img src={userAvatarPreview} alt="Photo utilisateur" className="h-full w-full object-cover" />
               ) : (
-                <Camera size={24} className="text-white/65" />
+                <Camera size={24} className="text-[var(--icon-muted)] opacity-60" />
               )}
             </div>
             <div className="text-sm text-[var(--text-muted)]">
@@ -192,7 +192,7 @@ export default function IdentitySettingsSection({
               <input
                 value={userProfile.display_name}
                 onChange={(event) => setUserProfile((current) => ({ ...current, display_name: event.target.value }))}
-                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-orange-500/30"
+                className="w-full rounded-2xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors focus:border-orange-500/30 focus:shadow-sm"
                 placeholder="Ton nom dans l'app"
               />
             </div>
@@ -204,7 +204,7 @@ export default function IdentitySettingsSection({
               <input
                 value={userProfile.workspace_name}
                 onChange={(event) => setUserProfile((current) => ({ ...current, workspace_name: event.target.value }))}
-                className="w-full rounded-2xl border border-white/8 bg-black/20 px-4 py-3 text-sm text-white outline-none transition-colors focus:border-orange-500/30"
+                className="w-full rounded-2xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--text-primary)] outline-none transition-colors focus:border-orange-500/30 focus:shadow-sm"
                 placeholder="Mon compte"
               />
             </div>

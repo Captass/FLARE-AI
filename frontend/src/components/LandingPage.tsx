@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { ArrowDown, ArrowRight, Zap, MessageSquare, BarChart3, Bot, Menu, X, Download } from "lucide-react";
-import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
+import { ArrowDown, ArrowRight, Zap, MessageSquare, BarChart3, Bot, Menu, X, Download, Instagram, Mail, Facebook, TrendingUp, Globe, Search, Linkedin } from "lucide-react";
+import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useMotionTemplate } from "framer-motion";
 import Spline from "@splinetool/react-spline";
 import React from "react";
 import FlareMark from "./FlareMark";
@@ -22,9 +22,243 @@ class SplineBoundary extends React.Component<
   }
 }
 
+/* 3D Tilt Component for cards */
+function TiltCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseXSpring = useSpring(x);
+  const mouseYSpring = useSpring(y);
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateY,
+        rotateX,
+        transformStyle: "preserve-3d",
+      }}
+      className="relative w-full"
+    >
+      <div style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Cinematic Blur-on-Scroll Component */
+function BlurScrollText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start end", "end start"],
+  });
+
+  const blur = useTransform(scrollYProgress, [0, 0.5, 1], [8, 0, 8]);
+  const opacity = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], [0, 1, 1, 0]);
+
+  return (
+    <motion.div ref={ref} style={{ filter: useTransform(blur, (v) => `blur(${v}px)`), opacity }} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+/* Animated Chat Simulation Component */
+function ChatSimulation({ scenarioId }: { scenarioId: number }) {
+  const [messages, setMessages] = useState<any[]>([]);
+  
+  const SCENARIOS = [
+    {
+      id: 0,
+      title: "Ventes (24/7)",
+      messages: [
+        { type: "user", text: "Bonjour ! Est-ce que le sac modèle X est encore dispo ?" },
+        { type: "bot", text: "Bonjour ! Un instant, je vérifie nos stocks... 🤖", delay: 1000 },
+        { type: "bot", text: "OUI ! Il nous en reste 3 en stock. Il est à 45 000 Ar.", delay: 2500 },
+        { type: "bot", options: ["Commander", "Voir photos", "Livraison ?"], delay: 3500 },
+      ]
+    },
+    {
+      id: 1,
+      title: "Marketing IA",
+      messages: [
+        { type: "bot", text: "🔥 OFFRE FLASH ! -20% sur toute la collection aujourd'hui.", delay: 500 },
+        { type: "user", text: "C'est valable pour la livraison à domicile ?" },
+        { type: "bot", text: "Absolument ! Entrez votre quartier pour estimer les frais de livraison.", delay: 2000 },
+        { type: "bot", options: ["Analakely", "Ivato", "Tamatave"], delay: 3000 },
+      ]
+    },
+    {
+      id: 2,
+      title: "Support Client",
+      messages: [
+        { type: "user", text: "Ma commande n'est pas encore arrivée." },
+        { type: "bot", text: "Je suis navré ! Je regarde tout de suite votre statut de livraison.", delay: 1000 },
+        { type: "bot", text: "Votre colis est actuellement avec le livreur. Arrivée prévue dans 15 min.", delay: 2500 },
+        { type: "bot", text: "Voulez-vous le numéro du livreur ?", delay: 3500 },
+      ]
+    }
+  ];
+
+  useEffect(() => {
+    setMessages([]);
+    const currentScenario = SCENARIOS.find(s => s.id === scenarioId);
+    if (!currentScenario) return;
+
+    const timers = currentScenario.messages.map((msg, i) => {
+      return setTimeout(() => {
+        setMessages(prev => [...prev, msg]);
+      }, msg.delay || (i * 1000));
+    });
+
+    return () => timers.forEach(t => clearTimeout(t));
+  }, [scenarioId]);
+
+  return (
+    <div className="flex flex-col gap-4 p-6 h-full font-sans">
+      <AnimatePresence>
+        {messages.map((msg, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className={`flex flex-col ${msg.type === 'user' ? 'items-end' : 'items-start'}`}
+          >
+            {msg.text && (
+              <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-xs font-medium shadow-sm leading-relaxed ${
+                msg.type === 'user' 
+                  ? 'bg-orange-500 text-white rounded-tr-none' 
+                  : 'bg-white border border-black/5 text-black rounded-tl-none'
+              }`}>
+                {msg.text}
+              </div>
+            )}
+            
+            {msg.options && (
+              <div className="flex flex-wrap gap-2 mt-2">
+                {msg.options.map((opt: string, optI: number) => (
+                  <button key={optI} className="px-3 py-1.5 rounded-full border border-orange-500/30 bg-orange-500/5 text-orange-600 text-[10px] font-black uppercase hover:bg-orange-500 hover:text-white transition-all">
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        ))}
+      </AnimatePresence>
+      
+      {/* Typing Indicator */}
+      {SCENARIOS.find(s => s.id === scenarioId)?.messages.length !== messages.length && (
+        <motion.div 
+           initial={{ opacity: 0 }}
+           animate={{ opacity: 1 }}
+           className="flex gap-1 p-3 bg-white border border-black/5 rounded-2xl w-12"
+        >
+          <div className="w-1.5 h-1.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+          <div className="w-1.5 h-1.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+          <div className="w-1.5 h-1.5 bg-black/20 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+/* Interactive Glow Button */
+function GlowButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const { left, top } = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - left);
+    mouseY.set(e.clientY - top);
+  };
+
+  return (
+    <motion.button
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className={`relative overflow-hidden ${className}`}
+    >
+      <motion.div
+        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          background: useMotionTemplate`radial-gradient(120px circle at ${mouseX}px ${mouseY}px, rgba(249, 115, 22, 0.15), transparent 80%)`,
+        }}
+      />
+      {children}
+    </motion.button>
+  );
+}
+
+/* Magnetic Wrapper for Interactive Elements */
+function Magnetic({ children, intensity = 0.35 }: { children: React.ReactNode; intensity?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, { stiffness: 150, damping: 15 });
+  const springY = useSpring(y, { stiffness: 150, damping: 15 });
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!ref.current) return;
+    const { clientX, clientY } = e;
+    const { left, top, width, height } = ref.current.getBoundingClientRect();
+    const centerX = left + width / 2;
+    const centerY = top + height / 2;
+    const distanceX = clientX - centerX;
+    const distanceY = clientY - centerY;
+
+    if (Math.abs(distanceX) < width * 1.5 && Math.abs(distanceY) < height * 1.5) {
+      x.set(distanceX * intensity);
+      y.set(distanceY * intensity);
+    } else {
+      x.set(0);
+      y.set(0);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, []);
+
+  return (
+    <motion.div ref={ref} style={{ x: springX, y: springY }}>
+      {children}
+    </motion.div>
+  );
+}
+
 interface LandingPageProps {
   onStart: (mode: "login" | "signup", prompt?: string) => void;
 }
+
+
 
 export default function LandingPage({ onStart }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,6 +269,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const [canInstall, setCanInstall] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeFeature, setActiveFeature] = useState<number | null>(0);
+  const [activeScenario, setActiveScenario] = useState(0);
 
   const { scrollY, scrollYProgress } = useScroll();
 
@@ -82,18 +318,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     };
   }, []);
 
-  const handleInstallClick = async () => {
-    const prompt = (window as any).deferredPrompt;
-    if (prompt) {
-      prompt.prompt();
-      const { outcome } = await prompt.userChoice;
-      if (outcome === 'accepted') {
-        (window as any).deferredPrompt = null;
-        setCanInstall(false);
-      }
-    } else {
-      alert("Pour installer FLARE AI :\n• Sur mobile : utilisez Ajouter a l ecran d accueil.\n• Sur PC : utilisez l option d installation dans la barre d adresse.");
-    }
+  const handleInstallClick = () => {
+    window.location.href = "/download";
   };
 
   const springX = useSpring(0, { stiffness: 150, damping: 20 });
@@ -203,6 +429,68 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       text: "Activation en 15 minutes chrono. Le support est local et ultra réactif.",
       initials: "ML"
     },
+    { 
+      name: "Jean P.", 
+      role: "Restaurateur", 
+      text: "Gérer les réservations sur Messenger était un enfer. Maintenant, FLARE s'en occupe tout seul.",
+      initials: "JP"
+    },
+    { 
+      name: "Fanja M.", 
+      role: "Coach Business", 
+      text: "La génération de contenu visuel est bluffante. Je gagne un temps précieux sur Instagram.",
+      initials: "FM"
+    },
+    { 
+      name: "Tahina Q.", 
+      role: "Start-up Founder", 
+      text: "Un OS digital qui comprend le marché Malgache. Enfin une solution adaptée à nos besoins.",
+      initials: "TQ"
+    },
+  ];
+
+  /* ── Plateformes Connectées (Glassmorphic Orbit) ── */
+  const MODULES_INFO = [
+    {
+      id: 0,
+      title: "Site Web",
+      description: "Le Widget FLARE s'intègre à votre site pour accueillir les visiteurs et conclure les ventes en direct de façon fluide.",
+      promise: "Conversion Directe",
+      color: "text-[#f97316]",
+      bgGlow: "rgba(249, 115, 22, 0.15)"
+    },
+    {
+      id: 1,
+      title: "Google",
+      description: "Synchronisez vos fiches produits et vos avis Google Business. Soyez trouvé et convertissez quand ils cherchent.",
+      promise: "Visibilité Moteur",
+      color: "text-[#4285F4]",
+      bgGlow: "rgba(66, 133, 244, 0.15)"
+    },
+    {
+      id: 2,
+      title: "Facebook",
+      description: "Capturez les leads de vos publicités Facebook en un clic avec des relances Messenger scénarisées et intelligentes.",
+      promise: "Acquisition Sociale",
+      color: "text-[#1877F2]",
+      bgGlow: "rgba(24, 119, 242, 0.15)"
+    },
+    {
+      id: 3,
+      title: "Instagram",
+      description: "Convertissez vos abonnés : le bot répond automatiquement à vos DMs et commente directement sous vos Reels et Posts.",
+      promise: "Engagement Actif",
+      color: "text-[#E4405F]",
+      bgGlow: "rgba(228, 64, 95, 0.15)"
+    },
+    {
+      id: 4,
+      title: "LinkedIn",
+      description: "Automatisez votre prospection B2B. Suscitez l'intérêt et qualifiez vos leads professionnels avec des approches ultra-ciblées.",
+      promise: "Réseautage B2B",
+      color: "text-[#0A66C2]",
+      bgGlow: "rgba(10, 102, 194, 0.15)"
+    }
   ];
 
   /* ── Cas d'usage orientés business ── */
@@ -230,12 +518,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     },
   ];
 
-  /* ── Avantages concrets ── */
+  /* --- Avantages concrets (Simplifiés) --- */
   const ADVANTAGES = [
-    { number: "01", title: "Zéro technique", text: "Pas de code, pas de formation. L'équipe FLARE active votre plateforme pour vous en 15 minutes." },
-    { number: "02", title: "Accompagnement", text: "Nous configurons vos premières automatisations avec vous pour garantir vos résultats." },
-    { number: "03", title: "Mémoire Intelligente", text: "FLARE apprend vos prix et votre ton. Chaque action est parfaitement alignée sur votre marque." },
-    { number: "04", title: "Pilote Automatique", text: "Pendant que vous dormez, votre système répond, produit et relance. Votre business ne s'arrête jamais." },
+    { number: "01", title: "Zéro technique", text: "Activé par nos experts en 15 min." },
+    { number: "02", title: "Accompagnement", text: "On configure tout avec vous." },
+    { number: "03", title: "Mémoire IA", text: "Elle apprend vos prix et votre ton." },
+    { number: "04", title: "Pilote Auto", text: "Répond et vend pendant vos repos." },
   ];
 
   /* ── Variants for staggered animations ── */
@@ -251,10 +539,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 30, scale: 0.95, filter: "blur(10px)" },
     visible: { 
       opacity: 1, 
       y: 0,
+      scale: 1,
+      filter: "blur(0px)",
       transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
     }
   };
@@ -265,7 +555,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       id="hero"
       className="landing-theme-scope landing-shell relative w-full h-screen overflow-y-auto no-scrollbar font-sans select-none"
     >
-      {/* ── Sticky Navbar ── */}
+      {/* --- Sticky Navbar --- */}
       <AnimatePresence>
         {isScrolled && (
           <motion.nav
@@ -288,16 +578,17 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 { label: "Offres", id: "pricing" },
                 { label: "Notre histoire", id: "story" },
               ].map((link) => (
-                <button
-                  key={link.id}
-                  onClick={() => {
-                    const el = document.getElementById(link.id);
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                  className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
-                >
-                  {link.label}
-                </button>
+                <Magnetic key={link.id}>
+                  <button
+                    onClick={() => {
+                      const el = document.getElementById(link.id);
+                      if (el) el.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
+                  >
+                    {link.label}
+                  </button>
+                </Magnetic>
               ))}
             </div>
 
@@ -416,6 +707,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               />
             </Suspense>
           </SplineBoundary>
+
         </div>
 
         {/* Header */}
@@ -435,8 +727,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 <FlareMark tone="auto" className="w-8 md:w-14" priority />
               </motion.div>
               <div className="flex flex-col justify-center">
-                <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none">FLARE AI</span>
-                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3">Votre business en pilote automatique</span>
+                <span className="landing-brand-title text-lg md:text-3xl uppercase leading-none font-black text-black">FLARE AI</span>
+                <span className="landing-brand-subtitle mt-1 uppercase md:mt-3 font-bold text-black">Votre business en pilote automatique</span>
               </div>
             </div>
 
@@ -456,72 +748,98 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </div>
           </motion.header>
 
-          {/* ── Hero Content ── */}
-          <main className="flex-1 flex flex-col justify-center min-h-[70vh]">
+          {/* ── Hero Content (AIDA Marketing Flow) ── */}
+          <main className="flex-1 flex flex-col justify-center min-h-[70vh] relative z-20 pointer-events-none">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={isLoaded ? "visible" : "hidden"}
-              className="max-w-4xl pt-10 md:pt-20"
+              className="max-w-3xl pt-10 md:pt-20 relative z-30 pointer-events-auto"
             >
-              {/* Badge */}
-              <motion.div 
-                variants={itemVariants}
-                className="landing-badge mb-8 inline-flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 backdrop-blur-md"
-              >
-                <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />
-                <span className="landing-kicker text-[10px] md:text-xs font-medium uppercase">🔥 Bêta ouverte · Chatbot Facebook · Madagascar</span>
-              </motion.div>
-
+              {/* 1. ATTENTION (Headline) */}
               <motion.h1
                 variants={itemVariants}
                 style={{ rotateX, rotateY }}
-                className="landing-headline text-[32px] sm:text-[52px] md:text-[78px] leading-[1.1] md:leading-[1] perspective-1000 font-[family-name:var(--font-outfit)]"
+                className="landing-headline text-[38px] sm:text-[56px] md:text-[84px] leading-[1.05] md:leading-[1] perspective-1000 font-[family-name:var(--font-outfit)]"
               >
-                Simplifiez. Produisez.<br />
-                <span className="font-bold tracking-tight">Automatisez.</span>
+                {/* Scroll-Scrubbed Reveal */}
+                {"Simplifiez. Produisez.".split(" ").map((word, i) => {
+                  const wordScroll = useTransform(scrollYProgress, [0, 0.1 + i * 0.05], [0, 1]);
+                  const wordBlur = useTransform(wordScroll, [0, 1], [15, 0]);
+                  return (
+                    <motion.span
+                      key={i}
+                      style={{ opacity: wordScroll, filter: useMotionTemplate`blur(${wordBlur}px)` }}
+                      className="inline-block"
+                    >
+                      {word}&nbsp;
+                    </motion.span>
+                  );
+                })}
+                <br />
+                <motion.span
+                  style={{ 
+                    opacity: useTransform(scrollYProgress, [0.2, 0.3], [0, 1]),
+                    scale: useTransform(scrollYProgress, [0.2, 0.3], [0.8, 1])
+                  }}
+                  className="font-black tracking-tight text-orange-500 inline-block drop-shadow-xl"
+                >
+                  Automatisez.
+                </motion.span>
               </motion.h1>
 
-              <motion.p 
-                variants={itemVariants}
-                className="landing-copy mt-8 mb-10 text-sm md:text-xl max-w-xl leading-relaxed"
-              >
-                La plateforme tout-en-un qui exécute vos <strong>ventes</strong>, vos <strong>contenus</strong> et vos <strong>documents</strong> pour vous.
-                Activé en <strong>15 min</strong> par l&apos;équipe FLARE. À partir de <strong>30 000 Ar/mois</strong>.
-              </motion.p>
+              {/* 2. INTEREST (Subtitle) */}
+              <div className="w-full mt-6 mb-8 lg:mb-10 lg:mt-8">
+                <motion.p 
+                  variants={itemVariants}
+                  className="landing-copy text-sm md:text-xl max-w-xl leading-relaxed text-black font-medium"
+                >
+                  <BlurScrollText>
+                    La plateforme tout-en-un qui exécute vos <strong>ventes</strong>, vos <strong>contenus</strong> et vos <strong>documents</strong> pour vous.
+                    Activé en <strong>15 min</strong> par l&apos;équipe FLARE.
+                  </BlurScrollText>
+                </motion.p>
+              </div>
 
+              {/* 3. ACTION (CTAs directly in flow) */}
               <motion.div 
                 variants={itemVariants}
-                className="flex flex-col sm:flex-row items-start gap-4"
+                className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-16"
               >
-                <button
+                <motion.button
                   onClick={() => onStart("signup")}
-                  className="landing-cta-hero group flex items-center gap-3 rounded-full bg-orange-500 px-10 py-5 text-[13px] font-bold uppercase tracking-widest transition-all duration-300 shadow-2xl shadow-orange-500/20 hover:scale-105 hover:bg-orange-600"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="landing-cta-hero group relative flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-orange-500 px-8 py-5 md:px-10 md:py-5 text-[14px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_20px_40px_rgba(249,115,22,0.4)] hover:bg-orange-600 hover:shadow-[0_20px_50px_rgba(249,115,22,0.6)] border border-orange-400"
                 >
+                  <motion.div
+                    className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20"
+                    initial={false}
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 1, repeat: Infinity }}
+                  />
                   Essayer gratuitement
-                  <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </button>
+                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+                </motion.button>
 
-                {canInstall && (
-                  <button
-                    onClick={handleInstallClick}
-                    className="landing-secondary-button flex items-center gap-3 rounded-full border px-6 py-5 text-[12px] font-medium uppercase transition-all"
-                  >
-                    <Download size={14} />
-                    Installer l&apos;app
-                  </button>
-                )}
+                <button
+                  onClick={handleInstallClick}
+                  className="flex items-center justify-center gap-3 rounded-full border-2 border-black/10 bg-white/50 backdrop-blur-md px-8 py-4 md:py-5 text-[13px] font-bold uppercase transition-all hover:bg-white hover:border-black/20 hover:scale-105 w-full sm:w-auto"
+                >
+                  <Download size={16} className="text-black/60" />
+                  Installer l&apos;app
+                </button>
               </motion.div>
 
-              {/* ── Hero Metrics ── */}
+              {/* 4. DESIRE / VALIDATION (Metrics) */}
               <motion.div
                 variants={containerVariants}
-                className="mt-16 flex gap-10 md:gap-16"
+                className="flex flex-wrap gap-8 md:gap-16 pt-8 border-t border-black/10"
               >
                 {METRICS.map((m, i) => (
                   <motion.div key={i} variants={itemVariants} className="flex flex-col">
-                    <span className="landing-metric-value text-2xl md:text-4xl font-bold tracking-tight font-[family-name:var(--font-outfit)]">{m.value}</span>
-                    <span className="landing-metric-label mt-1 text-[10px] md:text-xs uppercase">{m.label}</span>
+                    <span className="landing-metric-value text-3xl md:text-5xl font-black tracking-tighter font-[family-name:var(--font-outfit)] text-black">{m.value}</span>
+                    <span className="landing-metric-label mt-1 text-[10px] md:text-xs uppercase font-extrabold text-black/60 tracking-widest">{m.label}</span>
                   </motion.div>
                 ))}
               </motion.div>
@@ -529,281 +847,392 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           </main>
         </div>
 
-        {/* ── Social Proof / Trusted Tech Band ── */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          className="relative z-10 w-full border-y border-white/5 bg-white/[0.02] backdrop-blur-sm py-8"
-        >
-          <div className="max-w-6xl mx-auto px-6 flex flex-wrap justify-center items-center gap-8 md:gap-16 grayscale opacity-40">
-            <span className="text-[10px] uppercase tracking-widest font-semibold text-white/40">Propulsé par les meilleures technologies</span>
-            <div className="flex items-center gap-2">
-              <Bot size={16} />
-              <span className="text-sm font-bold">Google Cloud</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Zap size={16} />
-              <span className="text-sm font-bold">Next.js 14</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <MessageSquare size={16} />
-              <span className="text-sm font-bold">Meta API</span>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* ── Trust / Reviews Section ── */}
-      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {REVIEWS.map((rev, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="group relative p-8 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all duration-500"
-              >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-10 h-10 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 font-bold text-xs border border-orange-500/20">
-                    {rev.initials}
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-white">{rev.name}</h4>
-                    <span className="text-[10px] uppercase text-white/40">{rev.role}</span>
-                  </div>
-                </div>
-                <p className="text-sm leading-relaxed text-white/70 italic">&quot;{rev.text}&quot;</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+        {/* Trust Section ends here */}
       </section>
 
       {/* ══════════════════════════════════════════════════════
-          SOLUTIONS SECTION
+          SOLUTIONS SECTION (BOTNATION STYLE SIMULATION)
          ══════════════════════════════════════════════════════ */}
-      <section
-        id="solutions"
-        className="landing-section-muted relative z-20 overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
-      >
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 md:mb-24 max-w-2xl"
-          >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">L&apos;IA qui exécute pour vous</span>
-            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              3 piliers pour <span className="font-semibold">automatiser votre business</span>.
-            </h2>
-            <p className="landing-copy mt-4 max-w-xl text-sm md:text-lg leading-relaxed">
-              Ne vous souciez plus du &quot;comment&quot;. FLARE AI s&apos;occupe de l&apos;exécution technique.
-            </p>
-          </motion.div>
+      <section id="solutions" className="relative z-20 py-24 sm:py-32 bg-[#F9F7F2] border-t border-black/5 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-24">
+          
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-6xl font-black text-black mt-4 font-[family-name:var(--font-outfit)]">FLARE AI en action.</h2>
+          </div>
 
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="grid grid-cols-1 gap-6"
-          >
-            {USE_CASES.map((item, index) => {
-              const Icon = item.icon;
-              return (
-                <motion.button
-                  key={index}
-                  variants={itemVariants}
-                  onClick={() => onStart("signup", item.prompt)}
-                  className="landing-card group relative w-full overflow-hidden rounded-[24px] border border-white/[0.06] bg-white/[0.02] p-8 text-left transition-all duration-500 hover:border-white/[0.12] hover:bg-white/[0.04] md:p-10"
-                >
-                  {/* Subtle glow on hover */}
-                  <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-orange-500/[0.04] rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-1000 -translate-y-1/2 translate-x-1/3" />
-
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
-                    <div className="landing-icon-panel flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] transition-all duration-500 group-hover:border-orange-500/30 group-hover:bg-orange-500/10 group-hover:scale-110">
-                      <Icon className="landing-solution-icon landing-solution-icon-strong transition-colors" size={28} strokeWidth={2} />
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <h3 className="landing-card-title mb-3 text-xl md:text-3xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{item.title}</h3>
-                      <p className="landing-card-copy text-sm md:text-lg leading-relaxed max-w-2xl opacity-70 group-hover:opacity-100 transition-opacity">{item.description}</p>
-                    </div>
-
-                    <div className="landing-card-cta hidden md:flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] transition-all shrink-0 opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0">
-                      {item.cta}
-                      <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
-                    </div>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════
-          PRICING SECTION
-         ══════════════════════════════════════════════════════ */}
-      <section
-        id="pricing"
-        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
-      >
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 md:mb-24 max-w-2xl"
-          >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Offres bêta</span>
-            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              Un prix clair en <span className="font-semibold">Ariary</span>.<br />
-              Payez par MVola ou Orange Money.
-            </h2>
-            <p className="landing-copy mt-4 text-sm md:text-base leading-relaxed">
-              Pas de Stripe. Pas de carte étrangère. Tu paies localement, FLARE active ton bot.
-            </p>
-          </motion.div>
-
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
-          >
-            {[
-              {
-                name: "Starter",
-                price: "30 000",
-                subtitle: "Boutique, artisan, indépendant",
-                features: ["500 messages/mois", "Catalogue limité à 10 articles", "IA Réactive (Rapide)", "Dashboard basique", "Support par email"],
-                cta: "Commencer",
-                highlight: false,
-              },
-              {
-                name: "Pro",
-                price: "60 000",
-                subtitle: "Commerce actif, plusieurs produits",
-                features: ["2 000 messages/mois", "Catalogue jusqu'à 50 articles", "IA Vendeuse (Raisonnement)", "Script de vente IA inclus", "Portfolio de réalisations"],
-                cta: "Choisir Pro",
-                highlight: true,
-              },
-              {
-                name: "Business",
-                price: "120 000",
-                subtitle: "PME, équipe commerciale",
-                features: ["5 000 messages/mois", "Catalogue étendu (500 articles)", "IA Premium & Multi-Pages", "Rôles & permissions", "Support prioritaire"],
-                cta: "Choisir Business",
-                highlight: false,
-              },
-            ].map((plan, i) => (
-              <motion.div
+          {/* Scenario Tabs */}
+          <div className="flex flex-wrap justify-center gap-4 mb-20">
+            {["Trouver des clients", "Vendre mes produits", "Répondre aux questions"].map((tab, i) => (
+              <button
                 key={i}
-                variants={itemVariants}
-                className={`relative rounded-[32px] border p-8 md:p-10 flex flex-col gap-6 transition-all duration-500 ${
-                  plan.highlight
-                    ? "border-orange-500/40 bg-orange-500/[0.03] shadow-2xl shadow-orange-500/10 scale-[1.02] z-10"
-                    : "border-black/[0.06] bg-black/[0.01] hover:border-black/[0.12] hover:bg-white/50"
+                onClick={() => setActiveScenario(i)}
+                className={`px-8 py-4 rounded-full font-black uppercase tracking-widest transition-all duration-300 ${
+                  activeScenario === i 
+                    ? 'bg-black shadow-2xl scale-105 shadow-black/50' 
+                    : 'bg-white border border-black/10 hover:border-black/30 text-black/60'
                 }`}
               >
-                {plan.highlight && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-6 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white shadow-xl">
-                    Le plus populaire
-                  </div>
-                )}
-                <div>
-                  <span className="landing-section-kicker text-[10px] uppercase font-bold text-orange-600">{plan.name}</span>
-                  <div className="mt-4 flex items-baseline gap-1">
-                    <span className="landing-headline text-5xl md:text-6xl font-bold font-[family-name:var(--font-outfit)]">{plan.price}</span>
-                    <span className="landing-copy text-sm opacity-60">Ar / mois</span>
-                  </div>
-                  <p className="landing-card-copy mt-2 text-xs font-semibold">{plan.subtitle}</p>
-                </div>
-                <ul className="flex flex-col gap-4 flex-1 my-4">
-                  {plan.features.map((f, fi) => (
-                    <li key={fi} className="flex items-start gap-3 landing-card-copy text-sm font-medium">
-                      <div className="w-5 h-5 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
-                        <span className="text-orange-600 text-[10px]">✓</span>
-                      </div>
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <button
-                  onClick={() => onStart("signup")}
-                  className={`w-full rounded-2xl py-5 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
-                    plan.highlight
-                      ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:scale-[1.02]"
-                      : "border border-black/10 hover:border-black/30 hover:bg-black/5"
-                  }`}
-                >
-                  {plan.cta}
-                </button>
-              </motion.div>
+                <span className={`text-[11px] sm:text-xs tracking-widest inline-block ${activeScenario === i ? 'invert' : ''}`}>
+                  {tab}
+                </span>
+              </button>
             ))}
-          </motion.div>
+          </div>
 
-          <motion.p
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            className="mt-10 text-center landing-card-copy text-xs"
-          >
-            Paiement par <strong>MVola</strong> · <strong>Orange Money</strong> · <strong>Airtel Money</strong> · Virement · Cash.<br />
-            Activation manuelle par l&apos;équipe FLARE sous 15 min après vérification du paiement.
-          </motion.p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Device Mockup */}
+            <motion.div
+              key={activeScenario}
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="relative aspect-[9/16] max-w-[320px] mx-auto lg:ml-0 rounded-[3rem] border-[8px] border-black bg-white shadow-[0_50px_100px_rgba(0,0,0,0.1)] overflow-hidden"
+            >
+              {/* Phone Notch */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-20" />
+              
+              {/* App Bar Simulation */}
+              <div className="p-6 pt-10 border-b border-black/5 flex items-center gap-4 bg-white/80 backdrop-blur-md">
+                <div className="w-10 h-10 rounded-full bg-orange-500 flex items-center justify-center text-white">
+                  <FlareMark tone="light" className="w-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-black text-black leading-none">FLARE Business Bot</h4>
+                  <span className="text-[10px] text-green-500 font-bold">Online • FLARE AI Actif</span>
+                </div>
+              </div>
+
+              {/* Chat Content */}
+              <div className="h-[calc(100%-100px)] bg-black/[0.02]">
+                 <ChatSimulation scenarioId={activeScenario} />
+              </div>
+            </motion.div>
+
+            {/* Right: Content & Value Prop */}
+            <div className="flex flex-col gap-8">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeScenario}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
+                >
+                  <div className="flex h-16 w-16 items-center justify-center rounded-3xl bg-orange-500/10 text-orange-600 mb-8 border border-orange-500/20">
+                    <Zap size={32} />
+                  </div>
+                  <h3 className="text-3xl md:text-5xl font-black text-black leading-tight">
+                    {activeScenario === 0 && "Trouvez vos clients sans lever le petit doigt."}
+                    {activeScenario === 1 && "Vendez même quand vous dormez."}
+                    {activeScenario === 2 && "Répondez à vos clients 24h/24."}
+                  </h3>
+                  <p className="text-lg md:text-xl text-black/70 font-medium leading-relaxed max-w-xl">
+                    {activeScenario === 0 && "FLARE accueille vos visiteurs, comprend leurs besoins et vous envoie les contacts prêts à acheter."}
+                    {activeScenario === 1 && "Le bot donne vos prix, vérifie vos stocks et guide l'acheteur vers le paiement."}
+                    {activeScenario === 2 && "Gagnez du temps. FLARE répond aux questions sur vos horaires, vos prix et vos livraisons."}
+                  </p>
+                  
+                  <div className="pt-8">
+                    <button
+                       onClick={() => onStart("signup")}
+                       className="group flex items-center gap-4 text-sm font-black uppercase tracking-widest text-orange-600 hover:gap-6 transition-all"
+                    >
+                      Essayer ce scénario
+                      <ArrowRight size={20} />
+                    </button>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* ══════════════════════════════════════════════════════
+          ECOSYSTEM HUB (STANDARD LAYOUT)
+         ══════════════════════════════════════════════════════ */}
+      <section className="relative py-24 sm:py-32 overflow-hidden border-t border-black/5 bg-white">
+        <div className="max-w-7xl mx-auto px-6 lg:px-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+            
+            {/* Left: Interactive Platform Grid */}
+            <div className="relative">
+              {/* Soft background glow for the 'glass' base */}
+              <div className="absolute inset-0 bg-orange-500/5 rounded-[4rem] blur-3xl -z-10" />
+              
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { type: "icon", icon: Globe, label: "Site Web", color: "#f97316", id: 0 },
+                  { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg", label: "Google", color: "#4285F4", id: 1 },
+                  { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg", label: "Facebook", color: "#1877F2", id: 2 },
+                  { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg", label: "Instagram", color: "#E4405F", id: 3 },
+                  { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png", label: "LinkedIn", color: "#0A66C2", id: 4 },
+                ].map((platform, i) => (
+                  <motion.div
+                    key={i}
+                    onClick={() => setActiveFeature(platform.id)}
+                    whileHover={{ scale: 1.05 }}
+                    className={`cursor-pointer p-6 rounded-[2rem] transition-all duration-300 flex flex-col items-center gap-4 border
+                      ${activeFeature === platform.id 
+                         ? 'bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] border-black/10 z-10' 
+                         : 'bg-black/[0.02] border-transparent hover:bg-black/[0.04]'
+                      }
+                      ${i === 4 ? 'col-span-2 max-w-[50%] mx-auto w-full' : ''}
+                    `}
+                  >
+                    {platform.type === "icon" && platform.icon ? (
+                      <platform.icon size={32} style={{ stroke: platform.color }} strokeWidth={2.5} />
+                    ) : (
+                      <img src={platform.src} alt={platform.label} className="w-8 h-8 object-contain" />
+                    )}
+                    <span className="text-[10px] sm:text-xs font-black uppercase text-black/80 tracking-widest">{platform.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right: Content dynamically updated */}
+            <div className="flex flex-col">
+              <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium mb-6">Plateformes intégrées</span>
+              <h2 className="text-4xl md:text-5xl font-black text-black leading-tight mb-8 font-[family-name:var(--font-outfit)]">
+                Où que soient vos clients, <br/>
+                <span className="text-orange-500">FLARE est là.</span>
+              </h2>
+
+              <div className="relative min-h-[250px]">
+                <AnimatePresence mode="wait">
+                  {activeFeature !== null && (
+                    <motion.div
+                      key={activeFeature}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute inset-0"
+                    >
+                      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/5 border border-black/10 mb-6">
+                        <Zap size={14} className={MODULES_INFO[activeFeature].color} />
+                        <span className="text-[10px] uppercase font-black tracking-widest text-black/80">
+                          {MODULES_INFO[activeFeature].title}
+                        </span>
+                      </div>
+                      
+                      <p className="text-[15px] sm:text-lg text-black/70 font-medium leading-relaxed mb-8 max-w-lg">
+                        {MODULES_INFO[activeFeature].description}
+                      </p>
+
+                      <div className="p-5 rounded-[1.5rem] bg-[#F9F7F2] border border-black/5 inline-block">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-black/40 mb-1">Impact direct</p>
+                        <p className={`text-[15px] sm:text-lg font-black ${MODULES_INFO[activeFeature].color}`}>
+                          {MODULES_INFO[activeFeature].promise}
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
       {/* ══════════════════════════════════════════════════════
           ADVANTAGES SECTION
          ══════════════════════════════════════════════════════ */}
-      <section
-        id="advantages"
-        className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32"
-      >
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 md:mb-24 max-w-2xl"
-          >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Pourquoi ça marche</span>
-            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              Conçu pour <span className="font-semibold">te faire gagner du temps</span>, pas pour faire joli.
-            </h2>
-          </motion.div>
+      {/* ══════════════════════════════════════════════════════
+          COMMAND CENTER (DASHBOARD ILLUSTRATIONS)
+         ══════════════════════════════════════════════════════ */}
+      <section id="advantages" className="relative z-20 py-24 sm:py-32 bg-white border-y border-black/5 overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 lg:px-24">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left: Direct Text Content */}
+            <div>
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                className="max-w-xl"
+              >
+                <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Performance</span>
+                <h2 className="text-4xl md:text-6xl font-black text-black mt-4 mb-8 font-[family-name:var(--font-outfit)]">
+                  Tout est sous <span className="text-orange-500">contrôle.</span>
+                </h2>
+                
+                <div className="space-y-10">
+                  {ADVANTAGES.map((adv, index) => (
+                    <motion.div 
+                      key={index}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="flex gap-6 group"
+                    >
+                      <div className="text-2xl font-black text-orange-500/20 group-hover:text-orange-500 transition-colors">
+                        {adv.number}
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-black mb-2">{adv.title}</h3>
+                        <p className="text-black/60 font-medium">{adv.text}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Right: Motion Graphics Hub (Refined Maria Dashboard Style) */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-orange-500/5 rounded-[4rem] blur-3xl -z-10" />
+              
+              <div className="grid grid-cols-2 gap-6 relative z-10">
+                {/* User Welcome & Stats Stack */}
+                <motion.div 
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="p-8 rounded-[3rem] bg-white border border-black/5 shadow-2xl flex flex-col gap-6"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white text-xs font-black">M</div>
+                    <div>
+                      <h4 className="text-sm font-black text-black leading-tight">Bonjour Maria</h4>
+                      <p className="text-[10px] text-black/40 font-bold uppercase tracking-tight">Ecom Pilot Activé</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* Stat Items with SVG Circles */}
+                    {[
+                      { label: "Ventes", val: "$1,250", pct: 75, color: "#f97316", bg: "rgba(249, 115, 22, 0.05)" },
+                      { label: "Profit", val: "+42%", pct: 40, color: "#22c55e", bg: "rgba(34, 197, 94, 0.05)" }
+                    ].map((item, i) => (
+                      <div key={i} className="p-4 rounded-2xl flex items-center justify-between" style={{ background: item.bg }}>
+                        <div>
+                          <p className="text-[10px] font-black uppercase text-black/40">{item.label}</p>
+                          <p className="text-xl font-black text-black">{item.val}</p>
+                        </div>
+                        <div className="relative w-10 h-10">
+                           <svg className="w-full h-full transform -rotate-90">
+                             <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="4" fill="transparent" className="text-black/5" />
+                             <motion.circle 
+                               cx="20" cy="20" r="16" stroke={item.color} strokeWidth="4" fill="transparent"
+                               strokeDasharray="100"
+                               initial={{ strokeDashoffset: 100 }}
+                               whileInView={{ strokeDashoffset: 100 - item.pct }}
+                               transition={{ duration: 1.5, ease: "circOut", delay: 0.5 + (i * 0.2) }}
+                             />
+                           </svg>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Revenue Bar Chart (Second Inspiration) */}
+                <motion.div 
+                  whileHover={{ y: -5, scale: 1.02 }}
+                  className="p-8 rounded-[3rem] bg-[#020305] text-white shadow-2xl"
+                >
+                  <div className="mb-6">
+                    <span className="text-[10px] font-black uppercase text-white/40 tracking-widest">Revenus</span>
+                    <div className="text-3xl font-black mt-2 text-white">4.8k</div>
+                  </div>
+                  
+                  <div className="flex items-end justify-between h-32 gap-2">
+                    {[40, 70, 45, 90, 65, 80].map((h, i) => (
+                      <div key={i} className="flex-1 bg-white/5 rounded-t-lg relative overflow-hidden h-full">
+                        <motion.div 
+                          initial={{ height: 0 }}
+                          whileInView={{ height: `${h}%` }}
+                          transition={{ duration: 1, delay: i * 0.1, ease: "circOut" }}
+                          className="absolute bottom-0 left-0 w-full bg-orange-500 rounded-t-lg"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+
+                {/* Live Activity Console (Full Width) */}
+                <motion.div 
+                  whileHover={{ y: -3, scale: 1.01 }}
+                  className="col-span-2 p-8 rounded-[3rem] bg-[#F9F7F2] border border-black/5"
+                >
+                  <div className="flex items-center justify-between mb-8">
+                    <h4 className="text-xs font-black uppercase text-black tracking-widest">Pilotage en temps réel</h4>
+                    <motion.div 
+                      animate={{ opacity: [0.3, 1, 0.3] }} 
+                      transition={{ duration: 2, repeat: Infinity }}
+                      className="w-2 h-2 rounded-full bg-green-500" 
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { action: "Réponse Messenger", target: "Sales", time: "maint." },
+                      { action: "Update WhatsApp", target: "Price", time: "2m" },
+                      { action: "Lead Capturé", target: "Meta", time: "5m" }
+                    ].map((item, i) => (
+                      <motion.div 
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.15 }}
+                        className="p-5 rounded-2xl bg-white shadow-sm border border-black/5 flex flex-col gap-2"
+                      >
+                        <div className="p-2 w-fit rounded-lg bg-orange-500/10 text-orange-600">
+                           <Zap size={14} />
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-black text-black leading-tight">{item.action}</p>
+                          <p className="text-[10px] text-black/40 font-bold uppercase">{item.target} • {item.time}</p>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust / Reviews Section (Draggable Carousel) ── */}
+      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24 overflow-hidden border-y border-black/5 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-12 md:mb-16">
+            <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Témoignages</span>
+            <h2 className="text-3xl md:text-5xl font-black text-black mt-2">Ils nous font confiance.</h2>
+          </div>
 
           <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-50px" }}
-            className="landing-divider grid grid-cols-1 gap-px overflow-hidden rounded-[32px] bg-white/[0.08] md:grid-cols-2 lg:grid-cols-4"
+            drag="x"
+            dragConstraints={{ right: 0, left: isMobile ? -1400 : -1800 }}
+            dragElastic={0.1}
+            className="flex gap-8 cursor-grab active:cursor-grabbing pb-12"
           >
-            {ADVANTAGES.map((adv, index) => (
+            {REVIEWS.map((rev, i) => (
               <motion.div
-                key={index}
-                variants={itemVariants}
-                className="landing-card-muted group bg-[#020305] p-8 md:p-10 transition-colors hover:bg-white/[0.02]"
+                key={i}
+                whileHover={{ y: -10, scale: 1.02 }}
+                className="relative min-w-[300px] md:min-w-[450px] p-10 md:p-14 rounded-[40px] bg-white border border-black/10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-2xl hover:border-orange-500/20"
               >
-                <div className="flex items-center justify-between mb-8">
-                  <span className="landing-card-index text-[14px] font-mono font-bold tracking-widest text-orange-500/40">{adv.number}</span>
-                  <div className="w-1 h-8 bg-orange-500/10 rounded-full group-hover:bg-orange-500/40 transition-colors" />
+                <div className="flex items-center gap-6 mb-10">
+                  <div className="w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center text-orange-600 font-black text-xl">
+                    {rev.initials}
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-black text-black">{rev.name}</h4>
+                    <span className="text-xs uppercase text-orange-600 font-black tracking-widest">{rev.role}</span>
+                  </div>
                 </div>
-                <h3 className="landing-card-title text-xl md:text-2xl font-medium tracking-tight font-[family-name:var(--font-outfit)]">{adv.title}</h3>
-                <p className="landing-card-copy mt-4 text-sm md:text-base leading-relaxed opacity-60 group-hover:opacity-100 transition-opacity">{adv.text}</p>
+                
+                <p className="text-lg md:text-2xl leading-relaxed text-black font-medium italic opacity-90">&quot;{rev.text}&quot;</p>
+                
+                <div className="absolute top-8 right-12 text-black/5 text-8xl font-black">”</div>
               </motion.div>
             ))}
           </motion.div>
+          
+          <div className="flex items-center gap-4 text-xs font-black text-black/40 uppercase tracking-widest">
+            <ArrowRight size={16} />
+            Faites glisser pour en voir plus
+          </div>
         </div>
       </section>
 
@@ -836,79 +1265,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 <span className="text-[10px] uppercase font-bold tracking-wider">Meta Verified API</span>
              </div>
           </div>
-        </div>
-      </section>
-
-      {/* ══════════════════════════════════════════════════════
-          NOTRE HISTOIRE
-         ══════════════════════════════════════════════════════ */}
-      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
-        {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
-        <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
-          <SplineBoundary>
-            <Suspense fallback={null}>
-              <Spline
-                scene="https://prod.spline.design/rIcJ6LXEuI7u6Tn6/scene.splinecode"
-                className="w-full h-full"
-                style={{ pointerEvents: 'none' }}
-              />
-            </Suspense>
-          </SplineBoundary>
-        </div>
-        {/* Overlay pour lisibilité */}
-        <div className="landing-story-overlay absolute inset-0 z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/85 to-[#020305]/60" />
-
-        <div className="relative z-10 max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="mb-16 md:mb-20 max-w-2xl"
-          >
-            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Notre histoire</span>
-            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
-              Né à Madagascar, <span className="font-semibold">pensé pour le monde</span>.
-            </h2>
-          </motion.div>
-
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="flex flex-col md:flex-row gap-12 items-start"
-          >
-            {/* Photo Kévin à gauche */}
-            <motion.div
-              variants={itemVariants}
-              className="shrink-0 group"
-            >
-              <div className="w-40 h-52 md:w-48 md:h-64 rounded-[32px] overflow-hidden shadow-2xl grayscale group-hover:grayscale-0 transition-all duration-700">
-                <img src="/kevin.png" alt="Kévin — Fondateur" className="w-full h-full object-cover" />
-              </div>
-              <div className="mt-6">
-                <p className="landing-card-title text-sm font-bold uppercase tracking-tight">Kévin</p>
-                <p className="landing-card-copy text-xs font-bold text-orange-600/60 mt-1">Fondateur & Architecte</p>
-                <p className="landing-card-copy text-xs font-bold text-black/40 uppercase tracking-widest mt-2">FLARE AI — Madagascar</p>
-              </div>
-            </motion.div>
-
-            {/* Texte à droite */}
-            <motion.div
-              variants={containerVariants}
-              className="flex flex-col gap-8 max-w-xl"
-            >
-              <motion.p variants={itemVariants} className="landing-copy text-lg md:text-2xl leading-snug font-medium text-black">
-                FLARE AI est né d&apos;une vision : permettre à chaque entrepreneur de posséder son propre <span className="text-orange-600">pilote digital intelligent</span>.
-              </motion.p>
-              <motion.p variants={itemVariants} className="landing-copy text-base md:text-lg leading-relaxed opacity-70">
-                Nous ne construisons pas de simples outils, nous bâtissons la technologie qui automatise votre travail quotidien pour vous laisser vous concentrer sur votre croissance.
-              </motion.p>
-              <motion.p variants={itemVariants} className="landing-copy text-base md:text-lg leading-relaxed opacity-70">
-                Notre mission est de rendre l&apos;automatisation digitale accessible à tous, sans barrière technique et sans jargon complexe.
-              </motion.p>
-            </motion.div>
-          </motion.div>
         </div>
       </section>
 
@@ -972,6 +1328,213 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
       </section>
 
+      <section
+        id="pricing"
+        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
+      >
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 md:mb-24 max-w-2xl"
+          >
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Offres bêta</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
+              Payez par <span className="font-semibold text-orange-500">MVola</span> ou <span className="font-semibold text-orange-500">Orange Money</span>.
+            </h2>
+            <p className="landing-copy mt-4 text-sm md:text-base leading-relaxed">
+              Pas de Stripe. Pas de carte étrangère. Tu paies localement, FLARE active ton bot.
+            </p>
+          </motion.div>
+
+          <motion.div 
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-50px" }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+          >
+            {[
+              {
+                name: "Starter",
+                price: "30 000",
+                subtitle: "Boutique, artisan, indépendant",
+                features: ["500 messages/mois", "Catalogue limité à 10 articles", "IA Réactive (Rapide)", "Dashboard basique", "Support par email"],
+                cta: "Commencer",
+                highlight: false,
+              },
+              {
+                name: "Pro",
+                price: "60 000",
+                subtitle: "Commerce actif, plusieurs produits",
+                features: ["2 000 messages/mois", "Catalogue jusqu'à 50 articles", "IA Vendeuse (Raisonnement)", "Script de vente IA inclus", "Portfolio de réalisations"],
+                cta: "Choisir Pro",
+                highlight: true,
+              },
+              {
+                name: "Business",
+                price: "120 000",
+                subtitle: "PME, équipe commerciale",
+                features: ["5 000 messages/mois", "Catalogue étendu (500 articles)", "IA Premium & Multi-Pages", "Rôles & permissions", "Support prioritaire"],
+                cta: "Choisir Business",
+                highlight: false,
+              },
+            ].map((plan, i) => (
+              <motion.div
+                key={i}
+                variants={itemVariants}
+                className={`relative rounded-[32px] border p-8 md:p-10 flex flex-col gap-6 transition-all duration-500 group ${
+                  plan.highlight
+                    ? "border-orange-500/40 bg-orange-500/[0.03] shadow-2xl shadow-orange-500/10 scale-[1.02] z-10"
+                    : "border-black/[0.06] bg-black/[0.01] hover:border-black/[0.12] hover:bg-white/50 backdrop-blur-xl"
+                }`}
+              >
+                <div className="absolute inset-0 z-0 overflow-hidden rounded-[32px] pointer-events-none">
+                  <div className="absolute inset-0 opacity-20 group-hover:opacity-100 transition-opacity duration-700 blur-[30px]">
+                    <motion.div
+                      animate={{ x: ["-100%", "200%"], scale: [1, 1.2, 1] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                      className={`absolute -inset-y-10 w-1/2 -skew-x-12 ${plan.highlight ? "bg-orange-500/50" : "bg-black/20"}`}
+                    />
+                  </div>
+                </div>
+
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-6 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] !text-white shadow-xl z-20">
+                    Le plus populaire
+                  </div>
+                )}
+                <div className="relative z-10">
+                  <span className="landing-section-kicker text-[10px] uppercase font-bold text-orange-600">{plan.name}</span>
+                  <div className="mt-4 flex items-baseline gap-1">
+                    <span className="landing-headline text-5xl md:text-6xl font-black font-[family-name:var(--font-outfit)] text-black">{plan.price}</span>
+                    <span className="landing-copy text-sm font-bold text-black">Ar / mois</span>
+                  </div>
+                  <p className="landing-card-copy mt-2 text-xs font-bold text-black uppercase">{plan.subtitle}</p>
+                </div>
+                <ul className="relative z-10 flex flex-col gap-4 flex-1 my-4">
+                  {plan.features.map((f, fi) => (
+                    <li key={fi} className="flex items-start gap-3 landing-card-copy text-sm font-medium">
+                      <div className="w-5 h-5 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0">
+                        <span className="text-orange-600 text-[10px]">✓</span>
+                      </div>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <button
+                  onClick={() => onStart("signup")}
+                  className={`relative z-10 w-full rounded-2xl py-5 text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+                    plan.highlight
+                      ? "bg-orange-500 !text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600 hover:scale-[1.02]"
+                      : "border border-black/10 hover:border-black/30 hover:bg-black/5"
+                  }`}
+                >
+                  {plan.cta}
+                </button>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            className="mt-10 text-center landing-card-copy text-xs font-bold text-black"
+          >
+            Paiement par <strong>MVola</strong> · <strong>Orange Money</strong> · <strong>Airtel Money</strong> · Virement · Cash.<br />
+            Activation manuelle par l&apos;équipe FLARE sous 15 min après vérification du paiement.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* ══════════════════════════════════════════════════════
+          NOTRE HISTOIRE
+         ══════════════════════════════════════════════════════ */}
+      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
+        {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
+        <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+          <SplineBoundary>
+            <Suspense fallback={null}>
+              <Spline
+                scene="https://prod.spline.design/rIcJ6LXEuI7u6Tn6/scene.splinecode"
+                className="w-full h-full"
+                style={{ pointerEvents: 'none' }}
+              />
+            </Suspense>
+          </SplineBoundary>
+        </div>
+        {/* Overlay pour lisibilité */}
+        <div className="landing-story-overlay absolute inset-0 z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/85 to-[#020305]/60" />
+
+        <div className="relative z-10 max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-16 md:mb-20 max-w-2xl"
+          >
+            <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Notre histoire</span>
+            <h2 className="landing-section-title mt-4 text-3xl md:text-5xl font-[family-name:var(--font-outfit)]">
+              Né à Madagascar, <span className="font-semibold">pensé pour le monde</span>.
+            </h2>
+          </motion.div>
+
+          <motion.div
+            variants={containerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="flex flex-col md:flex-row gap-12 items-start"
+          >
+            {/* Animation Drapeau & Logo FLARE */}
+            <motion.div
+              variants={itemVariants}
+              className="shrink-0 group relative flex flex-col items-center"
+            >
+              <div className="w-40 h-52 md:w-48 md:h-64 rounded-[32px] overflow-hidden shadow-2xl bg-[#020305] relative flex items-center justify-center border border-black/5 group-hover:shadow-[0_30px_60px_rgba(0,0,0,0.15)] transition-all duration-700">
+                {/* Smooth Motion Graphic: Flag Colors */}
+                <motion.div 
+                  className="absolute inset-0 z-0 opacity-80 mix-blend-screen"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                >
+                  <div className="absolute -top-12 -right-12 w-48 h-48 bg-red-600 rounded-full filter blur-[45px] opacity-80"></div>
+                  <div className="absolute -bottom-12 -right-12 w-48 h-48 bg-green-600 rounded-full filter blur-[45px] opacity-80"></div>
+                  <div className="absolute top-1/2 -left-12 -translate-y-1/2 w-48 h-48 bg-white rounded-full filter blur-[40px] opacity-90"></div>
+                </motion.div>
+                
+                {/* Flare Logo */}
+                <div className="relative z-10 w-20 h-20 md:w-24 md:h-24 drop-shadow-[0_0_20px_rgba(255,255,255,0.4)] invert">
+                  <FlareMark tone="light" className="w-full h-full" />
+                </div>
+              </div>
+              <div className="mt-6 text-center">
+                <p className="landing-card-title text-sm font-black uppercase tracking-widest text-black">FLARE AI</p>
+                <p className="landing-card-copy text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mt-2">Made in Madagascar</p>
+              </div>
+            </motion.div>
+
+            {/* Texte à droite */}
+            <motion.div
+              variants={containerVariants}
+              className="flex flex-col gap-8 max-w-xl"
+            >
+              <motion.p variants={itemVariants} className="landing-copy text-lg md:text-2xl leading-snug font-medium text-black">
+                FLARE AI est né d&apos;une vision : permettre à chaque entrepreneur de posséder son propre <span className="text-orange-600">FLARE AI</span>.
+              </motion.p>
+              <motion.p variants={itemVariants} className="landing-copy text-base md:text-lg leading-relaxed opacity-70">
+                Nous ne construisons pas de simples outils, nous bâtissons la technologie qui automatise votre travail quotidien pour vous laisser vous concentrer sur votre croissance.
+              </motion.p>
+              <motion.p variants={itemVariants} className="landing-copy text-base md:text-lg leading-relaxed opacity-70">
+                Notre mission est de rendre l&apos;automatisation digitale accessible à tous.
+              </motion.p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ══════════════════════════════════════════════════════
           CTA FINAL
          ══════════════════════════════════════════════════════ */}
@@ -1012,26 +1575,77 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </motion.div>
           </motion.div>
         </div>
+      </section>
 
-        {/* Footer minimal */}
-        <div className="landing-footer mx-auto mt-24 flex max-w-6xl flex-col items-center justify-between gap-4 border-t border-white/5 pt-8 sm:flex-row">
-          <div className="flex items-center gap-3">
-            <FlareMark tone="dark" className="w-5" />
-            <span className="landing-brand-title text-xs uppercase">FLARE AI</span>
+      {/* ══════════════════════════════════════════════════════
+          CURVED CONTACT HUB (SOCIAL FOOTER)
+         ══════════════════════════════════════════════════════ */}
+      <section className="relative z-20 mt-[-80px] overflow-hidden theme-dark-override">
+        {/* SVG Curve Transition (Symmetrical Dip) */}
+        <div className="relative w-full overflow-hidden leading-[0] fill-[#020305]">
+           <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 100" preserveAspectRatio="none" className="relative block w-full h-[60px] md:h-[120px]">
+             <path d="M0,0 Q600,120 1200,0 V120 H0 Z"></path>
+           </svg>
+        </div>
+
+        <div className="bg-[#020305] px-6 py-20 sm:px-16 md:px-24">
+          <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
+            <motion.h2 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-3xl md:text-5xl font-black text-white mb-20"
+            >
+              Restons <span className="text-orange-500">connectés.</span>
+            </motion.h2>
+
+            <div className="flex flex-wrap justify-center items-center gap-12 sm:gap-16 w-full max-w-4xl mb-24 mx-auto">
+              {[
+                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg", label: "Facebook", href: "https://facebook.com", color: "#1877F2" },
+                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg", label: "Instagram", href: "https://instagram.com", color: "#E4405F" },
+                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg", label: "WhatsApp", href: "https://whatsapp.com", color: "#25D366" },
+                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg", label: "Messenger", href: "https://messenger.com", color: "#0084FF" },
+                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Circle-icons-mail.svg", label: "Email", href: "mailto:contact@flare.mg", color: "#EA4335" },
+              ].map((social, i) => (
+                <a
+                  key={i}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-4 cursor-pointer"
+                >
+                  <img src={social.src} alt={social.label} className="w-12 h-12 object-contain" />
+                  <span className="text-[12px] font-black uppercase tracking-[0.2em] text-white">
+                    {social.label}
+                  </span>
+                </a>
+              ))}
+            </div>
+
+            {/* Final Legal Footer */}
+            <div className="w-full flex flex-col md:flex-row items-center justify-between pt-12 border-t border-white/10 gap-8">
+              <div className="flex items-center gap-3">
+                <FlareMark className="w-6" /> {/* Now natively white thanks to SVG override */}
+                <span className="text-xs font-black uppercase text-white tracking-widest">FLARE AI</span>
+              </div>
+              
+              <div className="flex flex-wrap justify-center gap-8">
+                {[
+                  { label: "Confidentialité", href: "#" },
+                  { label: "CGU", href: "#" },
+                  { label: "Politique Cookies", href: "#" },
+                ].map((link) => (
+                  <a key={link.label} href={link.href} className="text-[10px] uppercase font-bold text-white/60 hover:text-white transition-colors tracking-widest">
+                    {link.label}
+                  </a>
+                ))}
+              </div>
+
+              <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+                © 2026 FLARE AI — Madagascar
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-6">
-            {[
-              { label: "Confidentialité", href: "#" },
-              { label: "CGU", href: "#" },
-            ].map((link) => (
-              <a key={link.label} href={link.href} className="landing-footer-link text-[10px] uppercase transition-colors font-medium">
-                {link.label}
-              </a>
-            ))}
-          </div>
-          <p className="landing-footer-link text-[10px] uppercase font-medium">
-            Conçu par FLARE AI — Madagascar
-          </p>
         </div>
       </section>
 
