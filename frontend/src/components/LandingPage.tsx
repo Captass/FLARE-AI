@@ -3,10 +3,17 @@
 import { useState, useEffect, useRef, Suspense } from "react";
 import { ArrowDown, ArrowRight, Zap, MessageSquare, BarChart3, Bot, Menu, X, Download, Instagram, Mail, Facebook, TrendingUp, Globe, Search, Linkedin } from "lucide-react";
 import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useMotionTemplate } from "framer-motion";
-import Spline from "@splinetool/react-spline";
+import dynamic from "next/dynamic";
 import React from "react";
 import FlareMark from "./FlareMark";
 import { ThemePreference } from "@/lib/theme";
+
+// SplineScene is a browser-only 3D engine wrapper — must stay client-side only
+// Using a local wrapper avoids package export resolution issues during SSG
+const Spline = dynamic(() => import("./SplineScene"), {
+  ssr: false,
+  loading: () => <div className="landing-spline-fallback w-full h-full" />,
+});
 
 /* Tiny error boundary so a Spline crash doesn't kill the page */
 class SplineBoundary extends React.Component<
