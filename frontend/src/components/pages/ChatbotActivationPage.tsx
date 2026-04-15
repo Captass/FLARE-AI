@@ -59,6 +59,38 @@ function parseApiError(e: unknown, fallback = "Une erreur est survenue."): strin
   }
   return raw || fallback;
 }
+export interface ActivationContextPage {
+  page_id: string;
+  page_name: string;
+  is_active: boolean;
+}
+
+export interface ActivationPageContext {
+  imported_pages: ActivationContextPage[];
+  selected_page_id: string | null;
+  target_page_id: string | null;
+  target_page_name: string | null;
+  target_page_url: string | null;
+}
+
+function normalizePageList(pages: unknown[]): ActivationContextPage[] {
+  if (!Array.isArray(pages)) return [];
+  return pages.map((p: any) => ({
+    page_id: String(p.page_id || ""),
+    page_name: String(p.page_name || ""),
+    is_active: Boolean(p.is_active),
+  })).filter(p => p.page_id);
+}
+
+function getSnapshotSelectedPageId(
+  pages: ActivationContextPage[],
+  candidates: (string | null | undefined)[]
+): string | null {
+  for (const c of candidates) {
+    if (c && pages.some((p) => p.page_id === c)) return c;
+  }
+  return getDefaultSelectedPageId(pages);
+}
 
 function getDefaultSelectedPageId(pages: ActivationContextPage[]): string | null {
   const active = pages.find((page) => page.is_active);
