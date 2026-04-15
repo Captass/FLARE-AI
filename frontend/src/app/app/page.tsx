@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import LoginScreen from "@/components/LoginScreen";
 import dynamic from "next/dynamic";
@@ -374,7 +374,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
   },
 };
 
-export default function Home() {
+function HomeContent() {
   const { user, token, loading: authLoading, error: authError, getFreshToken, login, loginWithPassword, signUpWithPassword, loginWithGoogle, resetPassword, logout, sendSignupPin, verifySignupPin } = useAuth();
   const [navStack, setNavStack] = useState<AppView[]>(["home"]);
   const activeView = navStack[navStack.length - 1];
@@ -1692,6 +1692,14 @@ export default function Home() {
       />
 
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="h-screen w-full bg-[#fbf7f0] flex items-center justify-center">Chargement...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }
 

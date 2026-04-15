@@ -29,52 +29,6 @@ class SplineBoundary extends React.Component<
   }
 }
 
-/* 3D Tilt Component for cards */
-function TiltCard({ children, index }: { children: React.ReactNode; index: number }) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
-
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  return (
-    <motion.div
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        rotateY,
-        rotateX,
-        transformStyle: "preserve-3d",
-      }}
-      className="relative w-full"
-    >
-      <div style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
-        {children}
-      </div>
-    </motion.div>
-  );
-}
-
 /* Cinematic Blur-on-Scroll Component */
 function BlurScrollText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
@@ -190,36 +144,6 @@ function ChatSimulation({ scenarioId }: { scenarioId: number }) {
         </motion.div>
       )}
     </div>
-  );
-}
-
-/* Interactive Glow Button */
-function GlowButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const { left, top } = e.currentTarget.getBoundingClientRect();
-    mouseX.set(e.clientX - left);
-    mouseY.set(e.clientY - top);
-  };
-
-  return (
-    <motion.button
-      onClick={onClick}
-      onMouseMove={handleMouseMove}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className={`relative overflow-hidden ${className}`}
-    >
-      <motion.div
-        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{
-          background: useMotionTemplate`radial-gradient(120px circle at ${mouseX}px ${mouseY}px, rgba(249, 115, 22, 0.15), transparent 80%)`,
-        }}
-      />
-      {children}
-    </motion.button>
   );
 }
 
@@ -500,31 +424,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     }
   ];
 
-  /* ── Cas d'usage orientés business ── */
-  const USE_CASES = [
-    {
-      icon: MessageSquare,
-      title: "Automatisez vos Ventes",
-      description: "Un chatbot Messenger qui répond à vos prospects 24/7 et qualifie les leads. Ne ratez plus aucune vente, même la nuit.",
-      cta: "Activer mon assistant",
-      prompt: "Configure mon chatbot Facebook pour répondre aux clients automatiquement",
-    },
-    {
-      icon: Zap,
-      title: "Automatisez vos Contenus",
-      description: "Générez vos visuels et vidéos TikTok/Facebook en un clic. FLARE s'occupe de la création pour vous rendre visible.",
-      cta: "Créer un visuel",
-      prompt: "Rédige un post Facebook accrocheur avec un visuel pour promouvoir mes services",
-    },
-    {
-      icon: BarChart3,
-      title: "Automatisez votre Gestion",
-      description: "Édition automatique de devis, factures et rapports. Libérez votre temps pour vous concentrer sur vos clients.",
-      cta: "Automatiser mes docs",
-      prompt: "Génère un modèle de devis professionnel pour mes services",
-    },
-  ];
-
   /* --- Avantages concrets (Simplifiés) --- */
   const ADVANTAGES = [
     { number: "01", title: "Zéro technique", text: "Activé par nos experts en 15 min." },
@@ -718,7 +617,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         {/* Header */}
-        <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
+        <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 md:px-12 lg:px-24 sm:pt-0 sm:pb-6">
           <motion.header
             initial={{ opacity: 0 }}
             animate={{ opacity: isLoaded ? 1 : 0 }}
@@ -861,7 +760,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           SOLUTIONS SECTION (BOTNATION STYLE SIMULATION)
          ══════════════════════════════════════════════════════ */}
       <section id="solutions" className="relative z-20 py-24 sm:py-32 bg-[#F9F7F2] border-t border-black/5 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
           
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-6xl font-black text-black mt-4 font-[family-name:var(--font-outfit)]">FLARE AI en action.</h2>
@@ -958,7 +857,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           ECOSYSTEM HUB (STANDARD LAYOUT)
          ══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 overflow-hidden border-t border-black/5 bg-white">
-        <div className="max-w-7xl mx-auto px-6 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
             
             {/* Left: Interactive Platform Grid */}
@@ -1048,7 +947,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           COMMAND CENTER (DASHBOARD ILLUSTRATIONS)
          ══════════════════════════════════════════════════════ */}
       <section id="advantages" className="relative z-20 py-24 sm:py-32 bg-white border-y border-black/5 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left: Direct Text Content */}
             <div>
@@ -1200,7 +1099,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </section>
 
       {/* ── Trust / Reviews Section (Draggable Carousel) ── */}
-      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24 overflow-hidden border-y border-black/5 bg-white">
+      <section className="relative z-20 px-6 py-20 md:px-12 lg:px-24 overflow-hidden border-y border-black/5 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="mb-12 md:mb-16">
             <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Témoignages</span>
@@ -1209,7 +1108,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
           <motion.div 
             drag="x"
-            dragConstraints={{ right: 0, left: isMobile ? -1400 : -1800 }}
+            dragConstraints={{ right: 0, left: isMobile ? -1400 : (typeof window !== 'undefined' && window.innerWidth < 1024 ? -1600 : -1800) }}
             dragElastic={0.1}
             className="flex gap-8 cursor-grab active:cursor-grabbing pb-12"
           >
@@ -1217,7 +1116,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <motion.div
                 key={i}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="relative min-w-[300px] md:min-w-[450px] p-10 md:p-14 rounded-[40px] bg-white border border-black/10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-2xl hover:border-orange-500/20"
+                className="relative min-w-[300px] sm:min-w-[380px] lg:min-w-[450px] p-10 md:p-14 rounded-[40px] bg-white border border-black/10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-2xl hover:border-orange-500/20"
               >
                 <div className="flex items-center gap-6 mb-10">
                   <div className="w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center text-orange-600 font-black text-xl">
@@ -1244,7 +1143,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </section>
 
       {/* ── Security / Reliability Section ── */}
-      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24 bg-gradient-to-b from-transparent to-white/[0.01]">
+      <section className="relative z-20 px-6 py-20 md:px-12 lg:px-24 bg-gradient-to-b from-transparent to-white/[0.01]">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1278,7 +1177,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           AVIS & CONFIANCE
          ══════════════════════════════════════════════════════ */}
-      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32">
+      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 md:px-12 lg:px-24 md:py-32">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -1292,7 +1191,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               { title: "Chiffrement de bout en bout", text: "Toutes tes données sont chiffrées en transit et au repos. Aucun accès tiers non autorisé." },
               { title: "Hébergement sécurisé", text: "Infrastructure Google Cloud Platform, conformité RGPD, sauvegardes automatiques quotidiennes." },
@@ -1337,7 +1236,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
       <section
         id="pricing"
-        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
+        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 md:px-12 lg:px-24 md:py-32"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -1360,7 +1259,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
           >
             {[
               {
@@ -1459,7 +1358,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           NOTRE HISTOIRE
          ══════════════════════════════════════════════════════ */}
-      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
+      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 md:px-12 lg:px-24 md:py-32">
         {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
         <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
           <SplineBoundary>
@@ -1545,7 +1444,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           CTA FINAL
          ══════════════════════════════════════════════════════ */}
-      <section className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
+      <section className="landing-section-base relative overflow-hidden px-6 py-24 md:px-12 lg:px-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             variants={containerVariants}
@@ -1595,7 +1494,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
            </svg>
         </div>
 
-        <div className="bg-[#020305] px-6 py-20 sm:px-16 md:px-24">
+        <div className="bg-[#020305] px-6 py-20 md:px-12 lg:px-24">
           <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
