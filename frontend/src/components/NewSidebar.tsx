@@ -122,7 +122,7 @@ function NavButton({
 
       <Icon size={15} strokeWidth={isActive ? 2 : 1.5} className="shrink-0" />
 
-      {expanded && <span className="flex-1 truncate text-[13px] tracking-[-0.01em]">{label}</span>}
+      {expanded && <span className="flex-1 truncate text-sm tracking-[-0.01em]">{label}</span>}
 
       {expanded && !isActive && (
         <ChevronRight size={12} className="shrink-0 opacity-0 transition-opacity group-hover:opacity-70" />
@@ -315,7 +315,7 @@ export default function NewSidebar({
               <FlareMark tone="auto" className="w-[16px]" />
             </div>
             {expanded && (
-              <span className="truncate text-[11px] font-medium uppercase tracking-[0.15em] text-[var(--text-muted)]">
+              <span className="truncate text-xs font-bold uppercase tracking-[0.15em] text-[var(--text-muted)]">
                 {brandName || "FLARE AI"}
               </span>
             )}
@@ -441,11 +441,11 @@ export default function NewSidebar({
             {expanded && (
               <>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12px] font-medium leading-tight text-[var(--text-primary)]">
+                  <p className="truncate text-sm font-bold leading-tight text-[var(--text-primary)]">
                     {displayName || user?.email?.split("@")[0] || (lang === "en" ? "User" : "Utilisateur")}
                   </p>
                   {user?.email && (
-                    <p className="mt-0.5 truncate text-[10px] leading-tight text-[var(--text-secondary)]">
+                    <p className="mt-0.5 truncate text-xs leading-tight text-[var(--text-secondary)]">
                       {user.email}
                     </p>
                   )}

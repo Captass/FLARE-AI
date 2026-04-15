@@ -54,11 +54,11 @@ function StatCard({
   }
   return (
     <div className="flex flex-col gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
-      <div className="flex items-center gap-1.5">
-        <Icon size={11} className="text-[var(--text-muted)]" />
-        <span className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">{label}</span>
+      <div className="flex items-center gap-2">
+        <Icon size={16} className="text-[var(--text-secondary)]" />
+        <span className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">{label}</span>
       </div>
-      <span className="text-[22px] font-semibold leading-none tracking-tight text-[var(--text-primary)] tabular-nums">
+      <span className="text-3xl font-bold leading-none tracking-tight text-[var(--text-primary)] tabular-nums">
         {value.toLocaleString("fr-FR")}
       </span>
     </div>
@@ -139,47 +139,47 @@ function ChatbotStatusCard({
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-[15px] font-medium text-[var(--text-primary)]">Chatbot Facebook</h3>
+            <h3 className="text-base font-bold text-[var(--text-primary)]">Chatbot Facebook</h3>
             {isComplete ? (
-              <span className="flex items-center gap-1 rounded-full bg-orange-500/12 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-orange-500 dark:text-orange-300">
-                <CheckCircle2 size={9} />
+              <span className="flex items-center gap-1 rounded-full bg-orange-500/12 px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-orange-600 dark:text-orange-300">
+                <CheckCircle2 size={12} />
                 En ligne
               </span>
             ) : isConnected ? (
-              <span className="rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-orange-400">
+              <span className="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-orange-500">
                 Config requise
               </span>
             ) : (
-              <span className="rounded-full bg-[var(--surface-subtle)] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[var(--text-muted)]">
+              <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-[var(--text-secondary)]">
                 Non configure
               </span>
             )}
           </div>
           {active_page && (
-            <p className="mt-1 text-[12px] text-[var(--text-secondary)]">
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
               Page:{" "}
-              <span className={`font-medium ${statusColor(active_page.status)}`}>{active_page.page_name}</span>
+              <span className={`font-bold ${statusColor(active_page.status)}`}>{active_page.page_name}</span>
               {active_page.status !== "active" && (
-                <span className="ml-1.5 text-orange-400/80">({statusLabel(active_page.status)})</span>
+                <span className="ml-1.5 text-orange-500 font-medium">({statusLabel(active_page.status)})</span>
               )}
             </p>
           )}
           {preferences && (
-            <p className="mt-0.5 text-[11px] text-[var(--text-muted)]">
-              {preferences.bot_name} � Ton {preferences.tone}
+            <p className="mt-1 text-sm font-medium text-[var(--text-secondary)]">
+              {preferences.bot_name} • Ton {preferences.tone}
             </p>
           )}
           {active_page?.last_error && (
-            <div className="mt-2 flex items-start gap-1.5 rounded-lg bg-orange-500/10 px-3 py-2">
-              <AlertCircle size={11} className="mt-0.5 shrink-0 text-orange-400/80" />
-              <p className="text-[11px] leading-relaxed text-orange-500 dark:text-orange-300">{active_page.last_error}</p>
+            <div className="mt-3 flex items-start gap-2 rounded-lg bg-orange-500/10 px-4 py-3">
+              <AlertCircle size={16} className="mt-0.5 shrink-0 text-orange-600" />
+              <p className="text-sm font-medium leading-relaxed text-orange-600 dark:text-orange-300">{active_page.last_error}</p>
             </div>
           )}
           <div className="mt-3 flex flex-wrap gap-2">
             {!isComplete && (
               <button
                 onClick={() => onNavigate?.("chatbot")}
-                className="flex items-center gap-1.5 rounded-lg bg-orange-500/10 px-3 py-2 text-[11px] font-medium text-orange-500 transition-all hover:bg-orange-500/20 dark:text-orange-300"
+                className="flex items-center gap-2 rounded-lg bg-orange-500/10 px-4 py-2.5 text-xs font-bold text-orange-600 transition-all hover:bg-orange-500/20 dark:text-orange-300"
               >
                 <Zap size={11} />
                 {step === "connect_page" ? "Connecter ma page" : "Terminer la config"}
@@ -189,21 +189,21 @@ function ChatbotStatusCard({
               <>
                 <button
                   onClick={() => onNavigate?.("conversations")}
-                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-[11px] font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 >
                   <MessageCircle size={11} />
                   Conversations
                 </button>
                 <button
                   onClick={() => onNavigate?.("leads")}
-                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-[11px] font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 >
                   <Users size={11} />
                   Leads
                 </button>
                 <button
                   onClick={() => onNavigate?.("chatbot")}
-                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-[11px] font-medium text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
+                  className="flex items-center gap-1.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-xs font-bold text-[var(--text-secondary)] transition-all hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
                 >
                   <Settings size={11} />
                   Gerer
@@ -213,7 +213,7 @@ function ChatbotStatusCard({
           </div>
         </div>
         {total_pages > 0 && (
-          <p className="mt-0.5 shrink-0 text-[11px] text-[var(--text-muted)]">
+          <p className="mt-0.5 shrink-0 text-xs text-[var(--text-secondary)]">
             {total_pages} page{total_pages > 1 ? "s" : ""}
           </p>
         )}
@@ -314,30 +314,30 @@ export default function DashboardPanel({
         >
           <div className="mb-5 flex items-center gap-2.5">
             {brandLogoUrl ? (
-              <img src={brandLogoUrl} alt="" className="h-5 w-5 rounded object-contain opacity-70" />
+              <img src={brandLogoUrl} alt="" className="h-6 w-6 rounded object-contain opacity-90" />
             ) : (
-              <FlareMark tone="auto" className="w-5" />
+              <FlareMark tone="auto" className="w-6" />
             )}
-            <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">
+            <p className="text-xs uppercase tracking-[0.08em] text-[var(--text-secondary)] font-bold">
               {scopeLabel}
             </p>
           </div>
-          <h1 className="text-[27px] font-semibold tracking-[-0.03em] text-[var(--text-primary)] md:text-[34px]">
+          <h1 className="text-3xl font-bold tracking-[-0.03em] text-[var(--text-primary)] md:text-[40px] md:leading-tight">
             {greeting}, {firstName}.
           </h1>
-          <p className="mt-1.5 text-[14px] font-light text-[var(--text-secondary)]">
+          <p className="mt-2 text-base font-medium text-[var(--text-secondary)]">
             Voici l'etat de ton compte et de tes automatisations.
           </p>
         </motion.section>
         <section>
           <div className="mb-3 flex items-center justify-between px-0.5">
-            <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Chatbot</p>
+            <p className="text-xs uppercase font-bold tracking-[0.08em] text-[var(--text-secondary)]">Chatbot</p>
             {token && (
               <button
                 onClick={() => setRefreshKey((k) => k + 1)}
-                className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
               >
-                <RefreshCw size={10} className={loadingOverview ? "animate-spin" : ""} />
+                <RefreshCw size={12} className={loadingOverview ? "animate-spin" : ""} />
                 Actualiser
               </button>
             )}
@@ -351,19 +351,19 @@ export default function DashboardPanel({
         {token && (
           <section>
             <div className="mb-3 flex items-center justify-between px-0.5">
-              <div className="flex items-center gap-1.5">
-                <TrendingUp size={11} className="text-[var(--text-muted)]" />
-                <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Activite</p>
+              <div className="flex items-center gap-2">
+                <TrendingUp size={16} className="text-[var(--text-secondary)]" />
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Activite</p>
               </div>
               <div className="flex items-center gap-0.5 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] p-0.5">
                 {PERIOD_OPTIONS.map((opt) => (
                   <button
                     key={opt.key}
                     onClick={() => setPeriod(opt.key)}
-                    className={`rounded-md px-2.5 py-1 text-[10px] font-medium transition-all ${
+                    className={`rounded-md px-3 py-1.5 text-xs font-bold transition-all ${
                       period === opt.key
                         ? "bg-[var(--surface-base)] text-[var(--text-primary)] shadow-sm"
-                        : "text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                        : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                     }`}
                   >
                     {opt.label}
@@ -379,7 +379,7 @@ export default function DashboardPanel({
           </section>
         )}
         <section>
-          <p className="mb-3 px-0.5 text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Acces rapide</p>
+          <p className="mb-3 px-0.5 text-xs font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Acces rapide</p>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-3">
             {QUICK_ACTIONS.map((action, i) => {
               const Icon = action.icon;
@@ -392,12 +392,12 @@ export default function DashboardPanel({
                   onClick={() => onNavigate?.(action.view)}
                   className="group flex flex-col items-start gap-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4 text-left transition-all duration-200 hover:bg-[var(--surface-subtle)]"
                 >
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${action.color}`}>
-                    <Icon size={14} />
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${action.color}`}>
+                    <Icon size={18} />
                   </div>
                   <div>
-                    <p className="text-[12px] font-medium leading-tight text-[var(--text-primary)]">{action.label}</p>
-                    <p className="mt-0.5 text-[10px] leading-tight text-[var(--text-secondary)]">{action.description}</p>
+                    <p className="text-sm font-bold leading-tight text-[var(--text-primary)]">{action.label}</p>
+                    <p className="mt-1 text-xs font-medium leading-tight text-[var(--text-secondary)]">{action.description}</p>
                   </div>
                 </motion.button>
               );
@@ -406,13 +406,13 @@ export default function DashboardPanel({
         </section>
           <section>
             <div className="mb-3 flex items-center justify-between px-0.5">
-              <p className="text-[10px] uppercase tracking-[0.08em] text-[var(--text-muted)]">Modules</p>
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-[var(--text-secondary)]">Modules</p>
               <button
                 onClick={() => onNavigate?.("automationHub")}
-                className="flex items-center gap-1 text-[10px] text-[var(--text-muted)] transition-colors hover:text-[var(--text-primary)]"
+                className="flex items-center gap-1.5 text-xs font-bold text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
               >
                 Voir tout
-                <ChevronRight size={11} />
+                <ChevronRight size={14} />
               </button>
             </div>
             <div className="grid gap-2 md:grid-cols-2">
@@ -424,13 +424,13 @@ export default function DashboardPanel({
                 onClick={() => onNavigate?.("chatbot")}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400">
-                      <Bot size={14} />
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-400">
+                      <Bot size={18} />
                     </div>
                     <div>
-                      <p className="text-[13px] font-medium text-[var(--text-primary)]">Chatbot Facebook</p>
-                      <p className="mt-0.5 text-[11px] text-[var(--text-secondary)]">
+                      <p className="text-sm font-bold text-[var(--text-primary)]">Chatbot Facebook</p>
+                      <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">
                         {overview?.step === "complete"
                           ? "Operationnel"
                           : overview?.step === "connect_page"
@@ -441,7 +441,7 @@ export default function DashboardPanel({
                       </p>
                     </div>
                   </div>
-                  <ArrowUpRight size={13} className="mt-0.5 shrink-0 text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-primary)]" />
+                  <ArrowUpRight size={16} className="mt-0.5 shrink-0 text-[var(--text-secondary)] transition-colors group-hover:text-[var(--text-primary)]" />
                 </div>
               </motion.div>
               <motion.div
@@ -452,16 +452,16 @@ export default function DashboardPanel({
                 onClick={() => onNavigate?.("chat")}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[rgba(12,32,74,0.12)] text-[var(--accent-navy)] dark:bg-[rgba(122,158,255,0.16)] dark:text-[rgb(183,203,255)]">
-                      <Sparkles size={14} />
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[rgba(12,32,74,0.12)] text-[var(--accent-navy)] dark:bg-[rgba(122,158,255,0.16)] dark:text-[rgb(183,203,255)]">
+                      <Sparkles size={18} />
                     </div>
                     <div>
-                      <p className="text-[13px] font-medium text-[var(--text-primary)]">Assistant IA</p>
-                      <p className="mt-0.5 text-[11px] text-[var(--text-secondary)]">Actif</p>
+                      <p className="text-sm font-bold text-[var(--text-primary)]">Assistant IA</p>
+                      <p className="mt-1 text-xs font-medium text-[var(--text-secondary)]">Actif</p>
                     </div>
                   </div>
-                  <ArrowUpRight size={13} className="mt-0.5 shrink-0 text-[var(--text-muted)] transition-colors group-hover:text-[var(--text-primary)]" />
+                  <ArrowUpRight size={16} className="mt-0.5 shrink-0 text-[var(--text-secondary)] transition-colors group-hover:text-[var(--text-primary)]" />
                 </div>
               </motion.div>
             </div>

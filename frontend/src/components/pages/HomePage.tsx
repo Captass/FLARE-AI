@@ -89,10 +89,10 @@ function KpiCard({
       className="flex-1 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] px-5 py-4"
     >
       <div className="flex items-center justify-between gap-3">
-        <p className="text-xs font-bold uppercase tracking-[0.1em] text-[var(--text-muted)]">{label}</p>
-        <Icon size={14} className="text-orange-500/60" />
+        <p className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">{label}</p>
+        <Icon size={16} className="text-orange-500/80" />
       </div>
-      <p className="mt-1 text-2xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{value}</p>
+      <p className="mt-1 text-3xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{value}</p>
     </motion.div>
   );
 }
@@ -183,8 +183,8 @@ export default function HomePage({
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
           className="text-center space-y-4"
         >
-          <p className="text-sm text-[var(--text-muted)]">
-            Bonjour <span className="font-semibold text-[var(--text-secondary)]">{displayName || "FLARE AI"}</span>
+          <p className="text-base text-[var(--text-secondary)]">
+            Bonjour <span className="font-bold text-[var(--text-primary)]">{displayName || "FLARE AI"}</span>
           </p>
           <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)] leading-tight">
             Vos automatisations,{" "}
@@ -223,7 +223,7 @@ export default function HomePage({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="mb-5 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--text-muted)]"
+            className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-[var(--text-secondary)]"
           >
             Plateformes connectées
           </motion.p>
@@ -250,13 +250,13 @@ export default function HomePage({
                   <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${p.bgColor} transition-transform duration-300 group-hover:scale-110`}>
                     <Logo className={`w-6 h-6 ${p.logoColor}`} />
                   </div>
-                  <span className="text-[13px] font-bold text-[var(--text-primary)]">{p.name}</span>
+                  <span className="text-sm font-bold text-[var(--text-primary)]">{p.name}</span>
                   {p.available ? (
-                    <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-orange-500">
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-orange-600">
                       Connecter →
                     </span>
                   ) : (
-                    <span className="text-[9px] font-bold uppercase tracking-[0.12em] text-[var(--text-muted)]">
+                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                       Bientôt
                     </span>
                   )}

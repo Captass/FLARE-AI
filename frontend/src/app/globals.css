@@ -71,7 +71,7 @@ html.dark {
   --dot-grid: #0a0a0e;
   --zinc-900: rgb(22, 22, 28);
   --zinc-950: rgb(14, 14, 19);
-  --text-muted: rgba(255, 255, 255, 0.5);
+  --text-muted: rgba(255, 255, 255, 0.8);
   --text-primary: #ffffff;
   --bg-card: rgba(20, 20, 26, 0.95);
   --bg-card-hover: rgba(28, 28, 36, 0.95);
@@ -96,10 +96,10 @@ html.dark {
   --brand-blue-soft: 139, 170, 236;
   --brand-blue-strong: 63, 94, 170;
   /* Semantic text tokens */
-  --text-secondary: rgba(255, 255, 255, 0.7);
-  --text-tertiary: rgba(255, 255, 255, 0.55);
-  --text-quaternary: rgba(255, 255, 255, 0.4);
-  --text-placeholder: rgba(255, 255, 255, 0.3);
+  --text-secondary: rgba(255, 255, 255, 0.9);
+  --text-tertiary: rgba(255, 255, 255, 0.85);
+  --text-quaternary: rgba(255, 255, 255, 0.75);
+  --text-placeholder: rgba(255, 255, 255, 0.6);
   /* Semantic surface tokens */
   --surface-base: rgb(10, 10, 14);
   --surface-subtle: rgba(255, 255, 255, 0.04);
@@ -130,7 +130,7 @@ html.light {
   --dot-grid: #fafafc;
   --zinc-900: rgb(235, 235, 242);
   --zinc-950: rgb(220, 220, 232);
-  --text-muted: rgba(15, 15, 20, 0.55);
+  --text-muted: rgba(15, 15, 20, 0.75);
   --text-primary: #0a0a0e;
   --bg-card: rgba(255, 255, 255, 0.95);
   --bg-card-hover: rgba(255, 255, 255, 1);
@@ -155,10 +155,10 @@ html.light {
   --brand-blue-soft: 139, 170, 236;
   --brand-blue-strong: 63, 94, 170;
   /* Semantic text tokens — proper hierarchy */
-  --text-secondary: rgba(15, 15, 20, 0.75);
-  --text-tertiary: rgba(15, 15, 20, 0.55);
-  --text-quaternary: rgba(15, 15, 20, 0.4);
-  --text-placeholder: rgba(15, 15, 20, 0.35);
+  --text-secondary: rgba(15, 15, 20, 0.85);
+  --text-tertiary: rgba(15, 15, 20, 0.8);
+  --text-quaternary: rgba(15, 15, 20, 0.7);
+  --text-placeholder: rgba(15, 15, 20, 0.6);
   /* Semantic surface tokens */
   --surface-base: rgb(250, 250, 252);
   --surface-subtle: rgba(15, 15, 20, 0.03);
@@ -166,9 +166,9 @@ html.light {
   --surface-overlay: rgba(15, 15, 20, 0.08);
   --surface-selected: rgba(249, 115, 22, 0.08);
   /* Semantic border tokens */
-  --border-default: rgba(15, 15, 20, 0.10);
-  --border-muted: rgba(15, 15, 20, 0.06);
-  --border-faint: rgba(15, 15, 20, 0.04);
+  --border-default: rgba(15, 15, 20, 0.18);
+  --border-muted: rgba(15, 15, 20, 0.12);
+  --border-faint: rgba(15, 15, 20, 0.08);
   --border-strong: rgba(15, 15, 20, 0.22);
   /* Divider */
   --divide-default: rgba(15, 15, 20, 0.06);
