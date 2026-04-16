@@ -220,6 +220,27 @@ const PLAN_PRICES: Record<string, string> = {
   enterprise: "Sur devis",
 };
 
+const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
+  {
+    code: "mvola",
+    label: "MVola",
+    recipient_name: "FLARE AI",
+    recipient_number: "034 02 107 31",
+    instructions:
+      "Envoyez le montant exact via MVola au numero ci-dessus, puis saisissez la reference de transaction generee.",
+    currency: "MGA",
+  },
+  {
+    code: "orange_money",
+    label: "Orange Money",
+    recipient_name: "FLARE AI",
+    recipient_number: "034 02 107 31",
+    instructions:
+      "Envoyez le montant exact via Orange Money au numero ci-dessus, puis saisissez la reference de transaction generee.",
+    currency: "MGA",
+  },
+];
+
 const SECTORS = [
   "Commerce",
   "Restauration",
@@ -480,9 +501,10 @@ export default function ChatbotActivationPage({
               )
           ),
         ];
-        setPaymentMethods(allMethods);
-        if (allMethods.length > 0 && !payMethodCode) {
-          setPayMethodCode(allMethods[0].code);
+        const resolvedMethods = allMethods.length > 0 ? allMethods : DEFAULT_PAYMENT_METHODS;
+        setPaymentMethods(resolvedMethods);
+        if (resolvedMethods.length > 0 && !payMethodCode) {
+          setPayMethodCode(resolvedMethods[0].code);
         }
 
         if (fetchedAr) {
@@ -711,6 +733,10 @@ export default function ChatbotActivationPage({
   const handleSubmitPayment = async () => {
         if (!txRef.trim()) {
       setError("Veuillez indiquer la reference de transaction.");
+      return;
+    }
+    if (!payMethodCode.trim()) {
+      setError("Veuillez choisir une methode de paiement.");
       return;
     }
     setBusy(true);
