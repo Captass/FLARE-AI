@@ -2,7 +2,7 @@
   "id": "/",
   "name": "FLARE AI",
   "short_name": "FLARE AI",
-  "description": "Assistant IA pour rechercher, creer, analyser et automatiser plus vite.",
+  "description": "Beta assistee FLARE AI: chatbot Facebook Messenger pour TPE/PME a Madagascar, paiement local et support humain.",
   "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],

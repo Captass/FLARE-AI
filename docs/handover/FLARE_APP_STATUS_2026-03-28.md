@@ -16,7 +16,15 @@ Le produit est organise en deux temps :
 2. utilisateur connecte -> application FLARE AI
 
 La landing publique reste la vitrine marketing.
-L'application connectee reste l'espace de travail.
+L'application connectee est maintenant recentree sur la beta assistee du `Chatbot Facebook`.
+
+## Etat courant
+
+- la beta publique vendue aujourd'hui est centree sur `Chatbot Facebook`
+- les surfaces `Assistant IA`, `Automatisations`, `workspace` et `organisation` sont historiques ou hors perimetre de la beta publique
+- le shell connecte doit donner la priorite a `Accueil`, `Mon chatbot Facebook`, `Offre / Activation`, `Support / Parametres`
+- le compte connecte pilote un seul parcours client
+- quand le paiement est valide, le plan choisi doit etre applique et visible cote client comme cote admin
 
 ## Update 2026-03-30
 
@@ -98,19 +106,19 @@ Decisions cles :
 - wording "Bot actif" / "Reprise manuelle" au lieu de "agent" / "human"
 - hub Operations admin avec Activations, Paiements, Commandes
 
-## Update 2026-04-04 - workspace owner self-serve
+## Update 2026-04-04 - historique workspace owner self-serve
 
-Le parcours de lancement a ete simplifie pour le mode solo :
+Les lignes ci-dessous sont conservees pour contexte historique, mais ne decrivent plus la beta actuelle :
 
-- tout utilisateur connecte peut creer son propre workspace FLARE
-- le createur du workspace devient automatiquement `owner`
-- le workspace cree devient immediatement l'espace actif
-- le parcours renvoie ensuite directement vers `Chatbot Facebook`
-- l'utilisateur connecte Facebook depuis cet espace, pas depuis l'espace personnel
-- seuls le proprietaire ou un admin peuvent connecter, activer, desactiver ou supprimer une page Facebook
-- les autres membres peuvent voir l'etat, mais pas gerer Facebook
-- si Meta ne renvoie pas les droits de page `MANAGE` et `MESSAGING`, la page reste visible mais l'activation est refusee avec un message clair
-- un reconnect OAuth ne doit plus remettre silencieusement une page active a `OFF`
+- tout utilisateur connecte pouvait creer son propre workspace FLARE
+- le createur du workspace devenait automatiquement `owner`
+- le workspace cree devenait immediatement l'espace actif
+- le parcours renvoyait ensuite directement vers `Chatbot Facebook`
+- l'utilisateur connectait Facebook depuis cet espace, pas depuis l'espace personnel
+- seuls le proprietaire ou un admin pouvaient connecter, activer, desactiver ou supprimer une page Facebook
+- les autres membres pouvaient voir l'etat, mais pas gerer Facebook
+- si Meta ne renvoyait pas les droits de page `MANAGE` et `MESSAGING`, la page restait visible mais l'activation etait refusee avec un message clair
+- un reconnect OAuth ne devait plus remettre silencieusement une page active a `OFF`
 
 Verification technique faite le 4 avril 2026 :
 
@@ -250,22 +258,14 @@ La derniere verification restante est une QA connectee reelle avec un vrai compt
 
 ## Structure actuelle de l'app
 
-Apres connexion, l'utilisateur arrive sur un accueil simple qui sert a choisir un espace :
+Apres connexion, l'utilisateur arrive sur une application recentee autour de 4 surfaces utiles a la beta assistee :
 
-- `Chatbot Facebook`
-- `Assistant IA`
-- `Automatisations`
+- `Accueil`
+- `Mon chatbot Facebook`
+- `Offre / Activation`
+- `Support / Parametres`
 
-Le menu lateral a ete volontairement vide pour alleger le parcours.
-La navigation detaillee est ensuite propre a l'espace choisi.
-
-Si le compte a acces a une ou plusieurs organisations partagees, FLARE ouvre ensuite un choix d'espace clair :
-
-- compte personnel
-- organisation partagee
-
-Ce choix d'espace n'est plus un detail technique.
-Il decide quelle offre, quels modules et quelle identite visuelle sont actifs dans l'app.
+Le menu lateral doit rester simple et ne plus remettre au centre les anciens espaces `Assistant IA`, `Automatisations`, `workspace` ou `organisation`.
 
 ## Modules actifs
 
@@ -282,58 +282,21 @@ Il ouvre maintenant un cockpit `Mon chatbot` avec des onglets internes :
 - `Script de vente` (plan Pro)
 - `Contenu IA` (plan Starter)
 
-Les vues organisation separent ensuite :
-
-- `Mon chatbot`
-- `Conversations`
-- `Prospects`
-- `Budget`
-
 Le cockpit lit les donnees Messenger live via le backend FLARE et pousse la configuration chatbot active lors des mises a jour de preferences, catalogue, portfolio et script de vente.
-Il reste le seul agent metier pleinement operationnel a ce jour.
+Il reste le seul module metier pleinement operationnel a ce jour.
 
-### 2. Assistant IA
+### 2. Surfaces historiques ou verrouillees
 
-L'assistant reste disponible comme espace de travail separe pour :
+- `Assistant IA`
+- `Automatisations`
+- `workspace`
+- `organisation`
 
-- discuter
-- preparer du contenu
-- travailler avec la memoire
-- utiliser des prompts
-- consulter des connaissances
-- manipuler des fichiers
+Ces surfaces peuvent encore exister dans le code ou dans l'historique documentaire, mais elles ne doivent plus structurer le parcours public ni la promesse beta.
 
-Cet espace n'est plus presente comme le centre du produit.
-Il vient apres le chatbot metier dans la hierarchie de l'app.
+## Historique
 
-### 3. Automatisations et agents non prets
-
-Les modules non operationnels restent visibles mais verrouilles.
-Ils n'ouvrent plus de faux parcours.
-Ils affichent un message d'offre ou d'acces, au lieu de promettre une fonction inexistante.
-
-## Organisation et espace de travail
-
-Le produit supporte maintenant deux niveaux d'identite :
-
-- profil personnel du compte
-- branding de l'organisation active
-
-Chaque utilisateur peut travailler :
-
-- dans son espace personnel
-- ou dans une organisation partagee
-
-Exemple vise : plusieurs comptes peuvent partager l'organisation `FLARE AI`.
-
-## Acces par organisation
-
-Le flow actuel est le suivant :
-
-1. l'utilisateur ouvre son compte FLARE
-2. si plusieurs espaces sont disponibles, il choisit ensuite l'organisation ou l'espace personnel
-3. FLARE applique le nom, le logo, l'offre et les modules de cet espace
-4. la session d'organisation reste temporaire et doit etre renouvelee ensuite
+Les paragraphes ci-dessous sont gardes pour contexte technique et historique. Ils ne decrivent pas la beta assistee actuelle.
 
 Hotfix launch 2026-04-03:
 

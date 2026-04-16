@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Conditions d'Utilisation — FLARE AI",
-  description: "Conditions générales d'utilisation de FLARE AI par FLARE AI.",
+  description: "Conditions d'utilisation de la beta assistee FLARE AI (chatbot Facebook, paiement local, activation manuelle).",
 };
 
 export default function TermsPage() {
@@ -24,15 +24,15 @@ export default function TermsPage() {
           <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: "800", margin: "0 0 16px", lineHeight: "1.15", background: "linear-gradient(135deg, #ffffff 0%, rgba(255,255,255,0.65) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Conditions d&apos;Utilisation
           </h1>
-          <p style={{ color: "rgba(248,250,252,0.45)", fontSize: "14px", margin: 0 }}>Dernière mise à jour : 2 avril 2026</p>
+          <p style={{ color: "rgba(248,250,252,0.45)", fontSize: "14px", margin: 0 }}>Dernière mise a jour : 16 avril 2026</p>
         </div>
 
         {[
           { title: "1. Acceptation des conditions", content: "En utilisant FLARE AI, vous acceptez les présentes conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre service." },
-          { title: "2. Description du service", content: "FLARE AI est une plateforme d'intelligence artificielle permettant aux entreprises de gérer un chatbot Messenger, un assistant IA, des campagnes de prospection et du contenu marketing. Le service est fourni par FLARE AI." },
+          { title: "2. Description du service", content: "FLARE AI fournit une beta assistee centree sur le chatbot Facebook Messenger pour TPE/PME a Madagascar. Le parcours inclut un choix d'offre, un paiement manuel local (MVola ou Orange Money), puis une activation manuelle par l'equipe FLARE." },
           { title: "3. Compte utilisateur", content: "Vous êtes responsable de la sécurité de votre compte. Vous devez fournir des informations exactes lors de l'inscription et nous notifier immédiatement de toute utilisation non autorisée de votre compte." },
           { title: "4. Utilisation acceptable", content: "Vous vous engagez à ne pas utiliser FLARE AI pour : envoyer des messages non sollicités (spam), violer les droits de propriété intellectuelle, diffuser du contenu illégal, haineux ou trompeur, contourner les limites de l'API Meta, ou perturber le fonctionnement du service." },
-          { title: "5. Intégration Facebook (Meta)", content: "L'utilisation de notre intégration Facebook est soumise aux Conditions d'utilisation de Meta for Developers. En connectant une Page Facebook, vous acceptez que FLARE AI agisse en tant qu'intermédiaire pour traiter les messages Messenger au nom de votre page." },
+          { title: "5. Intégration Facebook (Meta)", content: "L'utilisation de notre intégration Facebook est soumise aux Conditions d'utilisation de Meta for Developers. Dans la beta assistee actuelle, vous confirmez l'acces necessaire a votre page Facebook afin que FLARE AI puisse configurer, tester et activer le chatbot Messenger pour votre compte." },
           { title: "6. Propriété intellectuelle", content: "Le contenu, le code et les marques de FLARE AI appartiennent à FLARE AI. Le contenu que vous créez via notre plateforme vous appartient. Vous accordez à FLARE AI une licence limitée pour traiter ce contenu afin de fournir le service." },
           { title: "7. Limitation de responsabilité", content: "FLARE AI est fourni « en l'état ». FLARE AI ne peut être tenu responsable des dommages indirects ou des pertes résultant de l'utilisation du service, des interruptions de service, ou des réponses générées par l'IA." },
           { title: "8. Résiliation", content: "Vous pouvez résilier votre compte à tout moment. FLARE AI se réserve le droit de suspendre ou résilier les comptes en cas de violation des présentes conditions." },

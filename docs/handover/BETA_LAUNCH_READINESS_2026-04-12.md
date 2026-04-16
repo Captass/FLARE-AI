@@ -29,17 +29,16 @@ En revanche, le produit est assez structure pour une `beta payante assistee`, op
   - acquisition et entree vers connexion / inscription
 - `Application connectee`
   - espace utilisateur apres connexion
-  - selection d'organisation / workspace
+  - navigation recentree sur `Accueil`, `Mon chatbot Facebook`, `Offre / Activation`, `Support / Parametres`
 - `Chatbot Facebook`
   - coeur metier actuel
   - activation, personnalisation, catalogue, clients, commandes, dashboard
-- `Assistant IA`
-  - surface de travail separee
 - `Administration / Operations`
   - file activations
   - file paiements
   - file commandes
   - signalements
+  - dossier client unifie en cours de consolidation
 
 ### 2. Mode de lancement reel
 
@@ -73,15 +72,14 @@ Le mode officiel actuel est :
 ### Cote client
 
 1. creer un compte
-2. creer ou choisir un espace
-3. choisir une offre
-4. payer via methode locale manuelle
-5. soumettre la preuve
-6. remplir le formulaire chatbot
-7. ajouter FLARE comme admin/proprietaire de la page Facebook
-8. attendre la verification et l'activation
-9. voir le chatbot actif
-10. utiliser ensuite :
+2. choisir une offre
+3. payer via methode locale manuelle
+4. soumettre la preuve
+5. remplir le formulaire chatbot
+6. ajouter FLARE comme admin/proprietaire de la page Facebook
+7. attendre la verification et l'activation
+8. voir le chatbot actif
+9. utiliser ensuite :
    - personnalisation
    - catalogue
    - ON/OFF global
@@ -118,7 +116,7 @@ Le mode officiel actuel est :
 - le mode de lancement assiste est clairement defini
 - le parcours client et operateur est documente
 - le coeur metier `Chatbot Facebook` est priorise
-- l'app connectee et la separation produit / organisation sont cadrees
+- l'app connectee et la separation produit / compte sont cadrees
 - l'UI a ete largement nettoyee sur les surfaces critiques
 
 ### Conformite atteinte
@@ -176,13 +174,13 @@ OK :
 - navigation globale mieux cadre
 - branding produit mieux separe
 - retour et accueil plus coherents
-- Assistant IA stabilise structurellement
+- beta publique recentree sur le chatbot Facebook
 
 reste a valider :
 
 - QA visuelle complete desktop/mobile
 - derniers overlays / contrastes / modals en verification live
-- comportement Assistant avec vrai compte
+- comportement des surfaces historiques avec vrai compte
 
 ### Gate 2 - Metier coherent
 
@@ -219,7 +217,7 @@ il manque :
 
 minimum avant go-live public :
 
-1. connexion et selection d'espace
+1. connexion au compte client
 2. hub chatbot sans wizard parasite
 3. OAuth Facebook reel
 4. import page

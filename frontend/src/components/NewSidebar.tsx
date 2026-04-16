@@ -2,12 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  Zap,
+  Home,
   Bot,
-  Brain,
-  BookOpen,
   CreditCard,
-  MessageCircle,
   Settings,
   LogOut,
   X,
@@ -17,7 +14,6 @@ import {
   ChevronUp,
   AlertCircle,
   ShieldCheck,
-  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { User } from "firebase/auth";
@@ -39,34 +35,21 @@ interface NewSidebarProps {
   onClose?: () => void;
   lang?: "fr" | "en";
   token?: string | null;
-  userEmail?: string | null;
+  canAccessAdmin?: boolean;
 }
 
 type NavItem = {
   id: NavLevel;
   labelFr: string;
   labelEn: string;
-  icon: typeof Zap;
+  icon: typeof Home;
 };
 
-const ASSISTANT_ITEMS: NavItem[] = [
-  { id: "assistant", labelFr: "Discussions", labelEn: "Chats", icon: MessageCircle },
-  { id: "memory", labelFr: "Memoire", labelEn: "Memory", icon: Brain },
-  { id: "knowledge", labelFr: "Connaissances", labelEn: "Knowledge", icon: BookOpen },
-  { id: "prompts", labelFr: "Prompts", labelEn: "Prompts", icon: Zap },
-  { id: "files", labelFr: "Fichiers", labelEn: "Files", icon: FileText },
-  { id: "settings", labelFr: "Reglages", labelEn: "Settings", icon: Settings },
-];
-
 const MAIN_ITEMS: NavItem[] = [
-  { id: "automations", labelFr: "Automatisations", labelEn: "Automations", icon: Zap },
-  { id: "assistant", labelFr: "Assistant IA", labelEn: "AI Assistant", icon: Bot },
-];
-
-const SECONDARY_ITEMS: NavItem[] = [
-  { id: "guide", labelFr: "Guide", labelEn: "Guide", icon: BookOpen },
-  { id: "billing", labelFr: "Abonnements", labelEn: "Subscriptions", icon: CreditCard },
-  { id: "contact", labelFr: "Contactez-nous", labelEn: "Contact us", icon: MessageCircle },
+  { id: "home", labelFr: "Accueil", labelEn: "Home", icon: Home },
+  { id: "chatbot", labelFr: "Mon chatbot Facebook", labelEn: "My Facebook chatbot", icon: Bot },
+  { id: "billing", labelFr: "Offre / Activation", labelEn: "Offer / Activation", icon: CreditCard },
+  { id: "settings", labelFr: "Support / Parametres", labelEn: "Support / Settings", icon: Settings },
 ];
 
 const ADMIN_ITEM: NavItem = {
@@ -74,15 +57,6 @@ const ADMIN_ITEM: NavItem = {
   labelFr: "Administration",
   labelEn: "Administration",
   icon: ShieldCheck,
-};
-
-const ADMIN_EMAILS = ["cptskevin@gmail.com"];
-
-const SETTINGS_ITEM: NavItem = {
-  id: "settings",
-  labelFr: "Parametres",
-  labelEn: "Settings",
-  icon: Settings,
 };
 
 function NavButton({
@@ -184,14 +158,14 @@ export default function NewSidebar({
   open = false,
   onClose,
   lang = "fr",
-  userEmail,
+  canAccessAdmin = false,
 }: NewSidebarProps) {
   const [expanded, setExpanded] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const sidebarWidth = expanded ? "w-[240px]" : "w-[64px]";
 
-  const isAdmin = Boolean(userEmail && ADMIN_EMAILS.includes(userEmail.toLowerCase()));
+  const isAdmin = canAccessAdmin;
   const activeMainItem = (
     [
       "chatbot",
@@ -204,20 +178,16 @@ export default function NewSidebar({
       "chatbot-client-detail",
       "chatbot-orders",
       "chatbot-activation",
-      "automations",
-      "prospection",
-      "content",
-      "followup",
-      "agents",
-      "automationHub",
     ] as string[]
   ).includes(activeView as string)
-    ? "automations"
-    : (["memory", "knowledge", "prompts", "files", "assistant", "chat"] as string[]).includes(activeView as string)
-      ? "assistant"
+    ? "chatbot"
+    : (["billing"] as string[]).includes(activeView as string)
+      ? "billing"
+      : (["settings", "guide", "contact"] as string[]).includes(activeView as string)
+      ? "settings"
       : activeView === ("admin" as NavLevel)
         ? "admin"
-        : null;
+        : "home";
 
   const navigate = (level: NavLevel) => {
     setProfileMenuOpen(false);
@@ -353,47 +323,6 @@ export default function NewSidebar({
             ))}
           </nav>
 
-          {activeMainItem === "assistant" && expanded ? (
-            <div className="mt-2 space-y-0.5 px-1" aria-label="Navigation assistant">
-              {ASSISTANT_ITEMS.map((item) => {
-                const label = lang === "en" ? item.labelEn : item.labelFr;
-                const Icon = item.icon;
-                const isActive = activeView === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    id={`tour-nav-${item.id}`}
-                    type="button"
-                    onClick={() => navigate(item.id)}
-                    className={`ml-6 flex w-[calc(100%-1.5rem)] items-center gap-2 rounded-lg px-3 py-2 text-left text-[12px] transition-all ${
-                      isActive
-                        ? "bg-[var(--surface-selected)] text-[var(--text-primary)]"
-                        : "text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
-                    }`}
-                  >
-                    <Icon size={13} className="shrink-0" />
-                    <span className="truncate">{label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-
-          <SectionDivider />
-
-          <nav className="space-y-0.5" aria-label="Navigation secondaire">
-            {SECONDARY_ITEMS.map((item) => (
-              <NavButton
-                key={item.id}
-                item={item}
-                isActive={activeView === item.id}
-                expanded={expanded}
-                lang={lang}
-                onClick={() => navigate(item.id)}
-              />
-            ))}
-          </nav>
-
           {isAdmin && (
             <>
               <SectionDivider />
@@ -408,17 +337,6 @@ export default function NewSidebar({
               </nav>
             </>
           )}
-
-          <SectionDivider />
-          <nav className="space-y-0.5 pb-1" aria-label="Parametres">
-            <NavButton
-              item={SETTINGS_ITEM}
-              isActive={activeView === "settings"}
-              expanded={expanded}
-              lang={lang}
-              onClick={() => navigate("settings")}
-            />
-          </nav>
 
           <div className="flex-1" />
         </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -35,12 +35,8 @@ import { useAuth } from "@/hooks/useAuth";
 import NavBreadcrumb, { type NavLevel, NAV_LABELS } from "@/components/NavBreadcrumb";
 import NewSidebar from "@/components/NewSidebar";
 import HomePage from "@/components/pages/HomePage";
-import AutomationsPage from "@/components/pages/AutomationsPage";
-import FacebookPage from "@/components/pages/FacebookPage";
-import GooglePage from "@/components/pages/GooglePage";
 import ChatbotHomePage from "@/components/pages/ChatbotHomePage";
 import GuidePage from "@/components/pages/GuidePage";
-import BillingPage from "@/components/pages/BillingPage";
 import ContactPage from "@/components/pages/ContactPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import AssistantPage from "@/components/pages/AssistantPage";
@@ -64,6 +60,7 @@ import {
   FileAttachment,
   WorkspaceIdentity,
   getApiBaseUrl,
+  getAdminUsageSummary,
   getWorkspaceIdentity,
   healthCheck,
   saveTrackedFile,
@@ -106,16 +103,16 @@ const DEFAULT_BACK_TARGET: Partial<Record<AppView, AppView>> = {
   files: "assistant",
   dashboard: "home",
   automations: "home",
-  facebook: "automations",
-  google: "automations",
-  chatbot: "facebook",
+  facebook: "home",
+  google: "home",
+  chatbot: "home",
   "chatbot-personnalisation": "chatbot",
   "chatbot-parametres": "chatbot",
-  "chatbot-dashboard": "facebook",
+  "chatbot-dashboard": "chatbot",
   "chatbot-clients": "chatbot-dashboard",
   "chatbot-client-detail": "chatbot-clients",
   "chatbot-orders": "chatbot-dashboard",
-  "chatbot-activation": "chatbot",
+  "chatbot-activation": "billing",
   leads: "chatbot-dashboard",
   conversations: "chatbot-dashboard",
   expenses: "chatbot-dashboard",
@@ -161,9 +158,20 @@ function resolvePreferredFacebookPageId(
 }
 
 const GUEST_LOCKED_VIEWS: ActiveView[] = ["chat", "memory", "prompts", "knowledge", "files", "admin"];
-const ADMIN_EMAILS = ["cptskevin@gmail.com"];
 
 type LockedModuleView = "prospection" | "content" | "followup" | "agents";
+
+function isAdminDeniedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("403") ||
+    normalized.includes("401") ||
+    normalized.includes("forbidden") ||
+    normalized.includes("not authenticated") ||
+    normalized.includes("admin privileges required")
+  );
+}
 
 type LockedModuleConfig = {
   eyebrow: string;
@@ -177,21 +185,21 @@ type LockedModuleConfig = {
 
 const DEFAULT_NAV_STACKS: Record<AppView, AppView[]> = {
   home: ["home"],
-  automations: ["home", "automations"],
-  facebook: ["home", "automations", "facebook"],
-  google: ["home", "automations", "google"],
-  chatbot: ["home", "automations", "facebook", "chatbot"],
+  automations: ["home"],
+  facebook: ["home", "chatbot"],
+  google: ["home"],
+  chatbot: ["home", "chatbot"],
   leads: ["home", "automations", "facebook", "chatbot-dashboard", "leads"],
   conversations: ["home", "automations", "facebook", "chatbot-dashboard", "conversations"],
   expenses: ["home", "automations", "facebook", "chatbot-dashboard", "expenses"],
   chatbotFiles: ["home", "automations", "facebook", "chatbot-dashboard", "chatbotFiles"],
-  "chatbot-personnalisation": ["home", "automations", "facebook", "chatbot", "chatbot-personnalisation"],
-  "chatbot-parametres": ["home", "automations", "facebook", "chatbot", "chatbot-parametres"],
-  "chatbot-dashboard": ["home", "automations", "facebook", "chatbot-dashboard"],
-  "chatbot-clients": ["home", "automations", "facebook", "chatbot-dashboard", "chatbot-clients"],
-  "chatbot-client-detail": ["home", "automations", "facebook", "chatbot-dashboard", "chatbot-clients", "chatbot-client-detail"],
-  "chatbot-orders": ["home", "automations", "facebook", "chatbot-dashboard", "chatbot-orders"],
-  "chatbot-activation": ["home", "automations", "facebook", "chatbot", "chatbot-activation"],
+  "chatbot-personnalisation": ["home", "chatbot", "chatbot-personnalisation"],
+  "chatbot-parametres": ["home", "chatbot", "chatbot-parametres"],
+  "chatbot-dashboard": ["home", "chatbot", "chatbot-dashboard"],
+  "chatbot-clients": ["home", "chatbot", "chatbot-dashboard", "chatbot-clients"],
+  "chatbot-client-detail": ["home", "chatbot", "chatbot-dashboard", "chatbot-clients", "chatbot-client-detail"],
+  "chatbot-orders": ["home", "chatbot", "chatbot-dashboard", "chatbot-orders"],
+  "chatbot-activation": ["home", "billing", "chatbot-activation"],
   admin: ["home", "admin"],
   assistant: ["home", "assistant"],
   chat: ["home", "assistant"],
@@ -390,6 +398,7 @@ function HomeContent() {
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [adminAccessState, setAdminAccessState] = useState<"checking" | "granted" | "denied" | "unknown">("checking");
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -909,7 +918,30 @@ function HomeContent() {
   const resolvedBrandLogoUrl = toRenderableMediaUrl(
     workspaceIdentity?.user_profile.avatar_url || undefined
   );
-  const canAccessAdmin = Boolean(user?.email && ADMIN_EMAILS.includes(user.email.toLowerCase()));
+  useEffect(() => {
+    if (!user || !token) {
+      setAdminAccessState("denied");
+      return;
+    }
+
+    let cancelled = false;
+    setAdminAccessState("checking");
+
+    getAdminUsageSummary(token, 0)
+      .then(() => {
+        if (!cancelled) setAdminAccessState("granted");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setAdminAccessState(isAdminDeniedError(error) ? "denied" : "unknown");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, user]);
+
+  const canAccessAdmin = adminAccessState === "granted";
   const selectedFacebookPage =
     selectedFacebookPageId
       ? facebookPages.find((page) => page.page_id === selectedFacebookPageId) ?? null
@@ -924,6 +956,7 @@ function HomeContent() {
       activationStatus: activationRequest?.status ?? null,
       paymentStatus: activationRequest?.payment_status ?? null,
       flarePageAdminConfirmed: activationRequest?.flare_page_admin_confirmed === "true",
+      userRole: workspaceIdentity?.user_profile?.role ?? "user",
     }),
     [
       activationRequest?.flare_page_admin_confirmed,
@@ -934,6 +967,7 @@ function HomeContent() {
       selectedFacebookPageId,
       setupStatus?.has_connected_page,
       setupStatus?.step,
+      workspaceIdentity?.user_profile?.role,
     ]
   );
   const guideBottomClassName =
@@ -1264,11 +1298,11 @@ function HomeContent() {
   const viewSubtitleMap: Partial<Record<AppView, string>> = {
     assistant: sessionId ? `Session active` : "Pret a vous aider",
     chat: sessionId ? `Session active` : "Pret a vous aider",
-    home: "Vue d'ensemble",
+    home: "Beta assistee Facebook",
     guide: "Guide rapide",
-    billing: "Abonnement et modules",
-    contact: "Contacter FLARE",
-    settings: "Preferences et securite",
+    billing: "Offre, paiement et activation assistee",
+    contact: "Support FLARE",
+    settings: "Support et parametres",
     memory: "Informations memorisees contextuelles",
     dashboard: "Vue d'ensemble",
     prospection: "Page bloquee pour le moment",
@@ -1278,17 +1312,13 @@ function HomeContent() {
     prompts: "Bibliotheque de prompts prets a l'emploi",
     knowledge: "Documents de reference injectes au contexte",
     files: "Historique de tous les fichiers envoyes dans le chat",
-    admin: "Surveillance de la consommation et des couts",
+    admin: "Operations et validation client",
   };
   const viewSubtitle = viewSubtitleMap[activeView];
   const sidebarActiveView: NavLevel =
-    activeView === "assistant" || activeView === "chat"
-      ? "assistant"
+    activeView === "billing" || activeView === "chatbot-activation"
+      ? "billing"
       : activeView === "dashboard" ||
-          activeView === "leads" ||
-          activeView === "conversations" ||
-          activeView === "expenses" ||
-          activeView === "chatbotFiles" ||
           activeView === "facebook" ||
           activeView === "google" ||
           activeView === "chatbot" ||
@@ -1298,15 +1328,28 @@ function HomeContent() {
           activeView === "chatbot-clients" ||
           activeView === "chatbot-client-detail" ||
           activeView === "chatbot-orders" ||
-          activeView === "chatbot-activation"
-        ? "automations"
+          activeView === "conversations" ||
+          activeView === "expenses" ||
+          activeView === "chatbotFiles" ||
+          activeView === "leads"
+        ? "chatbot"
+        : activeView === "settings" ||
+          activeView === "guide" ||
+          activeView === "contact"
+        ? "settings"
         : activeView === "automationHub" ||
           activeView === "prospection" ||
           activeView === "content" ||
           activeView === "followup" ||
           activeView === "agents" ||
-          activeView === "automations"
-        ? "automations"
+          activeView === "automations" ||
+          activeView === "assistant" ||
+          activeView === "chat" ||
+          activeView === "memory" ||
+          activeView === "prompts" ||
+          activeView === "knowledge" ||
+          activeView === "files"
+        ? "home"
         : (activeView as NavLevel);
 
   // Variables supprimÃ©es â€” la navigation assistant est maintenant dans la sidebar uniquement
@@ -1408,7 +1451,7 @@ function HomeContent() {
           brandName="FLARE AI"
           logoUrl={resolvedBrandLogoUrl}
           lang={lang}
-          userEmail={user?.email ?? null}
+          canAccessAdmin={canAccessAdmin}
         />
 
         <SignalementModal
@@ -1526,11 +1569,21 @@ function HomeContent() {
         {activeView === "home" ? (
           <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} token={token} /></motion.div>
         ) : activeView === "automations" ? (
-          <motion.div key="automations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><AutomationsPage onPush={onPush} /></motion.div>
+          <motion.div key="automations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} token={token} /></motion.div>
         ) : activeView === "facebook" ? (
-          <motion.div key="facebook" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><FacebookPage onPush={onPush} /></motion.div>
+          <motion.div key="facebook" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage
+              onPush={onPush}
+              token={token}
+              getFreshToken={getFreshToken}
+              pages={facebookPages}
+              selectedPageId={selectedFacebookPageId}
+              onSelectPage={setSelectedFacebookPageId}
+              onPagesChanged={handlePagesChanged}
+              setupStatus={setupStatus}
+              onRefreshSetupStatus={loadSetupStatus}
+            /></motion.div>
         ) : activeView === "google" ? (
-          <motion.div key="google" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GooglePage /></motion.div>
+          <motion.div key="google" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} token={token} /></motion.div>
         ) : activeView === "chatbot" ? (
           <motion.div key="chatbot" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotHomePage
               onPush={onPush}
@@ -1570,7 +1623,7 @@ function HomeContent() {
         ) : activeView === "settings" ? (
            <motion.div key="settings" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><SettingsPage token={token} getFreshToken={getFreshToken} workspaceIdentity={workspaceIdentity} user={user} displayName={resolvedUserDisplayName} avatarUrl={resolvedUserAvatarUrl} theme={theme} onLogout={logoutWithScopeReset} onIdentitySaved={setWorkspaceIdentity} lang={lang} onLangChange={handleLangChange} /></motion.div>
         ) : activeView === "billing" ? (
-           <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BillingPage token={token} getFreshToken={getFreshToken} onPush={onPush} /></motion.div>
+           <motion.div key="billing" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ChatbotActivationPage token={token} getFreshToken={getFreshToken} onPush={onPush} availablePages={facebookPages} selectedPageId={selectedFacebookPageId} /></motion.div>
         ) : activeView === "guide" ? (
            <motion.div key="guide" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GuidePage /></motion.div>
         ) : activeView === "contact" ? (

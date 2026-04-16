@@ -600,10 +600,21 @@ def get_billing_features(
 ):
     context = _organization_context(authorization, allow_missing_scope=True)
     if not context:
-        return {"plan_id": "free", "features": get_plan_features("free")}
+        return {
+            "plan_id": "free",
+            "features": get_plan_features("free"),
+            "subscription_status": "inactive",
+            "subscription_updated_at": None,
+        }
 
+    subscription = get_user_subscription(context["organization_scope_id"]) or {}
     plan_id, features = _resolve_plan_features(context)
-    return {"plan_id": plan_id, "features": features}
+    return {
+        "plan_id": plan_id,
+        "features": features,
+        "subscription_status": subscription.get("status", "inactive"),
+        "subscription_updated_at": subscription.get("updated_at"),
+    }
 
 
 # ---------------------------------------------------------------------------

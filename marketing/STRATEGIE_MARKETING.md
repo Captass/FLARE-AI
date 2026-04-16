@@ -1,54 +1,74 @@
-# 🚀 FLARE AI — Stratégie Marketing Global
-**Version** : Avril 2026  
-**Objectif** : Une communication simple, directe et efficace pour les entrepreneurs.
+# FLARE AI - Strategie Marketing Beta Assistee
+**Version** : Avril 2026
+**Perimetre reel** : beta publique assistee autour du chatbot Facebook.
 
 ---
 
-## 1. La Promesse
-**"Simplifiez votre business. Automatisez vos actions. Vendez plus."**
+## 1. La promesse
+**"Mieux repondre sur Facebook, avec un chatbot active par FLARE."**
 
-FLARE AI n'est pas un logiciel complexe, c'est votre **Assistant Digital Particulier**. Il s'occupe de faire le travail à votre place là où sont vos clients.
-
----
-
-## 2. Le Slogan
-**"FLARE AI : Votre business en pilote automatique."**
-
----
-
-## 3. Proposition de Valeur Unique (UVP)
-**"Tout automatiser simplement, sans être un technicien."**
-La différence FLARE : Une plateforme tout-en-un activée pour vous en 15 minutes par nos experts. Vous n'avez rien à configurer.
+FLARE AI n'est pas encore une suite tout-en-un a vendre publiquement.
+La promesse publique actuelle doit rester simple :
+- chatbot Facebook pour TPE, PME et independants a Madagascar
+- paiement local MVola / Orange Money
+- activation assistee par l'equipe FLARE
+- support humain local
 
 ---
 
-## 4. Arguments de Vente (Les 3 Piliers d'Aide)
-
-| Pilier | Ce que FLARE fait pour vous | Votre gain concret |
-|--------|-----------------------------|--------------------|
-| **Ventes** | Répond aux messages Messenger 24h/24 et qualifie vos prospects. | Vous ne ratez plus aucune vente, même la nuit. |
-| **Contenus** | Crée vos visuels et vidéos TikTok/Facebook en un clic. | Vous êtes visible partout, sans passer des heures à créer. |
-| **Gestion** | Prépare vos devis, factures et tableaux de suivi. | Vous libérez votre temps pour vous concentrer sur vos clients. |
+## 2. Le slogan
+**"FLARE AI : votre chatbot Facebook, active avec vous par FLARE."**
 
 ---
 
-## 5. Ton & Style de Communication
-*   **Simple** : Pas de mots compliqués (IA, OS, etc.). On parle de "résultats".
-*   **Aide** : On se positionne comme celui qui enlève une épine du pied.
-*   **Direct** : Chaque phrase doit répondre à la question "Qu'est-ce que j'y gagne ?".
-*   **Mix local** : Communication en Français avec des touches de Malgache pour la confiance.
+## 3. Proposition de valeur unique
+**"Un chatbot Facebook utile, sans bricolage technique."**
+
+La difference FLARE aujourd'hui :
+- le client choisit une offre claire
+- le paiement se fait localement
+- FLARE valide le paiement et applique le plan
+- FLARE connecte et teste le chatbot
+- le client suit simplement l'avancement
 
 ---
 
-## 6. Charte Graphique
-*   **Couleurs** : Noir profond (Sérieux) et Orange vibrant (Énergie/Action).
-*   **Mode Sombre** : Pour le côté moderne et reposant.
-*   **Mode Clair** : Contraste maximal (Noir sur Blanc) pour une lecture parfaite en plein soleil.
-*   **Typographie** : Moderne et large pour être lisible facilement sur téléphone.
+## 4. Arguments de vente
+
+| Pilier | Ce que FLARE fait aujourd'hui | Gain concret |
+|--------|-------------------------------|--------------|
+| **Reponse client** | Repond sur Facebook Messenger et aide a traiter les demandes entrantes. | Vous repondez plus vite et vous laissez moins de messages sans suite. |
+| **Activation assistee** | L'equipe FLARE prend en charge la configuration du bot. | Vous n'avez pas a vous battre seul avec la technique Facebook. |
+| **Paiement local** | MVola et Orange Money avec validation humaine. | Le parcours reste adapte au contexte Madagascar. |
+| **Suivi simple** | Le plan, le paiement et l'activation sont visibles dans l'app. | Vous comprenez ou en est votre dossier sans ambiguite. |
 
 ---
 
-## 7. Les Preuves de Confiance
-*   "Déjà adopté par X entrepreneurs à Madagascar."
-*   Vidéos de démonstration : "Regardez comment FLARE répond en direct."
-*   Paiement local : "Payez par MVola ou Orange Money."
+## 5. Ce qu'il ne faut plus promettre publiquement
+- Google
+- TikTok
+- Instagram
+- LinkedIn
+- studio contenu
+- devis / factures
+- agents
+- "business en pilote automatique"
+- "zero technicien requis"
+
+Tant que ces surfaces ne sont pas reellement vendables, elles ne doivent pas etre au coeur du marketing public.
+
+---
+
+## 6. Ton et style
+- **Simple** : on parle de resultat concret, pas de jargon IA.
+- **Honnête** : on vend ce qui marche aujourd'hui, pas ce qui arrivera plus tard.
+- **Local** : references claires au contexte malgache, au paiement local et au support humain.
+- **Direct** : chaque phrase doit repondre a "qu'est-ce que FLARE fait pour moi maintenant ?"
+
+---
+
+## 7. Preuves de confiance
+- demonstrations reelles sur Messenger
+- activation assistee par une equipe FLARE identifiable
+- paiement MVola / Orange Money
+- suivi du plan applique et de l'etat d'activation dans l'app

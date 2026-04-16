@@ -6,7 +6,7 @@
  * Needed because page.tsx is a Server Component and can't pass functions as props.
  */
 import { useRouter } from "next/navigation";
-import LandingPage from "./LandingPage";
+import LandingPagePublicBeta from "./LandingPagePublicBeta";
 
 export default function LandingPageClient() {
   const router = useRouter();
@@ -16,5 +16,5 @@ export default function LandingPageClient() {
     router.push(`/app?auth=${mode}`);
   };
 
-  return <LandingPage onStart={handleStart} />;
+  return <LandingPagePublicBeta onStart={handleStart} />;
 }

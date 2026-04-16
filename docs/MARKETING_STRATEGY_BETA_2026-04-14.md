@@ -10,7 +10,7 @@
 
 > **Un chatbot Facebook IA actif sur la page de l'entrepreneur, géré par FLARE.**
 
-Le client ne configure pas Facebook lui-même. Il choisit un plan, paie (MVola / Orange Money), remplit un formulaire, et FLARE active le bot en moins de 15 minutes.
+Le client ne configure pas Facebook lui-même. Il choisit un plan, paie (MVola / Orange Money), remplit un formulaire, puis FLARE valide la preuve et active le bot dans un delai annonce par l'equipe.
 
 **Plans disponibles :**
 
@@ -25,6 +25,8 @@ Le client ne configure pas Facebook lui-même. Il choisit un plan, paie (MVola /
 - Self-serve Meta (pas de config Facebook seul)
 - Activation instantanée sans intervention humaine
 - Intégration API MVola automatique
+
+Le discours public doit donc parler d'`activation assistée`, pas d'activation instantanée.
 
 > [!IMPORTANT]
 > Ne pas survendre l'autonomie. Le message doit être : **"FLARE s'occupe de tout."** C'est un avantage, pas une limitation.

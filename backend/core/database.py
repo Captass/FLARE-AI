@@ -1298,6 +1298,8 @@ def get_user_subscription(user_id: str) -> Optional[Dict]:
             "user_email": sub.user_email,
             "plan_id": sub.plan_id,
             "plan_name": plan.name if plan else "Free",
+            "status": sub.status,
+            "updated_at": sub.updated_at.isoformat() if sub.updated_at else None,
             "daily_budget_usd": budget,
             "daily_cost_usd": round(daily_cost, 6),
             "usage_percent": round(min(usage_percent, 100), 1),

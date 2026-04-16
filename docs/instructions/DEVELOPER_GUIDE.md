@@ -10,7 +10,10 @@ Ce document explique comment travailler sur FLARE AI sans casser l'app.
 
 ## Le projet en clair
 
-FLARE AI est une application web avec :
+La verite produit actuelle est la beta assistee du `Chatbot Facebook`.
+Le reste de la suite IA existe encore dans le depot, mais il doit etre considere comme historique ou non prioritaire pour la beta publique.
+
+Le cadrage historique ci-dessous decrit l'ancienne presentation de la suite, pas la beta actuelle :
 
 - chat IA principal
 - mémoire utilisateur
@@ -75,7 +78,7 @@ FLARE AI est une application web avec :
 - `frontend/src/lib/firebase.ts` — initialisation Firebase Auth (clés publiques via env vars)
 - `frontend/src/components/NavBreadcrumb.tsx` — type `NavLevel` et breadcrumb ; **[v4.0.0]** ajout de `chatbot-orders`, `chatbot-activation`, `admin`
 - `frontend/src/components/NewSidebar.tsx` — barre laterale SPA ; **[v4.0.1]** ajout admin conditionnel (`ADMIN_EMAILS`), prop `userEmail`
-- `frontend/src/components/AdminPanel.tsx` — panneau admin ; **[v4.0.0]** 3 nouveaux onglets : Activations, Paiements, Commandes
+- `frontend/src/components/AdminPanel.tsx` — panneau admin ; **[v4.0.0]** hub `Operations` par defaut + onglets Activations, Paiements, Commandes
 - `frontend/src/components/pages/ChatbotHomePage.tsx` — accueil chatbot ; **[v4.0.0]** banniere activation, `isActivationActive`, `showSetupWizard` conditionnel
 - `frontend/src/components/pages/ChatbotActivationPage.tsx` — **[v4.0.0]** tunnel activation 5 etapes (plan → paiement → config → technicien → attente)
 - `frontend/src/components/pages/ChatbotOrdersPage.tsx` — **[v4.0.0]** liste et gestion des commandes chatbot
@@ -95,6 +98,8 @@ FLARE AI est une application web avec :
 
 ### Production (Render Dashboard)
 
+Pour la beta actuelle, les variables `GEMINI_API_KEY_ASSISTANT_REASONING` et `GEMINI_API_KEY_ASSISTANT_FAST` sont a lire comme des cles internes ou historiques, pas comme des dependances produit prioritaires.
+
 Les variables sont définies dans le dashboard Render → service → Environment :
 
 **Backend (`flare-backend`) :**
@@ -104,8 +109,8 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | `DATABASE_URL` | PostgreSQL Render (auto-injecté via Blueprint) |
 | `GEMINI_API_KEY_GLOBAL` | Clé Gemini principale / fallback (toutes les requêtes sans clé spécifique) |
 | `GEMINI_API_KEY_CHATBOT` | Clé Gemini dédiée au Chatbot Facebook Messenger |
-| `GEMINI_API_KEY_ASSISTANT_REASONING` | Clé Gemini dédiée à l'Assistant IA (tâches complexes) |
-| `GEMINI_API_KEY_ASSISTANT_FAST` | Clé Gemini dédiée à l'Assistant IA (tâches rapides / background) |
+| `GEMINI_API_KEY_ASSISTANT_REASONING` | Clé Gemini interne / historique pour les anciens flux Assistant IA |
+| `GEMINI_API_KEY_ASSISTANT_FAST` | Clé Gemini interne / historique pour les anciens flux Assistant IA |
 | `META_APP_ID` | App Facebook (depuis developers.facebook.com) |
 | `META_APP_SECRET` | App Facebook (secret) |
 | `META_VERIFY_TOKEN` | Token de vérification du webhook Messenger |
@@ -362,8 +367,8 @@ Chaque composant IA utilise une clé dédiée pour le suivi des coûts :
 ```python
 # core/llm_factory.py — get_llm(purpose=...)
 # purpose='chatbot'              → GEMINI_API_KEY_CHATBOT
-# purpose='assistant_reasoning'  → GEMINI_API_KEY_ASSISTANT_REASONING
-# purpose='assistant_fast'       → GEMINI_API_KEY_ASSISTANT_FAST
+# purpose='assistant_reasoning'  → GEMINI_API_KEY_ASSISTANT_REASONING (historique)
+# purpose='assistant_fast'       → GEMINI_API_KEY_ASSISTANT_FAST (historique)
 # fallback                       → GEMINI_API_KEY_GLOBAL
 ```
 

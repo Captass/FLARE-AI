@@ -21,6 +21,7 @@ from core.database import (
     ChatbotPreferences,
     ManualPaymentSubmission,
     REPORT_STATUSES,
+    SubscriptionPlan,
     UserReport,
     UserSubscription,
     get_db,
@@ -31,6 +32,14 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["activation"])
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
+
+
+def _configured_admin_emails() -> set[str]:
+    return {
+        email.strip().lower()
+        for email in str(settings.ADMIN_EMAILS or "").split(",")
+        if email and email.strip()
+    }
 
 
 def _get_user_context(authorization: Optional[str]) -> tuple[str, str]:
@@ -46,7 +55,12 @@ def _get_user_context(authorization: Optional[str]) -> tuple[str, str]:
 
 def _check_admin(authorization: Optional[str]) -> tuple[str, str]:
     user_id, user_email = get_user_identity(authorization)
-    admin_emails = [e.strip().lower() for e in settings.ADMIN_EMAILS.split(",")]
+    if user_id == "anonymous" or not str(user_email or "").strip():
+        raise HTTPException(status_code=401, detail="Authentification admin requise.")
+    admin_emails = _configured_admin_emails()
+    if not admin_emails:
+        logger.error("[activation] ADMIN_EMAILS est vide ou invalide.")
+        raise HTTPException(status_code=503, detail="Configuration admin indisponible.")
     if user_email.lower() not in admin_emails:
         raise HTTPException(status_code=403, detail="Acces admin requis.")
     return user_id, user_email
@@ -240,6 +254,18 @@ def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, A
         "primary_language": ar.primary_language,
         "notes_for_flare": ar.notes_for_flare,
         "assigned_operator_email": ar.assigned_operator_email,
+    }
+
+
+def _serialize_subscription(sub: Optional[UserSubscription]) -> Optional[Dict[str, Any]]:
+    if not sub:
+        return None
+    return {
+        "user_id": sub.user_id,
+        "user_email": sub.user_email,
+        "plan_id": sub.plan_id,
+        "status": sub.status,
+        "updated_at": sub.updated_at.isoformat() if sub.updated_at else None,
     }
 
 
@@ -489,8 +515,10 @@ def get_my_activation_request(
 
     if not ar:
         return {"activation_request": None}
-
-    return {"activation_request": _serialize_activation_request(ar)}
+    subscription = db.query(UserSubscription).filter(
+        UserSubscription.user_id == (ar.user_id or ar.requester_user_id)
+    ).first()
+    return {"activation_request": _serialize_activation_request(ar, subscription=subscription)}
 
 
 @router.post("/api/chatbot/activation-request")
@@ -608,7 +636,8 @@ def create_activation_request(
     db.refresh(ar)
 
     logger.info(f"[activation] Request created: {ar.id} for {user_id} by {user_email}")
-    return {"activation_request": _serialize_activation_request(ar)}
+    subscription = db.query(UserSubscription).filter(UserSubscription.user_id == user_id).first()
+    return {"activation_request": _serialize_activation_request(ar, subscription=subscription)}
 
 
 @router.patch("/api/chatbot/activation-request")
@@ -707,7 +736,10 @@ def update_activation_request(
 
     db.commit()
     db.refresh(ar)
-    return {"activation_request": _serialize_activation_request(ar)}
+    subscription = db.query(UserSubscription).filter(
+        UserSubscription.user_id == (ar.user_id or ar.requester_user_id)
+    ).first()
+    return {"activation_request": _serialize_activation_request(ar, subscription=subscription)}
 
 
 # ── Admin: payments ───────────────────────────────────────────────────────────
@@ -728,33 +760,57 @@ def admin_list_payments(
     if activation_ids:
         activations = db.query(ActivationRequest).filter(ActivationRequest.id.in_(activation_ids)).all()
         activation_map = {a.id: a for a in activations}
-
-    return {
-        "payments": [
-            {
-                "id": s.id,
-                "user_id": s.user_id,
-                "activation_request_id": s.activation_request_id,
-                "selected_plan_id": s.selected_plan_id,
-                "method_code": s.method_code,
-                "amount": s.amount,
-                "currency": s.currency,
-                "payer_full_name": s.payer_full_name,
-                "payer_phone": s.payer_phone,
-                "transaction_reference": s.transaction_reference,
-                "proof_file_url": s.proof_file_url,
-                "proof_file_name": s.proof_file_name,
-                "status": s.status,
-                "submitted_at": s.submitted_at.isoformat() if s.submitted_at else None,
-                "verified_at": s.verified_at.isoformat() if s.verified_at else None,
-                "verified_by": s.verified_by,
-                "rejection_reason": s.rejection_reason,
-                "created_at": s.created_at.isoformat() if s.created_at else None,
-                "activation_summary": _activation_summary(activation_map.get(s.activation_request_id)) if s.activation_request_id else None,
-            }
-            for s in submissions
-        ]
+    user_ids = {
+        str(s.user_id).strip()
+        for s in submissions
+        if str(s.user_id or "").strip()
     }
+    user_ids.update(
+        str((activation_map.get(s.activation_request_id).user_id or activation_map.get(s.activation_request_id).requester_user_id) or "").strip()
+        for s in submissions
+        if s.activation_request_id and activation_map.get(s.activation_request_id)
+    )
+    user_ids = {user_id for user_id in user_ids if user_id}
+    subscription_map: Dict[str, UserSubscription] = {}
+    if user_ids:
+        subscriptions = db.query(UserSubscription).filter(UserSubscription.user_id.in_(list(user_ids))).all()
+        subscription_map = {sub.user_id: sub for sub in subscriptions}
+
+    payments: List[Dict[str, Any]] = []
+    for s in submissions:
+        activation = activation_map.get(s.activation_request_id) if s.activation_request_id else None
+        target_user_id = str(
+            s.user_id
+            or (activation.user_id if activation else "")
+            or (activation.requester_user_id if activation else "")
+            or ""
+        ).strip()
+        subscription = subscription_map.get(target_user_id) if target_user_id else None
+        payments.append({
+            "id": s.id,
+            "user_id": target_user_id or None,
+            "activation_request_id": s.activation_request_id,
+            "selected_plan_id": s.selected_plan_id,
+            "method_code": s.method_code,
+            "amount": s.amount,
+            "currency": s.currency,
+            "payer_full_name": s.payer_full_name,
+            "payer_phone": s.payer_phone,
+            "transaction_reference": s.transaction_reference,
+            "proof_file_url": s.proof_file_url,
+            "proof_file_name": s.proof_file_name,
+            "status": s.status,
+            "submitted_at": s.submitted_at.isoformat() if s.submitted_at else None,
+            "verified_at": s.verified_at.isoformat() if s.verified_at else None,
+            "verified_by": s.verified_by,
+            "rejection_reason": s.rejection_reason,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+            "applied_plan_id": subscription.plan_id if subscription else None,
+            "subscription_status": subscription.status if subscription else None,
+            "activation_summary": _activation_summary(activation),
+        })
+
+    return {"payments": payments}
 
 
 @router.get("/api/admin/payments/{payment_id}")
@@ -770,6 +826,10 @@ def admin_get_payment(
     activation = None
     if s.activation_request_id:
         activation = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
+    subscription = None
+    target_user_id = str(s.user_id or (activation.user_id if activation else "") or (activation.requester_user_id if activation else "") or "").strip()
+    if target_user_id:
+        subscription = db.query(UserSubscription).filter(UserSubscription.user_id == target_user_id).first()
     return {
         "id": s.id,
         "user_id": s.user_id,
@@ -790,6 +850,9 @@ def admin_get_payment(
         "verified_at": s.verified_at.isoformat() if s.verified_at else None,
         "verified_by": s.verified_by,
         "rejection_reason": s.rejection_reason,
+        "applied_plan_id": subscription.plan_id if subscription else None,
+        "subscription_status": subscription.status if subscription else None,
+        "subscription": _serialize_subscription(subscription),
         "activation_summary": _activation_summary(activation),
     }
 
@@ -812,6 +875,16 @@ def admin_verify_payment(
         raise HTTPException(status_code=404, detail="Paiement introuvable.")
     if s.status == "verified":
         raise HTTPException(status_code=409, detail="Paiement deja valide.")
+    if s.status != "submitted":
+        raise HTTPException(status_code=400, detail="Seuls les paiements soumis peuvent etre verifies.")
+
+    target_plan_id = str(s.selected_plan_id or "").strip().lower()
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.id == target_plan_id,
+        SubscriptionPlan.is_active == "true",
+    ).first()
+    if not plan:
+        raise HTTPException(status_code=400, detail="Plan cible invalide pour cette verification.")
 
     s.status = "verified"
     s.verified_at = datetime.utcnow()
@@ -828,15 +901,25 @@ def admin_verify_payment(
     if not target_user_id:
         raise HTTPException(status_code=400, detail="Paiement sans utilisateur cible.")
     sub = db.query(UserSubscription).filter(UserSubscription.user_id == target_user_id).first()
-    if sub:
-        sub.plan_id = s.selected_plan_id
+    if not sub:
+        sub = UserSubscription(
+            user_id=target_user_id,
+            plan_id=target_plan_id,
+            status="active",
+        )
+        db.add(sub)
+    else:
+        sub.plan_id = target_plan_id
         sub.status = "active"
-        logger.info(f"[activation] Plan upgraded to {s.selected_plan_id} for {target_user_id}")
+    sub.updated_at = datetime.utcnow()
+    logger.info(f"[activation] Plan upgraded to {target_plan_id} for {target_user_id}")
 
     # Update activation request if linked
+    activation_payload: Optional[Dict[str, Any]] = None
     if s.activation_request_id:
         ar = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
         if ar:
+            ar.selected_plan_id = target_plan_id
             ar.payment_status = "verified"
             ar.payment_verified_at = datetime.utcnow()
             if ar.status == "payment_submitted":
@@ -846,12 +929,31 @@ def admin_verify_payment(
                     ar.status = "awaiting_flare_page_admin_access"
             _add_event(db, ar.id, "payment_verified", "admin", admin_email, {
                 "submission_id": s.id,
-                "plan": s.selected_plan_id,
+                "plan": target_plan_id,
+                "notes": req.notes.strip(),
             })
+            activation_payload = {
+                "id": ar.id,
+                "payment_status": ar.payment_status,
+                "status": ar.status,
+                "selected_plan_id": ar.selected_plan_id,
+            }
 
     db.commit()
     logger.info(f"[activation] Payment verified: {s.id} by {admin_email}")
-    return {"status": "verified", "id": s.id}
+    return {
+        "payment": {
+            "id": s.id,
+            "status": s.status,
+            "selected_plan_id": target_plan_id,
+            "verified_at": s.verified_at.isoformat() if s.verified_at else None,
+            "verified_by": s.verified_by,
+            "applied_plan_id": sub.plan_id,
+            "subscription_status": sub.status,
+        },
+        "activation_request": activation_payload,
+        "subscription": _serialize_subscription(sub),
+    }
 
 
 class PaymentRejectRequest(BaseModel):
@@ -905,8 +1007,25 @@ def admin_list_activations(
     requests = db.query(ActivationRequest).order_by(
         ActivationRequest.created_at.desc()
     ).limit(200).all()
+    user_ids = {
+        str(ar.user_id or ar.requester_user_id or "").strip()
+        for ar in requests
+        if str(ar.user_id or ar.requester_user_id or "").strip()
+    }
+    subscription_map: Dict[str, UserSubscription] = {}
+    if user_ids:
+        subscriptions = db.query(UserSubscription).filter(UserSubscription.user_id.in_(list(user_ids))).all()
+        subscription_map = {sub.user_id: sub for sub in subscriptions}
 
-    return {"activations": [_serialize_activation_request(ar) for ar in requests]}
+    return {
+        "activations": [
+            _serialize_activation_request(
+                ar,
+                subscription=subscription_map.get(str(ar.user_id or ar.requester_user_id or "").strip()),
+            )
+            for ar in requests
+        ]
+    }
 
 
 @router.get("/api/admin/activations/{request_id}")
@@ -925,7 +1044,10 @@ def admin_get_activation(
         ActivationRequestEvent.activation_request_id == request_id
     ).order_by(ActivationRequestEvent.created_at.asc()).all()
 
-    data = _serialize_activation_request(ar)
+    subscription = db.query(UserSubscription).filter(
+        UserSubscription.user_id == (ar.user_id or ar.requester_user_id)
+    ).first()
+    data = _serialize_activation_request(ar, subscription=subscription)
     data["events"] = [
         {
             "id": e.id,
@@ -952,6 +1074,9 @@ def admin_get_activation(
             "status": payment.status,
             "payer_full_name": payment.payer_full_name,
             "payer_phone": payment.payer_phone,
+            "selected_plan_id": payment.selected_plan_id,
+            "applied_plan_id": subscription.plan_id if subscription else None,
+            "subscription_status": subscription.status if subscription else None,
         }
 
     return data
@@ -990,7 +1115,7 @@ class ActivationSetStatusRequest(BaseModel):
 VALID_TRANSITIONS: Dict[str, set] = {
     "draft": {"awaiting_payment", "canceled"},
     "awaiting_payment": {"payment_submitted", "canceled"},
-    "payment_submitted": {"payment_verified", "rejected", "canceled"},
+    "payment_submitted": {"rejected", "canceled"},
     "payment_verified": {"awaiting_flare_page_admin_access", "queued_for_activation", "blocked", "canceled"},
     "awaiting_flare_page_admin_access": {"queued_for_activation", "blocked", "canceled"},
     "queued_for_activation": {"activation_in_progress", "blocked", "canceled"},
@@ -1018,6 +1143,15 @@ def admin_set_activation_status(
         raise HTTPException(status_code=400, detail=f"Transition invalide: {ar.status} → {req.status}")
 
     # Additional checks
+    if req.status == "payment_verified":
+        raise HTTPException(status_code=400, detail="Utilisez la validation de paiement pour confirmer un paiement.")
+
+    if req.status in {"awaiting_flare_page_admin_access", "queued_for_activation", "activation_in_progress", "testing", "active"} and ar.payment_status != "verified":
+        raise HTTPException(status_code=400, detail="Le paiement doit etre verifie avant de poursuivre l'activation.")
+
+    if req.status in {"queued_for_activation", "activation_in_progress", "testing", "active"} and ar.flare_page_admin_confirmed != "true":
+        raise HTTPException(status_code=400, detail="L'acces admin FLARE a la page doit etre confirme avant de poursuivre.")
+
     if req.status == "active" and not ar.tested_at:
         raise HTTPException(status_code=400, detail="Le test Messenger doit etre valide avant de marquer actif.")
 
@@ -1377,7 +1511,10 @@ def admin_update_order(
 # ── Serializers ───────────────────────────────────────────────────────────────
 
 
-def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
+def _serialize_activation_request(
+    ar: ActivationRequest,
+    subscription: Optional[UserSubscription] = None,
+) -> Dict[str, Any]:
     selected_pages = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
     return {
         "id": ar.id,
@@ -1419,6 +1556,9 @@ def _serialize_activation_request(ar: ActivationRequest) -> Dict[str, Any]:
         "assigned_operator_email": ar.assigned_operator_email,
         "internal_notes": ar.internal_notes,
         "blocked_reason": ar.blocked_reason,
+        "applied_plan_id": subscription.plan_id if subscription else None,
+        "subscription_status": subscription.status if subscription else None,
+        "subscription_updated_at": subscription.updated_at.isoformat() if subscription and subscription.updated_at else None,
         "requested_at": ar.requested_at.isoformat() if ar.requested_at else None,
         "payment_verified_at": ar.payment_verified_at.isoformat() if ar.payment_verified_at else None,
         "activation_started_at": ar.activation_started_at.isoformat() if ar.activation_started_at else None,

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Client API typÃ© pour FLARE AI Backend.
  * Toutes les requÃªtes vers le backend FLARE AI
  */
@@ -190,13 +190,13 @@ async function apiRequest<T>(
   const url = `${getApiBaseUrl()}${endpoint}`;
   const method = (options?.method || "GET").toUpperCase();
   const shouldRetry = method === "GET";
-  const timeoutMs = shouldRetry ? 10000 : 30000;
+  const timeoutMs = shouldRetry ? 15000 : 60000;
   const attempts = shouldRetry ? 2 : 1;
   let lastError: Error | null = null;
 
   for (let attempt = 0; attempt < attempts; attempt++) {
     const controller = options?.signal ? null : new AbortController();
-    const timeout = setTimeout(() => controller?.abort(), timeoutMs);
+    const timeout = setTimeout(() => controller?.abort(new Error("Le serveur met un peu trop de temps à répondre (Timeout). Veuillez réessayer.")), timeoutMs);
 
     try {
       const response = await fetch(url, {
@@ -1023,6 +1023,8 @@ export interface PlanFeatures {
 export interface BillingFeatures {
   plan_id: string;
   features: PlanFeatures;
+  subscription_status?: string;
+  subscription_updated_at?: string | null;
 }
 
 export async function getBillingFeatures(authToken?: string | null): Promise<BillingFeatures> {
@@ -1634,6 +1636,9 @@ export interface ActivationRequestPage {
 export interface ActivationRequest {
   id: string;
   selected_plan_id: string;
+  applied_plan_id?: string | null;
+  subscription_status?: string | null;
+  subscription_updated_at?: string | null;
   status: string;
   payment_status: string;
   contact_full_name: string;
@@ -1774,12 +1779,67 @@ export async function adminAddActivationNote(id: string, note: string, token?: s
 
 // ─── Admin: Payments ────────────────────────────────────────────────────────
 
-export async function getAdminPayments(token?: string | null): Promise<{ payments: any[] }> {
-  return apiRequest<{ payments: any[] }>("/api/admin/payments", {}, token);
+export async function getAdminPayments(token?: string | null): Promise<{ payments: AdminPaymentRecord[] }> {
+  return apiRequest<{ payments: AdminPaymentRecord[] }>("/api/admin/payments", {}, token);
 }
 
-export async function adminVerifyPayment(id: string, token?: string | null): Promise<{ status: string }> {
-  return apiRequest<{ status: string }>(`/api/admin/payments/${id}/verify`, {
+export interface AdminPaymentRecord {
+  id: string;
+  user_id: string | null;
+  activation_request_id: string | null;
+  selected_plan_id: string;
+  applied_plan_id?: string | null;
+  subscription_status?: string | null;
+  method_code: string;
+  amount: string;
+  currency: string;
+  payer_full_name: string;
+  payer_phone: string;
+  transaction_reference: string;
+  proof_file_url?: string | null;
+  proof_file_name?: string | null;
+  status: string;
+  submitted_at: string | null;
+  verified_at?: string | null;
+  verified_by?: string | null;
+  rejection_reason?: string | null;
+  created_at?: string | null;
+  activation_summary?: {
+    contact_full_name?: string;
+    contact_email?: string;
+    contact_phone?: string;
+    contact_whatsapp?: string;
+    business_name?: string;
+    facebook_page_name?: string;
+    facebook_page_url?: string;
+  } | null;
+}
+
+export interface AdminVerifyPaymentResponse {
+  payment: {
+    id: string;
+    status: string;
+    selected_plan_id: string;
+    verified_at?: string | null;
+    verified_by?: string | null;
+  };
+  activation_request?: {
+    id: string;
+    payment_status: string;
+    status: string;
+    selected_plan_id: string;
+  } | null;
+  subscription: {
+    user_id: string;
+    user_email?: string | null;
+    plan_id: string;
+    status: string;
+    updated_at?: string | null;
+  };
+}
+
+export async function adminVerifyPayment(id: string, token?: string | null): Promise<AdminVerifyPaymentResponse> {
+  return apiRequest<AdminVerifyPaymentResponse>(`/api/admin/payments/${id}/verify`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({}),

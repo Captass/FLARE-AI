@@ -1,76 +1,87 @@
 # Handover pour une autre IA de dev
 
-Dernière mise à jour : 2 avril 2026
+Derniere mise a jour : 16 avril 2026
 
-Ce document sert de reprise rapide si FLARE AI est repris par une autre IA de développement.
+Ce document sert de reprise rapide si FLARE AI est repris par une autre IA de developpement.
 
 ## Le projet en une phrase
 
-FLARE AI est une application IA web avec un chat central, de la mémoire, une base de connaissances, des agents, la génération d'images, de vidéos, de documents Word et de fichiers Excel.
+FLARE AI est aujourd'hui une application SaaS orientee `chatbot Facebook assiste` pour les TPE et PME de Madagascar, avec paiement manuel local et activation operee par l'equipe FLARE.
 
 ## Ce qui compte le plus
 
 - backend prioritaire
-- stabilité avant tout
+- stabilite avant tout
 - l'app doit rester utilisable en production
-- les traces écrites doivent être tenues à jour
+- la verite produit publique doit rester etroite et exacte
+- les traces ecrites doivent etre tenues a jour
 
-## Où commencer
+## Ce qu'il ne faut plus supposer par defaut
 
-1. lire [docs/README.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/README.md)
-2. lire [docs/setup/START.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/setup/START.md)
-3. lire [docs/setup/ENVIRONMENT.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/setup/ENVIRONMENT.md)
-4. lire [docs/instructions/DEVELOPER_GUIDE.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/instructions/DEVELOPER_GUIDE.md)
-5. vérifier [docs/instructions/TASKS.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/instructions/TASKS.md)
+Ne repars pas du principe que FLARE AI est actuellement une suite publique large avec :
 
-## Git depuis un agent / terminal intégré (Windows)
+- assistant IA vendu publiquement
+- memoire / knowledge base comme coeur produit
+- agents metier publics
+- generation d'images / videos / Word / Excel vendue
+- self-serve Meta complet
 
-Le dépôt est souvent sous un chemin du type `...\FLARE AI\...`. Le shell intégré (Cursor, etc.) peut alors **échouer avant d’exécuter `git`**. **À chaque automation** (`status`, `commit`, `push`) : appliquer la technique **`git --git-dir` / `--work-tree`** depuis un répertoire neutre, décrite dans [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md) (section Déploiement). Alternative : `scripts/render-deploy.ps1` à la racine du repo.
+Ces surfaces peuvent encore exister dans le code, mais elles ne definissent pas la beta publique actuelle.
+
+## Ou commencer
+
+1. lire [docs/README.md](../README.md)
+2. lire [docs/handover/FLARE_APP_STATUS_2026-03-28.md](FLARE_APP_STATUS_2026-03-28.md)
+3. lire [docs/handover/BETA_LAUNCH_READINESS_2026-04-12.md](BETA_LAUNCH_READINESS_2026-04-12.md)
+4. lire [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md)
+5. lire la spec de lancement [docs/specs/launch/v1_2026-04-04_assisted_activation/README.md](../specs/launch/v1_2026-04-04_assisted_activation/README.md)
+
+## Git depuis un agent / terminal integre (Windows)
+
+Le depot peut echouer avant meme d'executer `git` si le chemin contient une apostrophe.
+A chaque automation (`status`, `commit`, `push`) :
+
+- utiliser la technique `git --git-dir / --work-tree`
+- ou utiliser `scripts/render-deploy.ps1`
+
+Reference : [docs/instructions/DEVELOPER_GUIDE.md](../instructions/DEVELOPER_GUIDE.md)
 
 ## Dossiers utiles
 
-- [backend](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/backend)
-- [frontend](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/frontend)
-- [docs](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs)
-- [scripts](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/scripts)
-- [_archive](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/_archive)
+- [backend](../../backend)
+- [frontend](../../frontend)
+- [docs](..)
+- [scripts](../../scripts)
+- [_archive](../../_archive)
 
-## Dossiers à ne pas casser
+## Dossiers a ne pas casser
 
-- [backend](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/backend)
-- [frontend](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/frontend)
+- [backend](../../backend)
+- [frontend](../../frontend)
 - fichiers `.env` actifs dans backend et frontend
 
-## Bon réflexe de travail
+## Bon reflexe de travail
 
 Avant de dire qu'une fonction marche :
 
-1. vérifier le code
+1. verifier le code
 2. build ou compiler
-3. déployer si besoin
+3. deployer si besoin
 4. tester en vrai
-5. mettre à jour la documentation
+5. mettre a jour la documentation
 
-## Bon réflexe de rangement
+## Ce qu'il faut laisser a chaque passage
 
-- nouvelle note produit -> `docs/specs/`
-- nouvelle note architecture -> `docs/architecture/`
-- nouvelle note de reprise -> `docs/handover/`
-- nouvelle instruction de travail -> `docs/instructions/`
-- nouvelle note environnement / déploiement -> `docs/setup/`
-
-## Ce qu'il faut laisser à chaque passage
-
-- ce qui a été changé
-- ce qui a été déployé
-- ce qui reste à faire
-- où regarder si quelque chose casse
+- ce qui a ete change
+- ce qui a ete deploye
+- ce qui reste a faire
+- ou regarder si quelque chose casse
 
 ## Si tu dois reprendre vite
 
 Lis d'abord :
 
-- [docs/README.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/README.md)
-- [docs/setup/START.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/setup/START.md)
-- [docs/handover/DEV_SYNC.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/handover/DEV_SYNC.md)
-- [docs/instructions/TASKS.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare AI/Antigravity/FLARE AI OS/V2/docs/instructions/TASKS.md)
+- [docs/README.md](../README.md)
+- [docs/handover/INTERNAL_ASSISTED_BETA_OPERATIONS_MANUAL_2026-04-12.md](INTERNAL_ASSISTED_BETA_OPERATIONS_MANUAL_2026-04-12.md)
+- [docs/handover/BETA_LAUNCH_READINESS_2026-04-12.md](BETA_LAUNCH_READINESS_2026-04-12.md)
+- [docs/specs/launch/v1_2026-04-04_assisted_activation/09_ACCEPTANCE_TESTS.md](../specs/launch/v1_2026-04-04_assisted_activation/09_ACCEPTANCE_TESTS.md)

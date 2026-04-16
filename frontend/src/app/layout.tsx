@@ -18,24 +18,21 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    default: "FLARE AI — Assistant IA & Chatbot Facebook à Madagascar",
+    default: "FLARE AI - Chatbot Facebook assiste pour TPE/PME a Madagascar",
     template: "%s | FLARE AI",
   },
   description:
-    "FLARE AI est la plateforme d'intelligence artificielle de référence à Madagascar. Assistant IA multi-agents, chatbot Facebook Messenger automatisé, génération de contenu, recherche web et automatisation pour les entreprises africaines.",
+    "FLARE AI propose une beta assistee pour TPE/PME a Madagascar: chatbot Facebook Messenger, paiement manuel MVola ou Orange Money, activation par l'equipe FLARE et support local.",
   keywords: [
     "FLARE AI",
-    "assistant IA Madagascar",
-    "intelligence artificielle Madagascar",
     "chatbot Facebook Madagascar",
-    "chatbot Messenger automatisé",
-    "automatisation IA entreprise",
-    "outil IA marketing Madagascar",
-    "plateforme IA Afrique",
+    "chatbot Messenger PME",
+    "activation chatbot assistee",
+    "paiement MVola Orange Money",
+    "automatisation Facebook PME",
+    "support local Madagascar",
     "RAM'S FLARE",
     "ramsflare",
-    "IA générative Madagascar",
-    "agent IA",
   ],
   authors: [{ name: "RAM'S FLARE", url: "https://flareai.ramsflare.com" }],
   creator: "RAM'S FLARE",
@@ -57,9 +54,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "FLARE AI — Assistant IA & Chatbot Facebook à Madagascar",
+    title: "FLARE AI - Chatbot Facebook assiste a Madagascar",
     description:
-      "Plateforme d'intelligence artificielle de référence à Madagascar. Automatisez votre marketing, vos ventes et vos opérations grâce à FLARE AI.",
+      "Beta assistee FLARE AI pour TPE/PME a Madagascar: chatbot Facebook Messenger, paiement local et activation par l'equipe FLARE.",
     url: "https://flareai.ramsflare.com",
     siteName: "FLARE AI",
     locale: "fr_FR",
@@ -69,15 +66,15 @@ export const metadata: Metadata = {
         url: "/screenshot.png",
         width: 1200,
         height: 630,
-        alt: "FLARE AI — Assistant IA & Chatbot Facebook Madagascar",
+        alt: "FLARE AI - Chatbot Facebook assiste pour TPE/PME a Madagascar",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FLARE AI — Assistant IA & Chatbot Facebook à Madagascar",
+    title: "FLARE AI - Chatbot Facebook assiste a Madagascar",
     description:
-      "La plateforme IA de référence à Madagascar. Chatbot Messenger, assistant multi-agents, automatisation marketing.",
+      "Chatbot Facebook Messenger pour TPE/PME a Madagascar, paiement local et activation assistee par FLARE.",
     creator: "@ramsflare",
     images: ["/screenshot.png"],
   },
@@ -132,9 +129,9 @@ export default function RootLayout({
                 "name": "FLARE AI",
                 "alternateName": ["Flare AI", "FLARE", "RAM'S FLARE AI"],
                 "applicationCategory": "BusinessApplication",
-                "applicationSubCategory": "ArtificialIntelligenceApplication",
+                "applicationSubCategory": "CustomerServiceApplication",
                 "operatingSystem": "Web, iOS, Android",
-                "description": "FLARE AI est la plateforme d'intelligence artificielle de référence à Madagascar. Assistant IA multi-agents, chatbot Facebook Messenger automatisé, génération de contenu, recherche web et automatisation pour les entreprises africaines.",
+                "description": "FLARE AI propose une beta publique assistee centree sur le chatbot Facebook Messenger pour les TPE et PME de Madagascar, avec paiement local et activation manuelle par l'equipe FLARE.",
                 "url": "https://flareai.ramsflare.com",
                 "screenshot": "https://flareai.ramsflare.com/screenshot.png",
                 "softwareVersion": "4.0",
@@ -163,24 +160,20 @@ export default function RootLayout({
                   {
                     "@type": "Offer",
                     "name": "Starter",
-                    "price": "0",
-                    "priceCurrency": "EUR",
-                    "description": "Plan gratuit avec accès aux fonctionnalités de base"
+                    "description": "Plan de decouverte FLARE AI en mode assiste"
                   },
                   {
                     "@type": "Offer",
-                    "name": "Pro",
-                    "description": "Plan professionnel avec chatbot Facebook et fonctionnalités avancées"
+                    "name": "Business",
+                    "description": "Plan chatbot Facebook avec activation manuelle assistee par FLARE"
                   }
                 ],
                 "featureList": [
-                  "Assistant IA multi-agents",
-                  "Chatbot Facebook Messenger automatisé",
-                  "Génération d'images et vidéos par IA",
-                  "Recherche web intelligente",
-                  "Génération de documents Word et Excel",
-                  "Automatisation marketing",
-                  "Gestion des commandes Messenger"
+                  "Chatbot Facebook Messenger pour TPE/PME",
+                  "Activation assistee par l'equipe FLARE",
+                  "Paiement manuel local MVola et Orange Money",
+                  "Suivi des messages, leads et commandes Messenger",
+                  "Support local en francais et malgache"
                 ]
               },
               {
@@ -193,7 +186,7 @@ export default function RootLayout({
                   "@type": "ImageObject",
                   "url": "https://flareai.ramsflare.com/logo-flare-ai.png"
                 },
-                "description": "RAM'S FLARE développe FLARE AI, la plateforme d'intelligence artificielle de référence à Madagascar.",
+                "description": "RAM'S FLARE developpe FLARE AI, un SaaS de chatbot Facebook assiste pour TPE/PME a Madagascar.",
                 "areaServed": [
                   { "@type": "Country", "name": "Madagascar" }
                 ],

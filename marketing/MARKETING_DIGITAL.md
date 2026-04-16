@@ -1,38 +1,49 @@
-# 📱 Stratégie Marketing Digital — FLARE AI
-**Objectif** : Transformer la visibilité sur les réseaux sociaux en clients payants.
+# Strategie Marketing Digital - FLARE AI
+**Objectif** : transformer l'interet Facebook en clients payants pour la beta assistee.
 
 ---
 
-## 1. Canaux de Visibilité
+## 1. Canal prioritaire
 
-### Facebook (Le Canal de Vente)
-*   **Contenu** : Tutoriels rapides ("Comment FLARE répond à vos clients"), captures d'écran de Messenger.
-*   **Publicité** : Campagnes de "Génération de prospects" (Leads Ads) ciblées sur les centres d'intérêt business/e-commerce.
-*   **Retargeting** : Montrer des preuves de paiement MVola/Orange Money pour rassurer ceux qui ont déjà visité la page.
+### Facebook
+Canal principal de visibilite et de conversion pour la beta actuelle.
 
-### TikTok (Le Canal de Viralité)
-*   **Format** : Vidéos courtes (< 30 sec) montrant l'effet "Magie" de l'IA.
-*   **Sujet** : "Je suis parti dormir et FLARE a vendu 3 articles."
-*   **Langue** : Principalement Malgache avec des sous-titres visuels percutants.
+- **Contenu** : tutoriels courts sur Messenger, avant/apres, captures de conversations, suivi d'activation.
+- **Publicite** : campagnes de generation de prospects ciblees sur TPE, PME, boutiques, services et independants a Madagascar.
+- **Retargeting** : rassurer avec le paiement local, le support FLARE et l'activation assistee.
 
----
+### WhatsApp / support direct
+Canal secondaire de relance et d'accompagnement humain.
 
-## 2. Le Tunnel de Conversion
-1.  **Découverte** (TikTok/FB) : L'utilisateur voit une preuve concrète d'automatisation.
-2.  **Intérêt** (Landing Page) : L'utilisateur arrive sur la page, découvre la promesse simple.
-3.  **Action** (Inscription) : L'utilisateur s'inscrit pour essayer gratuitement.
-4.  **Activation** (Experts FLARE) : L'équipe FLARE contacte l'utilisateur pour activer son premier bot en 15 min.
+- prise de contact rapide apres inscription
+- aide sur la preuve de paiement
+- suivi de l'acces page Facebook
 
 ---
 
-## 3. Messages de Vente Prioritaires
-*   **Preuve directe** : "Faites le test, envoyez un message à notre page."
-*   **Urgency** : "Seulement X places disponibles pour la béta assistée."
-*   **Simplicité** : "On le fait pour vous, vous n'avez rien à apprendre."
+## 2. Tunnel de conversion reel
+1. **Decouverte** : le prospect voit une preuve simple du chatbot Facebook.
+2. **Interet** : la landing explique une seule promesse claire.
+3. **Inscription** : le prospect ouvre son espace FLARE.
+4. **Choix de l'offre** : le plan chatbot est choisi dans l'app.
+5. **Paiement local** : MVola ou Orange Money.
+6. **Validation FLARE** : paiement verifie, plan applique.
+7. **Activation assistee** : FLARE prend en charge la configuration Facebook.
 
 ---
 
-## 4. Indicateurs de Succès (KPIs)
-*   Nombre d'inscriptions quotidiennes.
-*   Coût par prospect (CPL) sur Facebook Ads.
-*   Taux de conversion Prospect -> Client payant après les 15 min d'activation.
+## 3. Messages prioritaires
+- **Preuve concrete** : "Regardez comment FLARE reprend vos demandes Messenger."
+- **Clarte** : "Un seul produit vendu aujourd'hui : le chatbot Facebook assiste."
+- **Confiance** : "Paiement MVola ou Orange Money, validation par une equipe locale."
+- **Simplicite** : "FLARE vous accompagne jusqu'a l'activation."
+
+---
+
+## 4. KPIs de la beta
+- inscriptions qualifiees
+- cout par prospect Facebook
+- taux prospect -> paiement soumis
+- taux paiement soumis -> paiement verifie
+- taux paiement verifie -> chatbot actif
+- delai moyen de validation et d'activation

@@ -1,15 +1,18 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import { Bot, CreditCard, MessageSquare, Rocket, Users } from "lucide-react";
 import {
-  Bot,
-  CheckCircle2,
-  AlertTriangle,
-  MessageSquare,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
-import { getChatbotOverview, getDashboardStats, type ChatbotOverview, type DashboardStats } from "@/lib/api";
+  getBillingFeatures,
+  getChatbotOverview,
+  getDashboardStats,
+  getMyActivationRequest,
+  type ActivationRequest,
+  type BillingFeatures,
+  type ChatbotOverview,
+  type DashboardStats,
+} from "@/lib/api";
 import { KPI_POLL_INTERVAL_MS } from "@/lib/kpiPolling";
 import { SkeletonCard } from "@/components/SkeletonLoader";
 import type { NavLevel } from "@/components/NavBreadcrumb";
@@ -20,102 +23,129 @@ interface HomePageProps {
   onPush: (level: NavLevel) => void;
 }
 
-/* ── Brand SVG icons ── */
-
-function FacebookLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-    </svg>
-  );
-}
-
-function GoogleLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className}>
-      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-    </svg>
-  );
-}
-
-function TikTokLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V9.4a8.16 8.16 0 0 0 4.77 1.53V7.48a4.85 4.85 0 0 1-1.01-.79z" />
-    </svg>
-  );
-}
-
-function InstagramLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zm0 10.162a3.999 3.999 0 1 1 0-7.998 3.999 3.999 0 0 1 0 7.998zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z" />
-    </svg>
-  );
-}
-
-function LinkedInLogo({ className }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="currentColor">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
-  );
-}
-
-/* ── KPI Card ── */
-
 function KpiCard({
   label,
   value,
+  tone = "neutral",
   icon: Icon,
   loading,
   delay,
 }: {
   label: string;
   value: string | number;
-  icon: LucideIcon;
+  tone?: "neutral" | "orange" | "navy";
+  icon: typeof Bot;
   loading?: boolean;
   delay: number;
 }) {
   if (loading) return <SkeletonCard />;
+
+  const toneClass =
+    tone === "orange"
+      ? "text-orange-500"
+      : tone === "navy"
+      ? "text-[var(--accent-navy)]"
+      : "text-[var(--text-primary)]";
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay, ease: [0.16, 1, 0.3, 1] }}
-      className="flex-1 rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] px-5 py-4"
+      className="rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] px-5 py-4"
     >
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">{label}</p>
         <Icon size={16} className="text-orange-500/80" />
       </div>
-      <p className="mt-1 text-3xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{value}</p>
+      <p className={`mt-2 text-3xl font-black tracking-tight ${toneClass}`}>{value}</p>
     </motion.div>
   );
 }
 
-/* ── Platform tile ── */
+function getActivationCopy(activation: ActivationRequest | null, planId: string | null) {
+  if (!planId || planId === "free") {
+    return {
+      title: "Choisissez votre offre",
+      body: "La beta publique actuelle de FLARE est centree sur le chatbot Facebook, avec paiement local et activation assistee.",
+      action: "Voir l'offre",
+      target: "billing" as NavLevel,
+    };
+  }
 
-type PlatformDef = {
-  id: string;
-  name: string;
-  logo: React.FC<{ className?: string }>;
-  logoColor: string;
-  bgColor: string;
-  available: boolean;
-  nav?: NavLevel;
-};
+  if (!activation) {
+    return {
+      title: "Offre activee, activation a lancer",
+      body: "Votre abonnement est pret. Il reste a soumettre ou finaliser votre demande d'activation Facebook.",
+      action: "Continuer l'activation",
+      target: "billing" as NavLevel,
+    };
+  }
 
-const PLATFORMS: PlatformDef[] = [
-  { id: "facebook", name: "Facebook", logo: FacebookLogo, logoColor: "text-[#1877F2]", bgColor: "bg-[#1877F2]/10", available: true, nav: "facebook" as NavLevel },
-  { id: "google", name: "Google", logo: GoogleLogo, logoColor: "", bgColor: "bg-[var(--surface-subtle)]", available: true, nav: "google" as NavLevel },
-  { id: "tiktok", name: "TikTok", logo: TikTokLogo, logoColor: "text-[var(--text-primary)]", bgColor: "bg-[var(--surface-subtle)]", available: false },
-  { id: "instagram", name: "Instagram", logo: InstagramLogo, logoColor: "text-[#E4405F]", bgColor: "bg-[#E4405F]/10", available: false },
-  { id: "linkedin", name: "LinkedIn", logo: LinkedInLogo, logoColor: "text-[#0A66C2]", bgColor: "bg-[#0A66C2]/10", available: false },
-];
+  const map: Record<string, { title: string; body: string; action?: string; target?: NavLevel }> = {
+    awaiting_payment: {
+      title: "Paiement en attente",
+      body: "Votre plan est choisi. Envoyez votre paiement MVola ou Orange Money pour lancer la validation.",
+      action: "Payer",
+      target: "billing",
+    },
+    payment_submitted: {
+      title: "Paiement recu, verification en cours",
+      body: "L'equipe FLARE verifie votre preuve. Le plan applique s'affichera ici apres validation.",
+      action: "Voir le dossier",
+      target: "billing",
+    },
+    awaiting_flare_page_admin_access: {
+      title: "Plan applique, acces page requis",
+      body: "Votre paiement est valide. Ajoutez maintenant FLARE comme admin de votre page Facebook pour poursuivre.",
+      action: "Confirmer l'acces",
+      target: "billing",
+    },
+    queued_for_activation: {
+      title: "Plan applique, activation en file",
+      body: "Votre abonnement est actif et votre chatbot attend sa prise en charge par un technicien FLARE.",
+      action: "Suivre l'activation",
+      target: "billing",
+    },
+    activation_in_progress: {
+      title: "Activation en cours",
+      body: "Le chatbot Facebook est en configuration par FLARE. Vous pourrez le piloter depuis le hub chatbot.",
+      action: "Suivre l'activation",
+      target: "billing",
+    },
+    testing: {
+      title: "Test Messenger en cours",
+      body: "Le paiement est valide, le plan est applique et l'equipe teste maintenant la mise en ligne.",
+      action: "Voir le statut",
+      target: "billing",
+    },
+    active: {
+      title: "Chatbot actif",
+      body: "Votre abonnement est actif et votre chatbot Facebook est en ligne.",
+      action: "Ouvrir mon chatbot",
+      target: "chatbot",
+    },
+    blocked: {
+      title: "Activation bloquee",
+      body: activation.blocked_reason || "Un blocage doit etre traite avant de reprendre l'activation.",
+      action: "Ouvrir le dossier",
+      target: "billing",
+    },
+    rejected: {
+      title: "Paiement a reprendre",
+      body: activation.blocked_reason || "La preuve de paiement a ete refusee. Vous pouvez renvoyer une nouvelle preuve.",
+      action: "Renvoyer une preuve",
+      target: "billing",
+    },
+  };
+
+  return map[activation.status] || {
+    title: "Activation en cours",
+    body: "Le dossier FLARE suit votre activation Facebook.",
+    action: "Voir le dossier",
+    target: "billing" as NavLevel,
+  };
+}
 
 export default function HomePage({
   displayName,
@@ -124,148 +154,181 @@ export default function HomePage({
 }: HomePageProps) {
   const [overview, setOverview] = useState<ChatbotOverview | null>(null);
   const [dashStats, setDashStats] = useState<DashboardStats | null>(null);
+  const [activationRequest, setActivationRequest] = useState<ActivationRequest | null>(null);
+  const [billing, setBilling] = useState<BillingFeatures | null>(null);
   const [loadingKpi, setLoadingKpi] = useState(false);
 
-  const fetchKpis = useCallback(
+  const fetchHub = useCallback(
     async (silent = false) => {
       if (!token) {
         setOverview(null);
         setDashStats(null);
+        setActivationRequest(null);
+        setBilling(null);
         setLoadingKpi(false);
         return;
       }
       if (!silent) setLoadingKpi(true);
       try {
-        const [ovResult, statsResult] = await Promise.allSettled([
+        const [overviewRes, statsRes, activationRes, billingRes] = await Promise.allSettled([
           getChatbotOverview(token),
           getDashboardStats(token),
+          getMyActivationRequest(token),
+          getBillingFeatures(token),
         ]);
-        if (ovResult.status === "fulfilled") setOverview(ovResult.value);
-        if (statsResult.status === "fulfilled") setDashStats(statsResult.value);
+        if (overviewRes.status === "fulfilled") setOverview(overviewRes.value);
+        if (statsRes.status === "fulfilled") setDashStats(statsRes.value);
+        if (activationRes.status === "fulfilled") setActivationRequest(activationRes.value.activation_request);
+        if (billingRes.status === "fulfilled") setBilling(billingRes.value);
       } finally {
         if (!silent) setLoadingKpi(false);
       }
     },
-    [token]
+    [token],
   );
 
   useEffect(() => {
     if (!token) {
       setOverview(null);
       setDashStats(null);
+      setActivationRequest(null);
+      setBilling(null);
       setLoadingKpi(false);
       return;
     }
-    void fetchKpis(false);
-    const intervalId = window.setInterval(() => void fetchKpis(true), KPI_POLL_INTERVAL_MS);
+    void fetchHub(false);
+    const intervalId = window.setInterval(() => void fetchHub(true), KPI_POLL_INTERVAL_MS);
     const onVisibility = () => {
-      if (document.visibilityState === "visible") void fetchKpis(true);
+      if (document.visibilityState === "visible") void fetchHub(true);
     };
     document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.clearInterval(intervalId);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [fetchKpis, token]);
+  }, [fetchHub, token]);
 
   const isActive = overview?.step === "complete";
   const messagesCount = dashStats?.period?.messages ?? dashStats?.messages?.total ?? 0;
   const contactsCount = dashStats?.conversations?.messenger ?? dashStats?.conversations?.total ?? 0;
+  const planId = billing?.plan_id ?? activationRequest?.applied_plan_id ?? null;
+  const planLabel = useMemo(() => {
+    const map: Record<string, string> = {
+      free: "Free",
+      starter: "Starter",
+      pro: "Pro",
+      business: "Business",
+    };
+    return map[String(planId || "free")] ?? String(planId || "Free");
+  }, [planId]);
+  const activationCopy = getActivationCopy(activationRequest, planId);
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-10 px-4 py-10 md:px-8 md:py-14">
-
-        {/* ── Hero ── */}
+      <div className="mx-auto flex w-full max-w-[920px] flex-col gap-8 px-4 py-10 md:px-8 md:py-14">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="text-center space-y-4"
+          className="space-y-4"
         >
           <p className="text-base text-[var(--text-secondary)]">
             Bonjour <span className="font-bold text-[var(--text-primary)]">{displayName || "FLARE AI"}</span>
           </p>
-          <h1 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)] leading-tight">
-            Vos automatisations,{" "}
-            <span className="text-orange-500">un seul endroit.</span>
-          </h1>
+          <div className="max-w-3xl">
+            <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-4xl">
+              Votre beta FLARE AI se concentre sur un seul moteur:
+              <span className="text-orange-500"> le chatbot Facebook assiste.</span>
+            </h1>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
+              Paiement local MVola ou Orange Money, activation manuelle par l&apos;equipe FLARE, puis pilotage simple de votre chatbot Facebook depuis un hub unique.
+            </p>
+          </div>
         </motion.header>
 
-        {/* ── KPIs ── */}
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <KpiCard
-            label="Status"
-            value={loadingKpi ? "..." : isActive ? "En ligne" : overview ? "À configurer" : "--"}
-            icon={Bot}
-            loading={loadingKpi}
-            delay={0.05}
-          />
-          <KpiCard
-            label="Messages ce mois"
-            value={loadingKpi ? "..." : String(messagesCount)}
-            icon={MessageSquare}
-            loading={loadingKpi}
-            delay={0.1}
-          />
-          <KpiCard
-            label="Leads captés"
-            value={loadingKpi ? "..." : String(contactsCount)}
-            icon={Users}
-            loading={loadingKpi}
-            delay={0.15}
-          />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard label="Plan actif" value={loadingKpi ? "..." : planLabel} icon={CreditCard} tone="orange" loading={loadingKpi} delay={0.05} />
+          <KpiCard label="Statut bot" value={loadingKpi ? "..." : isActive ? "En ligne" : "En attente"} icon={Bot} tone={isActive ? "navy" : "neutral"} loading={loadingKpi} delay={0.1} />
+          <KpiCard label="Messages" value={loadingKpi ? "..." : String(messagesCount)} icon={MessageSquare} loading={loadingKpi} delay={0.15} />
+          <KpiCard label="Leads / contacts" value={loadingKpi ? "..." : String(contactsCount)} icon={Users} loading={loadingKpi} delay={0.2} />
         </div>
 
-        {/* ── Platforms ── */}
-        <section>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mb-5 text-xs font-bold uppercase tracking-[0.18em] text-[var(--text-secondary)]"
-          >
-            Plateformes connectées
-          </motion.p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-            {PLATFORMS.map((p, i) => {
-              const Logo = p.logo;
-              return (
-                <motion.button
-                  key={p.id}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={p.available ? { scale: 1.04, y: -2 } : undefined}
-                  whileTap={p.available ? { scale: 0.97 } : undefined}
-                  transition={{ delay: 0.2 + i * 0.05, duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-                  onClick={p.available && p.nav ? () => onPush(p.nav!) : undefined}
-                  disabled={!p.available}
-                  className={`group relative flex flex-col items-center gap-3 rounded-[24px] border px-4 py-6 transition-all duration-300 ${
-                    p.available
-                      ? "border-[var(--border-default)] bg-[var(--bg-card)] hover:border-[var(--border-subtle)] hover:shadow-lg cursor-pointer"
-                      : "border-[var(--border-faint)] bg-[var(--surface-subtle)] opacity-50 cursor-not-allowed"
-                  }`}
-                >
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${p.bgColor} transition-transform duration-300 group-hover:scale-110`}>
-                    <Logo className={`w-6 h-6 ${p.logoColor}`} />
-                  </div>
-                  <span className="text-sm font-bold text-[var(--text-primary)]">{p.name}</span>
-                  {p.available ? (
-                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-orange-600">
-                      Connecter →
-                    </span>
-                  ) : (
-                    <span className="text-xs font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
-                      Bientôt
+        <motion.section
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.35, delay: 0.1 }}
+          className="rounded-[28px] border border-[var(--border-default)] bg-[var(--bg-card)] p-6"
+        >
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="max-w-2xl">
+              <div className="flex items-center gap-2">
+                <Rocket size={18} className="text-orange-500" />
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Prochaine action</p>
+              </div>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)]">{activationCopy.title}</h2>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{activationCopy.body}</p>
+              {activationRequest?.applied_plan_id && (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]">
+                    Plan demande: {activationRequest.selected_plan_id}
+                  </span>
+                  <span className="rounded-full bg-[var(--accent-navy)]/8 px-3 py-1 text-[11px] font-medium text-[var(--accent-navy)]">
+                    Plan applique: {activationRequest.applied_plan_id}
+                  </span>
+                  {activationRequest.subscription_status && (
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]">
+                      Abonnement: {activationRequest.subscription_status}
                     </span>
                   )}
-                </motion.button>
-              );
-            })}
+                </div>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => onPush(activationCopy.target)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+            >
+              {activationCopy.action}
+            </button>
           </div>
-        </section>
+        </motion.section>
 
+        <section className="grid gap-4 md:grid-cols-3">
+          {[
+            {
+              title: "Mon chatbot Facebook",
+              body: "Suivez l'etat du bot, vos conversations, vos commandes et les prochaines actions utiles.",
+              action: "Ouvrir le chatbot",
+              target: "chatbot" as NavLevel,
+            },
+            {
+              title: "Offre / Paiement / Activation",
+              body: "Choisissez votre plan, envoyez votre preuve et suivez l'activation assistee de bout en bout.",
+              action: "Voir le dossier",
+              target: "billing" as NavLevel,
+            },
+            {
+              title: "Support / Parametres",
+              body: "Mettez a jour vos preferences, votre profil et ouvrez un signalement si quelque chose bloque.",
+              action: "Ouvrir le support",
+              target: "settings" as NavLevel,
+            },
+          ].map((card, index) => (
+            <motion.button
+              key={card.title}
+              type="button"
+              onClick={() => onPush(card.target)}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.15 + index * 0.06 }}
+              className="rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+            >
+              <h3 className="text-lg font-bold text-[var(--text-primary)]">{card.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{card.body}</p>
+              <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-orange-500">{card.action}</p>
+            </motion.button>
+          ))}
+        </section>
       </div>
     </div>
   );

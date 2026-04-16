@@ -15,6 +15,7 @@ import {
   Copy,
   Check,
   MessageSquare,
+  Zap,
 } from "lucide-react";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
@@ -46,6 +47,14 @@ import {
 function parseApiError(e: unknown, fallback = "Une erreur est survenue."): string {
   if (!(e instanceof Error)) return fallback;
   const raw = e.message.trim();
+  // Handle AbortController / Timeout errors gracefully
+  if (
+    (e as { name?: string }).name === "AbortError" ||
+    raw.toLowerCase().includes("signal is aborted") ||
+    raw.toLowerCase().includes("timeout")
+  ) {
+    return "Le serveur met trop de temps a repondre. Verifiez votre connexion et reessayez.";
+  }
   // try JSON parse to extract FastAPI { "detail": "..." }
   if (raw.startsWith("{") || raw.startsWith("[")) {
     try {
@@ -155,61 +164,60 @@ const PLANS: Array<{
   id: ActivationPlanId | "enterprise";
   name: string;
   price: string;
-  popular?: boolean;
+  subtitle: string;
+  highlight: boolean;
   contact?: boolean;
+  cta: string;
   features: string[];
 }> = [
   {
     id: "starter",
     name: "Starter",
-    price: "30 000 Ar/mois",
+    price: "30 000",
+    subtitle: "Boutique · Artisan · Indépendant",
+    highlight: false,
+    cta: "Commencer",
     features: [
+      "500 messages / mois",
       "1 page Facebook",
-      "500 messages/mois",
-      "Bot actif 24/7",
-      "Catalogue simple",
+      "Chatbot IA 24h/24",
+      "Catalogue limité à 10 articles",
+      "Support par email",
     ],
   },
   {
     id: "pro",
     name: "Pro",
-    price: "60 000 Ar/mois",
-    popular: true,
+    price: "60 000",
+    subtitle: "Commerce actif · Plusieurs produits",
+    highlight: true,
+    cta: "Choisir Pro",
     features: [
-      "3 pages Facebook",
-      "2 000 messages/mois",
-      "Bot actif 24/7",
-      "Catalogue avance",
-      "Stats & dashboard",
+      "2 000 messages / mois",
+      "1 page Facebook",
+      "IA Vendeuse (Raisonnement)",
+      "Catalogue jusqu'à 50 articles",
+      "Script de vente IA inclus",
+      "Gestion des commandes",
       "Support prioritaire",
     ],
   },
   {
     id: "business",
     name: "Business",
-    price: "120 000 Ar/mois",
+    price: "120 000",
+    subtitle: "PME · Équipe commerciale",
+    highlight: false,
+    cta: "Choisir Business",
     features: [
-      "Pages illimitees",
-      "Messages illimites",
-      "Bot actif 24/7",
-      "Catalogue complet",
-      "Stats avancees",
-      "Support dedie",
-      "Operateur FLARE assigne",
+      "5 000 messages / mois",
+      "Multi-pages Facebook",
+      "IA Premium & avancée",
+      "Catalogue étendu (500 articles)",
+      "Rôles & permissions équipe",
+      "Analytics avancés",
+      "Support dédié",
     ],
-  },
-  {
-    id: "enterprise",
-    name: "Entreprise",
-    price: "Sur devis",
-    features: [
-      "Tout Business inclus",
-      "Solution sur mesure",
-      "Integration personnalisee",
-      "Accompagnement dedie",
-      "SLA garanti",
-    ],
-    contact: true,
   },
 ];
 
@@ -1016,78 +1024,109 @@ export default function ChatbotActivationPage({
               transition={{ duration: 0.25 }}
               className="flex flex-col gap-6"
             >
-              <div className="text-center">
-                <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
+              <div className="text-center mb-2">
+                <h2 className="text-3xl md:text-4xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)] mb-2">
                   Choisissez votre offre
                 </h2>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  Selectionnez le plan qui correspond a votre activite.
+                <p className="text-sm text-[var(--text-muted)] max-w-lg mx-auto">
+                  Sélectionnez le plan qui correspond à votre activité.
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {PLANS.map((plan) => {
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-stretch pt-4">
+                {PLANS.map((plan, pi) => {
                   const isSelected = selectedPlanId === plan.id;
-                  const isEnterprise = (plan as any).contact === true;
                   return (
-                    <motion.button
+                    <div
                       key={plan.id}
-                      type="button"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        if (isEnterprise) {
-                          window.location.href = "mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI";
-                          return;
-                        }
-                        setSelectedPlanId(plan.id as ActivationPlanId);
-                      }}
-                      className={`relative flex flex-col items-start text-left p-5 rounded-2xl border transition-all duration-200 ${
-                        isSelected
+                      onClick={() => setSelectedPlanId(plan.id as ActivationPlanId)}
+                      className={`relative rounded-[28px] border p-7 md:p-9 flex flex-col gap-5 cursor-pointer transition-all duration-300 group ${
+                        plan.highlight
+                          ? "border-orange-500/40 bg-orange-500/[0.03] shadow-2xl shadow-orange-500/10 scale-[1.02] z-10"
+                          : isSelected
                           ? "border-orange-500 bg-orange-500/5 shadow-lg shadow-orange-500/10"
-                          : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)]"
+                          : "border-[var(--border-default)] bg-[var(--surface-subtle)] hover:border-[var(--border-subtle)]"
                       }`}
                     >
-                      {plan.popular && (
-                    <span className="absolute -top-2.5 right-3 rounded-full bg-orange-500 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wider text-black">
-                          Populaire
-                        </span>
+                      {/* Shimmer blur background */}
+                      <div className="absolute inset-0 z-0 overflow-hidden rounded-[28px] pointer-events-none">
+                        <div className={`absolute inset-0 transition-opacity duration-700 blur-[30px] ${plan.highlight ? "opacity-20 group-hover:opacity-40" : "opacity-0 group-hover:opacity-10"}`}>
+                          <motion.div animate={{ x: ["-100%", "200%"], scale: [1, 1.2, 1] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className={`absolute -inset-y-10 w-1/2 -skew-x-12 ${plan.highlight ? "bg-orange-500/50" : "bg-white/20"}`} />
+                        </div>
+                      </div>
+
+                      {/* Popular badge */}
+                      {plan.highlight && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-orange-500 px-5 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white shadow-xl z-20">
+                          Le plus populaire
+                        </div>
                       )}
-                      <p className="text-base font-semibold text-[var(--text-primary)]">
-                        {plan.name}
-                      </p>
-                      <p className="text-lg font-bold text-orange-500 mt-1">
-                        {plan.price}
-                      </p>
-                      <ul className="mt-4 flex flex-col gap-1.5 text-sm text-[var(--text-secondary)]">
+
+                      {/* Selected indicator when not highlight */}
+                      {isSelected && !plan.highlight && (
+                        <div className="absolute -top-3 right-3 rounded-full bg-[var(--text-primary)] px-3 py-1 text-[9px] font-bold uppercase tracking-widest text-[var(--surface-base)] z-20">
+                          Sélectionné ✓
+                        </div>
+                      )}
+                      {isSelected && plan.highlight && (
+                        <div className="absolute top-3 right-3 rounded-full bg-[var(--surface-overlay)] backdrop-blur px-2 py-1 text-[9px] font-bold uppercase tracking-widest text-orange-500 z-20">
+                          Sélectionné ✓
+                        </div>
+                      )}
+
+                      {/* Name & Price */}
+                      <div className="relative z-10">
+                        <span className="text-[10px] uppercase font-bold tracking-[0.15em] text-orange-500">{plan.name}</span>
+                        <div className="mt-3 flex items-baseline gap-1">
+                          <span className="whitespace-nowrap text-4xl md:text-5xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">{plan.price}</span>
+                          <span className="text-sm font-bold text-[var(--text-muted)]">Ar / mois</span>
+                        </div>
+                        <p className="mt-1.5 text-[11px] font-bold uppercase tracking-wide text-[var(--text-muted)]">{plan.subtitle}</p>
+                      </div>
+
+                      {/* Features */}
+                      <ul className="relative z-10 flex flex-col gap-3 flex-1">
                         {plan.features.map((f) => (
-                          <li key={f} className="flex items-start gap-2">
-                            <CheckCircle2
-                              size={14}
-                              className="mt-0.5 shrink-0 text-orange-500"
-                            />
-                            <span>{f}</span>
+                          <li key={f} className="flex items-start gap-2.5 text-sm font-medium text-[var(--text-secondary)]">
+                            <div className="w-4 h-4 rounded-full bg-orange-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                              <CheckCircle2 size={10} className="text-orange-500" />
+                            </div>
+                            {f}
                           </li>
                         ))}
                       </ul>
-                      {isEnterprise ? (
-                        <div className="mt-4 w-full">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-secondary)]">
-                            <MessageSquare size={14} />
-                            Contactez-nous
-                          </span>
+
+                      {/* CTA area */}
+                      <div className="relative z-10 mt-1">
+                        <div className={`w-full rounded-2xl py-4 text-[11px] font-bold uppercase tracking-widest flex items-center justify-center gap-2 transition-all duration-200 ${
+                          isSelected
+                            ? plan.highlight
+                              ? "bg-orange-500 text-white shadow-lg shadow-orange-500/20"
+                              : "bg-orange-500/10 text-orange-500 border border-orange-500/30"
+                            : plan.highlight
+                            ? "bg-orange-500/80 text-white"
+                            : "border border-[var(--border-default)] text-[var(--text-muted)]"
+                        }`}>
+                          {isSelected ? <CheckCircle2 size={12} /> : plan.highlight ? <Zap size={12} /> : <ArrowRight size={12} />}
+                          {isSelected ? "Sélectionné" : plan.cta}
                         </div>
-                      ) : isSelected ? (
-                        <div className="mt-4 w-full">
-                          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-500">
-                            <CheckCircle2 size={14} />
-                            Selectionne
-                          </span>
-                        </div>
-                      ) : null}
-                    </motion.button>
+                      </div>
+                    </div>
                   );
                 })}
+              </div>
+
+              {/* Entreprise banner */}
+              <div className="rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-subtle)] px-6 py-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-orange-500">Entreprise</span>
+                  <h3 className="mt-1 text-xl font-black tracking-tight text-[var(--text-primary)] font-[family-name:var(--font-outfit)]">Solution 100% sur mesure</h3>
+                  <p className="mt-0.5 text-sm text-[var(--text-muted)]">Infrastructure dédiée · SLA garanti · Accompagnement complet</p>
+                </div>
+                <a href="mailto:contact@ramsflare.com?subject=Offre%20Entreprise%20FLARE%20AI" className="shrink-0 flex items-center gap-2 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-raised)] px-5 py-3 text-[11px] font-bold uppercase tracking-widest text-[var(--text-primary)] hover:border-[var(--border-subtle)] transition-all">
+                  <MessageSquare size={12} />
+                  Nous contacter
+                </a>
               </div>
 
               {/* Next */}
@@ -1963,6 +2002,27 @@ function AwaitingStatus({
       <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
         {display.description}
       </p>
+      {(ar.selected_plan_id || ar.applied_plan_id) && (
+        <div className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-left">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">
+            Plan et abonnement
+          </p>
+          <div className="space-y-1.5 text-xs text-[var(--text-secondary)]">
+            <p>
+              Plan demande:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{ar.selected_plan_id || "-"}</span>
+            </p>
+            <p>
+              Plan applique:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{ar.applied_plan_id || "-"}</span>
+            </p>
+            <p>
+              Statut abonnement:{" "}
+              <span className="text-[var(--text-primary)] font-medium">{ar.subscription_status || "-"}</span>
+            </p>
+          </div>
+        </div>
+      )}
       {(targetPageName || importedPages.length > 0) && (
         <div className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-left">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)] mb-2">

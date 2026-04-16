@@ -400,7 +400,7 @@ export default function ChatbotHomePage({
     } finally {
       setFbOauthBusy(false);
     }
-  }, [canManageFb, onPagesChanged, pushFeedback, resolveToken]);
+  }, [onPagesChanged, pushFeedback, resolveToken]);
 
   const handleSyncPagesList = useCallback(async () => {
     const t = await resolveToken();
@@ -476,6 +476,12 @@ export default function ChatbotHomePage({
     currentPlanId,
     activationRequest
   );
+  const currentPlanLabel = ({
+    free: "Free",
+    starter: "Starter",
+    pro: "Pro",
+    business: "Business",
+  } as Record<string, string>)[String(currentPlanId || activationRequest?.applied_plan_id || "free")] ?? String(currentPlanId || activationRequest?.applied_plan_id || "Free");
 
   // Etapes du guide d'onboarding
   const hasAnyPage = pages.length > 0;
@@ -566,6 +572,35 @@ export default function ChatbotHomePage({
                     {activationBanner.cta.label}
                   </button>
                 )}
+              </motion.div>
+            )}
+            {!activationLoading && (currentPlanId || activationRequest?.applied_plan_id) && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-5 py-4"
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
+                    Plan actif
+                  </span>
+                  <span className="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-orange-500">
+                    {currentPlanLabel}
+                  </span>
+                  {activationRequest?.selected_plan_id && (
+                    <span className="rounded-full bg-[var(--bg-card)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
+                      Demande: {activationRequest.selected_plan_id}
+                    </span>
+                  )}
+                  {activationRequest?.subscription_status && (
+                    <span className="rounded-full bg-[var(--bg-card)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
+                      Abonnement: {activationRequest.subscription_status}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                  Le plan applique par FLARE s&apos;affiche ici apres validation du paiement.
+                </p>
               </motion.div>
             )}
 

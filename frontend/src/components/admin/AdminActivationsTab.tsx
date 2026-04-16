@@ -43,7 +43,7 @@ const STATUS_COLORS: Record<string, string> = {
 const NEXT_STATUSES: Record<string, string[]> = {
   draft: ["awaiting_payment", "canceled"],
   awaiting_payment: ["payment_submitted", "canceled"],
-  payment_submitted: ["payment_verified", "rejected"],
+  payment_submitted: ["rejected"],
   payment_verified: ["awaiting_flare_page_admin_access"],
   awaiting_flare_page_admin_access: ["queued_for_activation", "blocked"],
   queued_for_activation: ["activation_in_progress", "blocked"],
@@ -67,6 +67,7 @@ const STATUS_FILTERS = ["all", "payment_submitted", "payment_verified", "queued_
 export default function AdminActivationsTab({ token, onBack }: { token: string; onBack: () => void }) {
   const [activations, setActivations] = useState<ActivationRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [assignDrafts, setAssignDrafts] = useState<Record<string, string>>({});
@@ -75,8 +76,13 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
   const [toast, setToast] = useState<{ ok: boolean; msg: string } | null>(null);
 
   const load = useCallback(async () => {
-    try { const res = await getAdminActivations(token); setActivations(res.activations ?? []); }
-    catch { /* silent */ }
+    setLoadError(null);
+    try {
+      const res = await getAdminActivations(token);
+      setActivations(res.activations ?? []);
+    } catch (error) {
+      setLoadError(error instanceof Error ? error.message : "Impossible de charger les activations.");
+    }
     setLoading(false);
   }, [token]);
 
@@ -104,6 +110,12 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
         </div>
       )}
 
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-[var(--text-primary)]">
+          {loadError}
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2 mb-6">
         {STATUS_FILTERS.map(s => (
@@ -116,6 +128,11 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
 
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--surface-subtle)] animate-pulse" />)}</div>
+      ) : loadError && filtered.length === 0 ? (
+        <div className="text-center py-16 text-[var(--text-secondary)]">
+          <Rocket size={44} className="mx-auto mb-4 opacity-25" />
+          <p>Le chargement des activations a echoue. Faites un refresh avant de conclure qu&apos;il n&apos;y a aucune demande.</p>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-[var(--text-secondary)]">
           <Rocket size={44} className="mx-auto mb-4 opacity-25" />
@@ -145,6 +162,15 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
                       <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-[var(--surface-subtle)] text-[var(--text-secondary)]">
                         {ar.selected_plan_id}
                       </span>
+                      {ar.applied_plan_id && (
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                          ar.applied_plan_id === ar.selected_plan_id && ar.subscription_status === "active"
+                            ? "bg-[var(--accent-navy)]/8 text-[var(--accent-navy)]"
+                            : "bg-red-500/10 text-red-500"
+                        }`}>
+                          Applique: {ar.applied_plan_id}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-[var(--text-secondary)] mt-1 truncate">
                       {ar.contact_full_name} · {ar.contact_email || ar.contact_phone || "—"} ·{" "}
@@ -174,6 +200,9 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
                             ["Entreprise", ar.business_name],
                             ["Secteur", ar.business_sector],
                             ["Ville", ar.business_city && ar.business_country ? `${ar.business_city}, ${ar.business_country}` : ar.business_city],
+                            ["Plan demande", ar.selected_plan_id],
+                            ["Plan applique", ar.applied_plan_id],
+                            ["Statut abonnement", ar.subscription_status],
                             ["Page cible", ar.activation_target_page_name || ar.facebook_page_name],
                             ["ID page cible", ar.activation_target_page_id],
                             ["URL Page", ar.facebook_page_url],
