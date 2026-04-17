@@ -205,7 +205,9 @@ interface LandingPageProps {
 
 export default function LandingPage({ onStart }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const splineAppRef = useRef<any>(null);
   const splineTargetsRef = useRef<{ head: any; eyeL: any; eyeR: any } | null>(null);
+  const lastPointerRef = useRef({ x: 0, y: 0 });
   const prefersReducedMotion = useReducedMotion();
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -263,6 +265,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         frame = 0;
         const x = (e.clientX / window.innerWidth - 0.5) * 2;
         const y = (e.clientY / window.innerHeight - 0.5) * 2;
+
+        lastPointerRef.current = { x, y };
         springX.set(x);
         springY.set(y);
       });
@@ -281,7 +285,18 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     const updateSpline = () => {
       const x = springX.get();
       const y = springY.get();
-      const { head, eyeL, eyeR } = splineTargetsRef.current!;
+      let targets = splineTargetsRef.current;
+      if ((!targets?.head && !targets?.eyeL && !targets?.eyeR) && splineAppRef.current) {
+        targets = {
+          head: splineAppRef.current.findObjectByName("Head"),
+          eyeL: splineAppRef.current.findObjectByName("Eye_L") || splineAppRef.current.findObjectByName("Eye Left"),
+          eyeR: splineAppRef.current.findObjectByName("Eye_R") || splineAppRef.current.findObjectByName("Eye Right"),
+        };
+        splineTargetsRef.current = targets;
+      }
+
+      if (!targets) return;
+      const { head, eyeL, eyeR } = targets;
 
       if (head) {
         head.rotation.y = x * 0.8;
@@ -296,6 +311,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         eyeR.rotation.x = y * 0.2;
       }
     };
+
+    updateSpline();
 
     const unsubX = springX.on("change", updateSpline);
     const unsubY = springY.on("change", updateSpline);
@@ -316,6 +333,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
   function onLoad(app: any) {
     if (!app) return;
+    splineAppRef.current = app;
     try {
       splineTargetsRef.current = {
         head: app.findObjectByName("Head"),
@@ -342,6 +360,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     }
     setHeroSplineReady(true);
     setIsLoaded(true);
+    const { x, y } = lastPointerRef.current;
+    springX.set(x);
+    springY.set(y);
   }
 
   /* ── Metrics visibles sur le hero ── */
