@@ -43,19 +43,19 @@ const NAV_ITEMS = [
 ];
 
 const toneClassMap: Record<Tone, string> = {
-  live: "border-orange-500/35 bg-orange-500/10 text-zinc-900",
-  opening: "border-zinc-900/15 bg-white/70 text-zinc-900",
-  vision: "border-blue-900/20 bg-blue-950/10 text-zinc-900",
+  live: "border-orange-500/40 bg-[#fff2e3] text-black",
+  opening: "border-black/12 bg-white text-black",
+  vision: "border-black/12 bg-[#f3ece1] text-black",
 };
 
 function AutomationBoard() {
   return (
-    <div className="relative overflow-hidden rounded-[30px] border border-zinc-900/10 bg-zinc-950 p-6 text-zinc-100 shadow-[0_24px_80px_rgba(15,23,42,0.35)]">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(249,115,22,0.2),transparent_36%),radial-gradient(circle_at_80%_80%,rgba(56,189,248,0.2),transparent_36%)]" />
+    <div className="relative overflow-hidden rounded-[30px] border border-black/10 bg-white/95 p-6 text-black shadow-[0_24px_80px_rgba(15,23,42,0.16)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(249,115,22,0.12),transparent_36%),radial-gradient(circle_at_80%_80%,rgba(56,189,248,0.12),transparent_36%)]" />
 
       <div className="relative z-10">
-        <p className="text-[11px] uppercase tracking-[0.28em] text-zinc-400">Command Center FLARE</p>
-        <h3 className="mt-2 text-2xl font-black">Automation flow en direct</h3>
+        <p className="text-[11px] uppercase tracking-[0.28em] text-black/75">Command Center FLARE</p>
+        <h3 className="mt-2 text-2xl font-black text-black">Automation flow en direct</h3>
 
         <div className="mt-6 space-y-4">
           {[
@@ -69,14 +69,14 @@ function AutomationBoard() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.45, delay: index * 0.12 }}
-              className="relative rounded-2xl border border-white/10 bg-white/5 px-4 py-3"
+              className="relative rounded-2xl border border-black/10 bg-[#f8f2e7] px-4 py-3"
             >
               <motion.span
                 animate={{ opacity: [0.35, 0.95, 0.35] }}
                 transition={{ duration: 2.1, repeat: Infinity, delay: index * 0.3 }}
                 className="absolute left-2 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-orange-400 shadow-[0_0_16px_rgba(251,146,60,0.9)]"
               />
-              <p className="pl-4 text-sm font-semibold text-zinc-100">{step}</p>
+              <p className="pl-4 text-sm font-semibold text-black">{step}</p>
             </motion.div>
           ))}
         </div>
@@ -104,19 +104,19 @@ export default function PublicPageShell({
   const pathname = usePathname();
 
   return (
-    <main className="relative min-h-screen overflow-x-hidden bg-[#f7f1e7] text-zinc-900">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_12%,rgba(249,115,22,0.12),transparent_34%),radial-gradient(circle_at_92%_10%,rgba(30,58,138,0.1),transparent_30%),radial-gradient(circle_at_50%_90%,rgba(15,23,42,0.08),transparent_34%)]" />
+    <main className="relative min-h-screen overflow-x-hidden bg-[#f7f1e7] text-black">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_14%_14%,rgba(249,115,22,0.10),transparent_28%),radial-gradient(circle_at_78%_72%,rgba(249,115,22,0.06),transparent_24%)]" />
 
       <div className="relative mx-auto w-full max-w-[1180px] px-6 pb-20 pt-8 md:px-8 lg:px-10">
-        <header className="rounded-3xl border border-zinc-900/10 bg-white/78 px-5 py-4 backdrop-blur-xl">
+        <header className="rounded-3xl border border-black/10 bg-white px-5 py-4 shadow-[0_14px_40px_rgba(15,23,42,0.06)]">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Link href="/" className="flex items-center gap-3">
-              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-zinc-900/10 bg-white">
+              <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-black/10 bg-white">
                 <FlareMark className="w-7" tone="light" />
               </span>
               <div>
-                <p className="text-xl font-black tracking-tight">FLARE AI</p>
-                <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-500">Automatisation TPE PME</p>
+                <p className="text-xl font-black tracking-tight text-black">FLARE AI</p>
+                <p className="text-[11px] uppercase tracking-[0.18em] text-black/70">Automatisation TPE PME</p>
               </div>
             </Link>
 
@@ -129,8 +129,8 @@ export default function PublicPageShell({
                     href={item.href}
                     className={`rounded-full px-4 py-2 text-sm font-bold transition ${
                       active
-                        ? "bg-zinc-900 text-white shadow-[0_8px_24px_rgba(24,24,27,0.25)]"
-                        : "text-zinc-700 hover:bg-zinc-900/8"
+                        ? "bg-orange-500 text-black shadow-[0_8px_24px_rgba(249,115,22,0.24)]"
+                        : "text-black hover:bg-black/6"
                     }`}
                   >
                     {item.label}
@@ -142,35 +142,30 @@ export default function PublicPageShell({
         </header>
 
         <section className="mt-10 grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.4 }}
-            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-6"
-          >
-            <div className="inline-flex items-center rounded-full border border-zinc-900/15 bg-white/75 px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-zinc-700">
+          <div className="space-y-6">
+            <div className="inline-flex items-center rounded-full border border-black/15 bg-white px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-black">
               {eyebrow}
             </div>
 
-            <h1 className="max-w-3xl text-5xl font-black leading-[0.94] tracking-tight text-zinc-950 md:text-6xl">
+            <h1 className="max-w-3xl text-5xl font-black leading-[0.94] tracking-tight text-black md:text-6xl" style={{ color: "#050505" }}>
               {title}
             </h1>
 
-            <p className="max-w-2xl text-lg font-medium leading-relaxed text-zinc-700">{description}</p>
+            <p className="max-w-2xl text-lg font-medium leading-relaxed text-black" style={{ color: "#151515" }}>{description}</p>
 
             <div className="grid gap-3 md:grid-cols-3">
               {statusBlocks.map((block) => (
                 <div
                   key={block.title}
                   className={`rounded-2xl border px-4 py-4 ${toneClassMap[block.tone]}`}
+                  style={{ color: "#111111" }}
                 >
-                  <p className="text-[11px] font-black uppercase tracking-[0.2em]">{block.title}</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black">{block.title}</p>
                   <ul className="mt-3 space-y-2">
                     {block.items.map((item) => (
-                      <li key={item} className="flex items-start gap-2 text-sm font-semibold leading-snug">
-                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-                        <span>{item}</span>
+                      <li key={item} className="flex items-start gap-2 text-sm font-semibold leading-snug text-black">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
+                        <span className="text-black">{item}</span>
                       </li>
                     ))}
                   </ul>
@@ -181,14 +176,14 @@ export default function PublicPageShell({
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <Link
                 href={primaryAction.href}
-                className="group inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-zinc-950 transition hover:bg-orange-400"
+                className="group inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-black transition hover:bg-orange-400"
               >
                 {primaryAction.label}
                 <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
               </Link>
               <Link
                 href={secondaryAction.href}
-                className="inline-flex items-center rounded-full border border-zinc-900/20 bg-white/72 px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-zinc-900 transition hover:border-zinc-900/35 hover:bg-white"
+                className="inline-flex items-center rounded-full border border-black/20 bg-white px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-black transition hover:border-black/35 hover:bg-white"
               >
                 {secondaryAction.label}
               </Link>
@@ -196,48 +191,43 @@ export default function PublicPageShell({
 
             <div className="grid gap-3 border-t border-zinc-900/10 pt-5 sm:grid-cols-3">
               {metrics.map((metric) => (
-                <div key={metric.label} className="rounded-2xl border border-zinc-900/10 bg-white/65 px-4 py-3">
-                  <p className="text-3xl font-black leading-none text-zinc-950">{metric.value}</p>
-                  <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-zinc-500">{metric.label}</p>
+                <div key={metric.label} className="rounded-2xl border border-black/10 bg-white px-4 py-3">
+                  <p className="text-3xl font-black leading-none text-black">{metric.value}</p>
+                  <p className="mt-2 text-xs font-black uppercase tracking-[0.14em] text-black/70">{metric.label}</p>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          >
+          <div>
             <AutomationBoard />
-          </motion.div>
+          </div>
         </section>
 
         <section className="mt-16 space-y-14">{children}</section>
 
-        <section className="mt-16 rounded-[30px] border border-zinc-900/12 bg-zinc-950 px-6 py-8 text-zinc-100 md:px-10 md:py-10">
+        <section className="mt-16 rounded-[30px] border border-black/12 bg-white/92 px-6 py-8 text-black md:px-10 md:py-10 shadow-[0_20px_55px_rgba(15,23,42,0.10)]">
           <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.22em] text-zinc-400">Conversion ready</p>
-              <h2 className="mt-2 text-3xl font-black leading-tight md:text-4xl">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-black/75">Conversion ready</p>
+              <h2 className="mt-2 text-3xl font-black leading-tight text-black md:text-4xl">
                 Passez de l&apos;intention a l&apos;automatisation active.
               </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300 md:text-base">
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-black/80 md:text-base">
                 Ouvrez votre espace, choisissez une offre, payez en local, puis activez votre premier flux avec l&apos;equipe FLARE.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
                 href="/app?auth=signup"
-                className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-zinc-950 transition hover:bg-orange-400"
+                className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-black transition hover:bg-orange-400"
               >
                 Demarrer
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/app?auth=login"
-                className="inline-flex items-center rounded-full border border-white/20 px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-zinc-100 transition hover:border-white/35"
+                className="inline-flex items-center rounded-full border border-black/15 bg-[#f8f2e7] px-6 py-3 text-sm font-black uppercase tracking-[0.08em] text-black transition hover:border-black/30"
               >
                 Se connecter
               </Link>

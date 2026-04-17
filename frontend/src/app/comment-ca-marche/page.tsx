@@ -12,28 +12,28 @@ export const metadata: Metadata = {
 const STEPS = [
   {
     icon: UserCheck,
-    title: "1. Inscription rapide",
-    copy: "Vous creez votre compte en quelques clics et vous ouvrez votre espace de pilotage.",
+    title: "1. Inscription",
+    copy: "Compte ouvert.",
   },
   {
     icon: Bot,
-    title: "2. Choix de l'offre",
-    copy: "Vous choisissez le plan adapte a votre volume de demandes et vos objectifs business.",
+    title: "2. Offre",
+    copy: "Plan choisi.",
   },
   {
     icon: CreditCard,
-    title: "3. Paiement local",
-    copy: "Vous payez en MVola ou Orange Money avec une reference claire et tracable.",
+    title: "3. Paiement",
+    copy: "MVola ou OM.",
   },
   {
     icon: ShieldCheck,
-    title: "4. Validation FLARE",
-    copy: "L'equipe confirme le paiement et applique le plan choisi sans etat ambigu.",
+    title: "4. Validation",
+    copy: "Plan applique.",
   },
   {
     icon: MessageSquare,
-    title: "5. Activation Messenger",
-    copy: "Le chatbot Facebook est connecte a votre page puis passe en statut actif.",
+    title: "5. Activation",
+    copy: "Bot en ligne.",
   },
 ];
 
@@ -64,23 +64,23 @@ export default function CommentCaMarchePage() {
   return (
     <PublicPageShell
       eyebrow="Processus d'activation"
-      title="Un parcours simple, suivi de bout en bout."
-      description="FLARE AI automatise les taches repetitives pour TPE/PME. Aujourd'hui, la preuve concrete est le chatbot Facebook assiste avec paiement local et activation accompagnee."
+      title="Paiement. Validation. Activation."
+      description="Chatbot Facebook actif aujourd'hui. Paiement local. Activation FLARE."
       statusBlocks={[
         {
-          title: "Disponible maintenant",
+          title: "Actif maintenant",
           tone: "live",
-          items: ["Chatbot Facebook assiste", "Paiement MVola / Orange Money", "Suivi activation visible"],
+          items: ["Chatbot Facebook", "Paiement local"],
         },
         {
-          title: "En cours d'ouverture",
+          title: "En progression",
           tone: "opening",
-          items: ["Plus de cas d'usage metier", "Parcours plus autonome", "Routines de suivi et validation"],
+          items: ["Plus de cas metier", "Parcours plus autonome"],
         },
         {
-          title: "Vision FLARE AI",
+          title: "Vision FLARE",
           tone: "vision",
-          items: ["Plateforme d'automatisation", "Modules metier connectes", "Pilotage business unifie"],
+          items: ["Plateforme automation", "Pilotage unifie"],
         },
       ]}
       metrics={[
@@ -91,36 +91,36 @@ export default function CommentCaMarchePage() {
       primaryAction={{ label: "Demarrer la mise en route", href: "/app?auth=signup" }}
       secondaryAction={{ label: "Voir les offres", href: "/offres" }}
     >
-      <section className="rounded-[30px] border border-zinc-900/10 bg-white/75 p-6 shadow-[0_20px_65px_rgba(15,23,42,0.09)] md:p-8">
+      <section className="rounded-[30px] border border-black/12 bg-white p-6 shadow-[0_20px_65px_rgba(15,23,42,0.08)] md:p-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-zinc-500">Flow operationnel</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-950 md:text-4xl">
-              Comment votre activation avance
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-black/70">Flow operationnel</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-black md:text-4xl">
+              Le pipeline reel
             </h2>
           </div>
           <Link
             href="/cas-usage"
-            className="inline-flex items-center gap-2 rounded-full border border-zinc-900/15 bg-zinc-950 px-5 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:bg-zinc-800"
+            className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-[#f8f2e8] px-5 py-2.5 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:border-black/30"
           >
             Voir des cas concrets
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
-        <div className="mt-7 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-7 grid gap-3 md:grid-cols-5">
           {STEPS.map((step) => {
             const Icon = step.icon;
             return (
               <article
                 key={step.title}
-                className="group rounded-2xl border border-zinc-900/10 bg-[#f8f2e8] px-4 py-4 transition hover:-translate-y-0.5 hover:border-orange-500/35 hover:shadow-[0_16px_36px_rgba(249,115,22,0.16)]"
+                className="group rounded-2xl border border-black/10 bg-[#f8f2e8] px-4 py-4 transition hover:-translate-y-0.5 hover:border-orange-500/35 hover:shadow-[0_16px_36px_rgba(249,115,22,0.16)]"
               >
-                <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-900/10 bg-white text-zinc-900">
-                  <Icon className="h-4 w-4" />
+                <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-black/10 bg-white text-black">
+                  <Icon className="h-4 w-4 text-black" />
                 </div>
-                <h3 className="mt-3 text-sm font-black uppercase tracking-[0.06em] text-zinc-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-700">{step.copy}</p>
+                <h3 className="mt-3 text-sm font-black uppercase tracking-[0.06em] text-black">{step.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-black/80">{step.copy}</p>
               </article>
             );
           })}
@@ -130,39 +130,39 @@ export default function CommentCaMarchePage() {
       <section className="grid gap-4 md:grid-cols-3">
         {[
           {
-            title: "Etat activation en temps reel",
-            copy: "Chaque dossier avance avec des statuts clairs: paiement, validation, connexion page, activation.",
+            title: "Statut visible",
+            copy: "Paiement. Validation. Activation.",
           },
           {
-            title: "Validation humaine FLARE",
-            copy: "Vous n'etes pas seul: l'equipe suit les points critiques pour eviter les blocages silencieux.",
+            title: "Support FLARE",
+            copy: "Aide humaine sur les points critiques.",
           },
           {
-            title: "Sortie orientee resultat",
-            copy: "Objectif: repondre plus vite, convertir plus de demandes et structurer le suivi client.",
+            title: "Resultat direct",
+            copy: "Bot actif. Reponse plus vite.",
           },
         ].map((card) => (
           <article
             key={card.title}
-            className="rounded-2xl border border-zinc-900/10 bg-white/70 p-5 shadow-[0_12px_40px_rgba(15,23,42,0.06)]"
+            className="rounded-2xl border border-black/10 bg-white p-5 shadow-[0_12px_40px_rgba(15,23,42,0.05)]"
           >
-            <p className="text-xs font-black uppercase tracking-[0.12em] text-orange-600">Preuve terrain</p>
-            <h3 className="mt-2 text-xl font-black tracking-tight text-zinc-950">{card.title}</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-700">{card.copy}</p>
+            <p className="text-xs font-black uppercase tracking-[0.12em] text-black/70">Preuve terrain</p>
+            <h3 className="mt-2 text-xl font-black tracking-tight text-black">{card.title}</h3>
+            <p className="mt-3 text-sm leading-relaxed text-black/80">{card.copy}</p>
           </article>
         ))}
       </section>
 
-      <section className="rounded-[28px] border border-zinc-900/10 bg-white/75 p-6 md:p-8">
-        <h2 className="text-3xl font-black tracking-tight text-zinc-950">Questions critiques avant de commencer</h2>
+      <section className="rounded-[28px] border border-black/10 bg-white p-6 md:p-8">
+        <h2 className="text-3xl font-black tracking-tight text-black">Questions critiques</h2>
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {FAQS.map((item) => (
-            <div key={item.question} className="rounded-2xl border border-zinc-900/10 bg-[#fbf7f0] px-4 py-4">
+            <div key={item.question} className="rounded-2xl border border-black/10 bg-[#fbf7f0] px-4 py-4">
               <div className="flex items-start gap-3">
               <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
                 <div>
-                  <p className="text-sm font-semibold text-zinc-800">{item.question}</p>
-                  <p className="mt-2 text-sm leading-relaxed text-zinc-700">{item.answer}</p>
+                  <p className="text-sm font-semibold text-black">{item.question}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-black/80">{item.answer}</p>
                 </div>
               </div>
             </div>

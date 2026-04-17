@@ -57,7 +57,7 @@ export default function OffresPage() {
     <PublicPageShell
       eyebrow="Offres et conversion"
       title="Des offres nettes pour activer vite et scaler proprement."
-      description="FLARE AI est une plateforme d'automatisation en construction continue. Aujourd'hui, le module concret et prouve est le chatbot Facebook assiste, avec paiement local et activation guidee."
+      description="Choix simple. Paiement local. Activation FLARE. Chatbot Facebook actif aujourd'hui."
       statusBlocks={[
         {
           title: "Preuve active",
@@ -83,13 +83,13 @@ export default function OffresPage() {
       primaryAction={{ label: "Choisir mon offre", href: "/app?auth=signup" }}
       secondaryAction={{ label: "Retour accueil", href: "/" }}
     >
-      <section className="rounded-[30px] border border-zinc-900/10 bg-white/76 p-6 md:p-8">
+      <section className="rounded-[30px] border border-black/12 bg-white p-6 shadow-[0_20px_65px_rgba(15,23,42,0.08)] md:p-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">Grille d&apos;offres</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-950 md:text-4xl">Choisissez votre niveau d&apos;automatisation</h2>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/70">Grille d&apos;offres</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-black md:text-4xl">Choisissez votre niveau d&apos;automatisation</h2>
           </div>
-          <p className="max-w-sm text-right text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">
+          <p className="max-w-sm text-right text-xs font-semibold uppercase tracking-[0.12em] text-black/70">
             Meme logique d&apos;offres que dans l&apos;espace Offre / Activation
           </p>
         </div>
@@ -100,28 +100,28 @@ export default function OffresPage() {
               key={plan.name}
               className={`rounded-2xl border p-5 shadow-[0_12px_34px_rgba(15,23,42,0.08)] ${
                 plan.featured
-                  ? "border-orange-500/40 bg-zinc-950 text-zinc-100"
-                  : "border-zinc-900/10 bg-[#f8f2e8] text-zinc-900"
+                  ? "border-orange-500/40 bg-[#fff2e3] text-black"
+                  : "border-black/10 bg-[#f8f2e8] text-black"
               }`}
             >
               <div className="flex items-center justify-between gap-3">
                 <h3 className="text-2xl font-black tracking-tight">{plan.name}</h3>
                 <span
                   className={`rounded-full px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] ${
-                    plan.featured ? "bg-orange-500 text-zinc-950" : "border border-zinc-900/15 bg-white/70 text-zinc-700"
+                    plan.featured ? "bg-orange-500 text-black" : "border border-black/15 bg-white text-black"
                   }`}
                 >
                   {plan.badge}
                 </span>
               </div>
-              <p className={`mt-3 text-sm leading-relaxed ${plan.featured ? "text-zinc-200" : "text-zinc-700"}`}>{plan.summary}</p>
-              <p className={`mt-4 text-sm font-black uppercase tracking-[0.08em] ${plan.featured ? "text-orange-300" : "text-zinc-500"}`}>
+              <p className="mt-3 text-sm leading-relaxed text-black/82">{plan.summary}</p>
+              <p className="mt-4 text-sm font-black uppercase tracking-[0.08em] text-black/75">
                 {plan.price}
               </p>
               <ul className="mt-4 space-y-2">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-start gap-2 text-sm font-semibold leading-snug">
-                    <Check className={`mt-0.5 h-4 w-4 shrink-0 ${plan.featured ? "text-orange-400" : "text-orange-600"}`} />
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-orange-600" />
                     <span>{feature}</span>
                   </li>
                 ))}
@@ -130,8 +130,8 @@ export default function OffresPage() {
                 href={plan.cta}
                 className={`mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-xs font-black uppercase tracking-[0.08em] transition ${
                   plan.featured
-                    ? "bg-orange-500 text-zinc-950 hover:bg-orange-400"
-                    : "border border-zinc-900/15 bg-white text-zinc-900 hover:border-zinc-900/30"
+                    ? "bg-orange-500 text-black hover:bg-orange-400"
+                    : "border border-black/15 bg-white text-black hover:border-black/30"
                 }`}
               >
                 Activer cette offre
@@ -162,37 +162,37 @@ export default function OffresPage() {
         ].map((item) => {
           const Icon = item.icon;
           return (
-            <article key={item.title} className="rounded-2xl border border-zinc-900/10 bg-white/75 p-5">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-900/12 bg-[#f8f2e8]">
-                <Icon className="h-5 w-5 text-zinc-900" />
+            <article key={item.title} className="rounded-2xl border border-black/10 bg-white p-5">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black/12 bg-[#f8f2e8]">
+                <Icon className="h-5 w-5 text-black" />
               </div>
-              <h3 className="mt-3 text-xl font-black tracking-tight text-zinc-950">{item.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-zinc-700">{item.copy}</p>
+              <h3 className="mt-3 text-xl font-black tracking-tight text-black">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-black/80">{item.copy}</p>
             </article>
           );
         })}
       </section>
 
-      <section className="rounded-[28px] border border-zinc-900/10 bg-white/78 p-6 md:p-8">
+      <section className="rounded-[28px] border border-black/10 bg-white p-6 md:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">Praticite</p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-zinc-950">Pret a passer en production ?</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-700">
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-black/70">Praticite</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-black">Pret a passer en production ?</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-black/80">
               Ouvrez votre espace, choisissez l&apos;offre adaptee, puis lancez votre activation avec accompagnement FLARE.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               href="/app?auth=signup"
-              className="inline-flex items-center gap-2 rounded-full bg-zinc-950 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:bg-zinc-800"
+              className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:bg-orange-400"
             >
               Demarrer maintenant
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/comment-ca-marche"
-              className="inline-flex items-center gap-2 rounded-full border border-zinc-900/15 bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-zinc-900 transition hover:border-zinc-900/30"
+              className="inline-flex items-center gap-2 rounded-full border border-black/15 bg-[#f8f2e8] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:border-black/30"
             >
               Voir le parcours
               <BadgeCheck className="h-4 w-4" />
