@@ -8,7 +8,12 @@
  * déjà connectés vers /app, de façon transparente côté navigateur.
  */
 import LandingPageClient from "@/components/LandingPageClient";
-import SpaLoader from "@/components/SpaLoader";
+import dynamic from "next/dynamic";
+
+const SpaLoader = dynamic(() => import("@/components/SpaLoader"), {
+  ssr: false,
+  loading: () => null,
+});
 
 export default function HomePage() {
   return (

@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, ChevronDown, CheckCircle2, Clock3, Download, Facebook, Globe, Instagram, Linkedin, Mail, Menu, MessageSquare, Search, ShieldCheck, Sparkles, TrendingUp, Wallet, Workflow, X, Zap } from "lucide-react";
-import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useMotionTemplate } from "framer-motion";
+import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, ChevronDown, CheckCircle2, Clock3, Download, Facebook, Globe, Instagram, Linkedin, Mail, Menu, MessageSquare, ShieldCheck, TrendingUp, Workflow, X, Zap } from "lucide-react";
+import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useReducedMotion } from "framer-motion";
 import dynamic from "next/dynamic";
 import React from "react";
 import FlareMark from "./FlareMark";
-import { ThemePreference } from "@/lib/theme";
 
 // SplineScene is a browser-only 3D engine wrapper — must stay client-side only
 // Using a local wrapper avoids package export resolution issues during SSG
@@ -29,52 +28,6 @@ class SplineBoundary extends React.Component<
   }
 }
 
-/* 3D Tilt Component for cards */
-function TiltCard({ children, index }: { children: React.ReactNode; index: number }) {
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
-  const mouseXSpring = useSpring(x);
-  const mouseYSpring = useSpring(y);
-
-  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
-  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    const xPct = mouseX / width - 0.5;
-    const yPct = mouseY / height - 0.5;
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  return (
-    <motion.div
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      style={{
-        rotateY,
-        rotateX,
-        transformStyle: "preserve-3d",
-      }}
-      className="relative w-full"
-    >
-      <div style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
-        {children}
-      </div>
-    </motion.div>
-  );
-}
-
 /* Preserve the historical hero reveal while keeping Hooks valid. */
 function WordReveal({ word, index, scrollYProgress }: { word: string; index: number; scrollYProgress: any }) {
   const wordScroll = useTransform(scrollYProgress, [0, 0.1 + index * 0.05], [0, 1]);
@@ -87,24 +40,6 @@ function WordReveal({ word, index, scrollYProgress }: { word: string; index: num
     >
       {word}&nbsp;
     </motion.span>
-  );
-}
-
-/* Cinematic Blur-on-Scroll Component */
-function BlurScrollText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
-  const ref = useRef(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  });
-
-  const opacity = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], [0, 1, 1, 0]);
-  const y = useTransform(scrollYProgress, [0, 0.5, 1], [22, 0, -22]);
-
-  return (
-    <motion.div ref={ref} style={{ opacity, y }} className={className}>
-      {children}
-    </motion.div>
   );
 }
 
@@ -208,36 +143,6 @@ function ChatSimulation({ scenarioId }: { scenarioId: number }) {
   );
 }
 
-/* Interactive Glow Button */
-function GlowButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
-    const { left, top } = e.currentTarget.getBoundingClientRect();
-    mouseX.set(e.clientX - left);
-    mouseY.set(e.clientY - top);
-  };
-
-  return (
-    <motion.button
-      onClick={onClick}
-      onMouseMove={handleMouseMove}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      className={`relative overflow-hidden ${className}`}
-    >
-      <motion.div
-        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-        style={{
-          background: useMotionTemplate`radial-gradient(120px circle at ${mouseX}px ${mouseY}px, rgba(249, 115, 22, 0.15), transparent 80%)`,
-        }}
-      />
-      {children}
-    </motion.button>
-  );
-}
-
 /* Magnetic Wrapper for Interactive Elements */
 function Magnetic({ children, intensity = 0.35 }: { children: React.ReactNode; intensity?: number }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -265,8 +170,24 @@ function Magnetic({ children, intensity = 0.35 }: { children: React.ReactNode; i
   };
 
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    if (typeof window === "undefined") return;
+    const canHover = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    if (!canHover) return;
+
+    let frame = 0;
+    const onMouseMove = (event: MouseEvent) => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        handleMouseMove(event);
+      });
+    };
+
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("mousemove", onMouseMove);
+    };
   }, []);
 
   return (
@@ -284,15 +205,16 @@ interface LandingPageProps {
 
 export default function LandingPage({ onStart }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const splineTargetsRef = useRef<{ head: any; eyeL: any; eyeR: any } | null>(null);
+  const prefersReducedMotion = useReducedMotion();
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [splineApp, setSplineApp] = useState<any>(null);
-  const [canInstall, setCanInstall] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState<number | null>(0);
   const [activeScenario, setActiveScenario] = useState(0);
+  const enableRichEffects = !isMobile && !prefersReducedMotion;
 
   const { scrollY, scrollYProgress } = useScroll();
 
@@ -317,23 +239,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   });
 
   useEffect(() => {
-    if ((window as any).deferredPrompt) {
-      setCanInstall(true);
-    }
-
-    const handlePrompt = () => setCanInstall(true);
-    const handleCustomPrompt = () => setCanInstall(true);
-
-    window.addEventListener("beforeinstallprompt", handlePrompt);
-    window.addEventListener("pwa-prompt-ready", handleCustomPrompt);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handlePrompt);
-      window.removeEventListener("pwa-prompt-ready", handleCustomPrompt);
-    };
-  }, []);
-
-  useEffect(() => {
     document.body.classList.add("is-public-landing");
     return () => {
       document.body.classList.remove("is-public-landing");
@@ -348,38 +253,46 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const springY = useSpring(0, { stiffness: 150, damping: 20 });
 
   useEffect(() => {
+    if (!enableRichEffects || typeof window === "undefined") return;
+
+    let frame = 0;
     const handleMouseMove = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 2;
-      const y = (e.clientY / window.innerHeight - 0.5) * 2;
-      springX.set(x);
-      springY.set(y);
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        const x = (e.clientX / window.innerWidth - 0.5) * 2;
+        const y = (e.clientY / window.innerHeight - 0.5) * 2;
+        springX.set(x);
+        springY.set(y);
+      });
     };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, [springX, springY]);
+
+    window.addEventListener("mousemove", handleMouseMove, { passive: true });
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("mousemove", handleMouseMove);
+    };
+  }, [enableRichEffects, springX, springY]);
 
   useEffect(() => {
+    if (!enableRichEffects || !splineTargetsRef.current) return;
+
     const updateSpline = () => {
       const x = springX.get();
       const y = springY.get();
+      const { head, eyeL, eyeR } = splineTargetsRef.current!;
 
-      if (splineApp) {
-        const head = splineApp.findObjectByName("Head");
-        const eyeL = splineApp.findObjectByName("Eye_L") || splineApp.findObjectByName("Eye Left");
-        const eyeR = splineApp.findObjectByName("Eye_R") || splineApp.findObjectByName("Eye Right");
-
-        if (head) {
-          head.rotation.y = x * 0.8;
-          head.rotation.x = y * 0.4;
-        }
-        if (eyeL) {
-          eyeL.rotation.y = x * 0.4;
-          eyeL.rotation.x = y * 0.2;
-        }
-        if (eyeR) {
-          eyeR.rotation.y = x * 0.4;
-          eyeR.rotation.x = y * 0.2;
-        }
+      if (head) {
+        head.rotation.y = x * 0.8;
+        head.rotation.x = y * 0.4;
+      }
+      if (eyeL) {
+        eyeL.rotation.y = x * 0.4;
+        eyeL.rotation.x = y * 0.2;
+      }
+      if (eyeR) {
+        eyeR.rotation.y = x * 0.4;
+        eyeR.rotation.x = y * 0.2;
       }
     };
 
@@ -390,7 +303,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       unsubX();
       unsubY();
     };
-  }, [springX, springY, splineApp]);
+  }, [enableRichEffects, springX, springY]);
 
   const rotateX = useTransform(springY, (v) => v * -1.5);
   const rotateY = useTransform(springX, (v) => v * 1.5);
@@ -402,8 +315,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
   function onLoad(app: any) {
     if (!app) return;
-    setSplineApp(app);
     try {
+      splineTargetsRef.current = {
+        head: app.findObjectByName("Head"),
+        eyeL: app.findObjectByName("Eye_L") || app.findObjectByName("Eye Left"),
+        eyeR: app.findObjectByName("Eye_R") || app.findObjectByName("Eye Right"),
+      };
+
       if (isMobile && app.renderer) {
         app.renderer.setPixelRatio(0.75);
       }
@@ -813,16 +731,18 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </AnimatePresence>
 
       {/* ── Subtle Cursor Glow (orange) ── */}
-      <motion.div
-        className="fixed inset-0 z-0 pointer-events-none opacity-30"
-        style={{
-          background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(249, 115, 22, 0.12) 0%, transparent 40%)`
-        } as any}
-        animate={{
-          "--mouse-x": mousePosX as any,
-          "--mouse-y": mousePosY as any
-        } as any}
-      />
+      {enableRichEffects ? (
+        <motion.div
+          className="fixed inset-0 z-0 pointer-events-none opacity-30"
+          style={{
+            background: `radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(249, 115, 22, 0.12) 0%, transparent 40%)`
+          } as any}
+          animate={{
+            "--mouse-x": mousePosX as any,
+            "--mouse-y": mousePosY as any
+          } as any}
+        />
+      ) : null}
 
       {/* ── Scroll Progress (Right Edge) ── */}
       <motion.div
@@ -856,17 +776,20 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       <section className="relative w-full h-screen flex flex-col items-center justify-center sm:block">
         {/* 3D Robot Background */}
         <div className="landing-hero-scene absolute inset-0 z-0 opacity-40 grayscale-[80%]">
-          <SplineBoundary>
-            <Suspense fallback={<div className="landing-spline-fallback w-full h-full bg-[#020305]" />}>
-              <Spline
-                scene="https://prod.spline.design/JD2om2Ai-FFKwh9D/scene.splinecode"
-                onLoad={onLoad}
-                className="w-full h-full"
-                style={{ pointerEvents: isMobile ? 'none' : 'auto' }}
-              />
-            </Suspense>
-          </SplineBoundary>
-
+          {enableRichEffects ? (
+            <SplineBoundary>
+              <Suspense fallback={<div className="landing-spline-fallback w-full h-full bg-[#020305]" />}>
+                <Spline
+                  scene="https://prod.spline.design/JD2om2Ai-FFKwh9D/scene.splinecode"
+                  onLoad={onLoad}
+                  className="w-full h-full"
+                  style={{ pointerEvents: 'auto' }}
+                />
+              </Suspense>
+            </SplineBoundary>
+          ) : (
+            <div className="landing-spline-fallback w-full h-full bg-[#020305]" />
+          )}
         </div>
 
         {/* Header */}
@@ -1936,17 +1859,19 @@ export default function LandingPage({ onStart }: LandingPageProps) {
          ══════════════════════════════════════════════════════ */}
       <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
         {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
-        <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
-          <SplineBoundary>
-            <Suspense fallback={null}>
-              <Spline
-                scene="https://prod.spline.design/rIcJ6LXEuI7u6Tn6/scene.splinecode"
-                className="w-full h-full"
-                style={{ pointerEvents: 'none' }}
-              />
-            </Suspense>
-          </SplineBoundary>
-        </div>
+        {enableRichEffects ? (
+          <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+            <SplineBoundary>
+              <Suspense fallback={null}>
+                <Spline
+                  scene="https://prod.spline.design/rIcJ6LXEuI7u6Tn6/scene.splinecode"
+                  className="w-full h-full"
+                  style={{ pointerEvents: 'none' }}
+                />
+              </Suspense>
+            </SplineBoundary>
+          </div>
+        ) : null}
         {/* Overlay pour lisibilité */}
         <div className="landing-story-overlay absolute inset-0 z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/85 to-[#020305]/60" />
 
