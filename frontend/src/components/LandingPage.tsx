@@ -558,27 +558,27 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       title: "Disponible maintenant",
       tone: "live",
       items: [
-        "Chatbot Facebook assiste",
-        "Paiement MVola / Orange Money",
-        "Activation accompagnee par FLARE",
+        "Chatbot Facebook",
+        "Paiement local",
+        "Activation FLARE",
       ],
     },
     {
       title: "En cours d'ouverture",
       tone: "opening",
       items: [
-        "Plus de cas d'usage metier",
-        "Parcours encore plus fluide",
-        "Plus d'automatisations visibles dans l'app",
+        "Plus de cas metier",
+        "Parcours plus simple",
+        "Plus d'automatisations",
       ],
     },
     {
       title: "Vision FLARE AI",
       tone: "vision",
       items: [
-        "Plateforme d'automatisation business",
-        "Modules ventes, contenu et gestion",
-        "Pilotage unifie pour TPE / PME",
+        "Plateforme automation",
+        "Modules business",
+        "Pilotage unifie",
       ],
     },
   ];
@@ -586,23 +586,23 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const BUSINESS_BENEFITS = [
     {
       icon: TrendingUp,
-      title: "Plus de demandes traitees",
-      description: "Vous repondez plus vite aux prospects et vous laissez moins d'opportunites se perdre.",
+      title: "Plus de demandes",
+      description: "Reponse plus rapide.",
     },
     {
       icon: Workflow,
-      title: "Moins de repetition manuelle",
-      description: "FLARE prend les taches repetitives en charge pour liberer votre equipe sur le concret.",
+      title: "Moins de repetition",
+      description: "Plus de temps utile.",
     },
     {
       icon: Clock3,
-      title: "Mise en route lisible",
-      description: "Le parcours paiement, validation, activation et suivi reste visible a chaque etape.",
+      title: "Activation visible",
+      description: "Chaque etape est claire.",
     },
     {
       icon: ShieldCheck,
-      title: "Support local rassurant",
-      description: "Paiement local, equipe FLARE, verification humaine et statut clair dans l'application.",
+      title: "Support FLARE",
+      description: "Humain. Local. Clair.",
     },
   ];
 
@@ -944,8 +944,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   style={{ filter: "none", textShadow: "none", transform: "translateZ(0)" }}
                   className="landing-copy text-sm md:text-xl max-w-xl leading-relaxed text-black font-medium"
                 >
-                  FLARE AI automatise les taches repetitives pour aider les TPE et PME a gagner du temps, mieux repondre et augmenter leur chiffre d&apos;affaires.
-                  Aujourd&apos;hui, la preuve concrete la plus claire est le <strong>chatbot Facebook assiste</strong>, avec paiement local et activation par l&apos;equipe FLARE.
+                  FLARE AI automatise vos taches repetitives.
+                  <br />
+                  <strong>Chatbot Facebook actif aujourd&apos;hui. Paiement local. Activation FLARE.</strong>
                 </motion.p>
               </div>
 
@@ -1009,10 +1010,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             >
               <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Vision + preuve concrete</span>
               <h2 className="mt-4 text-3xl font-black leading-tight text-black md:text-5xl font-[family-name:var(--font-outfit)]">
-                Une plateforme d&apos;automatisation business, avec une preuve active deja exploitable.
+                Une plateforme d&apos;automatisation business.
               </h2>
               <p className="landing-copy mt-5 text-sm leading-relaxed text-black/70 md:text-lg">
-                FLARE AI porte une vision large d&apos;automatisation pour les TPE et PME. Aujourd&apos;hui, le module le plus concret et le plus credible reste le chatbot Facebook assiste, avec paiement local, validation humaine et activation suivie dans l&apos;app.
+                Preuve active aujourd&apos;hui : chatbot Facebook assiste.
               </p>
 
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
