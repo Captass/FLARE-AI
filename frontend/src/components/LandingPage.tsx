@@ -1516,9 +1516,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <a
               href="/comment-ca-marche"
               className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:bg-black/85"
+              style={{ color: "#ffffff" }}
             >
-              Voir le parcours detaille
-              <ArrowUpRight size={16} />
+              <span style={{ color: "#ffffff" }}>Voir le parcours detaille</span>
+              <ArrowUpRight size={16} style={{ color: "#ffffff" }} />
             </a>
             <a
               href="/offres"
@@ -1793,9 +1794,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <a
               href="/comment-ca-marche"
               className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:bg-black/85"
+              style={{ color: "#ffffff" }}
             >
-              Revoir le process
-              <ArrowUpRight size={16} />
+              <span style={{ color: "#ffffff" }}>Revoir le process</span>
+              <ArrowUpRight size={16} style={{ color: "#ffffff" }} />
             </a>
             <a
               href="/cas-usage"
