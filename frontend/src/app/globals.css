@@ -176,23 +176,16 @@ html.light {
   --accent-navy: #3b5bdb;
 }
 
-html.light .landing-theme-scope [class*="text-"],
-html.light .landing-theme-scope [class*="text_"],
 html.light .landing-theme-scope .landing-copy,
 html.light .landing-theme-scope .landing-card-title,
 html.light .landing-theme-scope .landing-card-copy,
 html.light .landing-theme-scope .landing-section-title,
-html.light .landing-theme-scope .landing-brand-subtitle,
-html.light .landing-theme-scope .landing-metric-label,
-html.light .landing-theme-scope svg,
-html.light .landing-theme-scope svg * {
+html.light .landing-theme-scope .landing-brand-subtitle {
   color: #000000 !important;
-  stroke: #000000 !important;
   opacity: 1 !important;
 }
 
-/* Force dark sections to render text in white */
-html.light .landing-theme-scope .theme-dark-override [class*="text-"],
+/* Dark landing sections keep their own explicit contrast styles. */
 html.light .landing-theme-scope .theme-dark-override .landing-copy,
 html.light .landing-theme-scope .theme-dark-override svg,
 html.light .landing-theme-scope .theme-dark-override svg * {
