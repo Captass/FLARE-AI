@@ -210,6 +210,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [heroSplineReady, setHeroSplineReady] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState<number | null>(0);
@@ -275,7 +276,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   }, [enableRichEffects, springX, springY]);
 
   useEffect(() => {
-    if (!enableRichEffects || !splineTargetsRef.current) return;
+    if (!enableRichEffects || !heroSplineReady || !splineTargetsRef.current) return;
 
     const updateSpline = () => {
       const x = springX.get();
@@ -303,7 +304,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       unsubX();
       unsubY();
     };
-  }, [enableRichEffects, springX, springY]);
+  }, [enableRichEffects, heroSplineReady, springX, springY]);
 
   const rotateX = useTransform(springY, (v) => v * -1.5);
   const rotateY = useTransform(springX, (v) => v * 1.5);
@@ -339,6 +340,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     } catch (e) {
       console.warn("Spline onLoad manipulation failed:", e);
     }
+    setHeroSplineReady(true);
     setIsLoaded(true);
   }
 
