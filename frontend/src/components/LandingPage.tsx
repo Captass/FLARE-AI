@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense } from "react";
-import { ArrowDown, ArrowRight, Zap, MessageSquare, BarChart3, Bot, Menu, X, Download, Instagram, Mail, Facebook, TrendingUp, Globe, Search, Linkedin } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, ChevronDown, CheckCircle2, Clock3, Download, Facebook, Globe, Instagram, Linkedin, Mail, Menu, MessageSquare, Search, ShieldCheck, Sparkles, TrendingUp, Wallet, Workflow, X, Zap } from "lucide-react";
 import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useMotionTemplate } from "framer-motion";
 import dynamic from "next/dynamic";
 import React from "react";
@@ -29,6 +29,67 @@ class SplineBoundary extends React.Component<
   }
 }
 
+/* 3D Tilt Component for cards */
+function TiltCard({ children, index }: { children: React.ReactNode; index: number }) {
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+
+  const mouseXSpring = useSpring(x);
+  const mouseYSpring = useSpring(y);
+
+  const rotateX = useTransform(mouseYSpring, [-0.5, 0.5], ["7deg", "-7deg"]);
+  const rotateY = useTransform(mouseXSpring, [-0.5, 0.5], ["-7deg", "7deg"]);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const width = rect.width;
+    const height = rect.height;
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    const xPct = mouseX / width - 0.5;
+    const yPct = mouseY / height - 0.5;
+    x.set(xPct);
+    y.set(yPct);
+  };
+
+  const handleMouseLeave = () => {
+    x.set(0);
+    y.set(0);
+  };
+
+  return (
+    <motion.div
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        rotateY,
+        rotateX,
+        transformStyle: "preserve-3d",
+      }}
+      className="relative w-full"
+    >
+      <div style={{ transform: "translateZ(30px)", transformStyle: "preserve-3d" }}>
+        {children}
+      </div>
+    </motion.div>
+  );
+}
+
+/* Preserve the historical hero reveal while keeping Hooks valid. */
+function WordReveal({ word, index, scrollYProgress }: { word: string; index: number; scrollYProgress: any }) {
+  const wordScroll = useTransform(scrollYProgress, [0, 0.1 + index * 0.05], [0, 1]);
+  const wordY = useTransform(wordScroll, [0, 1], [12, 0]);
+  const wordScale = useTransform(wordScroll, [0, 1], [0.985, 1]);
+  return (
+    <motion.span
+      style={{ opacity: wordScroll, y: wordY, scale: wordScale }}
+      className="inline-block"
+    >
+      {word}&nbsp;
+    </motion.span>
+  );
+}
+
 /* Cinematic Blur-on-Scroll Component */
 function BlurScrollText({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   const ref = useRef(null);
@@ -37,11 +98,11 @@ function BlurScrollText({ children, className = "" }: { children: React.ReactNod
     offset: ["start end", "end start"],
   });
 
-  const blur = useTransform(scrollYProgress, [0, 0.5, 1], [8, 0, 8]);
   const opacity = useTransform(scrollYProgress, [0, 0.4, 0.6, 1], [0, 1, 1, 0]);
+  const y = useTransform(scrollYProgress, [0, 0.5, 1], [22, 0, -22]);
 
   return (
-    <motion.div ref={ref} style={{ filter: useTransform(blur, (v) => `blur(${v}px)`), opacity }} className={className}>
+    <motion.div ref={ref} style={{ opacity, y }} className={className}>
       {children}
     </motion.div>
   );
@@ -144,6 +205,36 @@ function ChatSimulation({ scenarioId }: { scenarioId: number }) {
         </motion.div>
       )}
     </div>
+  );
+}
+
+/* Interactive Glow Button */
+function GlowButton({ children, onClick, className = "" }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const { left, top } = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - left);
+    mouseY.set(e.clientY - top);
+  };
+
+  return (
+    <motion.button
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      className={`relative overflow-hidden ${className}`}
+    >
+      <motion.div
+        className="pointer-events-none absolute -inset-px opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        style={{
+          background: useMotionTemplate`radial-gradient(120px circle at ${mouseX}px ${mouseY}px, rgba(249, 115, 22, 0.15), transparent 80%)`,
+        }}
+      />
+      {children}
+    </motion.button>
   );
 }
 
@@ -336,8 +427,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   /* ── Metrics visibles sur le hero ── */
   const METRICS = [
     { value: "50k+", label: "messages automatisés" },
-    { value: "15 min", label: "pour l'activer" },
-    { value: "0", label: "technicien requis" },
+    { value: "15 min", label: "apres validation" },
+    { value: "Support", label: "equipe FLARE incluse" },
   ];
 
   /* ── Témoignages pour la confiance ── */
@@ -351,7 +442,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     { 
       name: "Sarah R.", 
       role: "Agence Digitale", 
-      text: "L'automatisation des factures et devis nous a fait gagner 10h par semaine. Indispensable.",
+      text: "Le suivi des messages entrants et des relances nous a rendus beaucoup plus reactifs sur les leads chauds.",
       initials: "SR"
     },
     { 
@@ -369,7 +460,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     { 
       name: "Fanja M.", 
       role: "Coach Business", 
-      text: "La génération de contenu visuel est bluffante. Je gagne un temps précieux sur Instagram.",
+      text: "Je vois enfin un parcours clair entre paiement, validation et mise en ligne. C'est concret et rassurant.",
       initials: "FM"
     },
     { 
@@ -388,7 +479,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       description: "Le Widget FLARE s'intègre à votre site pour accueillir les visiteurs et conclure les ventes en direct de façon fluide.",
       promise: "Conversion Directe",
       color: "text-[#f97316]",
-      bgGlow: "rgba(249, 115, 22, 0.15)"
+      bgGlow: "rgba(249, 115, 22, 0.15)",
+      status: "En expansion",
+      note: "Brique de plateforme en progression dans l'ecosysteme FLARE."
     },
     {
       id: 1,
@@ -396,7 +489,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       description: "Synchronisez vos fiches produits et vos avis Google Business. Soyez trouvé et convertissez quand ils cherchent.",
       promise: "Visibilité Moteur",
       color: "text-[#4285F4]",
-      bgGlow: "rgba(66, 133, 244, 0.15)"
+      bgGlow: "rgba(66, 133, 244, 0.15)",
+      status: "Bientot",
+      note: "Vision d'automatisation plus large, non presentee comme flux public principal aujourd'hui."
     },
     {
       id: 2,
@@ -404,7 +499,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       description: "Capturez les leads de vos publicités Facebook en un clic avec des relances Messenger scénarisées et intelligentes.",
       promise: "Acquisition Sociale",
       color: "text-[#1877F2]",
-      bgGlow: "rgba(24, 119, 242, 0.15)"
+      bgGlow: "rgba(24, 119, 242, 0.15)",
+      status: "Actif aujourd'hui",
+      note: "La preuve la plus concrete du moment: chatbot Facebook assiste avec activation FLARE."
     },
     {
       id: 3,
@@ -412,7 +509,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       description: "Convertissez vos abonnés : le bot répond automatiquement à vos DMs et commente directement sous vos Reels et Posts.",
       promise: "Engagement Actif",
       color: "text-[#E4405F]",
-      bgGlow: "rgba(228, 64, 95, 0.15)"
+      bgGlow: "rgba(228, 64, 95, 0.15)",
+      status: "En expansion",
+      note: "Capacite de plateforme en developpement, a distinguer du flux actif aujourd'hui."
     },
     {
       id: 4,
@@ -420,16 +519,144 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       description: "Automatisez votre prospection B2B. Suscitez l'intérêt et qualifiez vos leads professionnels avec des approches ultra-ciblées.",
       promise: "Réseautage B2B",
       color: "text-[#0A66C2]",
-      bgGlow: "rgba(10, 102, 194, 0.15)"
+      bgGlow: "rgba(10, 102, 194, 0.15)",
+      status: "Vision FLARE",
+      note: "Projection de la plateforme d'automatisation, pas promesse de self-serve immediat."
     }
   ];
 
-  /* --- Avantages concrets (Simplifiés) --- */
+  /* ── Cas d'usage orientés business ── */
+  const USE_CASES = [
+    {
+      icon: MessageSquare,
+      title: "Automatisez vos Ventes",
+      description: "Un chatbot Messenger qui répond à vos prospects 24/7 et qualifie les leads. Ne ratez plus aucune vente, même la nuit.",
+      cta: "Activer mon assistant",
+      prompt: "Configure mon chatbot Facebook pour répondre aux clients automatiquement",
+      status: "Actif aujourd'hui",
+    },
+    {
+      icon: Zap,
+      title: "Automatisez vos Contenus",
+      description: "Générez vos visuels et vidéos TikTok/Facebook en un clic. FLARE s'occupe de la création pour vous rendre visible.",
+      cta: "Créer un visuel",
+      prompt: "Rédige un post Facebook accrocheur avec un visuel pour promouvoir mes services",
+      status: "En expansion",
+    },
+    {
+      icon: BarChart3,
+      title: "Automatisez votre Gestion",
+      description: "Édition automatique de devis, factures et rapports. Libérez votre temps pour vous concentrer sur vos clients.",
+      cta: "Automatiser mes docs",
+      prompt: "Génère un modèle de devis professionnel pour mes services",
+      status: "Vision FLARE",
+    },
+  ];
+
+  const HERO_STATUS_BLOCKS = [
+    {
+      title: "Disponible maintenant",
+      tone: "live",
+      items: [
+        "Chatbot Facebook assiste",
+        "Paiement MVola / Orange Money",
+        "Activation accompagnee par FLARE",
+      ],
+    },
+    {
+      title: "En cours d'ouverture",
+      tone: "opening",
+      items: [
+        "Plus de cas d'usage metier",
+        "Parcours encore plus fluide",
+        "Plus d'automatisations visibles dans l'app",
+      ],
+    },
+    {
+      title: "Vision FLARE AI",
+      tone: "vision",
+      items: [
+        "Plateforme d'automatisation business",
+        "Modules ventes, contenu et gestion",
+        "Pilotage unifie pour TPE / PME",
+      ],
+    },
+  ];
+
+  const BUSINESS_BENEFITS = [
+    {
+      icon: TrendingUp,
+      title: "Plus de demandes traitees",
+      description: "Vous repondez plus vite aux prospects et vous laissez moins d'opportunites se perdre.",
+    },
+    {
+      icon: Workflow,
+      title: "Moins de repetition manuelle",
+      description: "FLARE prend les taches repetitives en charge pour liberer votre equipe sur le concret.",
+    },
+    {
+      icon: Clock3,
+      title: "Mise en route lisible",
+      description: "Le parcours paiement, validation, activation et suivi reste visible a chaque etape.",
+    },
+    {
+      icon: ShieldCheck,
+      title: "Support local rassurant",
+      description: "Paiement local, equipe FLARE, verification humaine et statut clair dans l'application.",
+    },
+  ];
+
+  const ACTIVATION_STEPS = [
+    { step: "01", title: "Inscription", description: "Vous creez votre espace FLARE AI et vous ouvrez votre tableau de bord." },
+    { step: "02", title: "Choix de l'offre", description: "Vous selectionnez le plan adapte a votre activite et votre volume de demandes." },
+    { step: "03", title: "Paiement local", description: "Vous payez en MVola ou Orange Money avec une reference de transaction claire." },
+    { step: "04", title: "Validation FLARE", description: "L'equipe valide le paiement et applique le plan choisi sans etat ambigu." },
+    { step: "05", title: "Activation", description: "Votre page Facebook est connectee, testee puis le bot passe visible comme actif." },
+  ];
+
+  const TRUST_PROOFS = [
+    {
+      kicker: "Preuve concrete aujourd'hui",
+      title: "Chatbot Facebook assiste",
+      description: "La preuve active la plus claire est deja exploitable: chatbot Messenger, paiement local, activation FLARE et suivi visible.",
+    },
+    {
+      kicker: "Ce que vous voyez dans l'app",
+      title: "Plan, statut, prochaines actions",
+      description: "Le client retrouve son plan demande, son plan applique, l'etat d'activation et la prochaine etape a faire.",
+    },
+    {
+      kicker: "Accompagnement Madagascar",
+      title: "Support humain sur les points critiques",
+      description: "Vous n'etes pas laisse seul sur la validation, la connexion page Facebook et la mise en ligne initiale.",
+    },
+  ];
+
+  const FAQS = [
+    {
+      question: "Combien de temps pour activer FLARE AI ?",
+      answer: "Le paiement est verifie par l'equipe FLARE, puis l'activation du chatbot Facebook suit selon le dossier et l'acces a la page. Le parcours est visible dans l'application.",
+    },
+    {
+      question: "Comment se fait le paiement ?",
+      answer: "Le paiement se fait localement en MVola ou Orange Money, avec une preuve et une reference de transaction verifiees par FLARE.",
+    },
+    {
+      question: "Faut-il etre technique ?",
+      answer: "Non. Vous choisissez l'offre, vous confirmez les acces necessaires et l'equipe FLARE accompagne les etapes critiques.",
+    },
+    {
+      question: "Que fait FLARE AI aujourd'hui exactement ?",
+      answer: "FLARE AI est une plateforme d'automatisation en construction. La preuve la plus concrete aujourd'hui est le chatbot Facebook assiste pour repondre plus vite et structurer la conversion.",
+    },
+  ];
+
+  /* ── Avantages concrets ── */
   const ADVANTAGES = [
-    { number: "01", title: "Zéro technique", text: "Activé par nos experts en 15 min." },
-    { number: "02", title: "Accompagnement", text: "On configure tout avec vous." },
-    { number: "03", title: "Mémoire IA", text: "Elle apprend vos prix et votre ton." },
-    { number: "04", title: "Pilote Auto", text: "Répond et vend pendant vos repos." },
+    { number: "01", title: "Zéro technique", text: "Pas de code, pas de formation. L'équipe FLARE active votre plateforme pour vous en 15 minutes." },
+    { number: "02", title: "Accompagnement", text: "Nous configurons vos premières automatisations avec vous pour garantir vos résultats." },
+    { number: "03", title: "Mémoire Intelligente", text: "FLARE apprend vos prix et votre ton. Chaque action est parfaitement alignée sur votre marque." },
+    { number: "04", title: "Pilote Automatique", text: "Pendant que vous dormez, votre système répond, produit et relance. Votre business ne s'arrête jamais." },
   ];
 
   /* ── Variants for staggered animations ── */
@@ -445,12 +672,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30, scale: 0.95, filter: "blur(10px)" },
+    hidden: { opacity: 0, y: 30, scale: 0.98 },
     visible: { 
       opacity: 1, 
       y: 0,
       scale: 1,
-      filter: "blur(0px)",
       transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
     }
   };
@@ -478,24 +704,36 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </div>
 
             <div className="hidden md:flex items-center gap-8">
+              <Magnetic>
+                <button
+                  onClick={() => document.getElementById("hero")?.scrollTo({ top: 0, behavior: "smooth" })}
+                  className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
+                >
+                  Accueil
+                </button>
+              </Magnetic>
               {[
-                { label: "Accueil", id: "hero" },
-                { label: "Solutions", id: "solutions" },
-                { label: "Offres", id: "pricing" },
-                { label: "Notre histoire", id: "story" },
+                { label: "Comment ca marche", href: "/comment-ca-marche" },
+                { label: "Cas d'usage", href: "/cas-usage" },
+                { label: "Offres", href: "/offres" },
               ].map((link) => (
-                <Magnetic key={link.id}>
-                  <button
-                    onClick={() => {
-                      const el = document.getElementById(link.id);
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
-                  >
+                <Magnetic key={link.href}>
+                  <a href={link.href} className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1">
                     {link.label}
-                  </button>
+                  </a>
                 </Magnetic>
               ))}
+              <Magnetic>
+                <button
+                  onClick={() => {
+                    const el = document.getElementById("story");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
+                >
+                  Notre histoire
+                </button>
+              </Magnetic>
             </div>
 
             <div className="flex items-center gap-4">
@@ -532,28 +770,43 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <X size={32} />
             </button>
             <nav className="flex flex-col gap-6 mt-12">
+              <button
+                onClick={() => {
+                  document.getElementById("hero")?.scrollTo({ top: 0, behavior: "smooth" });
+                  setMobileMenuOpen(false);
+                }}
+                className="landing-mobile-link text-2xl font-semibold uppercase text-left"
+              >
+                Accueil
+              </button>
               {[
-                { label: "Accueil", id: "hero" },
-                { label: "Solutions", id: "solutions" },
-                { label: "Offres", id: "pricing" },
-                { label: "Notre histoire", id: "story" },
+                { label: "Comment ca marche", href: "/comment-ca-marche" },
+                { label: "Cas d'usage", href: "/cas-usage" },
+                { label: "Offres", href: "/offres" },
               ].map((link) => (
-                <button
-                  key={link.id}
-                  onClick={() => {
-                    const el = document.getElementById(link.id);
-                    if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    setMobileMenuOpen(false);
-                  }}
+                <a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
                   className="landing-mobile-link text-2xl font-semibold uppercase text-left"
                 >
                   {link.label}
-                </button>
+                </a>
               ))}
+              <button
+                onClick={() => {
+                  const el = document.getElementById("story");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                  setMobileMenuOpen(false);
+                }}
+                className="landing-mobile-link text-2xl font-semibold uppercase text-left"
+              >
+                Notre histoire
+              </button>
             </nav>
             <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
                <button onClick={() => onStart("login")} className="landing-mobile-secondary w-full py-4 uppercase border rounded-2xl">Se connecter</button>
-               <button onClick={() => onStart("signup")} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Commencer gratuitement</button>
+               <button onClick={() => onStart("signup")} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Demarrer la mise en route</button>
             </div>
           </motion.div>
         )}
@@ -617,7 +870,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         {/* Header */}
-        <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 md:px-12 lg:px-24 sm:pt-0 sm:pb-6">
+        <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
           <motion.header
             initial={{ opacity: 0 }}
             animate={{ opacity: isLoaded ? 1 : 0 }}
@@ -669,19 +922,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 className="landing-headline text-[38px] sm:text-[56px] md:text-[84px] leading-[1.05] md:leading-[1] perspective-1000 font-[family-name:var(--font-outfit)]"
               >
                 {/* Scroll-Scrubbed Reveal */}
-                {"Simplifiez. Produisez.".split(" ").map((word, i) => {
-                  const wordScroll = useTransform(scrollYProgress, [0, 0.1 + i * 0.05], [0, 1]);
-                  const wordBlur = useTransform(wordScroll, [0, 1], [15, 0]);
-                  return (
-                    <motion.span
-                      key={i}
-                      style={{ opacity: wordScroll, filter: useMotionTemplate`blur(${wordBlur}px)` }}
-                      className="inline-block"
-                    >
-                      {word}&nbsp;
-                    </motion.span>
-                  );
-                })}
+                {"Simplifiez. Produisez.".split(" ").map((word, i) => (
+                  <WordReveal key={i} word={word} index={i} scrollYProgress={scrollYProgress} />
+                ))}
                 <br />
                 <motion.span
                   style={{ 
@@ -698,12 +941,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <div className="w-full mt-6 mb-8 lg:mb-10 lg:mt-8">
                 <motion.p 
                   variants={itemVariants}
+                  style={{ filter: "none", textShadow: "none", transform: "translateZ(0)" }}
                   className="landing-copy text-sm md:text-xl max-w-xl leading-relaxed text-black font-medium"
                 >
-                  <BlurScrollText>
-                    La plateforme tout-en-un qui exécute vos <strong>ventes</strong>, vos <strong>contenus</strong> et vos <strong>documents</strong> pour vous.
-                    Activé en <strong>15 min</strong> par l&apos;équipe FLARE.
-                  </BlurScrollText>
+                  FLARE AI automatise les taches repetitives pour aider les TPE et PME a gagner du temps, mieux repondre et augmenter leur chiffre d&apos;affaires.
+                  Aujourd&apos;hui, la preuve concrete la plus claire est le <strong>chatbot Facebook assiste</strong>, avec paiement local et activation par l&apos;equipe FLARE.
                 </motion.p>
               </div>
 
@@ -724,7 +966,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 1, repeat: Infinity }}
                   />
-                  Essayer gratuitement
+                  Demarrer la mise en route
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </motion.button>
 
@@ -733,7 +975,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   className="flex items-center justify-center gap-3 rounded-full border-2 border-black/10 bg-white/50 backdrop-blur-md px-8 py-4 md:py-5 text-[13px] font-bold uppercase transition-all hover:bg-white hover:border-black/20 hover:scale-105 w-full sm:w-auto"
                 >
                   <Download size={16} className="text-black/60" />
-                  Installer l&apos;app
+                  Ouvrir / installer l&apos;app
                 </button>
               </motion.div>
 
@@ -756,11 +998,135 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         {/* Trust Section ends here */}
       </section>
 
+      <section className="relative z-20 border-t border-black/5 bg-[#F9F7F2] px-6 py-14 sm:px-16 md:px-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              className="max-w-2xl"
+            >
+              <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Vision + preuve concrete</span>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-black md:text-5xl font-[family-name:var(--font-outfit)]">
+                Une plateforme d&apos;automatisation business, avec une preuve active deja exploitable.
+              </h2>
+              <p className="landing-copy mt-5 text-sm leading-relaxed text-black/70 md:text-lg">
+                FLARE AI porte une vision large d&apos;automatisation pour les TPE et PME. Aujourd&apos;hui, le module le plus concret et le plus credible reste le chatbot Facebook assiste, avec paiement local, validation humaine et activation suivie dans l&apos;app.
+              </p>
+
+              <div className="mt-8 grid gap-3 sm:grid-cols-2">
+                {BUSINESS_BENEFITS.slice(0, 2).map((benefit) => {
+                  const Icon = benefit.icon;
+                  return (
+                    <div key={benefit.title} className="rounded-[1.75rem] border border-black/8 bg-white/70 p-5 shadow-[0_20px_45px_rgba(15,23,42,0.06)]">
+                      <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-600">
+                        <Icon size={20} />
+                      </div>
+                      <h3 className="mt-4 text-lg font-black text-black">{benefit.title}</h3>
+                      <p className="mt-2 text-sm font-medium leading-relaxed text-black/65">{benefit.description}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              className="grid gap-4"
+            >
+              {HERO_STATUS_BLOCKS.map((block) => {
+                const blockClass =
+                  block.tone === "live"
+                    ? "border-orange-500/25 bg-white shadow-[0_20px_45px_rgba(249,115,22,0.12)]"
+                    : block.tone === "vision"
+                      ? "border-sky-900/15 bg-sky-950/[0.04]"
+                      : "border-black/10 bg-white/75";
+
+                return (
+                  <div key={block.title} className={`rounded-[1.8rem] border p-5 ${blockClass}`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-black/65">{block.title}</p>
+                      <span className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black/[0.03] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-black/55">
+                        <span className="h-2 w-2 rounded-full bg-orange-500" />
+                        FLARE
+                      </span>
+                    </div>
+                    <div className="mt-5 space-y-3">
+                      {block.items.map((item, index) => (
+                        <div key={item} className="relative overflow-hidden rounded-2xl border border-black/8 bg-[#fffdf9] px-4 py-3">
+                          <motion.div
+                            animate={{ opacity: [0.15, 0.5, 0.15], scaleX: [0.92, 1.02, 0.92] }}
+                            transition={{ duration: 2.8, repeat: Infinity, delay: index * 0.2 }}
+                            className="absolute inset-y-0 left-0 w-1/3 origin-left rounded-full bg-orange-500/10 blur-xl"
+                          />
+                          <div className="relative flex items-start gap-3">
+                            <BadgeCheck size={16} className="mt-0.5 shrink-0 text-orange-600" />
+                            <span className="text-sm font-semibold leading-relaxed text-black/75">{item}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative z-20 border-t border-black/5 bg-white px-6 py-20 sm:px-16 md:px-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Impact business</span>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-black md:text-5xl font-[family-name:var(--font-outfit)]">
+                Comment FLARE vous fait gagner du temps et de la traction.
+              </h2>
+            </div>
+            <div className="max-w-xl">
+              <p className="landing-copy text-sm leading-relaxed text-black/70 md:text-base">
+                L&apos;objectif n&apos;est pas juste d&apos;ajouter un outil. L&apos;objectif est de reduire la repetition, accelerer la reponse client et rendre le suivi plus actionnable.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            {BUSINESS_BENEFITS.map((benefit, index) => {
+              const Icon = benefit.icon;
+              return (
+                <motion.article
+                  key={benefit.title}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.55, delay: index * 0.08 }}
+                  className="group relative overflow-hidden rounded-[2rem] border border-black/8 bg-[#f8f2e7] p-6 shadow-[0_18px_45px_rgba(15,23,42,0.06)]"
+                >
+                  <motion.div
+                    animate={{ opacity: [0.25, 0.6, 0.25], x: ["-15%", "20%", "-15%"] }}
+                    transition={{ duration: 4.2, repeat: Infinity, delay: index * 0.25 }}
+                    className="absolute inset-x-[-15%] top-0 h-px bg-gradient-to-r from-transparent via-orange-500 to-transparent"
+                  />
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-[1.2rem] border border-orange-500/15 bg-white text-orange-600">
+                    <Icon size={22} />
+                  </div>
+                  <h3 className="mt-5 text-xl font-black text-black">{benefit.title}</h3>
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-black/65">{benefit.description}</p>
+                </motion.article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* ══════════════════════════════════════════════════════
           SOLUTIONS SECTION (BOTNATION STYLE SIMULATION)
          ══════════════════════════════════════════════════════ */}
       <section id="solutions" className="relative z-20 py-24 sm:py-32 bg-[#F9F7F2] border-t border-black/5 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-24">
           
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-6xl font-black text-black mt-4 font-[family-name:var(--font-outfit)]">FLARE AI en action.</h2>
@@ -857,7 +1223,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           ECOSYSTEM HUB (STANDARD LAYOUT)
          ══════════════════════════════════════════════════════ */}
       <section className="relative py-24 sm:py-32 overflow-hidden border-t border-black/5 bg-white">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
             
             {/* Left: Interactive Platform Grid */}
@@ -921,15 +1287,23 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                           {MODULES_INFO[activeFeature].title}
                         </span>
                       </div>
+
+                      <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white/80 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-black/65">
+                        <span className="h-2 w-2 rounded-full bg-orange-500" />
+                        {MODULES_INFO[activeFeature].status}
+                      </div>
                       
                       <p className="text-[15px] sm:text-lg text-black/70 font-medium leading-relaxed mb-8 max-w-lg">
                         {MODULES_INFO[activeFeature].description}
                       </p>
 
                       <div className="p-5 rounded-[1.5rem] bg-[#F9F7F2] border border-black/5 inline-block">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-black/40 mb-1">Impact direct</p>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-black/65 mb-1">Impact direct</p>
                         <p className={`text-[15px] sm:text-lg font-black ${MODULES_INFO[activeFeature].color}`}>
                           {MODULES_INFO[activeFeature].promise}
+                        </p>
+                        <p className="mt-3 max-w-sm text-xs font-semibold leading-relaxed text-black/72">
+                          {MODULES_INFO[activeFeature].note}
                         </p>
                       </div>
                     </motion.div>
@@ -947,7 +1321,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           COMMAND CENTER (DASHBOARD ILLUSTRATIONS)
          ══════════════════════════════════════════════════════ */}
       <section id="advantages" className="relative z-20 py-24 sm:py-32 bg-white border-y border-black/5 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 md:px-12 lg:px-24">
+        <div className="max-w-7xl mx-auto px-6 lg:px-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             {/* Left: Direct Text Content */}
             <div>
@@ -998,7 +1372,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                     <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center text-white text-xs font-black">M</div>
                     <div>
                       <h4 className="text-sm font-black text-black leading-tight">Bonjour Maria</h4>
-                      <p className="text-[10px] text-black/40 font-bold uppercase tracking-tight">Ecom Pilot Activé</p>
+                      <p className="text-[10px] text-black/65 font-bold uppercase tracking-tight">Ecom Pilot Activé</p>
                     </div>
                   </div>
 
@@ -1010,7 +1384,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                     ].map((item, i) => (
                       <div key={i} className="p-4 rounded-2xl flex items-center justify-between" style={{ background: item.bg }}>
                         <div>
-                          <p className="text-[10px] font-black uppercase text-black/40">{item.label}</p>
+                      <p className="text-[10px] font-black uppercase text-black/60">{item.label}</p>
                           <p className="text-xl font-black text-black">{item.val}</p>
                         </div>
                         <div className="relative w-10 h-10">
@@ -1086,7 +1460,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                         </div>
                         <div>
                           <p className="text-[12px] font-black text-black leading-tight">{item.action}</p>
-                          <p className="text-[10px] text-black/40 font-bold uppercase">{item.target} • {item.time}</p>
+                      <p className="text-[10px] text-black/60 font-bold uppercase">{item.target} • {item.time}</p>
                         </div>
                       </motion.div>
                     ))}
@@ -1099,7 +1473,152 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </section>
 
       {/* ── Trust / Reviews Section (Draggable Carousel) ── */}
-      <section className="relative z-20 px-6 py-20 md:px-12 lg:px-24 overflow-hidden border-y border-black/5 bg-white">
+      <section className="relative z-20 border-y border-black/5 bg-[#f8f2e7] px-6 py-20 sm:px-16 md:px-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Comment ca marche</span>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-black md:text-5xl font-[family-name:var(--font-outfit)]">
+                Un parcours clair, du paiement local a l&apos;activation visible.
+              </h2>
+            </div>
+            <div className="max-w-xl">
+              <p className="landing-copy text-sm leading-relaxed text-black/70 md:text-base">
+                FLARE ne vous laisse pas seul dans un tunnel opaque. Le paiement, la validation, l&apos;activation et le support suivent un flux lisible.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-5">
+            {ACTIVATION_STEPS.map((step, index) => (
+              <motion.article
+                key={step.step}
+                initial={{ opacity: 0, y: 18 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.5, delay: index * 0.06 }}
+                className="relative overflow-hidden rounded-[1.8rem] border border-black/8 bg-white/88 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)]"
+              >
+                <motion.div
+                  animate={{ opacity: [0.3, 0.75, 0.3] }}
+                  transition={{ duration: 2.4, repeat: Infinity, delay: index * 0.25 }}
+                  className="absolute left-5 top-0 h-full w-px bg-gradient-to-b from-orange-500/0 via-orange-500/40 to-orange-500/0"
+                />
+                <p className="pl-4 text-[11px] font-black uppercase tracking-[0.18em] text-orange-600">{step.step}</p>
+                <h3 className="mt-4 pl-4 text-lg font-black text-black">{step.title}</h3>
+                <p className="mt-2 pl-4 text-sm font-medium leading-relaxed text-black/65">{step.description}</p>
+              </motion.article>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/comment-ca-marche"
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:bg-black/85"
+            >
+              Voir le parcours detaille
+              <ArrowUpRight size={16} />
+            </a>
+            <a
+              href="/offres"
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:border-black/25"
+            >
+              Voir les offres
+              <ArrowUpRight size={16} />
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative z-20 border-b border-black/5 bg-white px-6 py-20 sm:px-16 md:px-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-2xl">
+              <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">Preuves et confiance</span>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-black md:text-5xl font-[family-name:var(--font-outfit)]">
+                Ce que le client comprend, voit et valide avant la mise en ligne.
+              </h2>
+            </div>
+            <div className="max-w-xl">
+              <p className="landing-copy text-sm leading-relaxed text-black/70 md:text-base">
+                La conversion se gagne avec des signaux nets: paiement local, statut visible, plan applique, support humain et cas d&apos;usage lisibles.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="grid gap-4 md:grid-cols-3">
+              {TRUST_PROOFS.map((proof, index) => (
+                <motion.article
+                  key={proof.title}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.25 }}
+                  transition={{ duration: 0.5, delay: index * 0.08 }}
+                  className="rounded-[1.8rem] border border-black/8 bg-[#f8f2e7] p-5 shadow-[0_18px_40px_rgba(15,23,42,0.05)]"
+                >
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-orange-600">{proof.kicker}</p>
+                  <h3 className="mt-3 text-xl font-black text-black">{proof.title}</h3>
+                  <p className="mt-3 text-sm font-medium leading-relaxed text-black/65">{proof.description}</p>
+                </motion.article>
+              ))}
+            </div>
+
+            <div className="rounded-[2.25rem] border border-black/8 bg-[#020305] p-7 text-white shadow-[0_30px_80px_rgba(2,3,5,0.35)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/45">Automation command center</p>
+                  <h3 className="mt-2 text-2xl font-black">Paiement valide - activation visible</h3>
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                  <Workflow size={18} className="text-orange-400" />
+                </div>
+              </div>
+
+              <div className="mt-8 space-y-4">
+                {[
+                  "Paiement soumis avec reference",
+                  "Validation FLARE du dossier",
+                  "Plan applique dans l'application",
+                  "Connexion page et tests Messenger",
+                  "Bot visible comme actif",
+                ].map((label, index) => (
+                  <div key={label} className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
+                    <motion.div
+                      animate={{ opacity: [0.2, 0.8, 0.2], x: ["-20%", "20%", "-20%"] }}
+                      transition={{ duration: 3.2, repeat: Infinity, delay: index * 0.22 }}
+                      className="absolute inset-y-0 left-0 w-1/2 bg-gradient-to-r from-orange-500/0 via-orange-500/20 to-orange-500/0 blur-xl"
+                    />
+                    <div className="relative flex items-start gap-3">
+                      <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-orange-400" />
+                      <span className="text-sm font-semibold leading-relaxed text-white/90">{label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a
+                  href="/cas-usage"
+                  className="inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:bg-orange-400"
+                >
+                  Voir des cas d&apos;usage
+                  <ArrowUpRight size={16} />
+                </a>
+                <a
+                  href="/comment-ca-marche"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/14 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:border-white/25"
+                >
+                  Comprendre le process
+                  <ArrowUpRight size={16} />
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24 overflow-hidden border-y border-black/5 bg-white">
         <div className="max-w-7xl mx-auto">
           <div className="mb-12 md:mb-16">
             <span className="text-xs font-black text-orange-600 uppercase tracking-widest">Témoignages</span>
@@ -1108,7 +1627,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
           <motion.div 
             drag="x"
-            dragConstraints={{ right: 0, left: isMobile ? -1400 : (typeof window !== 'undefined' && window.innerWidth < 1024 ? -1600 : -1800) }}
+            dragConstraints={{ right: 0, left: isMobile ? -1400 : -1800 }}
             dragElastic={0.1}
             className="flex gap-8 cursor-grab active:cursor-grabbing pb-12"
           >
@@ -1116,7 +1635,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <motion.div
                 key={i}
                 whileHover={{ y: -10, scale: 1.02 }}
-                className="relative min-w-[300px] sm:min-w-[380px] lg:min-w-[450px] p-10 md:p-14 rounded-[40px] bg-white border border-black/10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-2xl hover:border-orange-500/20"
+                className="relative min-w-[300px] md:min-w-[450px] p-10 md:p-14 rounded-[40px] bg-white border border-black/10 shadow-[0_20px_60px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-2xl hover:border-orange-500/20"
               >
                 <div className="flex items-center gap-6 mb-10">
                   <div className="w-16 h-16 rounded-3xl bg-orange-500/10 flex items-center justify-center text-orange-600 font-black text-xl">
@@ -1135,7 +1654,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             ))}
           </motion.div>
           
-          <div className="flex items-center gap-4 text-xs font-black text-black/40 uppercase tracking-widest">
+          <div className="flex items-center gap-4 text-xs font-black text-black/60 uppercase tracking-widest">
             <ArrowRight size={16} />
             Faites glisser pour en voir plus
           </div>
@@ -1143,7 +1662,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </section>
 
       {/* ── Security / Reliability Section ── */}
-      <section className="relative z-20 px-6 py-20 md:px-12 lg:px-24 bg-gradient-to-b from-transparent to-white/[0.01]">
+      <section className="relative z-20 px-6 py-20 sm:px-16 md:px-24 bg-gradient-to-b from-transparent to-white/[0.01]">
         <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1154,21 +1673,21 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <Bot size={32} className="text-orange-500" />
           </motion.div>
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight mb-4">Votre sécurité est notre priorité</h2>
-          <p className="text-sm md:text-lg text-white/60 max-w-2xl">
+          <p className="text-sm md:text-lg text-black/75 max-w-2xl">
             Données chiffrées, hébergement Google Cloud sécurisé et conformité Meta API. Votre business est entre de bonnes mains.
           </p>
-          <div className="mt-10 flex flex-wrap justify-center gap-6 opacity-60">
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
+          <div className="mt-10 flex flex-wrap justify-center gap-6">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-black/10 bg-black/[0.03]">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span className="text-[10px] uppercase font-bold tracking-wider">SSL Encrypted</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-black/70">SSL Encrypted</span>
              </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-black/10 bg-black/[0.03]">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span className="text-[10px] uppercase font-bold tracking-wider">GDPR Comply</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-black/70">GDPR Comply</span>
              </div>
-             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/5">
+             <div className="flex items-center gap-2 px-4 py-2 rounded-full border border-black/10 bg-black/[0.03]">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                <span className="text-[10px] uppercase font-bold tracking-wider">Meta Verified API</span>
+                <span className="text-[10px] uppercase font-bold tracking-wider text-black/70">Meta Verified API</span>
              </div>
           </div>
         </div>
@@ -1177,7 +1696,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           AVIS & CONFIANCE
          ══════════════════════════════════════════════════════ */}
-      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 md:px-12 lg:px-24 md:py-32">
+      <section className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-6xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -1191,7 +1710,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
               { title: "Chiffrement de bout en bout", text: "Toutes tes données sont chiffrées en transit et au repos. Aucun accès tiers non autorisé." },
               { title: "Hébergement sécurisé", text: "Infrastructure Google Cloud Platform, conformité RGPD, sauvegardes automatiques quotidiennes." },
@@ -1222,9 +1741,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             className="mt-12 flex flex-wrap items-center justify-center gap-6"
           >
             {[
-              { label: "Politique de confidentialité", href: "#" },
-              { label: "Conditions d'utilisation", href: "#" },
-              { label: "Politique cookies", href: "#" },
+              { label: "Politique de confidentialite", href: "/privacy-policy" },
+              { label: "Conditions d'utilisation", href: "/terms" },
+              { label: "Politique cookies", href: "/privacy-policy#cookies" },
             ].map((link) => (
               <a key={link.label} href={link.href} className="landing-footer-link text-xs uppercase transition-colors font-medium">
                 {link.label}
@@ -1234,9 +1753,63 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
       </section>
 
+      <section className="landing-section-base relative overflow-hidden border-t border-black/5 bg-white px-6 py-24 sm:px-16 md:px-24 md:py-28">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-14 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <span className="landing-section-kicker text-[10px] md:text-xs uppercase font-medium">FAQ conversion</span>
+              <h2 className="mt-4 text-3xl font-black leading-tight text-black md:text-5xl font-[family-name:var(--font-outfit)]">
+                Les questions qui comptent avant de demarrer.
+              </h2>
+            </div>
+            <div className="max-w-xl">
+              <p className="landing-copy text-sm leading-relaxed text-black/70 md:text-base">
+                L&apos;enjeu ici n&apos;est pas de faire joli. L&apos;enjeu est que le visiteur comprenne le paiement local, le support FLARE et la mise en route reelle.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {FAQS.map((item, index) => (
+              <motion.details
+                key={item.question}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{ duration: 0.45, delay: index * 0.06 }}
+                className="group rounded-[1.8rem] border border-black/8 bg-[#f8f2e7] p-6 shadow-[0_16px_38px_rgba(15,23,42,0.05)]"
+              >
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-4 text-left">
+                  <span className="text-lg font-black leading-snug text-black">{item.question}</span>
+                  <ChevronDown size={18} className="mt-1 shrink-0 text-black/45 transition group-open:rotate-180" />
+                </summary>
+                <p className="mt-4 pr-6 text-sm font-medium leading-relaxed text-black/68">{item.answer}</p>
+              </motion.details>
+            ))}
+          </div>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <a
+              href="/comment-ca-marche"
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-black px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white transition hover:bg-black/85"
+            >
+              Revoir le process
+              <ArrowUpRight size={16} />
+            </a>
+            <a
+              href="/cas-usage"
+              className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-black transition hover:border-black/25"
+            >
+              Voir les secteurs
+              <ArrowUpRight size={16} />
+            </a>
+          </div>
+        </div>
+      </section>
+
       <section
         id="pricing"
-        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 md:px-12 lg:px-24 md:py-32"
+        className="landing-section-muted relative overflow-hidden border-t border-white/5 px-6 py-24 sm:px-16 md:px-24 md:py-32"
       >
         <div className="max-w-6xl mx-auto">
           <motion.div
@@ -1250,7 +1823,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               Payez par <span className="font-semibold text-orange-500">MVola</span> ou <span className="font-semibold text-orange-500">Orange Money</span>.
             </h2>
             <p className="landing-copy mt-4 text-sm md:text-base leading-relaxed">
-              Pas de Stripe. Pas de carte étrangère. Tu paies localement, FLARE active ton bot.
+              Pas de Stripe. Pas de carte etrangere obligatoire. Vous payez localement, FLARE valide le dossier et votre activation avance avec support humain.
             </p>
           </motion.div>
 
@@ -1259,7 +1832,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
+            className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
             {[
               {
@@ -1349,8 +1922,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             viewport={{ once: true }}
             className="mt-10 text-center landing-card-copy text-xs font-bold text-black"
           >
-            Paiement par <strong>MVola</strong> · <strong>Orange Money</strong> · <strong>Airtel Money</strong> · Virement · Cash.<br />
-            Activation manuelle par l&apos;équipe FLARE sous 15 min après vérification du paiement.
+            Paiement par <strong>MVola</strong> ou <strong>Orange Money</strong>.<br />
+            Verification FLARE, plan applique, puis activation manuelle accompagnee.
           </motion.p>
         </div>
       </section>
@@ -1358,7 +1931,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           NOTRE HISTOIRE
          ══════════════════════════════════════════════════════ */}
-      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 md:px-12 lg:px-24 md:py-32">
+      <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
         {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
         <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
           <SplineBoundary>
@@ -1418,7 +1991,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               </div>
               <div className="mt-6 text-center">
                 <p className="landing-card-title text-sm font-black uppercase tracking-widest text-black">FLARE AI</p>
-                <p className="landing-card-copy text-[10px] font-bold text-black/40 uppercase tracking-[0.2em] mt-2">Made in Madagascar</p>
+                <p className="landing-card-copy text-[10px] font-bold text-black/65 uppercase tracking-[0.2em] mt-2">Made in Madagascar</p>
               </div>
             </motion.div>
 
@@ -1444,7 +2017,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           CTA FINAL
          ══════════════════════════════════════════════════════ */}
-      <section className="landing-section-base relative overflow-hidden px-6 py-24 md:px-12 lg:px-24 md:py-32">
+      <section className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
         <div className="max-w-3xl mx-auto text-center">
           <motion.div
             variants={containerVariants}
@@ -1494,7 +2067,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
            </svg>
         </div>
 
-        <div className="bg-[#020305] px-6 py-20 md:px-12 lg:px-24">
+        <div className="bg-[#020305] px-6 py-20 sm:px-16 md:px-24">
           <div className="max-w-6xl mx-auto flex flex-col items-center text-center">
             <motion.h2 
               initial={{ opacity: 0, y: 20 }}
@@ -1507,20 +2080,26 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
             <div className="flex flex-wrap justify-center items-center gap-12 sm:gap-16 w-full max-w-4xl mb-24 mx-auto">
               {[
-                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg", label: "Facebook", href: "https://facebook.com", color: "#1877F2" },
-                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg", label: "Instagram", href: "https://instagram.com", color: "#E4405F" },
-                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg", label: "WhatsApp", href: "https://whatsapp.com", color: "#25D366" },
-                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/b/be/Facebook_Messenger_logo_2020.svg", label: "Messenger", href: "https://messenger.com", color: "#0084FF" },
-                { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Circle-icons-mail.svg", label: "Email", href: "mailto:contact@flare.mg", color: "#EA4335" },
+                { type: "icon", icon: Facebook, label: "Facebook", href: "https://www.facebook.com/ramsflare", color: "#1877F2" },
+                { type: "icon", icon: Workflow, label: "Offres", href: "/offres", color: "#f97316" },
+                { type: "icon", icon: MessageSquare, label: "Process", href: "/comment-ca-marche", color: "#22c55e" },
+                { type: "icon", icon: TrendingUp, label: "Cas usage", href: "/cas-usage", color: "#60a5fa" },
+                { type: "icon", icon: Mail, label: "Email", href: "mailto:contact@ramsflare.com", color: "#EA4335" },
               ].map((social, i) => (
                 <a
                   key={i}
                   href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  target={social.href.startsWith("/") ? undefined : "_blank"}
+                  rel={social.href.startsWith("/") ? undefined : "noopener noreferrer"}
                   className="flex flex-col items-center gap-4 cursor-pointer"
                 >
-                  <img src={social.src} alt={social.label} className="w-12 h-12 object-contain" />
+                  {social.type === "icon" && social.icon ? (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                      <social.icon size={24} style={{ color: social.color }} />
+                    </div>
+                  ) : (
+                    <img src={social.src} alt={social.label} className="w-12 h-12 object-contain" />
+                  )}
                   <span className="text-[12px] font-black uppercase tracking-[0.2em] text-white">
                     {social.label}
                   </span>
@@ -1537,17 +2116,17 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               
               <div className="flex flex-wrap justify-center gap-8">
                 {[
-                  { label: "Confidentialité", href: "#" },
-                  { label: "CGU", href: "#" },
-                  { label: "Politique Cookies", href: "#" },
+                  { label: "Confidentialite", href: "/privacy-policy" },
+                  { label: "CGU", href: "/terms" },
+                  { label: "Politique Cookies", href: "/privacy-policy#cookies" },
                 ].map((link) => (
-                  <a key={link.label} href={link.href} className="text-[10px] uppercase font-bold text-white/60 hover:text-white transition-colors tracking-widest">
+                  <a key={link.label} href={link.href} className="text-[10px] uppercase font-bold text-white/75 hover:text-white transition-colors tracking-widest">
                     {link.label}
                   </a>
                 ))}
               </div>
 
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+              <p className="text-[10px] font-bold text-white/60 uppercase tracking-[0.2em]">
                 © 2026 FLARE AI — Madagascar
               </p>
             </div>
@@ -1651,10 +2230,16 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           color: #000000;
           letter-spacing: -0.04em;
           line-height: 0.95;
+          text-rendering: geometricPrecision;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
 
         .landing-copy {
-          color: rgba(0, 0, 0, 0.7);
+          color: rgba(0, 0, 0, 0.82);
+          text-rendering: geometricPrecision;
+          -webkit-font-smoothing: antialiased;
+          -moz-osx-font-smoothing: grayscale;
         }
 
         .landing-kicker,

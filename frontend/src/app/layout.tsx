@@ -18,15 +18,19 @@ const outfit = Outfit({
 
 export const metadata: Metadata = {
   title: {
-    default: "FLARE AI - Chatbot Facebook assiste pour TPE/PME a Madagascar",
+    default: "FLARE AI - Automatisation business pour TPE/PME a Madagascar",
     template: "%s | FLARE AI",
   },
   description:
-    "FLARE AI propose une beta assistee pour TPE/PME a Madagascar: chatbot Facebook Messenger, paiement manuel MVola ou Orange Money, activation par l'equipe FLARE et support local.",
+    "FLARE AI est une application d'automatisation pour TPE/PME a Madagascar. Aujourd'hui, la preuve concrete la plus visible est le chatbot Facebook assiste, avec paiement local, validation FLARE et support humain.",
   keywords: [
     "FLARE AI",
+    "automatisation PME Madagascar",
+    "application automatisation business",
     "chatbot Facebook Madagascar",
     "chatbot Messenger PME",
+    "augmentation productivite PME",
+    "augmentation chiffre affaires PME",
     "activation chatbot assistee",
     "paiement MVola Orange Money",
     "automatisation Facebook PME",
@@ -54,9 +58,9 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: "FLARE AI - Chatbot Facebook assiste a Madagascar",
+    title: "FLARE AI - Automatisation business a Madagascar",
     description:
-      "Beta assistee FLARE AI pour TPE/PME a Madagascar: chatbot Facebook Messenger, paiement local et activation par l'equipe FLARE.",
+      "Plateforme d'automatisation business pour TPE/PME a Madagascar. Preuve concrete aujourd'hui: chatbot Facebook assiste, paiement local et activation FLARE.",
     url: "https://flareai.ramsflare.com",
     siteName: "FLARE AI",
     locale: "fr_FR",
@@ -66,15 +70,15 @@ export const metadata: Metadata = {
         url: "/screenshot.png",
         width: 1200,
         height: 630,
-        alt: "FLARE AI - Chatbot Facebook assiste pour TPE/PME a Madagascar",
+        alt: "FLARE AI - Automatisation business pour TPE/PME a Madagascar",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "FLARE AI - Chatbot Facebook assiste a Madagascar",
+    title: "FLARE AI - Automatisation business a Madagascar",
     description:
-      "Chatbot Facebook Messenger pour TPE/PME a Madagascar, paiement local et activation assistee par FLARE.",
+      "Automatisation business pour TPE/PME a Madagascar, avec preuve actuelle sur le chatbot Facebook assiste et paiement local.",
     creator: "@ramsflare",
     images: ["/screenshot.png"],
   },
@@ -131,7 +135,7 @@ export default function RootLayout({
                 "applicationCategory": "BusinessApplication",
                 "applicationSubCategory": "CustomerServiceApplication",
                 "operatingSystem": "Web, iOS, Android",
-                "description": "FLARE AI propose une beta publique assistee centree sur le chatbot Facebook Messenger pour les TPE et PME de Madagascar, avec paiement local et activation manuelle par l'equipe FLARE.",
+                "description": "FLARE AI est une application d'automatisation business pour les TPE et PME a Madagascar. Aujourd'hui, la preuve concrete la plus visible est le chatbot Facebook assiste, avec paiement local, validation FLARE et activation accompagnee.",
                 "url": "https://flareai.ramsflare.com",
                 "screenshot": "https://flareai.ramsflare.com/screenshot.png",
                 "softwareVersion": "4.0",
@@ -169,6 +173,7 @@ export default function RootLayout({
                   }
                 ],
                 "featureList": [
+                  "Automatisation des taches repetitives pour TPE/PME",
                   "Chatbot Facebook Messenger pour TPE/PME",
                   "Activation assistee par l'equipe FLARE",
                   "Paiement manuel local MVola et Orange Money",
@@ -186,7 +191,7 @@ export default function RootLayout({
                   "@type": "ImageObject",
                   "url": "https://flareai.ramsflare.com/logo-flare-ai.png"
                 },
-                "description": "RAM'S FLARE developpe FLARE AI, un SaaS de chatbot Facebook assiste pour TPE/PME a Madagascar.",
+                "description": "RAM'S FLARE developpe FLARE AI, une application d'automatisation business pour TPE/PME a Madagascar, avec une preuve concrete actuelle autour du chatbot Facebook assiste.",
                 "areaServed": [
                   { "@type": "Country", "name": "Madagascar" }
                 ],

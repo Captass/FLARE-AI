@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Monitor, Smartphone, Download, ArrowLeft, Terminal, Apple } from "lucide-react";
+import { Monitor, Smartphone, Download, ArrowLeft, ShieldCheck } from "lucide-react";
 import FlareMark from "@/components/FlareMark";
 import Link from "next/link";
 
@@ -25,7 +25,22 @@ export default function DownloadPage() {
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
+  };
+
+  const handleOptionAction = async (id: string) => {
+    if (id === "Android") {
+      const prompt = (window as any).deferredPrompt;
+      if (prompt) {
+        prompt.prompt();
+        try {
+          await prompt.userChoice;
+        } catch {}
+        return;
+      }
+    }
+
+    window.location.href = "/app?auth=signup";
   };
 
   const DOWNLOAD_OPTIONS = [
@@ -34,8 +49,8 @@ export default function DownloadPage() {
       title: "macOS",
       chip: "Apple Silicon & Intel",
       icon: <LaptopIcon className="w-8 h-8" />,
-      size: "142 MB",
-      action: "Télécharger pour Mac",
+      size: "Acces web optimise",
+      action: "Ouvrir mon espace",
       highlight: detectedOS === "macOS"
     },
     {
@@ -43,8 +58,8 @@ export default function DownloadPage() {
       title: "Windows",
       chip: "Windows 10 & 11",
       icon: <Monitor className="w-8 h-8" />,
-      size: "135 MB",
-      action: "Télécharger pour Windows",
+      size: "Acces web optimise",
+      action: "Ouvrir mon espace",
       highlight: detectedOS === "Windows"
     },
     {
@@ -53,7 +68,7 @@ export default function DownloadPage() {
       chip: "Mobile & Tablette",
       icon: <Smartphone className="w-8 h-8" />,
       size: "Progressive Web App",
-      action: "Ajouter à l'écran",
+      action: "Installer la web app",
       highlight: detectedOS === "Android" || detectedOS === "iOS"
     }
   ];
@@ -86,10 +101,10 @@ export default function DownloadPage() {
 
         <motion.div variants={itemVariants} className="text-center mb-16 max-w-2xl">
           <h1 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter font-[family-name:var(--font-outfit)]">
-            Télécharger <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">FLARE AI</span>.
+            Accedez a <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-orange-600">FLARE AI</span>.
           </h1>
           <p className="text-lg md:text-xl text-black/60 font-medium leading-relaxed">
-            Profitez de toute la puissance de FLARE directement sur votre bureau ou votre smartphone. Plus rapide, plus fluide, sans distractions.
+            Ouvrez votre espace FLARE AI sur ordinateur ou ajoutez la web app sur mobile. Le but ici est de vous faire entrer dans le parcours, pas de vous bloquer dans un faux telechargement.
           </p>
         </motion.div>
 
@@ -123,7 +138,7 @@ export default function DownloadPage() {
               </div>
 
               <div className="mt-auto pt-6 flex flex-col gap-4 border-t border-black/5">
-                <button className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 text-xs font-black uppercase tracking-widest transition-all
+                <button onClick={() => void handleOptionAction(opt.id)} className={`w-full py-4 rounded-xl flex items-center justify-center gap-3 text-xs font-black uppercase tracking-widest transition-all
                   ${opt.highlight ? 'bg-orange-500 text-white hover:bg-orange-600 shadow-xl shadow-orange-500/20' : 'bg-black/5 text-black hover:bg-black/10'}`}>
                   <Download size={16} />
                   {opt.action}
@@ -136,9 +151,11 @@ export default function DownloadPage() {
           ))}
         </motion.div>
 
-        <motion.div variants={itemVariants} className="flex items-center gap-3 text-black/40 font-medium text-sm">
-           <Terminal size={14} />
-           <span>CLI disponible via </span><code className="px-2 py-1 bg-black/5 font-black rounded-md text-xs">npm i -g @flare-ai/cli</code>
+        <motion.div variants={itemVariants} className="rounded-2xl border border-black/8 bg-white/70 px-5 py-4 text-center text-sm font-medium text-black/60">
+           <div className="flex items-center justify-center gap-2 text-black/70">
+             <ShieldCheck size={14} />
+             <span>Paiement local, validation FLARE et activation visible ensuite dans l&apos;app.</span>
+           </div>
         </motion.div>
 
       </motion.div>
