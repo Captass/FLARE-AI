@@ -283,27 +283,27 @@ function stepIndexOf(s: WizardStep): number {
   return STEP_ORDER.indexOf(s);
 }
 
-function statusToStep(status: string): WizardStep {
-  switch (status) {
-    case "draft":
-    case "awaiting_payment":
-      return "payment";
-    case "payment_submitted":
-      return "awaiting";
-    case "payment_verified":
-    case "awaiting_flare_page_admin_access":
-      return "flare_admin";
-    case "queued_for_activation":
-    case "activation_in_progress":
-    case "testing":
-      return "awaiting";
-    case "rejected":
-      return "payment";
-    case "active":
-      return "awaiting";
-    default:
-      return "choose_plan";
+function statusToStep(ar: any): WizardStep {
+  if (!ar) return "choose_plan";
+
+  const status = ar.status;
+
+  if (["draft", "awaiting_payment", "rejected"].includes(status)) {
+    return "payment";
   }
+
+  if (["payment_submitted", "payment_verified", "awaiting_flare_page_admin_access"].includes(status)) {
+    if (ar.flare_page_admin_confirmed === "true") {
+      return "awaiting";
+    }
+    const hasConfig = ar.activation_target_page_id || ar.facebook_page_name || ar.facebook_page_url;
+    if (hasConfig) {
+      return "flare_admin";
+    }
+    return "config";
+  }
+
+  return "awaiting";
 }
 
 // ---------------------------------------------------------------------------
@@ -561,7 +561,7 @@ export default function ChatbotActivationPage({
           setAdminConfirmed(fetchedAr.flare_page_admin_confirmed === "true");
 
           // jump to correct step
-          setStep(statusToStep(fetchedAr.status));
+          setStep(statusToStep(fetchedAr));
         }
       } catch (e) {
         console.error("ChatbotActivationPage: init error", e);
@@ -595,7 +595,7 @@ export default function ChatbotActivationPage({
         if (updated) {
           setAr(updated);
           // if status changed and user should be on a different step, redirect
-          const target: WizardStep = statusToStep(updated.status);
+          const target: WizardStep = statusToStep(updated);
           if (target !== "awaiting") {
             setStep(target);
           }
@@ -726,7 +726,7 @@ export default function ChatbotActivationPage({
             if (existingAr) {
               setAr(existingAr);
               setSelectedPlanId((existingAr.selected_plan_id as ActivationPlanId) || selectedPlanId);
-              setStep(statusToStep(existingAr.status));
+              setStep(statusToStep(existingAr));
               return;
             }
           }

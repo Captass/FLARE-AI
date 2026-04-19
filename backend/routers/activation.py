@@ -660,7 +660,7 @@ def update_activation_request(
     if not ar:
         raise HTTPException(status_code=404, detail="Aucune demande d'activation en cours.")
 
-    request_context_locked = ar.status not in {"draft", "awaiting_payment"}
+    request_context_locked = ar.flare_page_admin_confirmed == "true" or ar.status in {"queued_for_activation", "activation_in_progress", "testing", "active"}
 
     # Client-updatable fields
     allowed_fields = {
