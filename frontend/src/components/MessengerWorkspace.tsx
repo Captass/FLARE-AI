@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import {
   AlertCircle,
@@ -1162,10 +1162,10 @@ export default function MessengerWorkspace({
   selectedPageId,
 }: MessengerWorkspaceProps) {
   // Resout toujours un token frais si possible
-  const resolveToken = async (force = false): Promise<string | null> => {
+  const resolveToken = useCallback(async (force = false): Promise<string | null> => {
     if (getFreshToken) return await getFreshToken(force);
     return authToken ?? null;
-  };
+  }, [getFreshToken, authToken]);
   const [data, setData] = useState<MessengerDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -1252,7 +1252,7 @@ export default function MessengerWorkspace({
       window.removeEventListener("focus", refreshIfVisible);
       document.removeEventListener("visibilitychange", refreshIfVisible);
     };
-  }, [authToken, selectedPageId]);
+  }, [resolveToken, selectedPageId]);
 
   /* Auto-select first conversation */
   useEffect(() => {

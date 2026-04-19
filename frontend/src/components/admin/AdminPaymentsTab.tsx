@@ -131,7 +131,7 @@ export default function AdminPaymentsTab({ token, onBack }: { token: string; onB
             <div key={index} className="h-20 animate-pulse rounded-2xl bg-[var(--surface-subtle)]" />
           ))}
         </div>
-      ) : loadError && filtered.length === 0 ? (
+      ) : loadError && payments.length === 0 ? (
         <div className="py-16 text-center text-[var(--text-secondary)]">
           <CreditCard size={44} className="mx-auto mb-4 opacity-25" />
           <p>Le chargement des paiements a echoue. Faites un refresh avant de conclure qu&apos;il n&apos;y a rien a verifier.</p>

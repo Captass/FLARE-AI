@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, ChangeEvent } from "react";
+import { useEffect, useState, useRef, ChangeEvent, useCallback } from "react";
 import { Brain, Plus, X, Trash2, RefreshCw, Upload, FileText, Sparkles, ChevronDown, ChevronRight, List, Square, CheckSquare, Zap, Check } from "lucide-react";
 import { getFacts, addFact, deleteFact, MemoryFact } from "@/lib/api";
 
@@ -84,7 +84,7 @@ export default function MemoryPanel({ token }: { token?: string | null }) {
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
@@ -92,13 +92,13 @@ export default function MemoryPanel({ token }: { token?: string | null }) {
       setFacts(data);
     } catch { /* ignore */ }
     finally { setLoading(false); }
-  };
+  }, [token]);
 
   useEffect(() => {
     load();
     const interval = setInterval(load, 60000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [load]);
 
   const handleAdd = async () => {
     if (!form.key.trim() || !form.value.trim()) return;

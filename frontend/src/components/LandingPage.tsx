@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense, useCallback } from "react";
 import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, ChevronDown, CheckCircle2, Clock3, Download, Facebook, Globe, Instagram, Linkedin, Mail, Menu, MessageSquare, ShieldCheck, TrendingUp, Workflow, X, Zap } from "lucide-react";
-import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useReducedMotion } from "framer-motion";
+import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useReducedMotion, type Variants } from "framer-motion";
 import dynamic from "next/dynamic";
 import React from "react";
 import FlareMark from "./FlareMark";
@@ -46,8 +46,8 @@ function WordReveal({ word, index, scrollYProgress }: { word: string; index: num
 /* Animated Chat Simulation Component */
 function ChatSimulation({ scenarioId }: { scenarioId: number }) {
   const [messages, setMessages] = useState<any[]>([]);
-  
-  const SCENARIOS = [
+
+  const scenarios = useRef([
     {
       id: 0,
       title: "Ventes (24/7)",
@@ -78,11 +78,11 @@ function ChatSimulation({ scenarioId }: { scenarioId: number }) {
         { type: "bot", text: "Voulez-vous le numéro du livreur ?", delay: 3500 },
       ]
     }
-  ];
+  ]).current;
 
   useEffect(() => {
     setMessages([]);
-    const currentScenario = SCENARIOS.find(s => s.id === scenarioId);
+    const currentScenario = scenarios.find(s => s.id === scenarioId);
     if (!currentScenario) return;
 
     const timers = currentScenario.messages.map((msg, i) => {
@@ -92,7 +92,7 @@ function ChatSimulation({ scenarioId }: { scenarioId: number }) {
     });
 
     return () => timers.forEach(t => clearTimeout(t));
-  }, [scenarioId]);
+  }, [scenarioId, scenarios]);
 
   return (
     <div className="flex flex-col gap-4 p-6 h-full font-sans">
@@ -128,7 +128,7 @@ function ChatSimulation({ scenarioId }: { scenarioId: number }) {
       </AnimatePresence>
       
       {/* Typing Indicator */}
-      {SCENARIOS.find(s => s.id === scenarioId)?.messages.length !== messages.length && (
+      {scenarios.find(s => s.id === scenarioId)?.messages.length !== messages.length && (
         <motion.div 
            initial={{ opacity: 0 }}
            animate={{ opacity: 1 }}
@@ -151,7 +151,7 @@ function Magnetic({ children, intensity = 0.35 }: { children: React.ReactNode; i
   const springX = useSpring(x, { stiffness: 150, damping: 15 });
   const springY = useSpring(y, { stiffness: 150, damping: 15 });
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
     if (!ref.current) return;
     const { clientX, clientY } = e;
     const { left, top, width, height } = ref.current.getBoundingClientRect();
@@ -167,7 +167,7 @@ function Magnetic({ children, intensity = 0.35 }: { children: React.ReactNode; i
       x.set(0);
       y.set(0);
     }
-  };
+  }, [intensity, x, y]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -188,7 +188,7 @@ function Magnetic({ children, intensity = 0.35 }: { children: React.ReactNode; i
       if (frame) window.cancelAnimationFrame(frame);
       window.removeEventListener("mousemove", onMouseMove);
     };
-  }, []);
+  }, [handleMouseMove]);
 
   return (
     <motion.div ref={ref} style={{ x: springX, y: springY }}>
@@ -327,6 +327,8 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const rotateY = useTransform(springX, (v) => v * 1.5);
   const mousePosX = useTransform(springX, (v) => (v + 1) * 50 + "%");
   const mousePosY = useTransform(springY, (v) => (v + 1) * 50 + "%");
+  const heroWordOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 1]);
+  const heroWordScale = useTransform(scrollYProgress, [0, 0.1], [1, 1.05]);
 
   const logoParallaxX = useTransform(springX, (v) => v * 6);
   const logoParallaxY = useTransform(springY, (v) => v * 6);
@@ -601,7 +603,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   ];
 
   /* ── Variants for staggered animations ── */
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -612,15 +614,19 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     }
   };
 
-  const itemVariants = {
+  const itemVariants: Variants = {
     hidden: { opacity: 0, y: 30, scale: 0.98 },
     visible: { 
       opacity: 1, 
       y: 0,
       scale: 1,
-      transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+      transition: { duration: 0.8, ease: "easeOut" }
     }
   };
+
+  type PlatformTile =
+    | { type: "icon"; icon: typeof Globe; label: string; color: string; id: number; src?: never }
+    | { type: "img"; src: string; label: string; color: string; id: number; icon?: never };
 
   return (
     <div
@@ -873,10 +879,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 ))}
                 <br />
                 <motion.span
-                  style={{ 
-                    opacity: useTransform(scrollYProgress, [0, 0.1], [1, 1]),
-                    scale: useTransform(scrollYProgress, [0, 0.1], [1, 1.05])
-                  }}
+                  style={{ opacity: heroWordOpacity, scale: heroWordScale }}
                   className="font-black tracking-tight text-orange-500 inline-block drop-shadow-xl"
                 >
                   Automatisez.
@@ -922,7 +925,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   className="flex items-center justify-center gap-3 rounded-full border-2 border-black/10 bg-white/50 backdrop-blur-md px-8 py-4 md:py-5 text-[13px] font-bold uppercase transition-all hover:bg-white hover:border-black/20 hover:scale-105 w-full sm:w-auto"
                 >
                   <Download size={16} className="text-black/60" />
-                  Ouvrir / installer l&apos;app
+                  Windows / Android / Web
                 </button>
               </motion.div>
 
@@ -1179,13 +1182,13 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <div className="absolute inset-0 bg-orange-500/5 rounded-[4rem] blur-3xl -z-10" />
               
               <div className="grid grid-cols-2 gap-4">
-                {[
+                {([
                   { type: "icon", icon: Globe, label: "Site Web", color: "#f97316", id: 0 },
                   { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg", label: "Google", color: "#4285F4", id: 1 },
                   { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/b/b8/2021_Facebook_icon.svg", label: "Facebook", color: "#1877F2", id: 2 },
                   { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg", label: "Instagram", color: "#E4405F", id: 3 },
                   { type: "img", src: "https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png", label: "LinkedIn", color: "#0A66C2", id: 4 },
-                ].map((platform, i) => (
+                ] as PlatformTile[]).map((platform, i) => (
                   <motion.div
                     key={i}
                     onClick={() => setActiveFeature(platform.id)}
@@ -2044,13 +2047,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   rel={social.href.startsWith("/") ? undefined : "noopener noreferrer"}
                   className="flex flex-col items-center gap-4 cursor-pointer"
                 >
-                  {social.type === "icon" && social.icon ? (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-                      <social.icon size={24} style={{ color: social.color }} />
-                    </div>
-                  ) : (
-                    <img src={social.src} alt={social.label} className="w-12 h-12 object-contain" />
-                  )}
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                    <social.icon size={24} style={{ color: social.color }} />
+                  </div>
                   <span className="text-[12px] font-black uppercase tracking-[0.2em] text-white">
                     {social.label}
                   </span>

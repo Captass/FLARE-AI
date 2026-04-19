@@ -1,12 +1,12 @@
 # Handover pour une autre IA de dev
 
-Derniere mise a jour : 16 avril 2026
+Derniere mise a jour : 19 avril 2026
 
 Ce document sert de reprise rapide si FLARE AI est repris par une autre IA de developpement.
 
 ## Le projet en une phrase
 
-FLARE AI est aujourd'hui une application SaaS orientee `chatbot Facebook assiste` pour les TPE et PME de Madagascar, avec paiement manuel local et activation operee par l'equipe FLARE.
+FLARE AI est aujourd'hui une application SaaS orientee `chatbot Facebook assiste` pour les TPE et PME de Madagascar, avec paiement manuel local, activation operee par l'equipe FLARE, Windows native via `Tauri`, Android native via `APK` direct, et web / `PWA` pour macOS et iPhone.
 
 ## Ce qui compte le plus
 
@@ -15,6 +15,8 @@ FLARE AI est aujourd'hui une application SaaS orientee `chatbot Facebook assiste
 - l'app doit rester utilisable en production
 - la verite produit publique doit rester etroite et exacte
 - les traces ecrites doivent etre tenues a jour
+- la distribution native vise Windows et Android uniquement
+- macOS et iPhone restent sur le web / `PWA`, sans cible de store
 
 ## Ce qu'il ne faut plus supposer par defaut
 
@@ -25,6 +27,7 @@ Ne repars pas du principe que FLARE AI est actuellement une suite publique large
 - agents metier publics
 - generation d'images / videos / Word / Excel vendue
 - self-serve Meta complet
+- positionnement `App Store` ou `Play Store`
 
 Ces surfaces peuvent encore exister dans le code, mais elles ne definissent pas la beta publique actuelle.
 

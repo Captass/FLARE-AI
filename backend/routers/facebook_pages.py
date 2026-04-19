@@ -6,7 +6,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 from typing import Any
-from urllib.parse import urlencode, urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import httpx
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -78,6 +78,88 @@ def _normalize_frontend_origin(frontend_origin: str | None) -> str:
     if candidate.startswith("http://") or candidate.startswith("https://"):
         return candidate
     return settings.FRONTEND_URL.rstrip("/")
+
+
+def _normalize_platform(platform: str | None) -> str:
+    candidate = str(platform or "").strip().lower()
+    return candidate if candidate in {"web", "android", "windows", "macos"} else "web"
+
+
+def _platform_default_return_mode(platform: str | None) -> str:
+    normalized_platform = _normalize_platform(platform)
+    return "redirect" if normalized_platform in {"android", "windows", "macos"} else "popup"
+
+
+def _normalize_return_mode(return_mode: str | None, platform: str | None = None) -> str:
+    normalized_platform = _normalize_platform(platform)
+    if normalized_platform in {"android", "windows", "macos"}:
+        return "redirect"
+
+    candidate = str(return_mode or "").strip().lower()
+    return candidate if candidate in {"popup", "redirect"} else _platform_default_return_mode(normalized_platform)
+
+
+def _native_callback_url_for_platform(platform: str | None) -> str:
+    normalized_platform = _normalize_platform(platform)
+    if normalized_platform == "android":
+        return str(settings.NATIVE_ANDROID_CALLBACK_URL or "flareai://oauth/android").strip()
+    if normalized_platform == "windows":
+        return str(settings.NATIVE_WINDOWS_CALLBACK_URL or "flareai://oauth/windows").strip()
+    if normalized_platform == "macos":
+        return str(settings.NATIVE_MACOS_CALLBACK_URL or "flareai://oauth/macos").strip()
+    return ""
+
+
+def _allowed_callback_urls(frontend_origin: str, platform: str | None = None) -> list[str]:
+    candidates = [
+        frontend_origin.rstrip("/"),
+        str(settings.FRONTEND_URL or "").strip().rstrip("/"),
+        str(settings.NATIVE_ANDROID_CALLBACK_URL or "").strip(),
+        str(settings.NATIVE_WINDOWS_CALLBACK_URL or "").strip(),
+        str(settings.NATIVE_MACOS_CALLBACK_URL or "").strip(),
+    ]
+    native_default = _native_callback_url_for_platform(platform)
+    if native_default:
+        candidates.append(native_default)
+    return candidates
+
+
+def _matches_callback_base(candidate: str, base: str) -> bool:
+    normalized_candidate = str(candidate or "").strip()
+    normalized_base = str(base or "").strip().rstrip("/")
+    if not normalized_candidate or not normalized_base:
+        return False
+    return (
+        normalized_candidate == normalized_base
+        or normalized_candidate.startswith(f"{normalized_base}/")
+        or normalized_candidate.startswith(f"{normalized_base}?")
+        or normalized_candidate.startswith(f"{normalized_base}#")
+    )
+
+
+def _normalize_callback_url(
+    callback_url: str | None,
+    frontend_origin: str,
+    platform: str | None = None,
+) -> str:
+    candidate = str(callback_url or "").strip()
+    native_fallback = _native_callback_url_for_platform(platform)
+    if not candidate:
+        return native_fallback
+
+    allowed = [value for value in _allowed_callback_urls(frontend_origin, platform) if value]
+    for base in allowed:
+        if _matches_callback_base(candidate, base):
+            return candidate
+
+    return native_fallback
+
+
+def _append_query_params(target_url: str, params: dict[str, str]) -> str:
+    parsed = urlparse(target_url)
+    query = dict(parse_qsl(parsed.query, keep_blank_values=True))
+    query.update({key: value for key, value in params.items() if value != ""})
+    return urlunparse(parsed._replace(query=urlencode(query)))
 
 
 def _urlsafe_b64encode(value: bytes) -> str:
@@ -655,10 +737,20 @@ async def _disconnect_page_from_direct_service(page_id: str) -> None:
 
 
 
-def _callback_page(frontend_origin: str, status: str, detail: str, page_count: int = 0) -> HTMLResponse:
+def _callback_page(
+    frontend_origin: str,
+    status: str,
+    detail: str,
+    page_count: int = 0,
+    *,
+    callback_url: str = "",
+    return_mode: str = "popup",
+) -> HTMLResponse:
     safe_origin = json.dumps(_normalize_frontend_origin(frontend_origin))
     safe_status = json.dumps(status)
     safe_detail = json.dumps(detail)
+    safe_callback_url = json.dumps(callback_url)
+    safe_return_mode = json.dumps(return_mode)
     status_icon = "✅" if status == "success" else "❌"
     status_title = "Connexion Facebook reussie !" if status == "success" else "Connexion Facebook echouee"
     html = f"""
@@ -724,6 +816,21 @@ def _callback_page(frontend_origin: str, status: str, detail: str, page_count: i
             detail: {safe_detail},
             pageCount: {int(page_count or 0)}
           }};
+          const callbackUrl = {safe_callback_url};
+          const returnMode = {safe_return_mode};
+          if (callbackUrl && returnMode === "redirect") {{
+            try {{
+              const nextUrl = new URL(callbackUrl);
+              nextUrl.searchParams.set("oauth_type", "facebook");
+              nextUrl.searchParams.set("status", payload.status);
+              nextUrl.searchParams.set("detail", payload.detail || "");
+              nextUrl.searchParams.set("page_count", String(payload.pageCount || 0));
+              window.location.replace(nextUrl.toString());
+              return;
+            }} catch (error) {{
+              console.warn("Invalid native callback URL", error);
+            }}
+          }}
           if (window.opener && targetOrigin) {{
             window.opener.postMessage(payload, targetOrigin);
           }}
@@ -927,13 +1034,20 @@ async def _revoke_facebook_app_permissions(user_id: str) -> bool:
 async def start_facebook_auth(
     request: Request,
     frontend_origin: str | None = Query(default=None),
+    platform: str | None = Query(default=None),
+    return_mode: str | None = Query(default=None),
+    callback_url: str | None = Query(default=None),
     force_reauth: bool = Query(default=False),
     dashboard_access_key: str | None = Header(default=None, alias=DASHBOARD_ACCESS_HEADER),
     authorization: str | None = Header(None),
 ):
     context = _user_context_from_authorization(authorization, require_edit=True)
     _require_meta_oauth_configured()
-    callback_url = _facebook_callback_url(request)
+    oauth_callback_url = _facebook_callback_url(request)
+    normalized_frontend_origin = _normalize_frontend_origin(frontend_origin)
+    normalized_platform = _normalize_platform(platform)
+    normalized_return_mode = _normalize_return_mode(return_mode, normalized_platform)
+    normalized_callback_url = _normalize_callback_url(callback_url, normalized_frontend_origin, normalized_platform)
 
     # Do not force a fresh Meta consent on every reconnect.
     # Some accounts can reuse an already-valid authorization, while a full
@@ -955,14 +1069,17 @@ async def start_facebook_auth(
             "user_id": context["user_id"],
             "organization_slug": context["user_id"],
             "user_email": context["user_email"],
-            "frontend_origin": _normalize_frontend_origin(frontend_origin),
+            "frontend_origin": normalized_frontend_origin,
+            "platform": normalized_platform,
+            "return_mode": normalized_return_mode,
+            "callback_url": normalized_callback_url,
             "issued_at": _utcnow().isoformat(),
             "nonce": secrets.token_urlsafe(18),
         }
     )
     params = {
         "client_id": settings.META_APP_ID,
-        "redirect_uri": callback_url,
+        "redirect_uri": oauth_callback_url,
         "scope": ",".join(FACEBOOK_SCOPES),
         "response_type": "code",
         "state": state,
@@ -970,7 +1087,7 @@ async def start_facebook_auth(
     return {
         "authorization_url": f"https://www.facebook.com/{_graph_version()}/dialog/oauth?{urlencode(params)}",
         "user_id": context["user_id"],
-        "oauth_redirect_uri": callback_url,
+        "oauth_redirect_uri": oauth_callback_url,
         "meta_graph_version": _graph_version(),
     }
 
@@ -1009,19 +1126,28 @@ async def facebook_auth_callback(
     db: Session = Depends(get_db),
 ):
     state_payload = _decode_state(str(state or ""))
+    platform = _normalize_platform(state_payload.get("platform"))
     frontend_origin = _normalize_frontend_origin(state_payload.get("frontend_origin"))
+    callback_url = _normalize_callback_url(state_payload.get("callback_url"), frontend_origin, platform)
+    return_mode = _normalize_return_mode(state_payload.get("return_mode"), platform)
 
     if error:
         detail = str(error_description or error or "Autorisation Facebook refusee.")
-        return _callback_page(frontend_origin, "error", detail)
+        return _callback_page(frontend_origin, "error", detail, callback_url=callback_url, return_mode=return_mode)
 
     if not code:
-        return _callback_page(frontend_origin, "error", "Code Facebook manquant.")
+        return _callback_page(frontend_origin, "error", "Code Facebook manquant.", callback_url=callback_url, return_mode=return_mode)
 
     user_id = str(state_payload.get("user_id") or state_payload.get("organization_slug") or "").strip()
     user_email = str(state_payload.get("user_email") or "").strip().lower()
     if not user_id:
-        return _callback_page(frontend_origin, "error", "Utilisateur introuvable pour cette connexion.")
+        return _callback_page(
+            frontend_origin,
+            "error",
+            "Utilisateur introuvable pour cette connexion.",
+            callback_url=callback_url,
+            return_mode=return_mode,
+        )
 
     try:
         token_payload = await _exchange_facebook_code_for_token(
@@ -1031,26 +1157,34 @@ async def facebook_auth_callback(
         user_access_token = str(token_payload.get("access_token") or "").strip()
         pages = await _fetch_facebook_pages(user_access_token)
     except HTTPException as exc:
-        return _callback_page(frontend_origin, "error", str(exc.detail))
+        return _callback_page(frontend_origin, "error", str(exc.detail), callback_url=callback_url, return_mode=return_mode)
     except Exception as exc:
         logger.exception("Facebook callback failed: %s", exc)
-        return _callback_page(frontend_origin, "error", "Connexion Facebook impossible pour le moment.")
+        return _callback_page(
+            frontend_origin,
+            "error",
+            "Connexion Facebook impossible pour le moment.",
+            callback_url=callback_url,
+            return_mode=return_mode,
+        )
 
     if not pages:
         return _callback_page(
             frontend_origin,
             "error",
             "Aucune page Facebook avec les droits Messenger necessaires n'a ete retournee par Meta.",
+            callback_url=callback_url,
+            return_mode=return_mode,
         )
 
-        _upsert_facebook_page_connections(
-            db,
-            user_id,
-            user_email,
-            user_access_token,
-            pages,
-            token_payload,
-        )
+    _upsert_facebook_page_connections(
+        db,
+        user_id,
+        user_email,
+        user_access_token,
+        pages,
+        token_payload,
+    )
     success_detail = (
         f"{len(pages)} page(s) enregistree(s). "
         "Aucune page n'est activee automatiquement. "
@@ -1062,6 +1196,8 @@ async def facebook_auth_callback(
         "success",
         success_detail,
         page_count=len(pages),
+        callback_url=callback_url,
+        return_mode=return_mode,
     )
 
 

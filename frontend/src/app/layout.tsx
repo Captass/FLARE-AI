@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Instrument_Sans, Outfit } from "next/font/google";
 import "./globals.css";
 import GlobalBackground from "@/components/GlobalBackground";
+import PlatformRuntimeBoot from "@/components/platform/PlatformRuntimeBoot";
 import { getThemeInitScript } from "@/lib/theme";
 
 const instrumentSans = Instrument_Sans({ 
@@ -134,7 +135,7 @@ export default function RootLayout({
                 "alternateName": ["Flare AI", "FLARE", "RAM'S FLARE AI"],
                 "applicationCategory": "BusinessApplication",
                 "applicationSubCategory": "CustomerServiceApplication",
-                "operatingSystem": "Web, iOS, Android",
+                "operatingSystem": "Windows, Android, macOS Web, iPhone Web",
                 "description": "FLARE AI est une application d'automatisation business pour les TPE et PME a Madagascar. Aujourd'hui, la preuve concrete la plus visible est le chatbot Facebook assiste, avec paiement local, validation FLARE et activation accompagnee.",
                 "url": "https://flareai.ramsflare.com",
                 "screenshot": "https://flareai.ramsflare.com/screenshot.png",
@@ -210,20 +211,9 @@ export default function RootLayout({
             ]),
           }}
         />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.deferredPrompt = null;
-              window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                window.deferredPrompt = e;
-                window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
-              });
-            `,
-          }}
-        />
       </head>
       <body className={`${instrumentSans.className} ${outfit.variable} h-full`}>
+        <PlatformRuntimeBoot />
         <GlobalBackground />
         {children}
       </body>

@@ -197,7 +197,7 @@ export default function FloatingContextualGuide({
             className="pointer-events-auto inline-flex h-12 items-center gap-2 rounded-full border border-orange-500/35 bg-[var(--surface-base)] px-4 text-[var(--text-primary)] shadow-[var(--shadow-card)] transition-colors hover:bg-[var(--surface-raised)]"
           >
             <MessageCircle size={16} className="text-orange-500" />
-            <span className="text-sm font-semibold">Besoin d'aide ?</span>
+            <span className="text-sm font-semibold">Besoin d&apos;aide ?</span>
           </motion.button>
         )}
 

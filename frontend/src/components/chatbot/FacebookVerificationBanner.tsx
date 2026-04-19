@@ -47,7 +47,7 @@ export default function FacebookVerificationBanner({
             pas encore completement confirmee.
           </p>
           <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">
-            Derniere verification : {formatRelativeTime(page.last_synced_at)}. Vous pouvez rafraichir l'etat ci-dessous
+            Derniere verification : {formatRelativeTime(page.last_synced_at)}. Vous pouvez rafraichir l&apos;etat ci-dessous
             si vous venez de modifier quelque chose sur Facebook.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-sm text-[var(--text-primary)]">

@@ -7,11 +7,12 @@ import { motion } from "framer-motion";
 import PageSelector from "@/components/PageSelector";
 import { getChatbotOverview, type ChatbotOverview } from "@/lib/api";
 import {
+  consumeFacebookMessengerAuthResult,
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
   deactivateFacebookMessengerPage,
   resyncFacebookMessengerPages,
-  runFacebookMessengerOAuthPopup,
+  runFacebookMessengerOAuth,
   type FacebookMessengerStatus,
 } from "@/lib/facebookMessenger";
 
@@ -95,6 +96,28 @@ export default function ChatbotParametresPage({
     }
   }, [selectedPageId, overview, onSelectPage]);
 
+  useEffect(() => {
+    const authResult = consumeFacebookMessengerAuthResult();
+    if (!authResult || authResult.provider !== "facebook") {
+      return;
+    }
+
+    if (authResult.status === "success") {
+      setFacebookAuthLoading(true);
+      setFacebookError(null);
+      void (async () => {
+        try {
+          await loadData(true);
+        } finally {
+          setFacebookAuthLoading(false);
+        }
+      })();
+      return;
+    }
+
+    setFacebookError(authResult.detail || "Impossible de connecter Facebook.");
+  }, [loadData]);
+
   const canManagePages = facebookStatus?.can_manage_pages ?? false;
 
   const handleConnectFacebook = async () => {
@@ -111,8 +134,10 @@ export default function ChatbotParametresPage({
     setFacebookAuthLoading(true);
     setFacebookError(null);
     try {
-      await runFacebookMessengerOAuthPopup(accessToken);
-      await loadData(true);
+      const flow = await runFacebookMessengerOAuth(accessToken);
+      if (flow === "popup") {
+        await loadData(true);
+      }
     } catch (connectError) {
       setFacebookError(connectError instanceof Error ? connectError.message : "Impossible de connecter Facebook.");
     } finally {

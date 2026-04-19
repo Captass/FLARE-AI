@@ -128,7 +128,7 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
 
       {loading ? (
         <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-20 rounded-2xl bg-[var(--surface-subtle)] animate-pulse" />)}</div>
-      ) : loadError && filtered.length === 0 ? (
+      ) : loadError && activations.length === 0 ? (
         <div className="text-center py-16 text-[var(--text-secondary)]">
           <Rocket size={44} className="mx-auto mb-4 opacity-25" />
           <p>Le chargement des activations a echoue. Faites un refresh avant de conclure qu&apos;il n&apos;y a aucune demande.</p>

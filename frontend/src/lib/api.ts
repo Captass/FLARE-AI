@@ -8,6 +8,8 @@
  * Doit rester alignÃ© avec le backend Render actuel (voir `render.yaml` / DEVELOPER_GUIDE).
  * Lâ€™ancienne URL Cloud Run ne doit plus Ãªtre utilisÃ©e en prod.
  */
+import { getPlatformApiBaseUrl } from "@/lib/platform/runtime";
+
 const PRODUCTION_BACKEND_URL = "https://flare-backend-ab5h.onrender.com";
 
 const PROD_FRONTEND_HOSTS = new Set([
@@ -26,6 +28,11 @@ function isRenderStaticHost(hostname: string): boolean {
 }
 
 export function getApiBaseUrl(): string {
+  const platformUrl = getPlatformApiBaseUrl();
+  if (platformUrl) {
+    return platformUrl;
+  }
+
   const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
   if (configuredUrl) {
     return configuredUrl.replace(/\/+$/, "");
@@ -1635,6 +1642,8 @@ export interface ActivationRequestPage {
 
 export interface ActivationRequest {
   id: string;
+  user_id?: string | null;
+  requester_user_id?: string | null;
   selected_plan_id: string;
   applied_plan_id?: string | null;
   subscription_status?: string | null;
@@ -1677,6 +1686,7 @@ export interface ActivationRequest {
   tested_at: string | null;
   completed_at: string | null;
   created_at: string | null;
+  updated_at?: string | null;
 }
 
 export async function getMyActivationRequest(token?: string | null): Promise<{ activation_request: ActivationRequest | null }> {
@@ -1703,6 +1713,7 @@ export async function updateActivationRequest(updates: Record<string, unknown>, 
 
 export interface ChatbotOrder {
   id: string;
+  user_id?: string | null;
   facebook_page_id: string | null;
   page_name: string;
   contact_psid: string;
@@ -1871,6 +1882,7 @@ export async function adminUpdateOrder(orderId: string, updates: { status?: stri
 export interface UserReport {
   id: string;
   user_id: string;
+  reporter_user_id?: string | null;
   user_email: string;
   category: string;
   severity: string;

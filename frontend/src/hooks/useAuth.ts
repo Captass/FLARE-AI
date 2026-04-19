@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { 
+import {
   User, 
   onAuthStateChanged, 
   signInWithEmailAndPassword, 
@@ -18,6 +18,13 @@ import {
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { sendVerificationPin, verifyEmailPin } from "@/lib/api";
+import {
+  getAppReturnUrl,
+  getStoredValue,
+  removeStoredValue,
+  setStoredValue,
+  shouldUseRedirectAuthFlow,
+} from "@/lib/platform/runtime";
 
 export interface AuthState {
   user: User | null;
@@ -117,12 +124,12 @@ export function useAuth(): AuthState {
     });
 
     // Gestion du lien magique (Email Link) au chargement
-    if (isSignInWithEmailLink(auth, window.location.href)) {
-      const email = window.localStorage.getItem('emailForSignIn');
+    if (typeof window !== "undefined" && isSignInWithEmailLink(auth, window.location.href)) {
+      const email = getStoredValue("emailForSignIn");
       if (email) {
         signInWithEmailLink(auth, email, window.location.href)
           .then(() => {
-            window.localStorage.removeItem('emailForSignIn');
+            removeStoredValue("emailForSignIn");
           })
           .catch((err) => {
             if (mounted) setError(translateFirebaseError(err.code));
@@ -138,11 +145,11 @@ export function useAuth(): AuthState {
     setLoading(true);
     try {
       const actionCodeSettings = {
-        url: window.location.origin,
+        url: getAppReturnUrl("/app"),
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-      window.localStorage.setItem('emailForSignIn', email);
+      setStoredValue("emailForSignIn", email);
     } catch (e: any) {
       setError(translateFirebaseError(e.code));
     } finally {
@@ -192,6 +199,10 @@ export function useAuth(): AuthState {
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
+      if (shouldUseRedirectAuthFlow()) {
+        await signInWithRedirect(auth, provider);
+        return;
+      }
       await signInWithPopup(auth, provider);
     } catch (e: any) {
       const code = e?.code || "";

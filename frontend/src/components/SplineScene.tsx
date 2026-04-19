@@ -9,7 +9,7 @@ import Spline from "@splinetool/react-spline";
 
 interface SplineSceneProps {
   scene: string;
-  onLoad?: () => void;
+  onLoad?: (app: unknown) => void;
   className?: string;
   style?: React.CSSProperties;
 }

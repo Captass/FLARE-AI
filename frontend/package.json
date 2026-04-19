@@ -7,13 +7,26 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "deploy": "npm run build && npx firebase-tools deploy --only hosting"
+    "deploy": "npm run build && npx firebase-tools deploy --only hosting",
+    "android:sync": "npm run build && npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:apk": "npm run android:apk:debug",
+    "android:apk:debug": "npm run android:sync && cd android && gradlew.bat assembleDebug",
+    "android:apk:release": "npm run android:sync && cd android && gradlew.bat assembleRelease",
+    "desktop:dev": "npx tauri dev --config ../desktop/tauri/src-tauri/tauri.conf.json",
+    "desktop:build": "npx tauri build --config ../desktop/tauri/src-tauri/tauri.conf.json",
+    "desktop:build:windows": "npx tauri build --target x86_64-pc-windows-msvc --config ../desktop/tauri/src-tauri/tauri.conf.json"
   },
   "dependencies": {
+    "@capacitor/android": "^7.6.2",
+    "@capacitor/browser": "^7.0.5",
+    "@capacitor/cli": "^7.6.2",
+    "@capacitor/core": "^7.6.2",
     "@headlessui/react": "^2.2.9",
     "@react-three/drei": "^9.120.3",
     "@react-three/fiber": "^8.17.14",
     "@splinetool/react-spline": "^4.1.0",
+    "@tauri-apps/api": "^1.6.0",
     "@types/three": "^0.172.0",
     "clsx": "^2.1.1",
     "firebase": "^12.10.0",
@@ -34,6 +47,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^1.6.3",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",

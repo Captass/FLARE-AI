@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/1",
+  "build": {
+    "beforeBuildCommand": "cd ../../frontend && npm run build",
+    "beforeDevCommand": "cd ../../frontend && npm run dev",
+    "distDir": "../../frontend/out",
+    "devPath": "http://localhost:3000"
+  },
+  "package": {
+    "productName": "FLARE AI",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "shell": {
+        "open": true
+      }
+    },
+    "bundle": {
+      "active": true,
+      "identifier": "com.ramsflare.flareai.desktop",
+      "targets": ["msi", "nsis"],
+      "icon": [
+        "../../frontend/public/br-symbol-v4-192.png",
+        "../../frontend/public/br-symbol-v4-512.png"
+      ]
+    },
+    "windows": [
+      {
+        "title": "FLARE AI",
+        "width": 1440,
+        "height": 960,
+        "minWidth": 1100,
+        "minHeight": 760,
+        "resizable": true
+      }
+    ]
+  }
+}

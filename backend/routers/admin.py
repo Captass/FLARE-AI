@@ -66,15 +66,28 @@ def get_db():
         db.close()
 
 
+def _configured_admin_emails() -> set[str]:
+    return {
+        email.strip().lower()
+        for email in str(settings.ADMIN_EMAILS or "").split(",")
+        if email and email.strip()
+    }
+
+
 def check_admin_auth(authorization: Optional[str] = Header(None)):
     """Vérifie que l'utilisateur est dans la liste des administrateurs (ADMIN_EMAILS dans .env)."""
     try:
         user_id, user_email = get_user_identity(authorization)
-        admin_emails = [e.strip() for e in settings.ADMIN_EMAILS.split(",")]
+        if user_id == "anonymous" or not str(user_email or "").strip():
+            raise HTTPException(status_code=401, detail="Session expiree ou invalide.")
+        admin_emails = _configured_admin_emails()
+        if not admin_emails:
+            logger.error("[Admin] ADMIN_EMAILS est vide ou invalide.")
+            raise HTTPException(status_code=503, detail="Configuration admin indisponible.")
 
         logger.info(f"[Admin] Requête de {user_email} (ID: {user_id})")
 
-        if user_email not in admin_emails:
+        if user_email.lower() not in admin_emails:
             logger.warning(f"[Admin] Tentative d'accès refusée pour {user_email}")
             raise HTTPException(status_code=403, detail="Accès réservé à l'administrateur principal.")
         return user_id
@@ -82,7 +95,7 @@ def check_admin_auth(authorization: Optional[str] = Header(None)):
         raise
     except Exception as e:
         logger.error(f"[Admin] Erreur auth: {e}")
-        raise HTTPException(status_code=401, detail="Session expirée ou invalide.")
+        raise HTTPException(status_code=401, detail="Session expiree ou invalide.")
 
 
 def _firebase_email_lookup(uid: str) -> str:

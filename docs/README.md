@@ -1,6 +1,6 @@
 # FLARE AI - Documentation centrale
 
-Derniere mise a jour : 16 avril 2026
+Derniere mise a jour : 19 avril 2026
 
 Ce dossier `docs` est le point d'entree documentaire du projet.
 
@@ -13,6 +13,17 @@ La verite commercialisable actuelle est :
 - `paiement manuel local` (MVola / Orange Money)
 - `activation assistee` par l'equipe FLARE
 - `support humain local`
+
+## Distribution supportee
+
+La distribution produit suit maintenant cette matrice :
+
+- Windows : application native via `Tauri`
+- Android : application native via `APK` direct
+- macOS : web / `PWA` seulement
+- iPhone / iPad : web / `PWA` seulement
+- aucun positionnement `App Store` ou `Play Store` dans la doc publique
+- aucune promesse de store natif ne doit etre ajoutee dans les docs sans decision explicite
 
 Tout le reste doit etre traite comme :
 
@@ -101,6 +112,8 @@ Pour le chatbot Facebook FLARE AI et son cockpit :
 - le plan actif et l'activation sont rattaches directement au compte utilisateur
 - quand le paiement est valide, le plan choisi doit etre applique et visible cote client comme cote admin
 - `Parametres > Identite` sert a gerer le profil, l'avatar et le nom de compte affiches dans l'app
+- la distribution native est reservee a Windows via Tauri et Android via APK direct
+- macOS et iPhone restent sur le web / PWA, sans cible de store natif
 
 ## Lancement v1 - beta assistee
 

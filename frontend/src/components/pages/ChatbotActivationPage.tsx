@@ -784,6 +784,17 @@ export default function ChatbotActivationPage({
       return;
     }
 
+    if (importedPages.length === 0) {
+      if (!cfg.facebook_page_name || !cfg.facebook_page_name.trim()) {
+        setError("Veuillez indiquer le nom de votre page Facebook.");
+        return;
+      }
+      if (!cfg.facebook_page_url || !cfg.facebook_page_url.trim()) {
+        setError("Veuillez indiquer l'URL de votre page Facebook.");
+        return;
+      }
+    }
+
     setBusy(true);
     setError(null);
     try {

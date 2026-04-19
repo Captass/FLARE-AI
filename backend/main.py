@@ -244,6 +244,10 @@ for _extra in (o.strip() for o in (settings.EXTRA_CORS_ORIGINS or "").split(",")
     if _extra not in _allowed_origins:
         _allowed_origins.append(_extra)
 
+for _native_origin in (o.strip() for o in (settings.NATIVE_CORS_ORIGINS or "").split(",") if o.strip()):
+    if _native_origin not in _allowed_origins:
+        _allowed_origins.append(_native_origin)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins,

@@ -152,7 +152,7 @@ export default function ChatbotPreferencesForm({
 
       <div className="space-y-2">
         <label className="text-[12px] font-semibold uppercase tracking-[0.16em] text-white/45">
-          Message d'accueil
+          Message d&apos;accueil
         </label>
         <textarea
           value={value.greeting_message}

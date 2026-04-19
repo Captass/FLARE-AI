@@ -1,5 +1,7 @@
 # FLARE App Status - 2026-03-28
 
+Derniere mise a jour : 19 avril 2026
+
 ## URLs live
 
 - public frontend: `https://flareai.ramsflare.com`
@@ -18,6 +20,15 @@ Le produit est organise en deux temps :
 La landing publique reste la vitrine marketing.
 L'application connectee est maintenant recentree sur la beta assistee du `Chatbot Facebook`.
 
+## Distribution supportee
+
+- Windows : native via `Tauri`
+- Android : native via `APK` direct
+- macOS : web / `PWA` seulement
+- iPhone / iPad : web / `PWA` seulement
+- pas de positionnement `App Store` ni `Play Store`
+- les mentions de wrappers natives doivent suivre cette matrice uniquement
+
 ## Etat courant
 
 - la beta publique vendue aujourd'hui est centree sur `Chatbot Facebook`
@@ -25,6 +36,7 @@ L'application connectee est maintenant recentree sur la beta assistee du `Chatbo
 - le shell connecte doit donner la priorite a `Accueil`, `Mon chatbot Facebook`, `Offre / Activation`, `Support / Parametres`
 - le compte connecte pilote un seul parcours client
 - quand le paiement est valide, le plan choisi doit etre applique et visible cote client comme cote admin
+- la doc de distribution doit rester alignee sur Windows Tauri, Android APK, et web / PWA pour Apple
 
 ## Update 2026-03-30
 

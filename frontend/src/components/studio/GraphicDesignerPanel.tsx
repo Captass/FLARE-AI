@@ -472,7 +472,7 @@ export default function GraphicDesignerPanel({ token }: GraphicDesignerPanelProp
 
                     {filePreview && (
                       <div className="mt-4 overflow-hidden rounded-2xl border border-white/8">
-                        <img src={filePreview} alt="Aperçu source" className="h-40 w-full object-cover" />
+                        <img src={filePreview} alt="Aperçu source" className="h-40 w-full object-cover" loading="lazy" decoding="async" />
                       </div>
                     )}
                   </div>
@@ -540,7 +540,7 @@ export default function GraphicDesignerPanel({ token }: GraphicDesignerPanelProp
                         </button>
                       </div>
                       <div className="flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-[28px] border border-white/8 bg-[#121317]">
-                        <img src={result.url} alt={result.name} className="max-h-full max-w-full object-contain" />
+                        <img src={result.url} alt={result.name} className="max-h-full max-w-full object-contain" loading="lazy" decoding="async" />
                       </div>
                     </div>
                   </motion.div>

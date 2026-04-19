@@ -6,12 +6,13 @@ import PlatformCard, { NotifBadge } from "@/components/PlatformCard";
 import type { NavLevel } from "@/components/NavBreadcrumb";
 import PageSelector from "@/components/PageSelector";
 import {
+  consumeFacebookMessengerAuthResult,
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
   resyncFacebookMessengerPages,
   loadFacebookAuthDebugInfo,
   META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
-  runFacebookMessengerOAuthPopup,
+  runFacebookMessengerOAuth,
   type FacebookAuthDebugInfo,
   type FacebookMessengerPage,
 } from "@/lib/facebookMessenger";
@@ -245,6 +246,39 @@ export default function ChatbotHomePage({
   }, [syncFacebookPages]);
 
   useEffect(() => {
+    const authResult = consumeFacebookMessengerAuthResult();
+    if (!authResult || authResult.provider !== "facebook") {
+      return;
+    }
+
+    if (authResult.status === "success") {
+      setFbOauthBusy(true);
+      void (async () => {
+        try {
+          const t = await resolveToken();
+          if (!t) {
+            pushFeedback("error", "Session expiree. Reconnectez-vous a FLARE.");
+            return;
+          }
+
+          const st = await loadFacebookMessengerStatus(t);
+          setCanManageFb(st.can_manage_pages);
+          onPagesChanged?.(st.pages || []);
+          pushFeedback("success", "Connexion Meta terminee. Vos pages FLARE ont ete rechargees.");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Connexion Meta interrompue.";
+          pushFeedback("error", message);
+        } finally {
+          setFbOauthBusy(false);
+        }
+      })();
+      return;
+    }
+
+    pushFeedback("error", authResult.detail || "Connexion Meta interrompue.");
+  }, [onPagesChanged, pushFeedback, resolveToken]);
+
+  useEffect(() => {
     const canInspectMeta = Boolean(canManageFb);
 
     if (!canInspectMeta || typeof window === "undefined") {
@@ -382,10 +416,12 @@ export default function ChatbotHomePage({
     }
     setFbOauthBusy(true);
     try {
-      await runFacebookMessengerOAuthPopup(t);
-      const st = await loadFacebookMessengerStatus(t);
-      setCanManageFb(st.can_manage_pages);
-      onPagesChanged?.(st.pages || []);
+      const flow = await runFacebookMessengerOAuth(t);
+      if (flow === "popup") {
+        const st = await loadFacebookMessengerStatus(t);
+        setCanManageFb(st.can_manage_pages);
+        onPagesChanged?.(st.pages || []);
+      }
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Connexion Meta interrompue.";
       if (/403|forbidden|permission|owner|admin/i.test(msg)) {

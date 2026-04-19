@@ -55,7 +55,7 @@ export default function AdminReportsTab({ token, onBack }: { token: string; onBa
         </div>
         <div>
           <h2 className="text-xl font-bold text-[var(--text-primary)]">Signalements</h2>
-          <p className="text-xs text-[var(--text-secondary)]">Messages envoyés par les utilisateurs vers l'admin.</p>
+          <p className="text-xs text-[var(--text-secondary)]">Messages envoyes par les utilisateurs vers l&apos;admin.</p>
         </div>
         <button onClick={() => void load()} className="ml-auto rounded-xl p-2 transition-colors hover:bg-[var(--surface-subtle)]">
           <RefreshCcw size={15} className={`text-[var(--text-secondary)] ${loading ? "animate-spin" : ""}`} />

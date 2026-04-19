@@ -28,7 +28,7 @@ const SettingsModal = dynamic(() => import("@/components/SettingsModal"), { ssr:
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useFolders } from "@/hooks/useFolders";
-import { BookOpen, X, ChevronDown, Menu, Download, AlertCircle, ArrowLeft } from "lucide-react";
+import { BookOpen, X, ChevronDown, Menu, AlertCircle, ArrowLeft } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -401,8 +401,6 @@ function HomeContent() {
   const [adminAccessState, setAdminAccessState] = useState<"checking" | "granted" | "denied" | "unknown">("checking");
   const [showAuth, setShowAuth] = useState(false);
   const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showInstallBanner, setShowInstallBanner] = useState(false);
   const [displayName, setDisplayName] = useState<string>('');
   const [chatMode, setChatMode] = useState<'raisonnement' | 'rapide'>('raisonnement');
   const [workspaceIdentity, setWorkspaceIdentity] = useState<WorkspaceIdentity | null>(null);
@@ -457,17 +455,6 @@ function HomeContent() {
     const savedName = localStorage.getItem('flare-user-name');
     if (savedName) setDisplayName(savedName);
     
-    const handleBeforeInstall = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      const dismissed = localStorage.getItem('flare-install-dismissed');
-      if (!dismissed) setShowInstallBanner(true);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
-
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-    };
   }, []);
 
   // ── Force Cache Clear (v4.0.0 — Landing Overhaul) ──
@@ -941,7 +928,7 @@ function HomeContent() {
     };
   }, [token, user]);
 
-  const canAccessAdmin = adminAccessState === "granted";
+  const canAccessAdmin = Boolean(user && token) && adminAccessState !== "denied";
   const selectedFacebookPage =
     selectedFacebookPageId
       ? facebookPages.find((page) => page.page_id === selectedFacebookPageId) ?? null
@@ -956,7 +943,7 @@ function HomeContent() {
       activationStatus: activationRequest?.status ?? null,
       paymentStatus: activationRequest?.payment_status ?? null,
       flarePageAdminConfirmed: activationRequest?.flare_page_admin_confirmed === "true",
-      userRole: workspaceIdentity?.user_profile?.role ?? "user",
+      userRole: null,
     }),
     [
       activationRequest?.flare_page_admin_confirmed,
@@ -967,15 +954,12 @@ function HomeContent() {
       selectedFacebookPageId,
       setupStatus?.has_connected_page,
       setupStatus?.step,
-      workspaceIdentity?.user_profile?.role,
     ]
   );
   const guideBottomClassName =
-    activeView === "assistant" || activeView === "chat"
+  activeView === "assistant" || activeView === "chat"
       ? "bottom-[168px] md:bottom-8"
-      : showInstallBanner
-        ? "bottom-24 md:bottom-28"
-        : "bottom-4 md:bottom-6";
+      : "bottom-4 md:bottom-6";
   const guideVisible =
     !sidebarOpen &&
     !isSettingsModalOpen &&
@@ -1403,36 +1387,6 @@ function HomeContent() {
               </button>
             </div>
           )}
-
-        {/* PWA Install Banner */}
-        {showInstallBanner && deferredPrompt && (
-          <div className="fixed bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 md:gap-4 px-4 md:px-6 py-4 rounded-2xl bg-[var(--surface-base)] border border-[var(--border-default)] shadow-[var(--shadow-card)] animate-msg-pop max-w-md w-[calc(100vw-24px)] md:w-[90vw]">
-            <div className="w-10 h-10 rounded-xl bg-[var(--surface-subtle)] flex items-center justify-center shrink-0 border border-[var(--border-default)]">
-              <Download size={18} className="text-[var(--text-muted)]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] font-medium text-[var(--text-primary)]">Installer FLARE AI</p>
-              <p className="text-[11px] text-[var(--text-muted)] mt-0.5">Acces rapide depuis votre ecran d&apos;accueil</p>
-            </div>
-            <button
-              onClick={async () => {
-                deferredPrompt.prompt();
-                await deferredPrompt.userChoice;
-                setDeferredPrompt(null);
-                setShowInstallBanner(false);
-              }}
-              className="px-4 py-2 rounded-xl bg-[var(--text-primary)] hover:opacity-90 text-[rgb(var(--background))] text-[12px] font-bold tracking-wide transition-all shrink-0"
-            >
-              Installer
-            </button>
-            <button
-              onClick={() => { setShowInstallBanner(false); localStorage.setItem("flare-install-dismissed", "1"); }}
-              className="p-1.5 text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        )}
 
 
         {/* Sidebar */}

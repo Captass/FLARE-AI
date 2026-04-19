@@ -326,7 +326,7 @@ export default function DashboardPanel({
             {greeting}, {firstName}.
           </h1>
           <p className="mt-2 text-base font-medium text-[var(--text-secondary)]">
-            Voici l'etat de ton compte et de tes automatisations.
+            Voici l&apos;etat de ton compte et de tes automatisations.
           </p>
         </motion.section>
         <section>

@@ -68,7 +68,7 @@ export default function GooglePage() {
           className="rounded-2xl border border-[var(--accent-navy)]/20 bg-[var(--accent-navy)]/6 px-5 py-4"
         >
           <p className="text-sm font-medium text-[var(--text-primary)]">
-            Les modules Google arrivent prochainement. L'objectif est de relier acquisition, suivi
+            Les modules Google arrivent prochainement. L&apos;objectif est de relier acquisition, suivi
             et pilotage dans un flux simple a utiliser.
           </p>
         </motion.div>

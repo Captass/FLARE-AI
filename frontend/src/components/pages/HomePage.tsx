@@ -285,7 +285,10 @@ export default function HomePage({
             </div>
             <button
               type="button"
-              onClick={() => onPush(activationCopy.target)}
+              onClick={() => {
+                if (!activationCopy.target) return;
+                onPush(activationCopy.target);
+              }}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
             >
               {activationCopy.action}

@@ -1,6 +1,6 @@
 # Environnement et fichiers .env
 
-Derniere mise a jour : 29 mars 2026
+Derniere mise a jour : 19 avril 2026
 
 ## Regle importante
 
@@ -72,6 +72,10 @@ Ils sont utilises directement par le code.
 
 - `NEXT_PUBLIC_APP_ENV`
 - `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_API_URL_ANDROID`
+- `NEXT_PUBLIC_API_URL_DESKTOP`
+- `NEXT_PUBLIC_ANDROID_CALLBACK_URL`
+- `NEXT_PUBLIC_WINDOWS_CALLBACK_URL`
 - variables publiques Firebase
 
 ### Messenger Direct
@@ -112,6 +116,13 @@ Avant toute modification :
 ## Regle staging / production
 
 Le wizard Messenger ne doit pas etre teste directement sur `flareai.ramsflare.com`.
+
+La distribution native suit maintenant cette regle :
+
+- Windows : native via `Tauri`
+- Android : native via `APK` direct
+- macOS / iPhone / iPad : web / `PWA` seulement
+- aucun packaging de store natif ne doit etre suppose dans les fichiers `.env` ou les exemples
 
 Avant tout test externe :
 

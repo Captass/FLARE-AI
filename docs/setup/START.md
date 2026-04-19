@@ -1,10 +1,17 @@
 # START - Demarrage rapide FLARE AI
 
-Derniere mise a jour : 29 mars 2026
+Derniere mise a jour : 19 avril 2026
 
 ## Objectif
 
 Ce fichier sert a redemarrer vite le projet sans chercher partout.
+
+La distribution cible est maintenant :
+
+- Windows native via `Tauri`
+- Android native via `APK` direct
+- macOS / iPhone / iPad via web / `PWA` seulement
+- aucun positionnement `App Store` ou `Play Store`
 
 ## Regle immediate
 
@@ -15,6 +22,8 @@ Ne pas tester le nouveau wizard Messenger sur `https://flareai.ramsflare.com` ta
 - Frontend principal : [https://flareai.ramsflare.com](https://flareai.ramsflare.com)
 - Frontend Firebase : [https://rams-flare-ai.web.app](https://rams-flare-ai.web.app)
 - Backend actuellement pointe par le frontend local : `https://flare-backend-ynhuvwocwq-ew.a.run.app`
+
+Les memes URLs servent aussi aux parcours web / PWA sur macOS et iPhone.
 
 ## Dossiers a utiliser
 

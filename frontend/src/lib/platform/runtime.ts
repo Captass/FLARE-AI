@@ -1,0 +1,274 @@
+"use client";
+
+export type RuntimePlatform = "web" | "android" | "windows";
+export type AuthProvider = "facebook" | "google";
+export type BrowserPlatform = "windows" | "android" | "macos" | "ios" | "other";
+export type InstallChannel = "windows-native" | "android-native" | "simple-web" | "web";
+
+export interface RuntimeAuthResult {
+  provider: AuthProvider;
+  status: "success" | "error";
+  detail?: string;
+  pageCount?: number;
+  timestamp: string;
+}
+
+const AUTH_RESULT_PREFIX = "flare_auth_result:";
+const DEFAULT_WINDOWS_DOWNLOAD_PATH = "/downloads/flare-ai-windows.msi";
+const DEFAULT_ANDROID_DOWNLOAD_PATH = "/downloads/flare-ai-android.apk";
+const DEFAULT_WEB_APP_PATH = "/app?auth=signup";
+const DEFAULT_ANDROID_CALLBACK_URL = "flareai://oauth/android";
+const DEFAULT_WINDOWS_CALLBACK_URL = "flareai://oauth/windows";
+
+function getWindowLike(): (Window & typeof globalThis) | null {
+  return typeof window === "undefined" ? null : window;
+}
+
+function getNavigatorPlatform(): string {
+  const win = getWindowLike() as (Window & typeof globalThis & { navigator: Navigator & { userAgentData?: { platform?: string } } }) | null;
+  if (!win) return "";
+  return String(win.navigator.userAgentData?.platform || win.navigator.platform || "").toLowerCase();
+}
+
+function getCapacitorPlatform(): string {
+  const win = getWindowLike() as any;
+  return String(win?.Capacitor?.getPlatform?.() || "").toLowerCase();
+}
+
+export function getBrowserPlatform(): BrowserPlatform {
+  const win = getWindowLike();
+  if (!win) return "other";
+
+  const userAgent = String(win.navigator.userAgent || "").toLowerCase();
+  const platform = getNavigatorPlatform();
+
+  if (userAgent.includes("android")) return "android";
+  if (userAgent.includes("iphone") || userAgent.includes("ipad") || userAgent.includes("ipod")) return "ios";
+  if (platform.includes("win")) return "windows";
+  if (platform.includes("mac")) return "macos";
+  return "other";
+}
+
+export function detectRuntimePlatform(): RuntimePlatform {
+  const win = getWindowLike() as any;
+  if (!win) return "web";
+
+  const capacitorPlatform = getCapacitorPlatform();
+  if (capacitorPlatform === "android") return "android";
+
+  if (win.__TAURI__) {
+    const navigatorPlatform = getNavigatorPlatform();
+    if (navigatorPlatform.includes("win")) return "windows";
+  }
+
+  return "web";
+}
+
+export function isNativeRuntime(): boolean {
+  return detectRuntimePlatform() !== "web";
+}
+
+export function shouldUseRedirectAuthFlow(): boolean {
+  return isNativeRuntime();
+}
+
+function trimUrl(value?: string | null): string {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+export function getCurrentOrigin(): string {
+  const win = getWindowLike();
+  return win ? win.location.origin : "";
+}
+
+export function getAppReturnUrl(path = "/app"): string {
+  const platform = detectRuntimePlatform();
+  const platformUrl =
+    platform === "android"
+      ? process.env.NEXT_PUBLIC_ANDROID_CALLBACK_URL
+      : platform === "windows"
+        ? process.env.NEXT_PUBLIC_WINDOWS_CALLBACK_URL
+        : "";
+
+  if (platform !== "web") {
+    const configured = trimUrl(platformUrl);
+    if (configured) {
+      return configured;
+    }
+
+    if (platform === "android") return DEFAULT_ANDROID_CALLBACK_URL;
+    if (platform === "windows") return DEFAULT_WINDOWS_CALLBACK_URL;
+  }
+
+  const origin = trimUrl(getCurrentOrigin());
+  if (!origin) {
+    return "";
+  }
+  return new URL(path, `${origin}/`).toString();
+}
+
+export function getPlatformApiBaseUrl(): string | null {
+  const platform = detectRuntimePlatform();
+  const configured =
+    platform === "android"
+      ? process.env.NEXT_PUBLIC_API_URL_ANDROID
+      : platform === "windows"
+        ? process.env.NEXT_PUBLIC_API_URL_DESKTOP
+        : "";
+
+  const normalized = trimUrl(configured);
+  return normalized || null;
+}
+
+function resolveAbsoluteUrl(configuredUrl: string | undefined, fallbackPath: string): string {
+  const normalizedConfiguredUrl = String(configuredUrl || "").trim();
+  if (normalizedConfiguredUrl) {
+    return normalizedConfiguredUrl;
+  }
+
+  const origin = trimUrl(getCurrentOrigin());
+  if (!origin) {
+    return fallbackPath;
+  }
+
+  return new URL(fallbackPath, `${origin}/`).toString();
+}
+
+export function getWindowsDownloadUrl(): string {
+  return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL, DEFAULT_WINDOWS_DOWNLOAD_PATH);
+}
+
+export function getAndroidDownloadUrl(): string {
+  return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_ANDROID_DOWNLOAD_URL, DEFAULT_ANDROID_DOWNLOAD_PATH);
+}
+
+export function getSimpleWebAppUrl(): string {
+  return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_WEB_APP_URL, DEFAULT_WEB_APP_PATH);
+}
+
+export function canOfferSimpleWebInstall(): boolean {
+  const platform = getBrowserPlatform();
+  return platform === "macos" || platform === "ios";
+}
+
+export function getPreferredInstallChannel(): InstallChannel {
+  const platform = getBrowserPlatform();
+  if (platform === "windows") return "windows-native";
+  if (platform === "android") return "android-native";
+  if (platform === "macos" || platform === "ios") return "simple-web";
+  return "web";
+}
+
+export function setStoredValue(key: string, value: string): void {
+  const win = getWindowLike();
+  if (!win) return;
+  win.localStorage.setItem(key, value);
+}
+
+export function getStoredValue(key: string): string | null {
+  const win = getWindowLike();
+  if (!win) return null;
+  return win.localStorage.getItem(key);
+}
+
+export function removeStoredValue(key: string): void {
+  const win = getWindowLike();
+  if (!win) return;
+  win.localStorage.removeItem(key);
+}
+
+export function persistAuthResult(result: RuntimeAuthResult): void {
+  setStoredValue(`${AUTH_RESULT_PREFIX}${result.provider}`, JSON.stringify(result));
+}
+
+export function consumeAuthResult(provider: AuthProvider): RuntimeAuthResult | null {
+  const raw = getStoredValue(`${AUTH_RESULT_PREFIX}${provider}`);
+  if (!raw) return null;
+  removeStoredValue(`${AUTH_RESULT_PREFIX}${provider}`);
+  try {
+    return JSON.parse(raw) as RuntimeAuthResult;
+  } catch {
+    return null;
+  }
+}
+
+export function dispatchAuthResult(result: RuntimeAuthResult): void {
+  const win = getWindowLike();
+  if (!win) return;
+  win.dispatchEvent(new CustomEvent("flare-auth-result", { detail: result }));
+}
+
+export function readAuthResultFromUrl(): RuntimeAuthResult | null {
+  const win = getWindowLike();
+  if (!win) return null;
+  const url = new URL(win.location.href);
+  const provider = url.searchParams.get("oauth_type");
+  const status = url.searchParams.get("status");
+
+  if ((provider !== "facebook" && provider !== "google") || (status !== "success" && status !== "error")) {
+    return null;
+  }
+
+  const pageCountRaw = url.searchParams.get("page_count");
+  return {
+    provider,
+    status,
+    detail: url.searchParams.get("detail") || undefined,
+    pageCount: pageCountRaw ? Number(pageCountRaw) : undefined,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+export function clearAuthResultParamsFromUrl(): void {
+  const win = getWindowLike();
+  if (!win) return;
+  const url = new URL(win.location.href);
+  const next = new URL(url.toString());
+  ["oauth_type", "status", "detail", "page_count"].forEach((key) => next.searchParams.delete(key));
+  win.history.replaceState({}, "", `${next.pathname}${next.search}${next.hash}`);
+}
+
+export async function openExternalUrl(url: string): Promise<void> {
+  const win = getWindowLike() as any;
+  if (!win) return;
+
+  if (win.__TAURI__) {
+    try {
+      const { open } = await import("@tauri-apps/api/shell");
+      await open(url);
+      return;
+    } catch (error) {
+      console.warn("Failed to open external URL via Tauri shell", error);
+    }
+  }
+
+  const capacitorBrowser = win.Capacitor?.Plugins?.Browser;
+  if (capacitorBrowser?.open) {
+    await capacitorBrowser.open({ url });
+    return;
+  }
+
+  win.open(url, "_blank", "noopener,noreferrer");
+}
+
+export async function registerServiceWorker(): Promise<void> {
+  const win = getWindowLike();
+  if (!win || process.env.NODE_ENV !== "production" || !("serviceWorker" in win.navigator)) {
+    return;
+  }
+
+  try {
+    await win.navigator.serviceWorker.register("/sw.js");
+  } catch (error) {
+    console.warn("Failed to register service worker", error);
+  }
+}
+
+export function bootstrapRuntimeEnvironment(): void {
+  const win = getWindowLike();
+  if (!win) return;
+
+  const root = win.document.documentElement;
+  root.dataset.runtimePlatform = detectRuntimePlatform();
+  root.dataset.networkStatus = win.navigator.onLine ? "online" : "offline";
+}

@@ -62,7 +62,7 @@ export default function AdminReportsTab({ token, onBack }: { token: string; onBa
         <AlertCircle size={22} className="text-orange-500" />
         <div>
           <h2 className="text-xl font-bold text-[var(--text-primary)]">Signalements</h2>
-          <p className="text-sm text-[var(--text-muted)]">Messages envoyes par les utilisateurs vers l'admin.</p>
+          <p className="text-sm text-[var(--text-muted)]">Messages envoyes par les utilisateurs vers l&apos;admin.</p>
         </div>
         <button onClick={() => void load()} className="ml-auto rounded-xl p-2 transition-colors hover:bg-[var(--bg-hover)]">
           <RefreshCcw size={16} className={`text-[var(--text-muted)] ${loading ? "animate-spin" : ""}`} />

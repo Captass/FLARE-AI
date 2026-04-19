@@ -169,7 +169,7 @@ function buildDossiers(
     return 5;
   };
 
-  return [...byKey.values()].sort((left, right) => {
+  return Array.from(byKey.values()).sort((left, right) => {
     const p = priority(left) - priority(right);
     if (p !== 0) return p;
     const leftDate = left.payment?.submitted_at || left.activation?.updated_at || left.reports[0]?.created_at || left.orders[0]?.created_at || "";

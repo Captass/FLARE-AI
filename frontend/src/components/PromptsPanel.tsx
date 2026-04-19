@@ -186,7 +186,7 @@ export default function PromptsPanel({ token, onUsePrompt }: PromptsProps) {
             </div>
             <div>
               <h2 className="text-3xl font-semibold text-[var(--text-primary)] tracking-tight">Prompts</h2>
-              <p className="text-[14px] text-[var(--text-muted)] font-normal">{prompts.length} prompt{prompts.length !== 1 ? "s" : ""} prêt{prompts.length !== 1 ? "s" : ""} à l'emploi</p>
+              <p className="text-[14px] text-[var(--text-muted)] font-normal">{prompts.length} prompt{prompts.length !== 1 ? "s" : ""} prêt{prompts.length !== 1 ? "s" : ""} à l&apos;emploi</p>
             </div>
           </div>
           <button
@@ -275,7 +275,7 @@ export default function PromptsPanel({ token, onUsePrompt }: PromptsProps) {
               <MessageSquarePlus size={28} className="text-zinc-500" />
             </div>
             <p className="text-white font-medium mb-1">Aucun prompt</p>
-            <p className="text-sm text-zinc-500">Les prompts prédéfinis vous aident à communiquer efficacement avec l'IA.</p>
+            <p className="text-sm text-zinc-500">Les prompts prédéfinis vous aident à communiquer efficacement avec l&apos;IA.</p>
           </div>
         )}
 

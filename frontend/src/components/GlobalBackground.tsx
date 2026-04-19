@@ -57,16 +57,12 @@ export default function GlobalBackground() {
           rotate: [45, 0, 45],
           borderRadius: ["60% 40% 30% 70% / 60% 30% 70% 40%", "40% 60% 70% 30% / 40% 50% 60% 40%", "60% 40% 30% 70% / 60% 30% 70% 40%"]
         }}
-        style={{
-           x: useTransform(mouseX, [0, 100], [30, -30]),
-           y: useTransform(mouseY, [0, 100], [30, -30]),
-        }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
         className="absolute bottom-[20%] right-[10%] w-[500px] h-[500px] blur-[100px]"
         style={{
-           background: `radial-gradient(circle, rgb(var(--fg) / 0.04) 0%, transparent 70%)`,
-           x: useTransform(mouseX, [0, 100], [30, -30]),
-           y: useTransform(mouseY, [0, 100], [30, -30]),
+          background: `radial-gradient(circle, rgb(var(--fg) / 0.04) 0%, transparent 70%)`,
+          x: useTransform(mouseX, [0, 100], [30, -30]),
+          y: useTransform(mouseY, [0, 100], [30, -30]),
         }}
       />
 

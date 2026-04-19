@@ -2,6 +2,14 @@
 
 import { getApiBaseUrl } from "@/lib/api";
 import { auth } from "@/lib/firebase";
+import {
+  consumeAuthResult,
+  detectRuntimePlatform,
+  getAppReturnUrl,
+  openExternalUrl,
+  shouldUseRedirectAuthFlow,
+  type RuntimeAuthResult,
+} from "@/lib/platform/runtime";
 
 export interface FacebookMessengerPage {
   id: string;
@@ -45,6 +53,12 @@ export interface FacebookAuthDebugInfo {
   scopes: string[];
   oauth_configured: boolean;
   backend_url: string;
+}
+
+export interface FacebookMessengerAuthOptions {
+  callbackUrl?: string;
+  platform?: "web" | "android" | "windows";
+  returnMode?: "popup" | "redirect";
 }
 
 function buildAuthHeaders(token?: string | null): HeadersInit | undefined {
@@ -149,10 +163,20 @@ export async function loadFacebookMessengerStatus(token?: string | null): Promis
 
 export async function getFacebookMessengerAuthorizationUrl(
   token: string | null | undefined,
-  frontendOrigin: string
+  frontendOrigin: string,
+  options: FacebookMessengerAuthOptions = {}
 ): Promise<string> {
   const url = new URL(`${getApiBaseUrl()}/api/facebook/auth`);
   url.searchParams.set("frontend_origin", frontendOrigin);
+  if (options.platform) {
+    url.searchParams.set("platform", options.platform);
+  }
+  if (options.returnMode) {
+    url.searchParams.set("return_mode", options.returnMode);
+  }
+  if (options.callbackUrl) {
+    url.searchParams.set("callback_url", options.callbackUrl);
+  }
 
   const response = await facebookRequestWithTokenRetry(url.toString(), {}, token);
 
@@ -170,6 +194,7 @@ export async function loadFacebookAuthDebugInfo(
 ): Promise<FacebookAuthDebugInfo> {
   const url = new URL(`${getApiBaseUrl()}/api/facebook/auth-debug`);
   url.searchParams.set("frontend_origin", frontendOrigin);
+  url.searchParams.set("platform", detectRuntimePlatform());
 
   const response = await facebookRequestWithTokenRetry(url.toString(), {}, token);
 
@@ -187,7 +212,10 @@ export async function loadFacebookAuthDebugInfo(
  */
 export async function runFacebookMessengerOAuthPopup(token: string): Promise<void> {
   if (typeof window === "undefined") return;
-  const authUrl = await getFacebookMessengerAuthorizationUrl(token, window.location.origin);
+  const authUrl = await getFacebookMessengerAuthorizationUrl(token, window.location.origin, {
+    platform: detectRuntimePlatform(),
+    returnMode: "popup",
+  });
   if (!authUrl.trim()) {
     throw new Error("URL d'autorisation Meta manquante.");
   }
@@ -229,6 +257,36 @@ export async function runFacebookMessengerOAuthPopup(token: string): Promise<voi
     }, 400);
     window.addEventListener("message", handleMessage);
   });
+}
+
+export async function runFacebookMessengerOAuthRedirect(
+  token: string,
+  callbackUrl = getAppReturnUrl("/app")
+): Promise<void> {
+  if (typeof window === "undefined") return;
+  const authUrl = await getFacebookMessengerAuthorizationUrl(token, window.location.origin, {
+    callbackUrl,
+    platform: detectRuntimePlatform(),
+    returnMode: "redirect",
+  });
+  if (!authUrl.trim()) {
+    throw new Error("URL d'autorisation Meta manquante.");
+  }
+  await openExternalUrl(authUrl);
+}
+
+export async function runFacebookMessengerOAuth(token: string): Promise<"popup" | "redirect"> {
+  if (shouldUseRedirectAuthFlow()) {
+    await runFacebookMessengerOAuthRedirect(token);
+    return "redirect";
+  }
+
+  await runFacebookMessengerOAuthPopup(token);
+  return "popup";
+}
+
+export function consumeFacebookMessengerAuthResult(): RuntimeAuthResult | null {
+  return consumeAuthResult("facebook");
 }
 
 /** Met à jour la liste des pages depuis Meta (sans OAuth) si un token utilisateur est déjà stocké. */

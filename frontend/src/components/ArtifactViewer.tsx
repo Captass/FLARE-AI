@@ -818,7 +818,7 @@ export default function ArtifactViewer({ artifact, versions, onSelectVersion, on
               <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center">
                 <X size={20} className="text-red-400" />
               </div>
-              <p className="text-[var(--text-primary)] font-medium text-sm">Impossible d'afficher le fichier</p>
+              <p className="text-[var(--text-primary)] font-medium text-sm">Impossible d&apos;afficher le fichier</p>
               <p className="text-[var(--text-muted)] text-xs">{loadError}</p>
               <button onClick={handleDownload} className="mt-2 px-4 py-2 bg-[var(--bg-hover)] hover:bg-[var(--bg-active)] text-[var(--text-primary)] text-xs rounded-lg border border-[var(--border-glass)] transition-colors flex items-center gap-2">
                 <Download size={13} /> Télécharger le fichier
@@ -1003,7 +1003,7 @@ export default function ArtifactViewer({ artifact, versions, onSelectVersion, on
                   {/* Extrait sélectionné */}
                   <div className="px-3 py-2 bg-orange-500/10 border-b border-orange-500/20">
                     <p className="text-[10px] font-semibold text-orange-400 uppercase tracking-wider mb-0.5">Sélection</p>
-                    <p className="text-[12px] text-[var(--text-primary)] line-clamp-2 italic opacity-80">"{selectedText.slice(0, 80)}{selectedText.length > 80 ? '…' : ''}"</p>
+                    <p className="text-[12px] text-[var(--text-primary)] line-clamp-2 italic opacity-80">&quot;{selectedText.slice(0, 80)}{selectedText.length > 80 ? '…' : ''}&quot;</p>
                   </div>
                   {/* Input commentaire */}
                   <div className="p-3 flex flex-col gap-2">
@@ -1070,7 +1070,7 @@ export default function ArtifactViewer({ artifact, versions, onSelectVersion, on
                   <div className="p-3 bg-[var(--bg-input)] flex flex-col gap-2">
                     <div className="flex items-center justify-between mb-1">
                       <p className="text-[11px] text-[var(--text-muted)] px-1">
-                        <span className="font-medium text-[var(--text-primary)]">Astuce :</span> Indiquez votre sélection (ex: "Pour le bloc Introduction...") et la modification souhaitée.
+                        <span className="font-medium text-[var(--text-primary)]">Astuce :</span> Indiquez votre sélection (ex: &quot;Pour le bloc Introduction...&quot;) et la modification souhaitée.
                       </p>
                     </div>
                     

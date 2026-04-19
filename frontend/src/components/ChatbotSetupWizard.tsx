@@ -14,6 +14,7 @@ import {
   updateChatbotPreferences,
 } from "@/lib/api";
 import {
+  consumeFacebookMessengerAuthResult,
   activateFacebookMessengerPage,
   loadFacebookAuthDebugInfo,
   type FacebookAuthDebugInfo,
@@ -21,7 +22,7 @@ import {
   type FacebookMessengerStatus,
   loadFacebookMessengerStatus,
   META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
-  runFacebookMessengerOAuthPopup,
+  runFacebookMessengerOAuth,
 } from "@/lib/facebookMessenger";
 import { formatRelativeTime } from "@/components/chatbot/chatbotWorkspaceUtils";
 import { LANGUAGE_OPTIONS, PRIMARY_ROLE_OPTIONS, TONE_OPTIONS } from "@/components/chatbot/chatbotWorkspaceUtils";
@@ -243,6 +244,34 @@ export default function ChatbotSetupWizard({
     }
   }, [localStatus.step, refreshPreferences]);
 
+  useEffect(() => {
+    const authResult = consumeFacebookMessengerAuthResult();
+    if (!authResult || authResult.provider !== "facebook") {
+      return;
+    }
+
+    if (authResult.status === "success") {
+      setFacebookAuthLoading(true);
+      setFacebookError(null);
+      void (async () => {
+        try {
+          await refreshFacebookState();
+          const next = await refreshSetup();
+          if (next) {
+            setLocalStatus(next);
+          }
+        } finally {
+          setFacebookAuthLoading(false);
+        }
+      })();
+      return;
+    }
+
+    setFacebookError(
+      normalizeSessionError(authResult.detail || "Connexion Facebook impossible.", "Connexion Facebook impossible.")
+    );
+  }, [refreshFacebookState, refreshSetup]);
+
   const handleManualFacebookRefresh = useCallback(async () => {
     await refreshFacebookState();
     await refreshSetup();
@@ -274,12 +303,13 @@ export default function ChatbotSetupWizard({
         throw new Error(SESSION_RECOVERY_MESSAGE);
       }
 
-      await runFacebookMessengerOAuthPopup(accessToken);
-
-      await refreshFacebookState();
-      const next = await refreshSetup();
-      if (next) {
-        setLocalStatus(next);
+      const flow = await runFacebookMessengerOAuth(accessToken);
+      if (flow === "popup") {
+        await refreshFacebookState();
+        const next = await refreshSetup();
+        if (next) {
+          setLocalStatus(next);
+        }
       }
     } catch (error) {
       setFacebookError(
