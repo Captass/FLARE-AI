@@ -19,7 +19,7 @@ import {
 import { auth } from "@/lib/firebase";
 import { sendVerificationPin, verifyEmailPin } from "@/lib/api";
 import {
-  getAppReturnUrl,
+  getWebAppUrl,
   getStoredValue,
   removeStoredValue,
   setStoredValue,
@@ -145,7 +145,8 @@ export function useAuth(): AuthState {
     setLoading(true);
     try {
       const actionCodeSettings = {
-        url: getAppReturnUrl("/app"),
+        // Firebase email-link auth must always round-trip through an authorized web URL.
+        url: getWebAppUrl("/app?auth=login"),
         handleCodeInApp: true,
       };
       await sendSignInLinkToEmail(auth, email, actionCodeSettings);

@@ -1,5 +1,6 @@
-const CACHE_NAME = "flare-ai-os-v15";
-const PRECACHE_URLS = ["/", "/logo.png"];
+const CACHE_NAME = "flare-ai-os-v16";
+const APP_SHELL_URL = "/app?utm_source=pwa";
+const PRECACHE_URLS = ["/", APP_SHELL_URL, "/logo.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -80,7 +81,7 @@ self.addEventListener("fetch", (event) => {
   // All other requests: Network-first
   event.respondWith(
     fetch(event.request).catch(() => {
-      return caches.match(event.request) || caches.match("/");
+      return caches.match(event.request) || caches.match(APP_SHELL_URL) || caches.match("/");
     })
   );
 });

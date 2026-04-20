@@ -44,13 +44,13 @@
     {
       "name": "Mon chatbot Facebook",
       "short_name": "Chatbot",
-      "url": "/app?view=chatbot",
+      "url": "/app?view=chatbot&utm_source=pwa-shortcut",
       "icons": [{ "src": "/br-symbol-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     },
     {
       "name": "Offre et activation",
       "short_name": "Activation",
-      "url": "/app?view=billing",
+      "url": "/app?view=billing&utm_source=pwa-shortcut",
       "icons": [{ "src": "/br-symbol-v4-192.png", "sizes": "192x192", "type": "image/png" }]
     }
   ],

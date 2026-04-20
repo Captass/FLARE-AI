@@ -7,9 +7,11 @@ import Link from "next/link";
 import FlareMark from "@/components/FlareMark";
 import {
   getAndroidDownloadUrl,
+  hasAndroidDownload,
   getPreferredInstallChannel,
   getSimpleWebAppUrl,
   getWindowsDownloadUrl,
+  hasWindowsDownload,
   type InstallChannel,
 } from "@/lib/platform/runtime";
 
@@ -23,6 +25,7 @@ type DownloadOption = {
   actionLabel: string;
   helperText: string;
   href: string;
+  available: boolean;
   icon: ReactNode;
 };
 
@@ -40,9 +43,12 @@ export default function DownloadPage() {
         title: "Windows",
         chip: "Windows 10 et 11",
         modeLabel: "Logiciel natif (Tauri)",
-        actionLabel: "Telecharger FLARE AI pour Windows",
-        helperText: "Installeur desktop natif pour la beta FLARE AI.",
-        href: getWindowsDownloadUrl(),
+        actionLabel: hasWindowsDownload() ? "Telecharger FLARE AI pour Windows" : "Contacter FLARE pour le logiciel Windows",
+        helperText: hasWindowsDownload()
+          ? "Installeur desktop natif pour la beta FLARE AI."
+          : "Ajoutez NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL pour publier le lien MSI officiel.",
+        href: hasWindowsDownload() ? getWindowsDownloadUrl() : "/contact",
+        available: hasWindowsDownload(),
         icon: <Monitor className="h-8 w-8" />,
       },
       {
@@ -50,9 +56,12 @@ export default function DownloadPage() {
         title: "Android",
         chip: "Telephone et tablette",
         modeLabel: "APK natif direct",
-        actionLabel: "Telecharger l'APK Android",
-        helperText: "Fichier APK direct, sans passage par web app.",
-        href: getAndroidDownloadUrl(),
+        actionLabel: hasAndroidDownload() ? "Telecharger l'APK Android" : "Contacter FLARE pour l'APK Android",
+        helperText: hasAndroidDownload()
+          ? "Fichier APK direct, sans passage par web app."
+          : "Ajoutez NEXT_PUBLIC_ANDROID_DOWNLOAD_URL pour publier le lien APK officiel.",
+        href: hasAndroidDownload() ? getAndroidDownloadUrl() : "/contact",
+        available: hasAndroidDownload(),
         icon: <Smartphone className="h-8 w-8" />,
       },
       {
@@ -63,6 +72,7 @@ export default function DownloadPage() {
         actionLabel: "Ouvrir la web app",
         helperText: "Sur iPhone: Partager > Ajouter a l'ecran d'accueil.",
         href: getSimpleWebAppUrl(),
+        available: true,
         icon: <Globe className="h-8 w-8" />,
       },
     ],
@@ -172,6 +182,11 @@ export default function DownloadPage() {
                     {option.actionLabel}
                   </a>
                   <p className="mt-3 text-center text-[10px] font-medium uppercase tracking-wider text-black/35">{option.helperText}</p>
+                  {!option.available ? (
+                    <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-wider text-orange-600/80">
+                      Lien prive non publie dans cet environnement
+                    </p>
+                  ) : null}
                 </div>
               </motion.div>
             );

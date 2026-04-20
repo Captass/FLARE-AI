@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Bot, CreditCard, MessageSquare, Rocket, Users } from "lucide-react";
+import { Bot, CreditCard, MessageSquare, Rocket, Users, ArrowRight } from "lucide-react";
 import {
   getBillingFeatures,
   getChatbotOverview,
@@ -225,24 +225,58 @@ export default function HomePage({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex w-full max-w-[920px] flex-col gap-8 px-4 py-10 md:px-8 md:py-14">
+      <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-10 px-4 py-8 md:px-8 md:py-12">
         <motion.header
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="space-y-4"
+          className="relative overflow-hidden rounded-[32px] border border-[var(--border-default)] bg-[var(--bg-card)] p-8 md:p-12"
         >
-          <p className="text-base text-[var(--text-secondary)]">
-            Bonjour <span className="font-bold text-[var(--text-primary)]">{displayName || "FLARE AI"}</span>
-          </p>
-          <div className="max-w-3xl">
-            <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-4xl">
-              Votre beta FLARE AI se concentre sur un seul moteur:
-              <span className="text-orange-500"> le chatbot Facebook assiste.</span>
-            </h1>
-            <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)] md:text-base">
-              Paiement local MVola ou Orange Money, activation manuelle par l&apos;equipe FLARE, puis pilotage simple de votre chatbot Facebook depuis un hub unique.
-            </p>
+          {/* Subtle background glow */}
+          <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-orange-500/10 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-[var(--accent-navy)]/10 blur-3xl" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+            <div className="max-w-xl">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="mb-4 inline-flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5"
+              >
+                <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                  Beta Active
+                </span>
+              </motion.div>
+              
+              <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-5xl leading-[1.1]">
+                Bonjour <span className="text-orange-500">{displayName || "FLARE AI"}</span> 👋
+              </h1>
+              <p className="mt-4 text-base md:text-lg text-[var(--text-secondary)]">
+                Bienvenue dans votre espace d'automatisation centré sur le Chatbot Facebook.
+              </p>
+            </div>
+
+            {/* Visual Header Graphic */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="hidden md:flex shrink-0 items-center justify-center h-32 w-32 rounded-full bg-[var(--surface-subtle)] border border-[var(--border-default)] shadow-xl shadow-orange-500/5 relative"
+            >
+               <Bot size={48} className="text-orange-500 absolute" />
+               <motion.div 
+                 animate={{ rotate: 360 }} 
+                 transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                 className="absolute inset-0 rounded-full border border-dashed border-orange-500/30"
+               />
+               <motion.div 
+                 animate={{ rotate: -360 }} 
+                 transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                 className="absolute -inset-4 rounded-full border border-dashed border-[var(--accent-navy)]/20"
+               />
+            </motion.div>
           </div>
         </motion.header>
 
@@ -257,39 +291,43 @@ export default function HomePage({
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.1 }}
-          className="rounded-[28px] border border-[var(--border-default)] bg-[var(--bg-card)] p-6"
+          className="relative overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--bg-card)] p-6 md:p-8"
         >
-          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-            <div className="max-w-2xl">
-              <div className="flex items-center gap-2">
-                <Rocket size={18} className="text-orange-500" />
-                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Prochaine action</p>
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-orange-500/10 text-orange-500">
+                <Rocket size={24} />
               </div>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text-primary)]">{activationCopy.title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{activationCopy.body}</p>
-              {activationRequest?.applied_plan_id && (
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]">
-                    Plan demande: {activationRequest.selected_plan_id}
-                  </span>
-                  <span className="rounded-full bg-[var(--accent-navy)]/8 px-3 py-1 text-[11px] font-medium text-[var(--accent-navy)]">
-                    Plan applique: {activationRequest.applied_plan_id}
-                  </span>
-                  {activationRequest.subscription_status && (
-                    <span className="rounded-full bg-[var(--surface-subtle)] px-3 py-1 text-[11px] font-medium text-[var(--text-secondary)]">
-                      Abonnement: {activationRequest.subscription_status}
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">Prochaine action</p>
+                <h2 className="mt-1 text-xl md:text-2xl font-bold tracking-tight text-[var(--text-primary)]">{activationCopy.title}</h2>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">{activationCopy.body}</p>
+                
+                {activationRequest?.applied_plan_id && (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)] border border-[var(--border-default)]">
+                      Plan demandé: {activationRequest.selected_plan_id}
                     </span>
-                  )}
-                </div>
-              )}
+                    <span className="rounded-full bg-[var(--accent-navy)]/10 px-2.5 py-1 text-[10px] font-medium text-[var(--accent-navy)] border border-[var(--accent-navy)]/20">
+                      Plan appliqué: {activationRequest.applied_plan_id}
+                    </span>
+                    {activationRequest.subscription_status && (
+                      <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-1 text-[10px] font-medium text-[var(--text-secondary)] border border-[var(--border-default)]">
+                        Statut: {activationRequest.subscription_status}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+            
             <button
               type="button"
               onClick={() => {
                 if (!activationCopy.target) return;
                 onPush(activationCopy.target);
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-orange-600"
+              className="shrink-0 inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-3.5 text-sm font-bold text-white transition-all hover:bg-orange-600 hover:scale-[1.02] active:scale-95 shadow-lg shadow-orange-500/20"
             >
               {activationCopy.action}
             </button>
@@ -299,22 +337,31 @@ export default function HomePage({
         <section className="grid gap-4 md:grid-cols-3">
           {[
             {
-              title: "Mon chatbot Facebook",
-              body: "Suivez l'etat du bot, vos conversations, vos commandes et les prochaines actions utiles.",
-              action: "Ouvrir le chatbot",
+              title: "Mon Chatbot",
+              body: "Gérez votre IA Facebook",
+              action: "Ouvrir",
               target: "chatbot" as NavLevel,
+              icon: <Bot size={32} strokeWidth={1.5} />,
+              color: "text-orange-500",
+              bg: "bg-orange-500/10"
             },
             {
-              title: "Offre / Paiement / Activation",
-              body: "Choisissez votre plan, envoyez votre preuve et suivez l'activation assistee de bout en bout.",
-              action: "Voir le dossier",
+              title: "Abonnement",
+              body: "Paiement & Activation",
+              action: "Gérer",
               target: "billing" as NavLevel,
+              icon: <CreditCard size={32} strokeWidth={1.5} />,
+              color: "text-[var(--accent-navy)] dark:text-[rgb(183,203,255)]",
+              bg: "bg-[var(--accent-navy)]/10"
             },
             {
-              title: "Support / Parametres",
-              body: "Mettez a jour vos preferences, votre profil et ouvrez un signalement si quelque chose bloque.",
-              action: "Ouvrir le support",
+              title: "Paramètres",
+              body: "Profil & Support",
+              action: "Configurer",
               target: "settings" as NavLevel,
+              icon: <Users size={32} strokeWidth={1.5} />,
+              color: "text-blue-500",
+              bg: "bg-blue-500/10"
             },
           ].map((card, index) => (
             <motion.button
@@ -324,11 +371,20 @@ export default function HomePage({
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.15 + index * 0.06 }}
-              className="rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              className="group relative overflow-hidden rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-card)] p-6 text-left transition-all hover:border-[var(--border-strong)] hover:shadow-xl hover:shadow-black/5 dark:hover:shadow-white/5"
             >
-              <h3 className="text-lg font-bold text-[var(--text-primary)]">{card.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-[var(--text-secondary)]">{card.body}</p>
-              <p className="mt-4 text-xs font-bold uppercase tracking-[0.12em] text-orange-500">{card.action}</p>
+              <div className="relative z-10">
+                <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl ${card.bg} ${card.color} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
+                  {card.icon}
+                </div>
+                <h3 className="text-xl font-bold text-[var(--text-primary)]">{card.title}</h3>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">{card.body}</p>
+                <div className="mt-6 flex items-center text-xs font-bold uppercase tracking-wider text-[var(--text-primary)] opacity-60 transition-opacity group-hover:opacity-100">
+                  {card.action} <ArrowRight size={14} className="ml-1 -translate-x-2 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+                </div>
+              </div>
+              <div className={`absolute -right-8 -top-8 h-32 w-32 rounded-full ${card.bg} blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100`} />
             </motion.button>
           ))}
         </section>

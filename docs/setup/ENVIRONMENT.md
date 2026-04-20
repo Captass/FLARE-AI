@@ -76,6 +76,9 @@ Ils sont utilises directement par le code.
 - `NEXT_PUBLIC_API_URL_DESKTOP`
 - `NEXT_PUBLIC_ANDROID_CALLBACK_URL`
 - `NEXT_PUBLIC_WINDOWS_CALLBACK_URL`
+- `NEXT_PUBLIC_ANDROID_DOWNLOAD_URL`
+- `NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL`
+- `NEXT_PUBLIC_WEB_APP_URL`
 - variables publiques Firebase
 
 ### Messenger Direct
@@ -130,6 +133,13 @@ Avant tout test externe :
 2. preparer un backend staging
 3. preparer un service Messenger direct staging
 4. utiliser une page Facebook de test dediee
+
+Build natif local sans store :
+
+- Windows executable : `powershell -ExecutionPolicy Bypass -File scripts/build-windows-desktop.ps1`
+- Android APK : `powershell -ExecutionPolicy Bypass -File scripts/build-android-apk.ps1`
+- prerequis Windows : `%USERPROFILE%\\.cargo\\bin` et `%USERPROFILE%\\tools\\w64devkit\\w64devkit`
+- prerequis Android : `JAVA_HOME`, `ANDROID_SDK_ROOT` ou les chemins par defaut sous `%USERPROFILE%\\tools`
 
 Guide detaille :
 

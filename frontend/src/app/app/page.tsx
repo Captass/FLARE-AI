@@ -183,6 +183,10 @@ type LockedModuleConfig = {
   availableNow: { label: string; description: string; view: ActiveView; tone?: "primary" | "secondary" }[];
 };
 
+function isAppView(value: string | null): value is AppView {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(DEFAULT_NAV_STACKS, value);
+}
+
 const DEFAULT_NAV_STACKS: Record<AppView, AppView[]> = {
   home: ["home"],
   automations: ["home"],
@@ -423,6 +427,14 @@ function HomeContent() {
       setAuthMode(authIntent);
       setShowAuth(true);
     }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const requestedView = searchParams?.get("view");
+    if (!isAppView(requestedView)) {
+      return;
+    }
+    setNavStack(resolveDefaultNavStack(requestedView));
   }, [searchParams]);
 
   useEffect(() => {
@@ -928,7 +940,7 @@ function HomeContent() {
     };
   }, [token, user]);
 
-  const canAccessAdmin = Boolean(user && token) && adminAccessState !== "denied";
+  const canAccessAdmin = Boolean(user && token) && adminAccessState === "granted";
   const selectedFacebookPage =
     selectedFacebookPageId
       ? facebookPages.find((page) => page.page_id === selectedFacebookPageId) ?? null

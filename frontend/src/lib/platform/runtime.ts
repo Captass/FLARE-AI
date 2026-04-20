@@ -14,8 +14,6 @@ export interface RuntimeAuthResult {
 }
 
 const AUTH_RESULT_PREFIX = "flare_auth_result:";
-const DEFAULT_WINDOWS_DOWNLOAD_PATH = "/downloads/flare-ai-windows.msi";
-const DEFAULT_ANDROID_DOWNLOAD_PATH = "/downloads/flare-ai-android.apk";
 const DEFAULT_WEB_APP_PATH = "/app?auth=signup";
 const DEFAULT_ANDROID_CALLBACK_URL = "flareai://oauth/android";
 const DEFAULT_WINDOWS_CALLBACK_URL = "flareai://oauth/windows";
@@ -134,16 +132,56 @@ function resolveAbsoluteUrl(configuredUrl: string | undefined, fallbackPath: str
   return new URL(fallbackPath, `${origin}/`).toString();
 }
 
+function getConfiguredAbsoluteUrl(configuredUrl: string | undefined): string {
+  const normalizedConfiguredUrl = String(configuredUrl || "").trim();
+  if (!normalizedConfiguredUrl) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(normalizedConfiguredUrl)) {
+    return normalizedConfiguredUrl;
+  }
+
+  const origin = trimUrl(getCurrentOrigin());
+  if (!origin) {
+    return normalizedConfiguredUrl;
+  }
+
+  return new URL(normalizedConfiguredUrl, `${origin}/`).toString();
+}
+
 export function getWindowsDownloadUrl(): string {
-  return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL, DEFAULT_WINDOWS_DOWNLOAD_PATH);
+  return getConfiguredAbsoluteUrl(process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL);
+}
+
+export function hasWindowsDownload(): boolean {
+  return Boolean(getWindowsDownloadUrl());
 }
 
 export function getAndroidDownloadUrl(): string {
-  return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_ANDROID_DOWNLOAD_URL, DEFAULT_ANDROID_DOWNLOAD_PATH);
+  return getConfiguredAbsoluteUrl(process.env.NEXT_PUBLIC_ANDROID_DOWNLOAD_URL);
+}
+
+export function hasAndroidDownload(): boolean {
+  return Boolean(getAndroidDownloadUrl());
 }
 
 export function getSimpleWebAppUrl(): string {
   return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_WEB_APP_URL, DEFAULT_WEB_APP_PATH);
+}
+
+export function getWebAppUrl(path = "/app"): string {
+  const configured = trimUrl(process.env.NEXT_PUBLIC_WEB_APP_URL);
+  if (configured && /^https?:\/\//i.test(configured)) {
+    return configured;
+  }
+
+  const origin = trimUrl(getCurrentOrigin());
+  if (!origin) {
+    return configured || "";
+  }
+
+  return new URL(path, `${origin}/`).toString();
 }
 
 export function canOfferSimpleWebInstall(): boolean {

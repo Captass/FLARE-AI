@@ -43,7 +43,7 @@ const STATUS_COLORS: Record<string, string> = {
 const NEXT_STATUSES: Record<string, string[]> = {
   draft: ["awaiting_payment", "canceled"],
   awaiting_payment: ["payment_submitted", "canceled"],
-  payment_submitted: ["rejected"],
+  payment_submitted: ["payment_verified", "rejected"],
   payment_verified: ["awaiting_flare_page_admin_access"],
   awaiting_flare_page_admin_access: ["queued_for_activation", "blocked"],
   queued_for_activation: ["activation_in_progress", "blocked"],
@@ -116,12 +116,41 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
         </div>
       )}
 
+      {/* Status Counters */}
+      {!loading && !loadError && activations.length > 0 && (
+        <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[
+            { id: "payment_submitted", label: "Paiements à vérifier", icon: <Rocket size={14} /> },
+            { id: "payment_verified", label: "En attente admin", icon: <Rocket size={14} /> },
+            { id: "queued_for_activation", label: "À activer", icon: <Rocket size={14} /> },
+            { id: "testing", label: "En test", icon: <Rocket size={14} /> },
+          ].map(c => {
+            const count = activations.filter(a => a.status === c.id).length;
+            if (count === 0) return null;
+            return (
+              <button key={c.id} onClick={() => setFilterStatus(c.id)}
+                className="flex items-center justify-between rounded-xl border border-[var(--border-default)] bg-[var(--bg-card)] px-4 py-3 hover:bg-[var(--surface-subtle)] transition-colors text-left"
+              >
+                <div>
+                  <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                    {c.icon}
+                    <span className="text-[10px] font-bold uppercase tracking-wider">{c.label}</span>
+                  </div>
+                  <p className="mt-1 text-2xl font-black text-[var(--text-primary)]">{count}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Filter bar */}
       <div className="flex flex-wrap gap-2 mb-6">
         {STATUS_FILTERS.map(s => (
           <button key={s} onClick={() => setFilterStatus(s)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${filterStatus === s ? "border border-orange-500/30 bg-orange-500/10 text-orange-500" : "border border-transparent bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-default)]"}`}>
             {s === "all" ? "Toutes" : STATUS_LABELS[s] ?? s}
+            {s !== "all" && <span className="ml-1.5 opacity-60">({activations.filter(a => a.status === s).length})</span>}
           </button>
         ))}
       </div>
@@ -244,7 +273,20 @@ export default function AdminActivationsTab({ token, onBack }: { token: string; 
                           {ar.contact_email && <a href={`mailto:${ar.contact_email}`} className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]">Email client</a>}
                           {ar.contact_phone && <a href={`tel:${ar.contact_phone}`} className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]">Appeler</a>}
                           {(ar.contact_whatsapp || ar.contact_phone) && <a href={`https://wa.me/${String(ar.contact_whatsapp || ar.contact_phone).replace(/[^0-9]/g, "")}`} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]">WhatsApp</a>}
-                          {ar.facebook_page_url && <a href={ar.facebook_page_url} target="_blank" rel="noopener noreferrer" className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]">Page Facebook</a>}
+                          {ar.facebook_page_url && (
+                            <div className="flex items-center gap-1">
+                              <a href={ar.facebook_page_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--accent-navy)]/30 bg-[var(--accent-navy)]/10 px-3 py-2 text-xs font-bold text-[var(--accent-navy)] hover:bg-[var(--accent-navy)]/20">
+                                Ouvrir Page Facebook
+                              </a>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(ar.facebook_page_url!)}
+                                className="rounded-lg border border-[var(--border-default)] px-3 py-2 text-xs font-medium text-[var(--text-primary)] hover:bg-[var(--surface-subtle)]"
+                                title="Copier l'URL"
+                              >
+                                Copier
+                              </button>
+                            </div>
+                          )}
                         </div>
 
                         {/* Checklist */}
