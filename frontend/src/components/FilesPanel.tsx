@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
 import {
   ArrowUpDown,
   File,

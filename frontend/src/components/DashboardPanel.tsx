@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
 import { motion } from "framer-motion";
 import {
   AlertCircle,

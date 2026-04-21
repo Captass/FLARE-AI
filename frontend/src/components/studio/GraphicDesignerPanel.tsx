@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useRef, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
 import {
   AlertCircle,
   CheckCircle2,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { BookOpen, Plus, Trash2, Search, FileText, Loader2, AlertCircle, X, Upload, Check, Square, CheckSquare, Zap, ArrowLeft } from "lucide-react";
 import { uploadKnowledgeFile, getApiBaseUrl } from "@/lib/api";
 
@@ -36,9 +36,18 @@ export default function KnowledgePanel({ token, refreshToken }: KnowledgePanelPr
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isDeletingBulk, setIsDeletingBulk] = useState(false);
 
-  const headers: Record<string, string> = token
-    ? { "Content-Type": "application/json", Authorization: `Bearer ${token}` }
-    : { "Content-Type": "application/json" };
+  const headers: Record<string, string> = useMemo(
+    () => {
+      const nextHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        nextHeaders.Authorization = `Bearer ${token}`;
+      }
+      return nextHeaders;
+    },
+    [token]
+  );
 
   const loadDocs = useCallback(async () => {
     setLoading(true);
@@ -53,7 +62,7 @@ export default function KnowledgePanel({ token, refreshToken }: KnowledgePanelPr
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [headers]);
 
   useEffect(() => { loadDocs(); }, [loadDocs]);
   useEffect(() => { if (refreshToken) loadDocs(); }, [refreshToken, loadDocs]);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+/* eslint-disable @next/next/no-img-element */
 import {
   ArrowUpRight,
   BookOpen,

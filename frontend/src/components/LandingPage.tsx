@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, Suspense, useCallback } from "react";
+/* eslint-disable @next/next/no-img-element */
 import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, ChevronDown, CheckCircle2, Clock3, Download, Facebook, Globe, Instagram, Linkedin, Mail, Menu, MessageSquare, ShieldCheck, TrendingUp, Workflow, X, Zap } from "lucide-react";
 import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useReducedMotion, type Variants } from "framer-motion";
 import dynamic from "next/dynamic";

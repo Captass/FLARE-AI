@@ -390,8 +390,12 @@ function HomeContent() {
   const { user, token, loading: authLoading, error: authError, getFreshToken, login, loginWithPassword, signUpWithPassword, loginWithGoogle, resetPassword, logout, sendSignupPin, verifySignupPin } = useAuth();
   const [navStack, setNavStack] = useState<AppView[]>(["home"]);
   const activeView = navStack[navStack.length - 1];
-  const onPush = (level: NavLevel) => setNavStack(prev => [...prev, level]);
-  const onPop = () => setNavStack(prev => prev.length > 1 ? prev.slice(0, -1) : prev);
+  const onPush = useCallback((level: NavLevel) => {
+    setNavStack((prev) => [...prev, level]);
+  }, []);
+  const onPop = useCallback(() => {
+    setNavStack((prev) => (prev.length > 1 ? prev.slice(0, -1) : prev));
+  }, []);
 
   const [selectedMessengerConversationId, setSelectedMessengerConversationId] = useState<string | null>(null);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
@@ -1499,6 +1503,7 @@ function HomeContent() {
                    <div className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-2 text-left md:gap-3 md:px-3">
                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
                        {resolvedUserAvatarUrl ? (
+                         // eslint-disable-next-line @next/next/no-img-element
                          <img src={resolvedUserAvatarUrl} alt={resolvedUserDisplayName} className="h-full w-full object-cover" />
                        ) : (
                          <span className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)]">

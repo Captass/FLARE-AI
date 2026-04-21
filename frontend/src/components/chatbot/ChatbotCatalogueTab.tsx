@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type ChangeEvent, type DragEvent } from "react";
+/* eslint-disable @next/next/no-img-element */
 import { GripVertical, ImagePlus, Loader2, Plus, Save, Trash2, Upload } from "lucide-react";
 
 import type { CatalogueItem, CatalogueItemInput, PlanFeatures } from "@/lib/api";

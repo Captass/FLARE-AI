@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+/* eslint-disable @next/next/no-img-element */
 import { Camera, ImagePlus, Save, Upload, UserRound } from "lucide-react";
 import { WorkspaceIdentity, toRenderableMediaUrl, updateUserProfileSettings, uploadIdentityAsset } from "@/lib/api";
 

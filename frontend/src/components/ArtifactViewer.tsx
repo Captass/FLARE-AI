@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+/* eslint-disable @next/next/no-img-element */
 import { X, Download, FileText, FileSpreadsheet, ExternalLink, ImageIcon, Maximize2, Brush, Eraser, Check, Edit3, Save, Crop, MonitorPlay, Minimize2, Copy, Code, History, ChevronDown, ListTree, ListCollapse, BarChart3, PieChart as PieChartIcon, LineChart as LineChartIcon } from "lucide-react";
 import { BASE_URL } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
