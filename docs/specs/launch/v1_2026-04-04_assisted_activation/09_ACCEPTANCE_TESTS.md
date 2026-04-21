@@ -31,6 +31,7 @@
 | 2.1 | Accès hub Chatbot sans activation payante | Hub accessible directement (PageSelector + cartes visibles) | 🔧 |
 | 2.2 | Cliquer "Ouvrir Meta" | Popup OAuth Facebook s'ouvre | ⏳ |
 | 2.3 | Autoriser compte Facebook | Pages importées, liste visible | ⏳ |
+| 2.3b | Régression critique OAuth - Graph API Explorer vs callback FLARE | Si `Graph API Explorer` retourne la page cible dans `me/accounts` avec `MESSAGING` et `MANAGE`, le callback FLARE doit aussi la retourner; sinon échec critique bloquant | ❌ |
 | 2.4 | Page affichée avec toggle OFF (rouge) | Statut initial = OFF avant activation | ⏳ |
 | 2.5 | Cliquer toggle ON | Page activée, webhook souscrit, toggle passe au vert | ⏳ |
 | 2.6 | Cliquer toggle OFF | Page désactivée, webhook désouscrit, toggle passe au rouge | ⏳ |
@@ -193,10 +194,11 @@
 1. **Connexion** : se connecter avec `cptskevin@gmail.com`, vérifier org RAM'S FLARE active
 2. **Hub chatbot** : vérifier accès direct (pas de wizard, PageSelector visible)
 3. **OAuth Facebook** : "Ouvrir Meta", autoriser, importer la page
-4. **Toggle ON** : activer la page → témoin vert
-5. **Personnalisation** : remplir toutes les sections, enregistrer
-6. **Test Messenger** : envoyer un message sur la page Facebook
-7. **Vérifier réponse** : le bot répond selon la config (langue, ton, catalogue)
-8. **Toggle per-conversation** : passer en mode humain, vérifier silence du bot
-9. **Réactiver bot** : repasser en mode bot, vérifier réponse
-10. **Toggle global OFF** : désactiver la page → vérifier silence total
+4. **Controle croise si echec import** : comparer le resultat FLARE avec `Graph API Explorer` sur `me/accounts?fields=id,name,tasks`
+5. **Toggle ON** : activer la page → témoin vert
+6. **Personnalisation** : remplir toutes les sections, enregistrer
+7. **Test Messenger** : envoyer un message sur la page Facebook
+8. **Vérifier réponse** : le bot répond selon la config (langue, ton, catalogue)
+9. **Toggle per-conversation** : passer en mode humain, vérifier silence du bot
+10. **Réactiver bot** : repasser en mode bot, vérifier réponse
+11. **Toggle global OFF** : désactiver la page → vérifier silence total

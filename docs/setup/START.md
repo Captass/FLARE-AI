@@ -1,6 +1,15 @@
 # START - Demarrage rapide FLARE AI
 
-Derniere mise a jour : 19 avril 2026
+Derniere mise a jour : 22 avril 2026
+
+## A verifier immediatement
+
+Incident critique en cours sur `Chatbot Facebook` :
+
+- avant toute QA Facebook, verifier le bug OAuth / import de pages
+- `Graph API Explorer` peut voir une page avec `MESSAGING` et `MANAGE` alors que le callback FLARE retourne zero page
+- ne pas se fier au seul succes du test `Graph API Explorer`
+- ne pas valider l'import Facebook tant que la page n'apparait pas aussi dans le callback FLARE
 
 ## Objectif
 

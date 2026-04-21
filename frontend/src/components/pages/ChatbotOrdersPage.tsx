@@ -69,13 +69,13 @@ function statusLabel(s: string): string {
 
 function statusColor(s: string): string {
   const map: Record<string, string> = {
-    new: "bg-blue-500/20 text-blue-300",
-    confirmed: "bg-emerald-500/20 text-emerald-300",
-    delivered: "bg-emerald-500/20 text-emerald-300",
-    cancelled: "bg-red-500/20 text-red-300",
-    needs_followup: "bg-amber-500/20 text-amber-300",
+    new: "border border-navy-500/35 bg-navy-500/18 text-[rgb(220,232,255)]",
+    confirmed: "border border-emerald-500/40 bg-emerald-500/20 text-emerald-100",
+    delivered: "border border-emerald-500/40 bg-emerald-500/20 text-emerald-100",
+    cancelled: "border border-red-500/40 bg-red-500/18 text-red-100",
+    needs_followup: "border border-orange-500/45 bg-orange-500/20 text-orange-50",
   };
-  return map[s] || "bg-zinc-500/20 text-zinc-300";
+  return map[s] || "border border-zinc-400/35 bg-zinc-500/20 text-zinc-100";
 }
 
 function statusIcon(s: string) {
@@ -301,7 +301,7 @@ export default function ChatbotOrdersPage({
             <button
               type="button"
               onClick={() => void loadOrders()}
-              className="flex items-center gap-2 rounded-xl border border-fg/[0.08] bg-fg/[0.03] px-4 py-2 text-sm font-medium text-fg/60 transition-colors hover:bg-fg/[0.06]"
+              className="flex items-center gap-2 rounded-xl border border-fg/[0.12] bg-fg/[0.04] px-4 py-2 text-sm font-medium text-fg/70 transition-colors hover:bg-fg/[0.08]"
             >
               <RefreshCcw size={15} />
               Actualiser
@@ -471,7 +471,7 @@ export default function ChatbotOrdersPage({
               onClick={() => setFilter(id)}
               className={`rounded-full px-4 py-1.5 text-sm transition-colors ${
                 filter === id
-                  ? "bg-orange-500 font-medium text-[#140b02]"
+                  ? "bg-orange-500 font-semibold text-[#140b02]"
                   : "bg-fg/[0.05] text-fg/50 hover:bg-fg/[0.08]"
               }`}
             >
@@ -539,8 +539,8 @@ export default function ChatbotOrdersPage({
                       <span
                         className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
                           order.source === "signal"
-                            ? "bg-purple-500/20 text-purple-300"
-                            : "bg-zinc-500/20 text-zinc-300"
+                            ? "border border-navy-500/35 bg-navy-500/18 text-[rgb(220,232,255)]"
+                            : "border border-zinc-500/35 bg-zinc-500/18 text-zinc-100"
                         }`}
                       >
                         {order.source === "signal" ? "Signal IA" : "Manuel"}
@@ -689,11 +689,11 @@ export default function ChatbotOrdersPage({
                                 {order.customer_request_text}
                               </div>
                             )}
-                            {order.needs_human_followup && order.needs_human_followup !== "no" && (
-                              <div className="flex items-center gap-2 text-amber-400 sm:col-span-2">
+                            {order.needs_human_followup && (
+                              <div className="flex items-center gap-2 text-orange-100 sm:col-span-2">
                                 <AlertTriangle size={14} />
                                 <span className="text-xs font-medium">
-                                  Suivi humain requis : {order.needs_human_followup}
+                                  Suivi humain requis
                                 </span>
                               </div>
                             )}

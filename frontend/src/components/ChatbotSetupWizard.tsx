@@ -16,8 +16,6 @@ import {
 import {
   consumeFacebookMessengerAuthResult,
   activateFacebookMessengerPage,
-  loadFacebookAuthDebugInfo,
-  type FacebookAuthDebugInfo,
   type FacebookMessengerPage,
   type FacebookMessengerStatus,
   loadFacebookMessengerStatus,
@@ -80,9 +78,6 @@ export default function ChatbotSetupWizard({
   const [facebookAuthLoading, setFacebookAuthLoading] = useState(false);
   const [facebookBusyPageId, setFacebookBusyPageId] = useState<string | null>(null);
   const [facebookError, setFacebookError] = useState<string | null>(null);
-  const [facebookAuthDebug, setFacebookAuthDebug] = useState<FacebookAuthDebugInfo | null>(null);
-  const [facebookAuthDebugError, setFacebookAuthDebugError] = useState<string | null>(null);
-  const [facebookAuthDebugLoading, setFacebookAuthDebugLoading] = useState(false);
 
   const [preferences, setPreferences] = useState<ChatbotPreferences>(DEFAULT_CHATBOT_PREFERENCES);
   const [preferencesLoading, setPreferencesLoading] = useState(false);
@@ -169,37 +164,6 @@ export default function ChatbotSetupWizard({
     }
   }, [resolveAccessToken]);
 
-  const refreshFacebookAuthDebug = useCallback(async () => {
-    if (typeof window === "undefined") return null;
-
-    const accessToken = await resolveAccessToken();
-    if (!accessToken) {
-      setFacebookAuthDebug(null);
-      setFacebookAuthDebugError(null);
-      setFacebookAuthDebugLoading(false);
-      return null;
-    }
-
-    setFacebookAuthDebugLoading(true);
-    try {
-      const next = await loadFacebookAuthDebugInfo(accessToken, window.location.origin);
-      setFacebookAuthDebug(next);
-      setFacebookAuthDebugError(null);
-      return next;
-    } catch (error) {
-      setFacebookAuthDebug(null);
-      setFacebookAuthDebugError(
-        normalizeSessionError(
-          error instanceof Error ? error.message : "Diagnostic OAuth Facebook indisponible.",
-          "Diagnostic OAuth Facebook indisponible."
-        )
-      );
-      return null;
-    } finally {
-      setFacebookAuthDebugLoading(false);
-    }
-  }, [resolveAccessToken]);
-
   const refreshPreferences = useCallback(async () => {
     if (localStatus.step !== "configure") return;
     const accessToken = await resolveAccessToken();
@@ -227,16 +191,6 @@ export default function ChatbotSetupWizard({
   useEffect(() => {
     void refreshFacebookState();
   }, [localStatus.step, refreshFacebookState, token]);
-
-  useEffect(() => {
-    if (localStatus.step !== "connect_page" || !canManagePages) {
-      setFacebookAuthDebug(null);
-      setFacebookAuthDebugError(null);
-      setFacebookAuthDebugLoading(false);
-      return;
-    }
-    void refreshFacebookAuthDebug();
-  }, [localStatus.step, canManagePages, refreshFacebookAuthDebug]);
 
   useEffect(() => {
     if (localStatus.step === "configure") {
@@ -542,43 +496,43 @@ export default function ChatbotSetupWizard({
               </div>
             ) : null}
 
-            {canManagePages ? (
-              <div className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-[13px] text-white/72">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-white/32">Diagnostic OAuth runtime</p>
-                    <p className="mt-1 text-white/50">
-                      Ces valeurs viennent du backend live et permettent de verifier exactement l&apos;app Meta utilisee en production.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => void refreshFacebookAuthDebug()}
-                    disabled={facebookAuthDebugLoading}
-                    className="rounded-full border border-white/[0.1] px-4 py-2 text-[12px] text-white/62 hover:bg-white/[0.04] disabled:opacity-50"
-                  >
-                    {facebookAuthDebugLoading ? "Chargement..." : "Actualiser"}
-                  </button>
-                </div>
-
-                {facebookAuthDebug ? (
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    <DebugField label="App ID">{facebookAuthDebug.client_id || "Non configure"}</DebugField>
-                    <DebugField label="Graph API">{facebookAuthDebug.graph_version || "Non configure"}</DebugField>
-                    <DebugField label="Redirect URI" fullWidth>{facebookAuthDebug.redirect_uri || "Non configure"}</DebugField>
-                    <DebugField label="Frontend origin" fullWidth>{facebookAuthDebug.frontend_origin || "Non configure"}</DebugField>
-                    <DebugField label="Backend URL" fullWidth>{facebookAuthDebug.backend_url || "Non configure"}</DebugField>
-                    <DebugField label="Scopes" fullWidth>{facebookAuthDebug.scopes.join(", ") || "Aucun"}</DebugField>
-                  </div>
-                ) : facebookAuthDebugError ? (
-                  <p className="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-[13px] text-red-100">
-                    {facebookAuthDebugError}
-                  </p>
-                ) : facebookAuthDebugLoading ? (
-                  <p className="mt-4 text-white/42">Chargement du diagnostic OAuth...</p>
+            <div className="mt-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-4 text-[13px] text-white/72">
+              <p className="text-[11px] uppercase tracking-[0.14em] text-white/32">Resume connexion Facebook</p>
+              <p className="mt-1 text-white/50">
+                Ce resume montre l&apos;etat de connexion FLARE sans afficher de details OAuth techniques.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.08em]">
+                <span className="rounded-full border border-white/[0.12] bg-white/[0.03] px-2.5 py-1 text-white/72">
+                  {(facebookStatus?.pages?.length || 0)} page(s) importee(s)
+                </span>
+                <span className="rounded-full border border-white/[0.12] bg-white/[0.03] px-2.5 py-1 text-white/72">
+                  {activePage ? "Page activee" : "Aucune page active"}
+                </span>
+                {facebookStatus?.oauth_configured === false ? (
+                  <span className="rounded-full border border-orange-400/30 bg-orange-500/15 px-2.5 py-1 text-orange-100">
+                    OAuth Meta a configurer
+                  </span>
+                ) : null}
+                {facebookStatus?.direct_service_configured === false ? (
+                  <span className="rounded-full border border-orange-400/30 bg-orange-500/15 px-2.5 py-1 text-orange-100">
+                    Service Messenger a finaliser
+                  </span>
+                ) : null}
+                {facebookStatus?.permission_warning_count ? (
+                  <span className="rounded-full border border-orange-400/30 bg-orange-500/15 px-2.5 py-1 text-orange-100">
+                    {facebookStatus.permission_warning_count} page(s) avec permissions incompletes
+                  </span>
+                ) : null}
+                {!canManagePages ? (
+                  <span className="rounded-full border border-white/[0.12] bg-white/[0.03] px-2.5 py-1 text-white/72">
+                    Gestion reservee owner/admin
+                  </span>
                 ) : null}
               </div>
-            ) : null}
+              {!canManagePages && facebookStatus?.facebook_access_message ? (
+                <p className="mt-3 text-[12px] text-white/52">{facebookStatus.facebook_access_message}</p>
+              ) : null}
+            </div>
 
             {!facebookOauthBlocked && directServiceWarning ? (
               <div className="mt-4 rounded-xl border border-orange-400/20 bg-orange-500/8 px-4 py-3 text-[13px] text-orange-50/90">
@@ -835,25 +789,6 @@ function Field({
     <div className={fullWidth ? "md:col-span-2" : ""}>
       <label className="mb-1.5 block text-[10px] uppercase tracking-[0.12em] text-white/30">{label}</label>
       {children}
-    </div>
-  );
-}
-
-function DebugField({
-  label,
-  children,
-  fullWidth = false,
-}: {
-  label: string;
-  children: React.ReactNode;
-  fullWidth?: boolean;
-}) {
-  return (
-    <div className={fullWidth ? "md:col-span-2" : ""}>
-      <p className="text-[10px] uppercase tracking-[0.12em] text-white/30">{label}</p>
-      <p className="mt-1 break-all rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 font-mono text-[12px] text-white/78">
-        {children}
-      </p>
     </div>
   );
 }

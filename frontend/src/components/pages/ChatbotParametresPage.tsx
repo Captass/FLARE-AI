@@ -286,6 +286,12 @@ export default function ChatbotParametresPage({
                 onRemovePage={handleRemovePage}
                 canManagePages={canManagePages}
                 busyPageId={facebookBusyPageId}
+                connectionSummary={{
+                  oauthConfigured: facebookStatus.oauth_configured,
+                  directServiceConfigured: facebookStatus.direct_service_configured,
+                  permissionWarningCount: facebookStatus.permission_warning_count,
+                  accessMessage: facebookStatus.facebook_access_message || null,
+                }}
               />
             </div>
           ) : null}

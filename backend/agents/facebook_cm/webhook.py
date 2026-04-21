@@ -30,6 +30,14 @@ def _is_page_bot_active(page_id: str) -> bool:
     return str(getattr(connection, "is_active", "false")).lower() == "true"
 
 
+def _conversation_id_for_event(page_id: str, sender_id: str) -> str:
+    resolved_page_id = str(page_id or "").strip()
+    resolved_sender = str(sender_id or "").strip()
+    if resolved_page_id:
+        return f"messenger_{resolved_page_id}_{resolved_sender}"
+    return f"messenger_{resolved_sender}"
+
+
 async def process_webhook_event(payload: dict) -> None:
     """
     Traite un evenement webhook Meta Graph.
@@ -61,6 +69,8 @@ async def process_webhook_event(payload: dict) -> None:
 
             if "message" in event and "text" in event["message"]:
                 message_text = event["message"]["text"]
+                message_mid = str(event.get("message", {}).get("mid") or "").strip() or None
+                conversation_id = _conversation_id_for_event(page_id, sender_id)
                 logger.info("Message recu de %s sur page=%s", sender_id, page_id or "?")
 
                 try:
@@ -69,6 +79,8 @@ async def process_webhook_event(payload: dict) -> None:
                         message_text=message_text,
                         page_id=page_id,
                         auto_reply=True,
+                        source_message_id=message_mid,
+                        source_conversation_id=conversation_id,
                     )
                 except Exception as exc:
                     logger.error("Erreur traitement message %s: %s", sender_id, exc)
@@ -88,6 +100,8 @@ async def process_webhook_event(payload: dict) -> None:
 
             elif "postback" in event:
                 postback_payload = event["postback"].get("payload", "")
+                postback_mid = str(event.get("postback", {}).get("mid") or "").strip() or None
+                conversation_id = _conversation_id_for_event(page_id, sender_id)
                 logger.info("Postback de %s sur page=%s: %s", sender_id, page_id or "?", postback_payload)
 
                 try:
@@ -96,6 +110,8 @@ async def process_webhook_event(payload: dict) -> None:
                         message_text=f"[POSTBACK: {postback_payload}]",
                         page_id=page_id,
                         auto_reply=True,
+                        source_message_id=postback_mid,
+                        source_conversation_id=conversation_id,
                     )
                 except Exception as exc:
                     logger.error("Erreur traitement postback %s: %s", sender_id, exc)
@@ -127,11 +143,15 @@ async def process_webhook_event(payload: dict) -> None:
                 elif any(t in att_types for t in ("image", "video", "file")):
                     # Traiter comme un message texte avec contexte
                     try:
+                        attachment_mid = str(event.get("message", {}).get("mid") or "").strip() or None
+                        conversation_id = _conversation_id_for_event(page_id, sender_id)
                         await cm_agent.handle_message(
                             psid=sender_id,
                             message_text="[Le client a envoye une image/fichier. Reponds en accusant reception et demande comment tu peux l'aider.]",
                             page_id=page_id,
                             auto_reply=True,
+                            source_message_id=attachment_mid,
+                            source_conversation_id=conversation_id,
                         )
                     except Exception as exc:
                         logger.error("Erreur traitement attachment %s: %s", sender_id, exc)

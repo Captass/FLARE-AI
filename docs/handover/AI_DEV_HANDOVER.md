@@ -1,6 +1,6 @@
 # Handover pour une autre IA de dev
 
-Derniere mise a jour : 19 avril 2026
+Derniere mise a jour : 22 avril 2026
 
 Ce document sert de reprise rapide si FLARE AI est repris par une autre IA de developpement.
 
@@ -17,6 +17,16 @@ FLARE AI est aujourd'hui une application SaaS orientee `chatbot Facebook assiste
 - les traces ecrites doivent etre tenues a jour
 - la distribution native vise Windows et Android uniquement
 - macOS et iPhone restent sur le web / `PWA`, sans cible de store
+
+## Incident critique a traiter d'abord
+
+Avant de reprendre autre chose sur `Chatbot Facebook`, verifier l'incident live suivant :
+
+- le callback OAuth Meta de FLARE peut echouer avec `Aucune page Facebook avec les droits Messenger necessaires n'a ete retournee par Meta.`
+- dans au moins un cas reel de production, `Graph API Explorer` avec la meme app Meta et le meme compte renvoyait pourtant la page cible avec `MESSAGING` et `MANAGE`
+- le bug d'affichage de pages stale cote frontend est corrige, mais la cause racine OAuth / callback n'est pas corrigee
+- ne pas declarer l'import Facebook valide tant que le callback FLARE ne retourne pas effectivement la page attendue
+- prochaine action obligatoire : ajouter des logs precis sur l'echange de token et la reponse `/me/accounts` dans `backend/routers/facebook_pages.py`, puis comparer ce que recoit FLARE avec ce que voit `Graph API Explorer`
 
 ## Ce qu'il ne faut plus supposer par defaut
 

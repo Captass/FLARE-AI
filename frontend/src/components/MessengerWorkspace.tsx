@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import {
   downloadMessengerExport,
+  MessengerDashboardAlert,
   MessengerConversationCard,
   MessengerCustomerHighlight,
   MessengerDashboardData,
@@ -82,10 +83,10 @@ function normSearch(v: string): string {
 
 function statusColor(s: string): string {
   const n = s.toLowerCase();
-  if (n.includes("hot")) return "text-orange-400";
-  if (n.includes("support") || n.includes("human")) return "text-red-400";
-  if (n.includes("qualified")) return "text-blue-400";
-  if (n.includes("new")) return "text-emerald-400";
+  if (n.includes("hot")) return "text-orange-700 dark:text-orange-100";
+  if (n.includes("support") || n.includes("human")) return "text-red-700 dark:text-red-100";
+  if (n.includes("qualified")) return "text-navy-800 dark:text-[rgb(220,232,255)]";
+  if (n.includes("new")) return "text-emerald-700 dark:text-emerald-100";
   return "text-white/40";
 }
 
@@ -207,11 +208,21 @@ function summarizeFacebookActivationOutcome(
 
 function statusBg(s: string): string {
   const n = s.toLowerCase();
-  if (n.includes("hot")) return "bg-orange-500/10";
-  if (n.includes("support") || n.includes("human")) return "bg-red-500/10";
-  if (n.includes("qualified")) return "bg-blue-500/10";
-  if (n.includes("new")) return "bg-emerald-500/10";
+  if (n.includes("hot")) return "bg-orange-500/18 border border-orange-500/35";
+  if (n.includes("support") || n.includes("human")) return "bg-red-500/18 border border-red-500/35";
+  if (n.includes("qualified")) return "bg-navy-500/18 border border-navy-500/35";
+  if (n.includes("new")) return "bg-emerald-500/18 border border-emerald-500/35";
   return "bg-white/[0.04]";
+}
+
+function alertToneClass(severity: MessengerDashboardAlert["severity"]): string {
+  if (severity === "critical") {
+    return "border-red-500/35 bg-red-500/18 text-red-900 dark:text-red-100";
+  }
+  if (severity === "warning") {
+    return "border-orange-500/40 bg-orange-500/20 text-orange-900 dark:text-orange-100";
+  }
+  return "border-navy-500/35 bg-navy-500/16 text-navy-900 dark:text-[rgb(220,232,255)]";
 }
 
 function statusLabel(s: string): string {
@@ -1340,6 +1351,9 @@ export default function MessengerWorkspace({
   }, [conversationQueue]);
 
   const nextConversationInQueue = filteredConversationQueue[0] || null;
+  const visibleConversationAlerts = useMemo(() => {
+    return (data?.alerts || []).slice(0, 6);
+  }, [data]);
 
   const leadBuckets = useMemo(() => {
     const hl = data?.customerHighlights || [];
@@ -2312,6 +2326,35 @@ export default function MessengerWorkspace({
                   {item.label} ({item.count})
                 </button>
               ))}
+            </div>
+
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-[0.1em] text-white/30">Notifications backend</p>
+              {visibleConversationAlerts.length === 0 ? (
+                <p className="mt-2 text-[11px] text-white/30">Aucune alerte active.</p>
+              ) : (
+                <div className="mt-2 space-y-1.5">
+                  {visibleConversationAlerts.map((alert) => (
+                    <button
+                      key={alert.id}
+                      onClick={() => {
+                        if (alert.psid) {
+                          setSelectedPsid(alert.psid);
+                        }
+                        if (alert.severity === "critical") {
+                          setConversationFocus("urgent");
+                        } else if (alert.severity === "warning") {
+                          setConversationFocus("hot");
+                        }
+                      }}
+                      className={`w-full rounded-lg border px-2.5 py-2 text-left transition-all hover:bg-white/10 ${alertToneClass(alert.severity)}`}
+                    >
+                      <p className="truncate text-[11px] font-semibold">{alert.title}</p>
+                      <p className="mt-1 truncate text-[10px] opacity-85">{alert.detail}</p>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {nextConversationInQueue ? (

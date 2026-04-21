@@ -51,7 +51,13 @@ export default function ChatbotClientDetailPage({
             Aucun client selectionne. Ouvrez la section Clients et choisissez une conversation.
           </div>
         ) : (
-          <MessengerWorkspace authToken={token} getFreshToken={getFreshToken} initialConversationId={contactId} selectedPageId={selectedPageId} />
+          <MessengerWorkspace
+            initialTab="conversations"
+            authToken={token}
+            getFreshToken={getFreshToken}
+            initialConversationId={contactId}
+            selectedPageId={selectedPageId}
+          />
         )}
       </div>
     </div>

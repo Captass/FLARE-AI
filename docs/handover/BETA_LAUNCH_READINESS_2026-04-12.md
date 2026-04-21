@@ -1,5 +1,14 @@
 # FLARE AI - Beta Launch Readiness - 2026-04-12
 
+## Alerte 2026-04-22 - incident critique Facebook OAuth
+
+La readiness beta doit maintenant tenir compte d'un incident live supplementaire :
+
+- le callback OAuth Facebook de FLARE peut retourner zero page alors que `Graph API Explorer` voit bien la page cible avec `MESSAGING` et `MANAGE`
+- ce point bloque la fiabilite du parcours d'import Facebook pour des utilisateurs reels
+- le correctif frontend de pages stale est livre, mais la cause racine backend n'est pas corrigee
+- conclusion operationnelle : la beta assistee reste possible, mais le self-serve Facebook ne doit pas etre considere comme fiabilise tant que ce bug n'est pas corrige
+
 ## Objet
 
 Document unique de reference pour repondre a une question simple :

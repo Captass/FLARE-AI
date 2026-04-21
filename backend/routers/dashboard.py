@@ -20,7 +20,7 @@ from fastapi.responses import Response
 from core.auth import get_user_id_from_header, get_user_identity
 from core.config import settings
 from core.database import (
-    SessionLocal, Conversation, Message,
+    SessionLocal, ChatbotOrder, Conversation, Message,
     CoreMemoryFact, ProspectingCampaign, ProspectLead, Skill
 )
 
@@ -719,6 +719,144 @@ def _public_reply_summary(needs_human: bool = False, ready_to_buy: bool = False)
     return "Le bot suit la conversation et conserve le contexte utile."
 
 
+def _normalize_order_status(value: Any) -> str:
+    normalized = _clean_text(value).lower()
+    mapping = {
+        "detected": "new",
+        "contacted": "needs_followup",
+        "confirmed": "confirmed",
+        "fulfilled": "delivered",
+        "canceled": "cancelled",
+        "cancelled": "cancelled",
+        "new": "new",
+        "needs_followup": "needs_followup",
+        "delivered": "delivered",
+    }
+    return mapping.get(normalized, "new")
+
+
+def _normalize_followup_flag(value: Any) -> bool:
+    return _clean_text(value).lower() in {"1", "true", "yes", "oui", "needed", "required"}
+
+
+def _build_dashboard_alerts(
+    *,
+    organization_slug: str,
+    page_id: str | None,
+    customer_highlights: list[dict[str, Any]],
+    priority_queue: list[dict[str, Any]],
+) -> tuple[list[dict[str, Any]], dict[str, int]]:
+    alerts: list[dict[str, Any]] = []
+    alert_counts = {
+        "critical": 0,
+        "warning": 0,
+        "info": 0,
+        "human_followup": 0,
+        "conversation_followup": 0,
+        "order_followup": 0,
+        "order_human_followup": 0,
+    }
+
+    def push_alert(alert: dict[str, Any], bucket: str) -> None:
+        alerts.append(alert)
+        severity = _clean_text(alert.get("severity")).lower() or "info"
+        if severity in alert_counts:
+            alert_counts[severity] += 1
+        alert_counts[bucket] += 1
+
+    seen_psids: set[str] = set()
+    for item in customer_highlights:
+        psid = _clean_text(item.get("psid"))
+        if not psid or psid in seen_psids:
+            continue
+        if bool(item.get("needsHuman")):
+            seen_psids.add(psid)
+            push_alert(
+                {
+                    "id": f"human-{psid}",
+                    "title": f"{_clean_text(item.get('customer')) or 'Client'} attend une reprise humaine",
+                    "detail": _clean_text(item.get("lastMessage")) or "Une intervention humaine est requise sur cette conversation.",
+                    "severity": "critical",
+                    "psid": psid,
+                    "customer": _clean_text(item.get("customer")),
+                    "status": _clean_text(item.get("status")),
+                    "timestamp": _clean_text(item.get("lastMessageAt")) or datetime.utcnow().isoformat(),
+                    "source": "highlight",
+                },
+                "human_followup",
+            )
+        elif bool(item.get("readyToBuy")):
+            seen_psids.add(psid)
+            push_alert(
+                {
+                    "id": f"followup-{psid}",
+                    "title": f"{_clean_text(item.get('customer')) or 'Client'} est pret a convertir",
+                    "detail": _clean_text(item.get("lastMessage")) or "Conversation commerciale a suivre rapidement.",
+                    "severity": "warning",
+                    "psid": psid,
+                    "customer": _clean_text(item.get("customer")),
+                    "status": _clean_text(item.get("status")),
+                    "timestamp": _clean_text(item.get("lastMessageAt")) or datetime.utcnow().isoformat(),
+                    "source": "highlight",
+                },
+                "conversation_followup",
+            )
+
+    db = SessionLocal()
+    try:
+        orders_query = db.query(ChatbotOrder).filter(
+            ChatbotOrder.organization_slug == organization_slug,
+        )
+        if page_id:
+            orders_query = orders_query.filter(ChatbotOrder.facebook_page_id == page_id)
+        order_rows = orders_query.order_by(ChatbotOrder.updated_at.desc(), ChatbotOrder.created_at.desc()).limit(40).all()
+        for order in order_rows:
+            normalized_status = _normalize_order_status(order.status)
+            needs_human = _normalize_followup_flag(order.needs_human_followup)
+            if normalized_status not in {"new", "needs_followup"} and not needs_human:
+                continue
+            push_alert(
+                {
+                    "id": f"order-{order.id}",
+                    "title": (
+                        f"Commande {order.contact_name or 'Messenger'} a reprendre"
+                        if needs_human
+                        else f"Commande {order.contact_name or 'Messenger'} a suivre"
+                    ),
+                    "detail": _clean_text(order.product_summary or order.customer_request_text) or "Commande issue du chatbot Messenger.",
+                    "severity": "critical" if needs_human else "warning",
+                    "psid": _clean_text(order.contact_psid) or None,
+                    "customer": _clean_text(order.contact_name),
+                    "status": normalized_status,
+                    "timestamp": order.updated_at.isoformat() if order.updated_at else (order.created_at.isoformat() if order.created_at else datetime.utcnow().isoformat()),
+                    "source": "backend_alert",
+                },
+                "order_human_followup" if needs_human else "order_followup",
+            )
+    finally:
+        db.close()
+
+    if not alerts:
+        for index, item in enumerate(priority_queue[:4]):
+            alerts.append(
+                {
+                    "id": f"priority-{index + 1}",
+                    "title": f"{_clean_text(item.get('customer')) or 'Client'} demande une action",
+                    "detail": _clean_text(item.get("message")) or "Signal Messenger prioritaire.",
+                    "severity": "warning",
+                    "psid": None,
+                    "customer": _clean_text(item.get("customer")),
+                    "status": _clean_text(item.get("status")),
+                    "timestamp": _clean_text(item.get("time")) or datetime.utcnow().isoformat(),
+                    "source": "priority_queue",
+                }
+            )
+            alert_counts["warning"] += 1
+            alert_counts["conversation_followup"] += 1
+
+    return alerts[:12], alert_counts
+
+
 def _sanitize_public_messenger_payload(payload: dict[str, Any]) -> dict[str, Any]:
     def alias_for(psid: Any = None, customer: Any = None) -> tuple[str, str]:
         return _public_contact_alias(psid=psid, customer=customer)
@@ -811,12 +949,30 @@ def _sanitize_public_messenger_payload(payload: dict[str, Any]) -> dict[str, Any
             }
         )
 
+    sanitized_alerts: list[dict[str, Any]] = []
+    for item in payload.get("alerts", []):
+        public_id, customer_label = alias_for(psid=item.get("psid"), customer=item.get("customer"))
+        sanitized_alerts.append(
+            {
+                **item,
+                "psid": public_id,
+                "customer": customer_label,
+                "detail": _public_signal_summary(
+                    status=item.get("status"),
+                    message=item.get("detail"),
+                    needs_human=_clean_text(item.get("severity")).lower() == "critical",
+                    ready_to_buy=_clean_text(item.get("severity")).lower() == "warning",
+                ),
+            }
+        )
+
     return {
         **payload,
         "priorityQueue": sanitized_priority_queue,
         "recentMessages": sanitized_recent_messages,
         "conversations": sanitized_conversations,
         "customerHighlights": sanitized_highlights,
+        "alerts": sanitized_alerts,
         "urls": {
             "json24h": "",
             "csv24h": "",
@@ -852,6 +1008,25 @@ def _empty_messenger_payload(access_scope: str) -> dict[str, Any]:
         "intentBreakdown": [],
         "providerBreakdown": [],
         "customerHighlights": [],
+        "alerts": [],
+        "alertCounts": {
+            "critical": 0,
+            "warning": 0,
+            "info": 0,
+            "human_followup": 0,
+            "conversation_followup": 0,
+            "order_followup": 0,
+            "order_human_followup": 0,
+        },
+        "alert_counts": {
+            "critical": 0,
+            "warning": 0,
+            "info": 0,
+            "human_followup": 0,
+            "conversation_followup": 0,
+            "order_followup": 0,
+            "order_human_followup": 0,
+        },
         "access": {
             "scope": access_scope,
             "canViewSensitive": access_scope == "operator",
@@ -888,6 +1063,12 @@ async def get_messenger_dashboard_data(
         records,
         parsed.get("conversations", []),
     )
+    alerts, alert_counts = _build_dashboard_alerts(
+        organization_slug=organization_slug,
+        page_id=page_id,
+        customer_highlights=customer_highlights,
+        priority_queue=parsed.get("priorityQueue", []),
+    )
     payload = {
         "summary": parsed.get("summary", []),
         "periodStats": parsed.get("periodStats", []),
@@ -901,6 +1082,9 @@ async def get_messenger_dashboard_data(
         "intentBreakdown": intent_breakdown,
         "providerBreakdown": provider_breakdown,
         "customerHighlights": customer_highlights,
+        "alerts": alerts,
+        "alertCounts": alert_counts,
+        "alert_counts": alert_counts,
         "access": {
             "scope": access_scope,
             "canViewSensitive": access_scope == "operator",

@@ -7,12 +7,12 @@ from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header
 from core.database import (
-    ChatbotCatalogueItem, ChatbotPortfolioItem, ChatbotPreferences,
+    ChatbotCatalogueItem, ChatbotOrder, ChatbotPortfolioItem, ChatbotPreferences,
     ChatbotSalesConfig, FacebookPageConnection, get_db, get_plan_features,
     get_user_subscription,
 )
@@ -28,6 +28,23 @@ router = APIRouter(prefix="/api", tags=["chatbot"])
 
 ALLOWED_TONES = {"professionnel", "amical", "decontracte", "formel"}
 ALLOWED_PRIMARY_ROLES = {"vendeur", "support_client", "informateur", "mixte"}
+CANONICAL_ORDER_STATUSES = {"new", "confirmed", "needs_followup", "delivered", "cancelled"}
+
+
+def _normalize_order_status(value: Any) -> str:
+    normalized = str(value or "").strip().lower()
+    mapping = {
+        "detected": "new",
+        "contacted": "needs_followup",
+        "confirmed": "confirmed",
+        "fulfilled": "delivered",
+        "canceled": "cancelled",
+        "cancelled": "cancelled",
+        "new": "new",
+        "needs_followup": "needs_followup",
+        "delivered": "delivered",
+    }
+    return mapping.get(normalized, "new")
 
 
 class ChatbotPreferencesPayload(BaseModel):
@@ -201,6 +218,32 @@ def _active_pages_for_org(db: Session, organization_slug: str) -> list[FacebookP
     )
 
 
+def _chatbot_preferences_for_page(
+    db: Session,
+    organization_slug: str,
+    page_id: Optional[str],
+) -> Optional[ChatbotPreferences]:
+    base_query = (
+        db.query(ChatbotPreferences)
+        .filter(
+            or_(
+                ChatbotPreferences.user_id == organization_slug,
+                ChatbotPreferences.organization_slug == organization_slug,
+            )
+        )
+        .order_by(ChatbotPreferences.updated_at.desc(), ChatbotPreferences.created_at.desc())
+    )
+    resolved_page_id = str(page_id or "").strip()
+    if resolved_page_id:
+        scoped = base_query.filter(ChatbotPreferences.page_id == resolved_page_id).first()
+        if scoped:
+            return scoped
+    fallback = base_query.filter(ChatbotPreferences.page_id.is_(None)).first()
+    if fallback:
+        return fallback
+    return base_query.first()
+
+
 async def _sync_active_pages_for_org(
     db: Session,
     organization_slug: str,
@@ -211,20 +254,11 @@ async def _sync_active_pages_for_org(
     if not active_pages:
         return None
 
-    preferences = (
-        db.query(ChatbotPreferences)
-        .filter(
-            or_(
-                ChatbotPreferences.user_id == organization_slug,
-                ChatbotPreferences.organization_slug == organization_slug,
-            )
-        )
-        .first()
-    )
-    direct_service_payload = _serialize_chatbot_preferences_for_direct_service(preferences)
     sync_warning: str | None = None
 
     for page in active_pages:
+        page_preferences = _chatbot_preferences_for_page(db, organization_slug, page.page_id)
+        direct_service_payload = _serialize_chatbot_preferences_for_direct_service(page_preferences)
         page_access_token = encryption_service.decrypt(page.page_access_token_encrypted or "")
         if not page_access_token:
             page.status = "reconnect_required"
@@ -485,6 +519,18 @@ async def get_chatbot_overview(
             "all_pages": [],
             "total_pages": 0,
             "pending_human_count": 0,
+            "alerts": {
+                "total": 0,
+                "items": [],
+                "totals": {
+                    "pending_human_count": 0,
+                    "ready_to_buy_count": 0,
+                    "orders_detected_count": 0,
+                    "orders_contacted_count": 0,
+                },
+                "priority_preview": [],
+                "last_updated": datetime.utcnow().isoformat(),
+            },
         }
 
     org_slug = context["organization_slug"]
@@ -546,6 +592,9 @@ async def get_chatbot_overview(
     step = _setup_step(active_page, prefs)
 
     pending_human_count = 0
+    ready_to_buy_count = 0
+    priority_queue: list[dict[str, Any]] = []
+    dashboard_last_updated: str | None = None
     if has_connected_page:
         try:
             dashboard_state, records = await _fetch_messenger_dashboard_bundle(org_slug, active_page.page_id)
@@ -555,9 +604,87 @@ async def get_chatbot_overview(
                 records,
             )
             pending_human_count = totals.get("needsAttentionContacts", 0)
+            ready_to_buy_count = totals.get("readyToBuyContacts", 0)
+            parsed_priority = dashboard_state.get("priorityQueue", [])
+            if isinstance(parsed_priority, list):
+                priority_queue = parsed_priority
+            dashboard_last_updated = str(dashboard_state.get("lastUpdated") or "").strip() or None
         except Exception as e:
             # Silently fallback to 0 if direct service fails to reply
             pass
+
+    order_rows = (
+        db.query(ChatbotOrder.status, func.count(ChatbotOrder.id))
+        .filter(
+            or_(
+                ChatbotOrder.user_id == context["user_id"],
+                ChatbotOrder.organization_scope_id == org_slug,
+                ChatbotOrder.organization_slug == org_slug,
+            )
+        )
+        .group_by(ChatbotOrder.status)
+        .all()
+    )
+    order_counts: dict[str, int] = {}
+    for raw_status, count in order_rows:
+        normalized_status = _normalize_order_status(raw_status)
+        if normalized_status in CANONICAL_ORDER_STATUSES:
+            order_counts[normalized_status] = int(count or 0)
+
+    orders_detected_count = int(order_counts.get("new", 0))
+    orders_contacted_count = int(order_counts.get("needs_followup", 0))
+    alert_items: list[dict[str, Any]] = []
+    if pending_human_count > 0:
+        alert_items.append(
+            {
+                "type": "human_followup",
+                "level": "high",
+                "count": pending_human_count,
+                "title": "Conversations a reprendre",
+                "message": "Des clients attendent une reprise humaine.",
+            }
+        )
+    if ready_to_buy_count > 0:
+        alert_items.append(
+            {
+                "type": "ready_to_buy",
+                "level": "medium",
+                "count": ready_to_buy_count,
+                "title": "Clients prets a acheter",
+                "message": "Des conversations indiquent une intention d'achat forte.",
+            }
+        )
+    if orders_detected_count > 0:
+        alert_items.append(
+            {
+                "type": "orders_detected",
+                "level": "medium",
+                "count": orders_detected_count,
+                "title": "Nouvelles commandes detectees",
+                "message": "Des commandes issues des messages attendent un premier suivi.",
+            }
+        )
+    if orders_contacted_count > 0:
+        alert_items.append(
+            {
+                "type": "orders_contacted",
+                "level": "low",
+                "count": orders_contacted_count,
+                "title": "Commandes a confirmer",
+                "message": "Des commandes ont ete contactees et restent a confirmer.",
+            }
+        )
+    if active_page and active_page.status in {"sync_error", "reconnect_required", "permissions_missing"}:
+        alert_items.append(
+            {
+                "type": "page_sync",
+                "level": "high",
+                "count": 1,
+                "title": "Action requise sur la page active",
+                "message": _user_safe_last_error(active_page.last_error)
+                or "La page active doit etre reconnectee ou resynchronisee.",
+            }
+        )
 
     def _serialize_page(p: FacebookPageConnection) -> dict:
         return {
@@ -586,6 +713,29 @@ async def get_chatbot_overview(
         "all_pages": [_serialize_page(p) for p in all_pages],
         "total_pages": len(all_pages),
         "pending_human_count": pending_human_count,
+        "alerts": {
+            "total": len(alert_items),
+            "items": alert_items,
+            "totals": {
+                "pending_human_count": pending_human_count,
+                "ready_to_buy_count": ready_to_buy_count,
+                "orders_detected_count": orders_detected_count,
+                "orders_contacted_count": orders_contacted_count,
+            },
+            "priority_preview": [
+                {
+                    "time": str(item.get("time") or "").strip(),
+                    "priority": str(item.get("priority") or "").strip(),
+                    "customer": str(item.get("customer") or "").strip(),
+                    "message": str(item.get("message") or "").strip(),
+                    "status": str(item.get("status") or "").strip(),
+                    "mode": str(item.get("mode") or "").strip(),
+                }
+                for item in priority_queue[:3]
+                if isinstance(item, dict)
+            ],
+            "last_updated": dashboard_last_updated or datetime.utcnow().isoformat(),
+        },
     }
 
 

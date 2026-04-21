@@ -1,11 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { Loader2, AlertCircle, ArrowRight, User } from "lucide-react";
+import { Loader2, AlertCircle, ArrowRight, User, BellRing } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import type { NavLevel } from "@/components/NavBreadcrumb";
-import { loadMessengerDashboardData, type MessengerConversationCard } from "@/lib/messengerDirect";
+import {
+  loadMessengerDashboardData,
+  type MessengerAlertSeverity,
+  type MessengerConversationCard,
+  type MessengerDashboardAlert,
+} from "@/lib/messengerDirect";
 import { setContactBotStatus } from "@/lib/api";
 
 type FilterId = "all" | "leads" | "human" | "paused";
@@ -26,6 +31,7 @@ export default function ChatbotClientsPage({
   selectedPageId,
 }: ChatbotClientsPageProps) {
   const [conversations, setConversations] = useState<MessengerConversationCard[]>([]);
+  const [alerts, setAlerts] = useState<MessengerDashboardAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterId>("all");
@@ -54,6 +60,7 @@ export default function ChatbotClientsPage({
       try {
         const data = await loadMessengerDashboardData(t, selectedPageId);
         setConversations(data.conversations || []);
+        setAlerts(data.alerts || []);
         setCanSwitchMode(Boolean(data.access?.canSwitchMode));
         setAccessMessage(data.access?.message || null);
       } catch {
@@ -124,6 +131,21 @@ export default function ChatbotClientsPage({
   }, [conversations, filter]);
 
   const needsHumanCount = conversations.filter((conversation) => conversation.humanTakeover).length;
+  const visibleAlerts = useMemo(() => alerts.slice(0, 6), [alerts]);
+  const criticalAlerts = useMemo(
+    () => alerts.filter((alert) => alert.severity === "critical").length,
+    [alerts]
+  );
+
+  const alertToneClass = (severity: MessengerAlertSeverity): string => {
+    if (severity === "critical") {
+      return "border-red-500/35 bg-red-500/15 text-red-900 dark:text-red-100";
+    }
+    if (severity === "warning") {
+      return "border-orange-500/40 bg-orange-500/16 text-orange-900 dark:text-orange-50";
+    }
+    return "border-navy-500/35 bg-navy-500/14 text-navy-800 dark:text-[rgb(220,232,255)]";
+  };
 
   if (loading) {
     return (
@@ -157,7 +179,7 @@ export default function ChatbotClientsPage({
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="flex flex-col gap-3 rounded-xl border border-orange-500/30 bg-orange-500/10 p-4 text-orange-400 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 rounded-xl border border-orange-500/35 bg-orange-500/14 p-4 text-orange-50 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <AlertCircle size={20} className="shrink-0" />
                   <p className="text-sm font-medium">
@@ -169,7 +191,7 @@ export default function ChatbotClientsPage({
                 <button
                   type="button"
                   onClick={() => setFilter("human")}
-                  className="shrink-0 rounded-full bg-orange-500/20 px-4 py-2 text-sm font-semibold text-orange-200 ring-1 ring-orange-400/30 hover:bg-orange-500/30"
+                  className="shrink-0 rounded-full bg-orange-500/28 px-4 py-2 text-sm font-semibold text-orange-50 ring-1 ring-orange-300/45 hover:bg-orange-500/36"
                 >
                   Voir les alertes
                 </button>
@@ -177,6 +199,56 @@ export default function ChatbotClientsPage({
             </motion.div>
           )}
         </AnimatePresence>
+
+        <section className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-fg/90">Notifications &amp; alertes</p>
+              <p className="mt-1 text-xs text-fg/60">
+                Signaux operationnels remontes par le backend Messenger.
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-500/35 bg-orange-500/15 px-3 py-1 text-xs font-semibold text-orange-900 dark:text-orange-100">
+              <BellRing size={12} />
+              {alerts.length} total
+            </span>
+          </div>
+          {visibleAlerts.length === 0 ? (
+            <div className="mt-3 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-xs text-fg/60">
+              Aucune alerte backend active pour la page selectionnee.
+            </div>
+          ) : (
+            <div className="mt-3 space-y-2">
+              {visibleAlerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className={`rounded-xl border px-3 py-2 ${alertToneClass(alert.severity)}`}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-semibold">{alert.title}</p>
+                      <p className="mt-1 text-xs opacity-90">{alert.detail}</p>
+                    </div>
+                    {alert.psid ? (
+                      <button
+                        type="button"
+                        onClick={() => handleContactSelect(alert.psid as string)}
+                        className="shrink-0 rounded-md border border-black/25 bg-black/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-black hover:bg-black/20 dark:border-white/25 dark:bg-white/10 dark:text-white dark:hover:bg-white/20"
+                      >
+                        Ouvrir
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          {criticalAlerts > 0 ? (
+            <p className="mt-2 text-[11px] text-red-700 dark:text-red-200/90">
+              {criticalAlerts} alerte(s) critique(s) demandent une reprise humaine rapide.
+            </p>
+          ) : null}
+        </section>
 
         {error && <p className="text-red-400">{error}</p>}
         {flashMessage ? (
@@ -250,7 +322,7 @@ export default function ChatbotClientsPage({
                     <div className="mt-2 flex w-full items-center justify-between gap-6 sm:mt-0 sm:w-auto sm:justify-end">
                       <div className="flex items-center gap-3">
                         <span className={`hidden text-xs font-semibold uppercase tracking-widest sm:inline-block ${
-                          botEnabled ? "text-navy-400" : "text-red-400/70"
+                          botEnabled ? "text-emerald-500 dark:text-emerald-200" : "text-red-400"
                         }`}>
                           {botEnabled ? "Bot ON" : "Bot OFF"}
                         </span>
@@ -259,8 +331,8 @@ export default function ChatbotClientsPage({
                           disabled={isHandling || !canSwitchMode}
                           className={`relative flex h-7 w-12 items-center rounded-full border transition-colors ${
                             botEnabled
-                              ? "border-navy-500/30 bg-navy-500/20"
-                              : "border-red-500/20 bg-red-500/10"
+                              ? "border-emerald-500/40 bg-emerald-500/22"
+                              : "border-red-500/35 bg-red-500/16"
                           }`}
                           title={
                             canSwitchMode
@@ -272,7 +344,7 @@ export default function ChatbotClientsPage({
                             layout
                             transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             className={`h-5 w-5 rounded-full shadow-sm ${
-                               botEnabled ? "ml-[26px] bg-navy-400" : "ml-1 bg-red-400"
+                              botEnabled ? "ml-[26px] bg-emerald-300" : "ml-1 bg-red-300"
                             }`}
                           />
                           {isHandling ? (

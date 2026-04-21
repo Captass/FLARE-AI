@@ -32,6 +32,23 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["activation"])
 
+CANONICAL_ORDER_STATUSES = {"new", "confirmed", "needs_followup", "delivered", "cancelled"}
+LEGACY_TO_CANONICAL_ORDER_STATUS = {
+    "detected": "new",
+    "contacted": "needs_followup",
+    "confirmed": "confirmed",
+    "fulfilled": "delivered",
+    "canceled": "cancelled",
+    "cancelled": "cancelled",
+}
+CANONICAL_TO_LEGACY_ORDER_STATUS = {
+    "new": "detected",
+    "confirmed": "confirmed",
+    "needs_followup": "contacted",
+    "delivered": "fulfilled",
+    "cancelled": "canceled",
+}
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 
@@ -117,6 +134,25 @@ def _normalize_facebook_pages_context(raw_pages: Any) -> List[Dict[str, Any]]:
         if len(normalized) >= 50:
             break
     return normalized
+
+
+def _normalize_order_status(value: Optional[str]) -> str:
+    normalized = str(value or "").strip().lower()
+    if normalized in CANONICAL_ORDER_STATUSES:
+        return normalized
+    return LEGACY_TO_CANONICAL_ORDER_STATUS.get(normalized, "new")
+
+
+def _to_legacy_order_status(value: Optional[str]) -> str:
+    canonical = _normalize_order_status(value)
+    return CANONICAL_TO_LEGACY_ORDER_STATUS.get(canonical, "detected")
+
+
+def _normalize_followup_flag(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    normalized = str(value or "").strip().lower()
+    return normalized in {"1", "true", "yes", "oui", "needed", "required"}
 
 
 def _decode_facebook_pages_context(raw_json: Optional[str]) -> List[Dict[str, Any]]:
@@ -1278,6 +1314,7 @@ def admin_list_activations(
             _serialize_activation_request(
                 ar,
                 subscription=subscription_map.get(str(ar.user_id or ar.requester_user_id or "").strip()),
+                include_internal=True,
             )
             for ar in requests
         ]
@@ -1303,7 +1340,7 @@ def admin_get_activation(
     subscription = db.query(UserSubscription).filter(
         UserSubscription.user_id == (ar.user_id or ar.requester_user_id)
     ).first()
-    data = _serialize_activation_request(ar, subscription=subscription)
+    data = _serialize_activation_request(ar, subscription=subscription, include_internal=True)
     data["events"] = [
         {
             "id": e.id,
@@ -1666,7 +1703,7 @@ def create_order(
         delivery_address=req.delivery_address,
         customer_request_text=req.customer_request_text,
         source=req.source if req.source in ("signal", "manual") else "manual",
-        status="detected",
+        status=_to_legacy_order_status("new"),
     )
     db.add(order)
     db.commit()
@@ -1679,7 +1716,7 @@ def create_order(
 class UpdateOrderRequest(BaseModel):
     status: Optional[str] = None
     assigned_to: Optional[str] = None
-    needs_human_followup: Optional[str] = None
+    needs_human_followup: Optional[Any] = None
 
 
 @router.patch("/api/chatbot/orders/{order_id}")
@@ -1702,12 +1739,12 @@ def update_order(
     if not order:
         raise HTTPException(status_code=404, detail="Commande introuvable.")
 
-    if req.status and req.status in ("detected", "contacted", "confirmed", "fulfilled", "canceled"):
-        order.status = req.status
+    if req.status:
+        order.status = _to_legacy_order_status(req.status)
     if req.assigned_to is not None:
         order.assigned_to = req.assigned_to
     if req.needs_human_followup is not None:
-        order.needs_human_followup = req.needs_human_followup
+        order.needs_human_followup = "true" if _normalize_followup_flag(req.needs_human_followup) else "false"
 
     db.commit()
     db.refresh(order)
@@ -1758,12 +1795,12 @@ def admin_update_order(
     if not order:
         raise HTTPException(status_code=404, detail="Commande introuvable.")
 
-    if req.status and req.status in ("detected", "contacted", "confirmed", "fulfilled", "canceled"):
-        order.status = req.status
+    if req.status:
+        order.status = _to_legacy_order_status(req.status)
     if req.assigned_to is not None:
         order.assigned_to = req.assigned_to
     if req.needs_human_followup is not None:
-        order.needs_human_followup = req.needs_human_followup
+        order.needs_human_followup = "true" if _normalize_followup_flag(req.needs_human_followup) else "false"
 
     db.commit()
     db.refresh(order)
@@ -1780,9 +1817,11 @@ def admin_update_order(
 def _serialize_activation_request(
     ar: ActivationRequest,
     subscription: Optional[UserSubscription] = None,
+    *,
+    include_internal: bool = False,
 ) -> Dict[str, Any]:
     selected_pages = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
-    return {
+    payload = {
         "id": ar.id,
         "user_id": ar.user_id or ar.requester_user_id,
         "requester_user_id": ar.requester_user_id,
@@ -1819,8 +1858,6 @@ def _serialize_activation_request(
         "flare_page_admin_confirmed": ar.flare_page_admin_confirmed,
         "flare_page_admin_confirmed_at": ar.flare_page_admin_confirmed_at.isoformat() if ar.flare_page_admin_confirmed_at else None,
         "flare_page_admin_confirmed_by": ar.flare_page_admin_confirmed_by,
-        "assigned_operator_email": ar.assigned_operator_email,
-        "internal_notes": ar.internal_notes,
         "blocked_reason": ar.blocked_reason,
         "applied_plan_id": subscription.plan_id if subscription else None,
         "subscription_status": subscription.status if subscription else None,
@@ -1833,6 +1870,10 @@ def _serialize_activation_request(
         "created_at": ar.created_at.isoformat() if ar.created_at else None,
         "updated_at": ar.updated_at.isoformat() if ar.updated_at else None,
     }
+    if include_internal:
+        payload["assigned_operator_email"] = ar.assigned_operator_email
+        payload["internal_notes"] = ar.internal_notes
+    return payload
 
 
 def _serialize_report(report: UserReport) -> Dict[str, Any]:
@@ -1890,8 +1931,9 @@ def _serialize_order(o: ChatbotOrder) -> Dict[str, Any]:
         "customer_request_text": o.customer_request_text,
         "confidence": o.confidence,
         "source": o.source,
-        "status": o.status,
-        "needs_human_followup": o.needs_human_followup,
+        "source_message_id": o.source_message_id,
+        "status": _normalize_order_status(o.status),
+        "needs_human_followup": _normalize_followup_flag(o.needs_human_followup),
         "assigned_to": o.assigned_to,
         "created_at": o.created_at.isoformat() if o.created_at else None,
         "updated_at": o.updated_at.isoformat() if o.updated_at else None,

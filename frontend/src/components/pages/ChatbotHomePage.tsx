@@ -10,10 +10,9 @@ import {
   loadFacebookMessengerStatus,
   activateFacebookMessengerPage,
   resyncFacebookMessengerPages,
-  loadFacebookAuthDebugInfo,
   META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
   runFacebookMessengerOAuth,
-  type FacebookAuthDebugInfo,
+  type FacebookMessengerStatus,
   type FacebookMessengerPage,
 } from "@/lib/facebookMessenger";
 
@@ -207,7 +206,7 @@ export default function ChatbotHomePage({
   const [pagesRefreshBusy, setPagesRefreshBusy] = useState(false);
   const [fbOauthBusy, setFbOauthBusy] = useState(false);
   const [feedback, setFeedback] = useState<InlineFeedback | null>(null);
-  const [facebookAuthDebug, setFacebookAuthDebug] = useState<FacebookAuthDebugInfo | null>(null);
+  const [facebookStatusSnapshot, setFacebookStatusSnapshot] = useState<FacebookMessengerStatus | null>(null);
 
   const pushFeedback = useCallback((tone: InlineFeedback["tone"], message: string) => {
     setFeedback({ tone, message });
@@ -253,6 +252,7 @@ export default function ChatbotHomePage({
     try {
       const st = await loadFacebookMessengerStatus(t);
       setCanManageFb(st.can_manage_pages);
+      setFacebookStatusSnapshot(st);
       onPagesChanged?.(st.pages || []);
     } catch {
       /* ignore: statut Meta optionnel au chargement hub */
@@ -281,6 +281,7 @@ export default function ChatbotHomePage({
 
           const st = await loadFacebookMessengerStatus(t);
           setCanManageFb(st.can_manage_pages);
+          setFacebookStatusSnapshot(st);
           onPagesChanged?.(st.pages || []);
           pushFeedback("success", "Connexion Meta terminee. Vos pages FLARE ont ete rechargees.");
         } catch (error) {
@@ -296,38 +297,6 @@ export default function ChatbotHomePage({
     pushFeedback("error", authResult.detail || "Connexion Meta interrompue.");
   }, [onPagesChanged, pushFeedback, resolveToken]);
 
-  useEffect(() => {
-    const canInspectMeta = Boolean(canManageFb);
-
-    if (!canInspectMeta || typeof window === "undefined") {
-      setFacebookAuthDebug(null);
-      return;
-    }
-
-    let cancelled = false;
-    void (async () => {
-      const t = await resolveToken();
-      if (!t) {
-        if (!cancelled) setFacebookAuthDebug(null);
-        return;
-      }
-      try {
-        const debugInfo = await loadFacebookAuthDebugInfo(t, window.location.origin);
-        if (!cancelled) {
-          setFacebookAuthDebug(debugInfo);
-        }
-      } catch {
-        if (!cancelled) {
-          setFacebookAuthDebug(null);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [canManageFb, resolveToken]);
-
   const handleActivatePage = useCallback(
     async (pageId: string) => {
       const t = await resolveToken();
@@ -336,6 +305,7 @@ export default function ChatbotHomePage({
       try {
         const responsePage = await activateFacebookMessengerPage(pageId, t);
         const st = await loadFacebookMessengerStatus(t);
+        setFacebookStatusSnapshot(st);
         
         let shouldSelect = true;
         if (responsePage.page_id === selectedPageId) shouldSelect = false;
@@ -390,6 +360,7 @@ export default function ChatbotHomePage({
         const { deactivateFacebookMessengerPage } = await import("@/lib/facebookMessenger");
         await deactivateFacebookMessengerPage(pageId, t);
         const st = await loadFacebookMessengerStatus(t);
+        setFacebookStatusSnapshot(st);
         onPagesChanged?.(st.pages || []);
       } catch (e) {
         console.error(e);
@@ -411,6 +382,7 @@ export default function ChatbotHomePage({
         const { disconnectFacebookMessengerPage } = await import("@/lib/facebookMessenger");
         await disconnectFacebookMessengerPage(pageId, t);
         const st = await loadFacebookMessengerStatus(t);
+        setFacebookStatusSnapshot(st);
         onPagesChanged?.(st.pages);
         if (selectedPageId === pageId && onSelectPage && st.pages.length > 0) {
           onSelectPage(st.pages[0].page_id);
@@ -438,6 +410,7 @@ export default function ChatbotHomePage({
       if (flow === "popup") {
         const st = await loadFacebookMessengerStatus(t);
         setCanManageFb(st.can_manage_pages);
+        setFacebookStatusSnapshot(st);
         onPagesChanged?.(st.pages || []);
       }
     } catch (e) {
@@ -463,6 +436,7 @@ export default function ChatbotHomePage({
     try {
       await resyncFacebookMessengerPages(t);
       const st = await loadFacebookMessengerStatus(t);
+      setFacebookStatusSnapshot(st);
       onPagesChanged?.(st.pages || []);
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
@@ -728,7 +702,12 @@ export default function ChatbotHomePage({
                 onRemovePage={handleRemovePage}
                 canManagePages={canManageFb}
                 busyPageId={fbBusyPageId}
-                authDebug={facebookAuthDebug}
+                connectionSummary={{
+                  oauthConfigured: facebookStatusSnapshot?.oauth_configured,
+                  directServiceConfigured: facebookStatusSnapshot?.direct_service_configured,
+                  permissionWarningCount: facebookStatusSnapshot?.permission_warning_count,
+                  accessMessage: facebookStatusSnapshot?.facebook_access_message || null,
+                }}
               />
             )}
           </div>
@@ -763,11 +742,11 @@ export default function ChatbotHomePage({
                       <span className="relative flex h-3 w-3">
                         {botFullyLive ? (
                           <>
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-navy-400 opacity-75" />
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-navy-500" />
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-80" />
+                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
                           </>
                         ) : (
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-400" />
+                          <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500" />
                         )}
                       </span>
                       <p className="text-lg font-bold text-[var(--text-primary)]">{botFullyLive ? "Bot ON" : "Bot OFF"}</p>
@@ -777,7 +756,7 @@ export default function ChatbotHomePage({
               </div>
               <div
                 className={`p-2.5 rounded-xl ${
-                  botFullyLive ? "bg-navy-500/10 text-[var(--accent-navy)] dark:text-[rgb(183,203,255)]" : "bg-orange-500/10 text-orange-500"
+                  botFullyLive ? "bg-emerald-500/18 text-emerald-700 dark:text-emerald-200" : "bg-orange-500/16 text-orange-700 dark:text-orange-100"
                 }`}
               >
                 <Bot size={20} />

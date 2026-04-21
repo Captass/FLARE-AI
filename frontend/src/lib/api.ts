@@ -1678,7 +1678,7 @@ export interface ActivationRequest {
   notes_for_flare: string;
   flare_page_admin_confirmed: string;
   flare_page_admin_confirmed_at: string | null;
-  assigned_operator_email: string | null;
+  assigned_operator_email?: string | null;
   blocked_reason: string | null;
   requested_at: string | null;
   payment_verified_at: string | null;
@@ -1720,6 +1720,7 @@ export interface ChatbotOrder {
   contact_name: string;
   contact_phone: string;
   contact_email: string;
+  source_message_id?: string | null;
   product_summary: string;
   quantity_text: string;
   amount_text: string;
@@ -1728,7 +1729,7 @@ export interface ChatbotOrder {
   confidence: number;
   source: string;
   status: string;
-  needs_human_followup: string;
+  needs_human_followup: boolean;
   assigned_to: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -1746,7 +1747,7 @@ export async function createChatbotOrder(data: Partial<ChatbotOrder>, token?: st
   }, token);
 }
 
-export async function updateChatbotOrder(orderId: string, updates: { status?: string; assigned_to?: string; needs_human_followup?: string }, token?: string | null): Promise<{ order: ChatbotOrder }> {
+export async function updateChatbotOrder(orderId: string, updates: { status?: string; assigned_to?: string; needs_human_followup?: boolean }, token?: string | null): Promise<{ order: ChatbotOrder }> {
   return apiRequest<{ order: ChatbotOrder }>(`/api/chatbot/orders/${orderId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },

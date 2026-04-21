@@ -4,7 +4,14 @@ import React, { useState } from "react";
 import { motion, type Variants } from "framer-motion";
 import { Facebook, Loader2, Plus, RefreshCw, Trash2 } from "lucide-react";
 
-import type { FacebookAuthDebugInfo, FacebookMessengerPage } from "@/lib/facebookMessenger";
+import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
+
+export interface FacebookConnectionSummary {
+  oauthConfigured?: boolean;
+  directServiceConfigured?: boolean;
+  permissionWarningCount?: number;
+  accessMessage?: string | null;
+}
 
 interface PageSelectorProps {
   pages: FacebookMessengerPage[];
@@ -20,7 +27,7 @@ interface PageSelectorProps {
   onRemovePage?: (pageId: string) => void;
   canManagePages?: boolean;
   busyPageId?: string | null;
-  authDebug?: FacebookAuthDebugInfo | null;
+  connectionSummary?: FacebookConnectionSummary | null;
 }
 
 const staggerContainer: Variants = {
@@ -52,7 +59,7 @@ export default function PageSelector({
   onRemovePage,
   canManagePages = false,
   busyPageId = null,
-  authDebug = null,
+  connectionSummary = null,
 }: PageSelectorProps) {
   const [pendingRemovePageId, setPendingRemovePageId] = useState<string | null>(null);
 
@@ -100,12 +107,16 @@ export default function PageSelector({
             onClick={() => onConnectMetaPages()}
             disabled={metaDisabled}
             title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
-            className="mt-2 flex items-center gap-2 rounded-xl border border-orange-500/30 bg-orange-500/15 px-6 py-2.5 font-medium text-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all hover:bg-orange-500/25 hover:shadow-[0_0_25px_rgba(249,115,22,0.2)] disabled:pointer-events-none disabled:opacity-45 dark:text-orange-300"
+            className="mt-2 flex items-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/18 px-6 py-2.5 font-medium text-orange-700 shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all hover:bg-orange-500/28 hover:shadow-[0_0_25px_rgba(249,115,22,0.2)] disabled:pointer-events-none disabled:opacity-45 dark:text-orange-100"
           >
             {connectMetaBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Ouvrir Meta et importer mes pages
           </button>
-          {authDebug ? <OAuthDebugCard authDebug={authDebug} /> : null}
+          <ConnectionSummaryCard
+            pages={pages}
+            canManagePages={canManagePages}
+            connectionSummary={connectionSummary}
+          />
         </div>
       </motion.div>
     );
@@ -139,7 +150,7 @@ export default function PageSelector({
             onClick={() => onConnectMetaPages()}
             disabled={metaDisabled}
             title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#1877F2]/20 bg-[#1877F2]/10 px-3 py-1.5 text-xs font-medium text-[#1877F2] transition-colors hover:bg-[#1877F2]/15 disabled:pointer-events-none disabled:opacity-40"
+            className="inline-flex items-center gap-2 rounded-lg border border-[#1877F2]/35 bg-[#1877F2]/16 px-3 py-1.5 text-xs font-medium text-[#1d4ed8] transition-colors hover:bg-[#1877F2]/22 disabled:pointer-events-none disabled:opacity-40 dark:text-[#cce0ff]"
           >
             {connectMetaBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
             Ouvrir Meta
@@ -154,14 +165,18 @@ export default function PageSelector({
       ) : null}
 
       <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] p-3 text-xs leading-relaxed text-[var(--text-secondary)]">
-        <strong className="text-[var(--text-primary)]">Choisir dans FLARE :</strong> cliquez sur une carte pour configurer la personnalisation. <strong className="text-[var(--text-primary)]">Messenger :</strong> utilisez le toggle <strong className="text-emerald-600 dark:text-emerald-300">ON</strong> / <strong className="text-red-600 dark:text-red-300">OFF</strong> pour activer ou desactiver le bot sur cette page.
+        <strong className="text-[var(--text-primary)]">Choisir dans FLARE :</strong> cliquez sur une carte pour configurer la personnalisation. <strong className="text-[var(--text-primary)]">Messenger :</strong> utilisez le toggle <strong className="text-emerald-700 dark:text-emerald-200">ON</strong> / <strong className="text-red-700 dark:text-red-300">OFF</strong> pour activer ou desactiver le bot sur cette page.
       </div>
 
       <div className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-xs leading-relaxed text-[var(--text-primary)]">
         Si la popup Facebook affiche <strong>&quot;Fonctionnalite indisponible&quot;</strong>, le blocage vient de Meta avant le retour vers FLARE.
       </div>
 
-      {authDebug ? <OAuthDebugCard authDebug={authDebug} /> : null}
+      <ConnectionSummaryCard
+        pages={pages}
+        canManagePages={canManagePages}
+        connectionSummary={connectionSummary}
+      />
 
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3">
         {pages.map((page) => {
@@ -210,7 +225,7 @@ export default function PageSelector({
                     <div
                       className={`flex h-11 w-11 items-center justify-center rounded-full border text-sm font-bold ${
                         isSelected
-                          ? "border-orange-500/30 bg-orange-500/10 text-orange-600 dark:text-orange-300"
+                          ? "border-orange-500/40 bg-orange-500/16 text-orange-700 dark:text-orange-100"
                           : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
                       }`}
                     >
@@ -230,11 +245,11 @@ export default function PageSelector({
                   <span className="truncate font-mono text-sm text-[var(--text-secondary)]">ID - {page.page_id}</span>
                   <span className="mt-0.5 text-sm">
                     {isBotOn ? (
-                      <span className="font-medium text-emerald-600 dark:text-emerald-300">Bot ON (reponses actives)</span>
+                      <span className="font-medium text-emerald-700 dark:text-emerald-200">Bot ON (reponses actives)</span>
                     ) : page.status === "reconnect_required" ? (
-                      <span className="font-medium text-red-600 dark:text-red-300">Reconnexion requise</span>
+                      <span className="font-medium text-red-700 dark:text-red-200">Reconnexion requise</span>
                     ) : (
-                      <span className="font-medium text-red-600 dark:text-red-300">Bot OFF (aucune reponse)</span>
+                      <span className="font-medium text-red-700 dark:text-red-200">Bot OFF (aucune reponse)</span>
                     )}
                   </span>
                   {hasDirectSyncLag ? (
@@ -246,7 +261,7 @@ export default function PageSelector({
                     </span>
                   ) : null}
                   {page.last_error ? (
-                    <span className="mt-0.5 truncate text-xs text-red-600 dark:text-red-300" title={page.last_error}>
+                    <span className="mt-0.5 truncate text-xs text-red-700 dark:text-red-200" title={page.last_error}>
                       {page.last_error}
                     </span>
                   ) : null}
@@ -255,14 +270,14 @@ export default function PageSelector({
 
               <div className="flex shrink-0 items-center gap-3 sm:pl-2">
                 {isSelected ? (
-                  <span className="mr-1 hidden text-xs font-semibold uppercase tracking-wide text-orange-600 dark:text-orange-300 sm:inline">
+                  <span className="mr-1 hidden text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-100 sm:inline">
                     Selection FLARE
                   </span>
                 ) : null}
 
                 {(showActivate || showDeactivate) && canManagePages ? (
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold uppercase tracking-widest ${isBotOn ? "text-emerald-600 dark:text-emerald-300" : "text-red-600 dark:text-red-300"}`}>
+                    <span className={`text-xs font-semibold uppercase tracking-widest ${isBotOn ? "text-emerald-700 dark:text-emerald-200" : "text-red-700 dark:text-red-200"}`}>
                       {isBotOn ? "ON" : "OFF"}
                     </span>
                     <button
@@ -278,8 +293,8 @@ export default function PageSelector({
                       }}
                       className={`relative flex h-8 w-14 items-center rounded-full border transition-all ${
                         isBotOn
-                          ? "border-emerald-500/30 bg-emerald-500/20"
-                          : "border-red-500/20 bg-red-500/10"
+                          ? "border-emerald-500/45 bg-emerald-500/24"
+                          : "border-red-500/35 bg-red-500/16"
                       } ${isBusy ? "opacity-60" : "cursor-pointer hover:opacity-90"}`}
                       title={isBotOn ? "Desactiver le bot sur cette page" : "Activer le bot sur cette page"}
                     >
@@ -290,7 +305,7 @@ export default function PageSelector({
                           layout
                           transition={{ type: "spring", stiffness: 500, damping: 30 }}
                           className={`h-6 w-6 rounded-full shadow-md ${
-                            isBotOn ? "ml-[26px] bg-emerald-400" : "ml-1 bg-red-400"
+                            isBotOn ? "ml-[26px] bg-emerald-300" : "ml-1 bg-red-300"
                           }`}
                         />
                       )}
@@ -350,38 +365,47 @@ export default function PageSelector({
   );
 }
 
-function OAuthDebugCard({ authDebug }: { authDebug: FacebookAuthDebugInfo }) {
+function ConnectionSummaryCard({
+  pages,
+  canManagePages,
+  connectionSummary,
+}: {
+  pages: FacebookMessengerPage[];
+  canManagePages: boolean;
+  connectionSummary: FacebookConnectionSummary | null;
+}) {
+  const activeCount = pages.filter((page) => page.is_active && page.webhook_subscribed).length;
+  const warningCount = connectionSummary?.permissionWarningCount || 0;
+  const oauthConfigured = connectionSummary?.oauthConfigured;
+  const directServiceConfigured = connectionSummary?.directServiceConfigured;
+
+  const lineItems: string[] = [];
+  lineItems.push(`${pages.length} page(s) importee(s)`);
+  lineItems.push(activeCount > 0 ? `${activeCount} active(s)` : "Aucune page active");
+  if (oauthConfigured === false) lineItems.push("OAuth Meta non configure");
+  if (directServiceConfigured === false) lineItems.push("Service Messenger a finaliser");
+  if (!canManagePages) lineItems.push("Gestion reservee owner/admin");
+  if (warningCount > 0) lineItems.push(`${warningCount} page(s) avec permissions incompletes`);
+
   return (
     <div className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] p-4 text-left">
-      <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Verification Facebook</p>
+      <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Resume connexion Facebook</p>
       <p className="mt-1 text-xs text-[var(--text-secondary)]">
-        Ce bloc montre simplement quelle application Facebook FLARE utilise vraiment.
+        Ce bloc affiche uniquement l&apos;etat de connexion FLARE. Aucun detail OAuth sensible n&apos;est expose.
       </p>
-      <div className="mt-3 grid gap-3 md:grid-cols-2">
-        <DebugItem label="App ID" value={authDebug.client_id} />
-        <DebugItem label="Version" value={authDebug.graph_version} />
-        <DebugItem label="Retour Facebook" value={authDebug.redirect_uri} fullWidth />
-        <DebugItem label="Autorisations" value={authDebug.scopes.join(", ")} fullWidth />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {lineItems.map((item) => (
+          <span
+            key={item}
+            className="rounded-full border border-[var(--border-default)] bg-[var(--surface-base)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]"
+          >
+            {item}
+          </span>
+        ))}
       </div>
-    </div>
-  );
-}
-
-function DebugItem({
-  label,
-  value,
-  fullWidth = false,
-}: {
-  label: string;
-  value: string;
-  fullWidth?: boolean;
-}) {
-  return (
-    <div className={fullWidth ? "md:col-span-2" : ""}>
-      <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">{label}</p>
-      <p className="mt-1 break-all rounded-lg border border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 font-mono text-[12px] text-[var(--text-primary)]">
-        {value || "Non configure"}
-      </p>
+      {connectionSummary?.accessMessage ? (
+        <p className="mt-3 text-xs text-[var(--text-secondary)]">{connectionSummary.accessMessage}</p>
+      ) : null}
     </div>
   );
 }

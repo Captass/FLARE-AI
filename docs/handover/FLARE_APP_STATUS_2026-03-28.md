@@ -1,6 +1,6 @@
 # FLARE App Status - 2026-03-28
 
-Derniere mise a jour : 19 avril 2026
+Derniere mise a jour : 22 avril 2026
 
 ## URLs live
 
@@ -37,6 +37,22 @@ L'application connectee est maintenant recentree sur la beta assistee du `Chatbo
 - le compte connecte pilote un seul parcours client
 - quand le paiement est valide, le plan choisi doit etre applique et visible cote client comme cote admin
 - la doc de distribution doit rester alignee sur Windows Tauri, Android APK, et web / PWA pour Apple
+
+## Update 2026-04-22 - incident critique OAuth Facebook
+
+Incident live prioritaire sur le parcours `Offre / Activation` et l'import de pages Facebook :
+
+- le callback OAuth Meta peut renvoyer `Aucune page Facebook avec les droits Messenger necessaires n'a ete retournee par Meta.`
+- dans un cas reel de production, `Graph API Explorer` avec la meme app Meta et le meme compte renvoyait pourtant la page `FLARE AI` dans `me/accounts?fields=id,name,tasks`
+- la page etait visible avec `MESSAGING` et `MANAGE`, ce qui prouve que le probleme restant n'est pas uniquement un probleme de droits Meta cote utilisateur
+- le correctif frontend livre dans `0726506` nettoie les pages stale apres echec OAuth et evite un faux diagnostic visuel
+- en revanche, la cause racine backend OAuth / callback reste ouverte et bloque encore la fiabilite du self-serve Facebook
+
+Impact a retenir :
+
+- ne pas annoncer le parcours d'import Facebook comme fiable tant que ce bug n'est pas corrige
+- en cas de reproduction, comparer systematiquement le resultat FLARE avec `Graph API Explorer`
+- la prochaine correction doit cibler `backend/routers/facebook_pages.py` avec logs sur token exchange, scopes reels et reponse `/me/accounts`
 
 ## Update 2026-03-30
 

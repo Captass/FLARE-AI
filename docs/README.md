@@ -1,6 +1,16 @@
 # FLARE AI - Documentation centrale
 
-Derniere mise a jour : 19 avril 2026
+Derniere mise a jour : 22 avril 2026
+
+## Alerte critique - Facebook OAuth / import de pages
+
+Incident live prioritaire a traiter en premier sur le module `Chatbot Facebook`.
+
+- le symptome production reel est : le callback OAuth Meta peut afficher `Aucune page Facebook avec les droits Messenger necessaires n'a ete retournee par Meta.`
+- ce symptome peut arriver alors que `Graph API Explorer` voit bien la page et renvoie `MESSAGING` et `MANAGE` sur `me/accounts`
+- le correctif UI de pages stale est deja livre, mais la cause racine backend OAuth / callback n'est pas corrigee
+- tant que ce point n'est pas fixe, ne pas considerer l'import Facebook self-serve comme fiable en production
+- priorite immediate : instrumenter et corriger `backend/routers/facebook_pages.py` sur l'echange token OAuth et la lecture de `/me/accounts`
 
 Ce dossier `docs` est le point d'entree documentaire du projet.
 

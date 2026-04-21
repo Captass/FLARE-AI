@@ -438,7 +438,7 @@ ACTIVATION_TERMINAL_STATUSES = {"active", "rejected", "canceled"}
 
 PAYMENT_STATUSES = ["draft", "submitted", "verified", "rejected"]
 
-ORDER_STATUSES = ["detected", "contacted", "confirmed", "fulfilled", "canceled"]
+ORDER_STATUSES = ["new", "confirmed", "needs_followup", "delivered", "cancelled"]
 
 REPORT_STATUSES = ["new", "in_review", "resolved", "dismissed"]
 
@@ -609,7 +609,7 @@ class ChatbotOrder(Base):
     customer_request_text = Column(Text, default="")
     confidence = Column(Float, default=0.0)
     source = Column(String, default="manual")  # signal | manual
-    status = Column(String, default="detected")  # detected, contacted, confirmed, fulfilled, canceled
+    status = Column(String, default="detected")  # stored legacy values are normalized at the API edge
     needs_human_followup = Column(String, default="false")
     assigned_to = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
