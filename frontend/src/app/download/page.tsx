@@ -6,11 +6,11 @@ import { ArrowLeft, Download, Globe, Monitor, ShieldCheck, Smartphone } from "lu
 import Link from "next/link";
 import FlareMark from "@/components/FlareMark";
 import {
-  getAndroidDownloadUrl,
+  getAndroidDownloadRoute,
   hasAndroidDownload,
   getPreferredInstallChannel,
   getSimpleWebAppUrl,
-  getWindowsDownloadUrl,
+  getWindowsDownloadRoute,
   hasWindowsDownload,
   type InstallChannel,
 } from "@/lib/platform/runtime";
@@ -42,12 +42,14 @@ export default function DownloadPage() {
         channel: "windows-native",
         title: "Windows",
         chip: "Windows 10 et 11",
-        modeLabel: "Logiciel natif (Tauri)",
-        actionLabel: hasWindowsDownload() ? "Telecharger FLARE AI pour Windows" : "Contacter FLARE pour le logiciel Windows",
+        modeLabel: "Installateur Windows",
+        actionLabel: hasWindowsDownload()
+          ? "Telecharger FLARE AI pour Windows"
+          : "Ouvrir le lien FLARE Windows",
         helperText: hasWindowsDownload()
-          ? "Installeur desktop natif pour la beta FLARE AI."
-          : "Ajoutez NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL pour publier le lien MSI officiel.",
-        href: hasWindowsDownload() ? getWindowsDownloadUrl() : "/contact",
+          ? "Installateur officiel FLARE AI distribue depuis la release."
+          : "Lien release non configure. Le chemin stable reste /downloads/windows.",
+        href: getWindowsDownloadRoute(),
         available: hasWindowsDownload(),
         icon: <Monitor className="h-8 w-8" />,
       },
@@ -55,12 +57,12 @@ export default function DownloadPage() {
         channel: "android-native",
         title: "Android",
         chip: "Telephone et tablette",
-        modeLabel: "APK natif direct",
-        actionLabel: hasAndroidDownload() ? "Telecharger l'APK Android" : "Contacter FLARE pour l'APK Android",
+        modeLabel: "APK release signee",
+        actionLabel: hasAndroidDownload() ? "Telecharger l'APK Android" : "Ouvrir le lien FLARE Android",
         helperText: hasAndroidDownload()
-          ? "Fichier APK direct, sans passage par web app."
-          : "Ajoutez NEXT_PUBLIC_ANDROID_DOWNLOAD_URL pour publier le lien APK officiel.",
-        href: hasAndroidDownload() ? getAndroidDownloadUrl() : "/contact",
+          ? "APK natif signe distribue depuis la release."
+          : "Lien release non configure. Le chemin stable reste /downloads/android.",
+        href: getAndroidDownloadRoute(),
         available: hasAndroidDownload(),
         icon: <Smartphone className="h-8 w-8" />,
       },
@@ -123,7 +125,7 @@ export default function DownloadPage() {
             Choisissez votre acces <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">FLARE AI</span>
           </h1>
           <p className="text-lg font-medium leading-relaxed text-black/62 md:text-xl">
-            Pivot produit actif: Windows = app native Tauri, Android = APK natif direct, macOS et iPhone = web app simple.
+            Android APK release signee, Windows installateur, macOS + iPhone web app only.
           </p>
         </motion.div>
 
@@ -199,7 +201,7 @@ export default function DownloadPage() {
         >
           <div className="flex items-center justify-center gap-2 text-black/72">
             <ShieldCheck size={14} />
-            <span>Beta actuelle: pas d&apos;app native macOS/iPhone. Acces simple via web app/PWA uniquement.</span>
+            <span>Distribution actuelle: Android APK signe, Windows installateur, macOS + iPhone web app only.</span>
           </div>
         </motion.div>
       </motion.div>

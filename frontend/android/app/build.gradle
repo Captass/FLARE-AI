@@ -1,5 +1,26 @@
 apply plugin: 'com.android.application'
 
+def resolveConfigValue(String gradleProperty, String envName = gradleProperty) {
+    def propertyValue = project.findProperty(gradleProperty)
+    if (propertyValue != null && propertyValue.toString().trim()) {
+        return propertyValue.toString().trim()
+    }
+
+    def envValue = System.getenv(envName)
+    if (envValue != null && envValue.trim()) {
+        return envValue.trim()
+    }
+
+    return null
+}
+
+def releaseKeystorePath = resolveConfigValue('flareAndroidKeystorePath', 'FLARE_ANDROID_KEYSTORE_PATH')
+def releaseKeystorePassword = resolveConfigValue('flareAndroidKeystorePassword', 'FLARE_ANDROID_KEYSTORE_PASSWORD')
+def releaseKeyAlias = resolveConfigValue('flareAndroidKeyAlias', 'FLARE_ANDROID_KEY_ALIAS')
+def releaseKeyPassword = resolveConfigValue('flareAndroidKeyPassword', 'FLARE_ANDROID_KEY_PASSWORD')
+def releaseSigningConfigured = [releaseKeystorePath, releaseKeystorePassword, releaseKeyAlias, releaseKeyPassword]
+    .every { it != null && !it.isEmpty() }
+
 android {
     namespace "com.ramsflare.flareai"
     compileSdk rootProject.ext.compileSdkVersion
@@ -10,18 +31,66 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        manifestPlaceholders = [
+            flareDeepLinkScheme : resolveConfigValue('flareAndroidDeepLinkScheme', 'FLARE_ANDROID_DEEPLINK_SCHEME') ?: 'flareai',
+            flareDeepLinkHost   : resolveConfigValue('flareAndroidDeepLinkHost', 'FLARE_ANDROID_DEEPLINK_HOST') ?: 'oauth',
+            flareDeepLinkPath   : resolveConfigValue('flareAndroidDeepLinkPath', 'FLARE_ANDROID_DEEPLINK_PATH') ?: '/android',
+            flareDeepLinkWebHost: resolveConfigValue('flareAndroidDeepLinkWebHost', 'FLARE_ANDROID_DEEPLINK_WEB_HOST') ?: 'flareai.ramsflare.com'
+        ]
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+
+    signingConfigs {
+        release {
+            if (releaseSigningConfigured) {
+                storeFile file(releaseKeystorePath)
+                storePassword releaseKeystorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+                v1SigningEnabled true
+                v2SigningEnabled true
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    applicationVariants.all { variant ->
+        variant.outputs.all {
+            outputFileName = variant.buildType.name == "release" ? "flare-ai-android.apk" : "flare-ai-android-debug.apk"
+        }
+    }
+}
+
+tasks.register("validateReleaseSigning") {
+    doLast {
+        if (!releaseSigningConfigured) {
+            throw new GradleException(
+                "Release signing is required. Set FLARE_ANDROID_KEYSTORE_PATH, FLARE_ANDROID_KEYSTORE_PASSWORD, FLARE_ANDROID_KEY_ALIAS and FLARE_ANDROID_KEY_PASSWORD."
+            )
+        }
+        if (!file(releaseKeystorePath).exists()) {
+            throw new GradleException("Keystore file not found: ${releaseKeystorePath}")
+        }
+    }
+}
+
+tasks.matching { task ->
+    task.name == "assembleRelease" || task.name == "bundleRelease"
+}.configureEach {
+    dependsOn(tasks.named("validateReleaseSigning"))
 }
 
 repositories {

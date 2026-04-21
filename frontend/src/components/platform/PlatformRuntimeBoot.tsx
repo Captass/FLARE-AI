@@ -8,11 +8,14 @@ import {
   dispatchAuthResult,
   persistAuthResult,
   readAuthResultFromUrl,
+  registerNativeAuthBridge,
   registerServiceWorker,
 } from "@/lib/platform/runtime";
 
 export default function PlatformRuntimeBoot() {
   useEffect(() => {
+    let releaseNativeAuthBridge = () => {};
+
     bootstrapRuntimeEnvironment();
     void registerServiceWorker();
 
@@ -22,6 +25,10 @@ export default function PlatformRuntimeBoot() {
       dispatchAuthResult(authResult);
       clearAuthResultParamsFromUrl();
     }
+
+    void registerNativeAuthBridge().then((cleanup) => {
+      releaseNativeAuthBridge = cleanup;
+    });
 
     const handleBeforeInstallPrompt = (event: Event) => {
       const promptEvent = event as Event & { preventDefault: () => void };
@@ -44,6 +51,7 @@ export default function PlatformRuntimeBoot() {
     window.addEventListener("offline", handleOnline);
 
     return () => {
+      releaseNativeAuthBridge();
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("online", handleOnline);
       window.removeEventListener("offline", handleOnline);

@@ -18,8 +18,15 @@
     },
     "bundle": {
       "active": true,
+      "useLocalToolsDir": true,
       "identifier": "com.ramsflare.flareai.desktop",
+      "publisher": "Ramsflare",
       "targets": ["nsis"],
+      "windows": {
+        "nsis": {
+          "installMode": "currentUser"
+        }
+      },
       "icon": [
         "icons/icon.ico",
         "../../frontend/public/br-symbol-v4-192.png",

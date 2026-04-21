@@ -1,0 +1,133 @@
+name: Native Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to publish (example: v1.2.3)"
+        required: true
+        type: string
+      prerelease:
+        description: "Publish as prerelease"
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    env:
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
+      FLARE_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}\flare-ai-release.jks
+      FLARE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FLARE_ANDROID_KEYSTORE_PASSWORD }}
+      FLARE_ANDROID_KEY_ALIAS: ${{ secrets.FLARE_ANDROID_KEY_ALIAS }}
+      FLARE_ANDROID_KEY_PASSWORD: ${{ secrets.FLARE_ANDROID_KEY_PASSWORD }}
+      FLARE_ANDROID_DEEPLINK_SCHEME: ${{ vars.FLARE_ANDROID_DEEPLINK_SCHEME }}
+      FLARE_ANDROID_DEEPLINK_HOST: ${{ vars.FLARE_ANDROID_DEEPLINK_HOST }}
+      FLARE_ANDROID_DEEPLINK_PATH: ${{ vars.FLARE_ANDROID_DEEPLINK_PATH }}
+      FLARE_ANDROID_DEEPLINK_WEB_HOST: ${{ vars.FLARE_ANDROID_DEEPLINK_WEB_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate required Android signing secrets
+        shell: pwsh
+        env:
+          FLARE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FLARE_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          $required = @(
+            "FLARE_ANDROID_KEYSTORE_BASE64",
+            "FLARE_ANDROID_KEYSTORE_PASSWORD",
+            "FLARE_ANDROID_KEY_ALIAS",
+            "FLARE_ANDROID_KEY_PASSWORD"
+          )
+          foreach ($key in $required) {
+            $value = [Environment]::GetEnvironmentVariable($key)
+            if (-not $value) {
+              throw "Missing required GitHub secret: $key"
+            }
+          }
+
+      - name: Configure Android SDK environment
+        shell: pwsh
+        run: |
+          if (-not $env:ANDROID_SDK_ROOT) {
+            $fallbackSdkRoot = Join-Path $env:LOCALAPPDATA "Android\\Sdk"
+            if (Test-Path $fallbackSdkRoot) {
+              "ANDROID_SDK_ROOT=$fallbackSdkRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+              "ANDROID_HOME=$fallbackSdkRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+            } else {
+              throw "ANDROID_SDK_ROOT is not set and fallback path was not found: $fallbackSdkRoot"
+            }
+          }
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Decode Android signing keystore
+        shell: pwsh
+        env:
+          FLARE_ANDROID_KEYSTORE_BASE64: ${{ secrets.FLARE_ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          $keystoreBytes = [Convert]::FromBase64String($env:FLARE_ANDROID_KEYSTORE_BASE64)
+          [System.IO.File]::WriteAllBytes($env:FLARE_ANDROID_KEYSTORE_PATH, $keystoreBytes)
+
+      - name: Build signed Android release APK
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android-apk.ps1 -BuildType Release
+
+      - name: Build Windows NSIS installer
+        shell: pwsh
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-windows-desktop.ps1
+
+      - name: Verify native release assets
+        shell: pwsh
+        run: |
+          $apkPath = "artifacts/native/android/flare-ai-android.apk"
+          $installerPath = "artifacts/native/windows/flare-ai-windows-setup.exe"
+          if (-not (Test-Path $apkPath)) {
+            throw "Missing expected Android release asset: $apkPath"
+          }
+          if (-not (Test-Path $installerPath)) {
+            throw "Missing expected Windows installer asset: $installerPath"
+          }
+
+      - name: Summarize public asset URLs
+        shell: pwsh
+        run: |
+          $baseReleaseUrl = "https://github.com/${{ github.repository }}/releases/download/$env:RELEASE_TAG"
+          "Android asset: $baseReleaseUrl/flare-ai-android.apk" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          "Windows asset: $baseReleaseUrl/flare-ai-windows-setup.exe" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          prerelease: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prerelease == 'true' }}
+          fail_on_unmatched_files: true
+          files: |
+            artifacts/native/android/flare-ai-android.apk
+            artifacts/native/windows/flare-ai-windows-setup.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

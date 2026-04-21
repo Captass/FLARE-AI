@@ -4,6 +4,7 @@ export type RuntimePlatform = "web" | "android" | "windows";
 export type AuthProvider = "facebook" | "google";
 export type BrowserPlatform = "windows" | "android" | "macos" | "ios" | "other";
 export type InstallChannel = "windows-native" | "android-native" | "simple-web" | "web";
+export type NativeReleasePlatform = "android" | "windows";
 
 export interface RuntimeAuthResult {
   provider: AuthProvider;
@@ -17,6 +18,9 @@ const AUTH_RESULT_PREFIX = "flare_auth_result:";
 const DEFAULT_WEB_APP_PATH = "/app?auth=signup";
 const DEFAULT_ANDROID_CALLBACK_URL = "flareai://oauth/android";
 const DEFAULT_WINDOWS_CALLBACK_URL = "flareai://oauth/windows";
+const STABLE_ANDROID_DOWNLOAD_ROUTE = "/downloads/android";
+const STABLE_WINDOWS_DOWNLOAD_ROUTE = "/downloads/windows";
+const FLARE_NATIVE_AUTH_EVENT = "flare-native-auth-url";
 
 function getWindowLike(): (Window & typeof globalThis) | null {
   return typeof window === "undefined" ? null : window;
@@ -72,6 +76,17 @@ export function shouldUseRedirectAuthFlow(): boolean {
 
 function trimUrl(value?: string | null): string {
   return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function readFirstEnvValue(...values: Array<string | undefined>): string {
+  for (const value of values) {
+    const normalized = String(value || "").trim();
+    if (normalized) {
+      return normalized;
+    }
+  }
+
+  return "";
 }
 
 export function getCurrentOrigin(): string {
@@ -151,7 +166,12 @@ function getConfiguredAbsoluteUrl(configuredUrl: string | undefined): string {
 }
 
 export function getWindowsDownloadUrl(): string {
-  return getConfiguredAbsoluteUrl(process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL);
+  return getConfiguredAbsoluteUrl(
+    readFirstEnvValue(
+      process.env.NEXT_PUBLIC_WINDOWS_RELEASE_ASSET_URL,
+      process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL
+    )
+  );
 }
 
 export function hasWindowsDownload(): boolean {
@@ -159,7 +179,12 @@ export function hasWindowsDownload(): boolean {
 }
 
 export function getAndroidDownloadUrl(): string {
-  return getConfiguredAbsoluteUrl(process.env.NEXT_PUBLIC_ANDROID_DOWNLOAD_URL);
+  return getConfiguredAbsoluteUrl(
+    readFirstEnvValue(
+      process.env.NEXT_PUBLIC_ANDROID_RELEASE_ASSET_URL,
+      process.env.NEXT_PUBLIC_ANDROID_DOWNLOAD_URL
+    )
+  );
 }
 
 export function hasAndroidDownload(): boolean {
@@ -168,6 +193,30 @@ export function hasAndroidDownload(): boolean {
 
 export function getSimpleWebAppUrl(): string {
   return resolveAbsoluteUrl(process.env.NEXT_PUBLIC_WEB_APP_URL, DEFAULT_WEB_APP_PATH);
+}
+
+export function getWindowsDownloadRoute(): string {
+  return STABLE_WINDOWS_DOWNLOAD_ROUTE;
+}
+
+export function getAndroidDownloadRoute(): string {
+  return STABLE_ANDROID_DOWNLOAD_ROUTE;
+}
+
+export function getReleaseVersion(platform: NativeReleasePlatform): string {
+  if (platform === "android") {
+    return readFirstEnvValue(process.env.NEXT_PUBLIC_ANDROID_RELEASE_VERSION);
+  }
+
+  return readFirstEnvValue(process.env.NEXT_PUBLIC_WINDOWS_RELEASE_VERSION);
+}
+
+export function getReleaseDate(platform: NativeReleasePlatform): string {
+  if (platform === "android") {
+    return readFirstEnvValue(process.env.NEXT_PUBLIC_ANDROID_RELEASE_DATE);
+  }
+
+  return readFirstEnvValue(process.env.NEXT_PUBLIC_WINDOWS_RELEASE_DATE);
 }
 
 export function getWebAppUrl(path = "/app"): string {
@@ -239,7 +288,17 @@ export function dispatchAuthResult(result: RuntimeAuthResult): void {
 export function readAuthResultFromUrl(): RuntimeAuthResult | null {
   const win = getWindowLike();
   if (!win) return null;
-  const url = new URL(win.location.href);
+  return readAuthResultFromRawUrl(win.location.href);
+}
+
+export function readAuthResultFromRawUrl(rawUrl: string): RuntimeAuthResult | null {
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return null;
+  }
+
   const provider = url.searchParams.get("oauth_type");
   const status = url.searchParams.get("status");
 
@@ -300,6 +359,82 @@ export async function registerServiceWorker(): Promise<void> {
   } catch (error) {
     console.warn("Failed to register service worker", error);
   }
+}
+
+export function consumeNativeAuthCallbackUrl(rawUrl: string | null | undefined): RuntimeAuthResult | null {
+  const normalized = String(rawUrl || "").trim();
+  if (!normalized) {
+    return null;
+  }
+
+  const authResult = readAuthResultFromRawUrl(normalized);
+  if (!authResult) {
+    return null;
+  }
+
+  persistAuthResult(authResult);
+  dispatchAuthResult(authResult);
+  return authResult;
+}
+
+export async function registerNativeAuthBridge(): Promise<() => void> {
+  const win = getWindowLike() as (Window & typeof globalThis & { __FLARE_NATIVE_AUTH_URL__?: string }) | null;
+  if (!win || !isNativeRuntime()) {
+    return () => {};
+  }
+
+  const cleanups: Array<() => void> = [];
+
+  consumeNativeAuthCallbackUrl(win.__FLARE_NATIVE_AUTH_URL__);
+  delete win.__FLARE_NATIVE_AUTH_URL__;
+
+  if (detectRuntimePlatform() === "android") {
+    try {
+      const { App } = await import("@capacitor/app");
+
+      const launchUrl = await App.getLaunchUrl();
+      consumeNativeAuthCallbackUrl(launchUrl?.url);
+
+      const listener = await App.addListener("appUrlOpen", ({ url }) => {
+        consumeNativeAuthCallbackUrl(url);
+      });
+
+      cleanups.push(() => {
+        void listener.remove();
+      });
+    } catch (error) {
+      console.warn("Failed to register Capacitor appUrlOpen listener", error);
+    }
+  }
+
+  if ((win as any).__TAURI__) {
+    try {
+      const { listen } = await import("@tauri-apps/api/event");
+      const unlisten = await listen<string>(FLARE_NATIVE_AUTH_EVENT, (event) => {
+        consumeNativeAuthCallbackUrl(event.payload);
+      });
+
+      cleanups.push(() => {
+        unlisten();
+      });
+    } catch (error) {
+      console.warn("Failed to register Tauri native auth listener", error);
+    }
+
+    const handleWindowNativeAuth = (event: Event) => {
+      const customEvent = event as CustomEvent<string>;
+      consumeNativeAuthCallbackUrl(customEvent.detail);
+    };
+
+    win.addEventListener(FLARE_NATIVE_AUTH_EVENT, handleWindowNativeAuth as EventListener);
+    cleanups.push(() => {
+      win.removeEventListener(FLARE_NATIVE_AUTH_EVENT, handleWindowNativeAuth as EventListener);
+    });
+  }
+
+  return () => {
+    cleanups.forEach((cleanup) => cleanup());
+  };
 }
 
 export function bootstrapRuntimeEnvironment(): void {

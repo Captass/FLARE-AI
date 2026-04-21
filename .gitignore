@@ -16,8 +16,16 @@ frontend/.next/
 frontend/.next_prev/
 frontend/.next_build_backup*/
 frontend/out/
+artifacts/
+desktop/tauri/src-tauri/target/
+frontend/android/app/build/
+frontend/android/.gradle/
 tmp/
 _archive/
 backups/
 # Secrets locaux (jamais poussés — push protection GitHub)
 infra/credentials/
+frontend/android/dist/
+desktop/tauri/dist/
+frontend/android/**/*.jks
+frontend/android/**/*.keystore

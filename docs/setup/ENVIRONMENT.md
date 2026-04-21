@@ -1,74 +1,31 @@
-# Environnement et fichiers .env
+# Environnement et fichiers `.env`
 
-Derniere mise a jour : 19 avril 2026
+Derniere mise a jour : 21 avril 2026
 
 ## Regle importante
 
 Les fichiers `.env` actifs ne doivent pas etre deplaces.
-Ils sont utilises directement par le code.
+Ne jamais committer de secrets.
 
-## Fichiers actifs et exemples
-
-- [backend/.env](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/backend/.env)
-- [backend/.env.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/backend/.env.example)
-- [backend/.env.staging.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/backend/.env.staging.example)
-- [backend/.env.production.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/backend/.env.production.example)
-- [frontend/.env.local](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/frontend/.env.local)
-- [frontend/.env.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/frontend/.env.example)
-- [frontend/.env.staging.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/frontend/.env.staging.example)
-- [frontend/.env.production.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/frontend/.env.production.example)
-- [chatbot Facebook/direct_service/.env.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/chatbot%20Facebook/direct_service/.env.example)
-- [chatbot Facebook/direct_service/.env.staging.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/chatbot%20Facebook/direct_service/.env.staging.example)
-- [chatbot Facebook/direct_service/.env.production.example](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/chatbot%20Facebook/direct_service/.env.production.example)
-
-## Role de chaque fichier
-
-### Backend
-
-- `.env`
-  Fichier actif local pour le backend.
-- `.env.local`
-  Surcharge locale optionnelle chargee apres `.env` sans ecraser les vraies variables deja injectees dans l'environnement systeme.
-- `.env.example`
-  Modele local development.
-- `.env.staging.example`
-  Modele pour un backend de staging.
-- `.env.production.example`
-  Modele pour un backend de production.
+## Fichiers a connaitre
 
 ### Frontend
 
-- `.env.local`
-  Fichier actif local pour le frontend.
-- `.env.example`
-  Modele local development.
-- `.env.staging.example`
-  Valeurs a injecter au build du frontend staging.
-- `.env.production.example`
-  Valeurs a injecter au build du frontend live.
-
-### Messenger Direct
-
-- `.env.example`
-  Modele local du service direct.
-- `.env.staging.example`
-  Modele de staging du service direct.
-- `.env.production.example`
-  Modele de production du service direct.
-
-## Variables importantes a connaitre
+- `frontend/.env.local`
+- `frontend/.env.example`
+- `frontend/.env.staging.example`
+- `frontend/.env.production.example`
 
 ### Backend
 
-- `APP_ENV`
-- `FRONTEND_URL`
-- `BACKEND_URL`
-- `DATABASE_URL`
-- `MESSENGER_DIRECT_URL`
-- `MESSENGER_DIRECT_DASHBOARD_KEY`
-- `META_VERIFY_TOKEN`
+- `backend/.env`
+- `backend/.env.example`
+- `backend/.env.staging.example`
+- `backend/.env.production.example`
 
-### Frontend
+## Variables frontend importantes
+
+### API et callbacks
 
 - `NEXT_PUBLIC_APP_ENV`
 - `NEXT_PUBLIC_API_URL`
@@ -76,71 +33,107 @@ Ils sont utilises directement par le code.
 - `NEXT_PUBLIC_API_URL_DESKTOP`
 - `NEXT_PUBLIC_ANDROID_CALLBACK_URL`
 - `NEXT_PUBLIC_WINDOWS_CALLBACK_URL`
+- `NEXT_PUBLIC_WEB_APP_URL`
+
+Valeurs attendues pour le natif :
+
+- `NEXT_PUBLIC_ANDROID_CALLBACK_URL=flareai://oauth/android`
+- `NEXT_PUBLIC_WINDOWS_CALLBACK_URL=flareai://oauth/windows`
+
+### Downloads publics
+
+Ces variables ne sont plus des URLs FLARE affichees a l'utilisateur. Elles sont les cibles finales des pages stables :
+
 - `NEXT_PUBLIC_ANDROID_DOWNLOAD_URL`
 - `NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL`
-- `NEXT_PUBLIC_WEB_APP_URL`
-- variables publiques Firebase
 
-### Messenger Direct
+Les boutons publics doivent pointer vers :
+
+- `https://flareai.ramsflare.com/downloads/android`
+- `https://flareai.ramsflare.com/downloads/windows`
+
+Les valeurs recommandees pour les variables sont des assets GitHub Releases :
+
+- `NEXT_PUBLIC_ANDROID_DOWNLOAD_URL=https://github.com/<org>/<repo>/releases/download/<tag>/flare-ai-android.apk`
+- `NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL=https://github.com/<org>/<repo>/releases/download/<tag>/flare-ai-windows-setup.exe`
+
+Variables optionnelles d'affichage :
+
+- `NEXT_PUBLIC_ANDROID_RELEASE_VERSION`
+- `NEXT_PUBLIC_ANDROID_RELEASE_DATE`
+- `NEXT_PUBLIC_WINDOWS_RELEASE_VERSION`
+- `NEXT_PUBLIC_WINDOWS_RELEASE_DATE`
+
+### Firebase
+
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+
+## Variables backend importantes
 
 - `APP_ENV`
-- `SERVICE_PUBLIC_URL`
-- `FLARE_CHAT_URL`
-- `DASHBOARD_ACCESS_KEY`
-- `META_VERIFY_TOKEN`
+- `FRONTEND_URL`
+- `BACKEND_URL`
+- `DATABASE_URL`
+- `NATIVE_CORS_ORIGINS`
+- `NATIVE_ANDROID_CALLBACK_URL`
+- `NATIVE_WINDOWS_CALLBACK_URL`
 
-## Verification rapide avant de lancer le projet
+Valeurs natives recommandees :
 
-### Backend
+- `NATIVE_CORS_ORIGINS=capacitor://localhost,tauri://localhost,http://tauri.localhost`
+- `NATIVE_ANDROID_CALLBACK_URL=flareai://oauth/android`
+- `NATIVE_WINDOWS_CALLBACK_URL=flareai://oauth/windows`
 
-Depuis [backend](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/backend) :
+## Build local rapide
 
-```powershell
-python -m py_compile main.py
-```
-
-### Frontend
-
-Depuis [frontend](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/frontend) :
+### Frontend web
 
 ```powershell
+cd frontend
 npm run build
 ```
 
-## Regle pour une autre IA de dev
+### Android release
 
-Avant toute modification :
+```powershell
+cd frontend
+npm run android:apk:release
+```
 
-1. lire ce fichier
-2. verifier quels `.env` sont actifs
-3. ne pas deplacer les `.env`
-4. ne jamais committer de secrets par erreur
+Sortie attendue :
+
+- `artifacts/native/android/flare-ai-android.apk`
+
+### Windows installer
+
+```powershell
+cd frontend
+npm run desktop:build
+```
+
+Sortie attendue :
+
+- `artifacts/native/windows/flare-ai-windows-setup.exe`
+
+## Release GitHub
+
+Le workflow `.github/workflows/native-release.yml` publie les binaires Android et Windows sur GitHub Releases.
+
+Secrets requis :
+
+- `FLARE_ANDROID_KEYSTORE_BASE64`
+- `FLARE_ANDROID_KEYSTORE_PASSWORD`
+- `FLARE_ANDROID_KEY_ALIAS`
+- `FLARE_ANDROID_KEY_PASSWORD`
 
 ## Regle staging / production
 
-Le wizard Messenger ne doit pas etre teste directement sur `flareai.ramsflare.com`.
-
-La distribution native suit maintenant cette regle :
-
-- Windows : native via `Tauri`
-- Android : native via `APK` direct
-- macOS / iPhone / iPad : web / `PWA` seulement
-- aucun packaging de store natif ne doit etre suppose dans les fichiers `.env` ou les exemples
-
-Avant tout test externe :
-
-1. preparer un frontend staging
-2. preparer un backend staging
-3. preparer un service Messenger direct staging
-4. utiliser une page Facebook de test dediee
-
-Build natif local sans store :
-
-- Windows executable : `powershell -ExecutionPolicy Bypass -File scripts/build-windows-desktop.ps1`
-- Android APK : `powershell -ExecutionPolicy Bypass -File scripts/build-android-apk.ps1`
-- prerequis Windows : `%USERPROFILE%\\.cargo\\bin` et `%USERPROFILE%\\tools\\w64devkit\\w64devkit`
-- prerequis Android : `JAVA_HOME`, `ANDROID_SDK_ROOT` ou les chemins par defaut sous `%USERPROFILE%\\tools`
-
-Guide detaille :
-
-- [docs/setup/STAGING_WIZARD_DEPLOYMENT.md](D:/Travail/RAM'S%20FLARE/Flare%20Group/Flare%20AI/Antigravity/FLARE%20AI%20OS/V2/docs/setup/STAGING_WIZARD_DEPLOYMENT.md)
+- Android : APK release signe
+- Windows : installateur NSIS `.exe`
+- macOS / iPhone / iPad : web app / PWA uniquement
+- ne jamais supposer un `.msi` ou un packaging store dans les exemples d'env
