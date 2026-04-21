@@ -39,9 +39,9 @@ export const metadata: Metadata = {
     "RAM'S FLARE",
     "ramsflare",
   ],
-  authors: [{ name: "RAM'S FLARE", url: "https://flareai.ramsflare.com" }],
-  creator: "RAM'S FLARE",
-  publisher: "RAM'S FLARE",
+  authors: [{ name: "FLARE AI", url: "https://flareai.ramsflare.com" }],
+  creator: "FLARE AI",
+  publisher: "FLARE AI",
   metadataBase: new URL("https://flareai.ramsflare.com"),
   alternates: {
     canonical: "https://flareai.ramsflare.com",
@@ -146,7 +146,7 @@ export default function RootLayout({
                 "inLanguage": ["fr", "mg"],
                 "author": {
                   "@type": "Organization",
-                  "name": "RAM'S FLARE",
+                  "name": "FLARE AI",
                   "url": "https://flareai.ramsflare.com",
                   "logo": {
                     "@type": "ImageObject",
@@ -188,8 +188,8 @@ export default function RootLayout({
               {
                 "@context": "https://schema.org",
                 "@type": "Organization",
-                "name": "RAM'S FLARE",
-                "alternateName": "FLARE AI",
+                "name": "FLARE AI",
+                "alternateName": "RAM'S FLARE",
                 "url": "https://flareai.ramsflare.com",
                 "logo": {
                   "@type": "ImageObject",
@@ -197,7 +197,7 @@ export default function RootLayout({
                   "width": 3917,
                   "height": 3174
                 },
-                "description": "RAM'S FLARE developpe FLARE AI, une application d'automatisation business pour TPE/PME a Madagascar, avec une preuve concrete actuelle autour du chatbot Facebook assiste.",
+                "description": "FLARE AI est une application d'automatisation business pour TPE/PME a Madagascar, avec une preuve concrete actuelle autour du chatbot Facebook assiste.",
                 "areaServed": [
                   { "@type": "Country", "name": "Madagascar" }
                 ],

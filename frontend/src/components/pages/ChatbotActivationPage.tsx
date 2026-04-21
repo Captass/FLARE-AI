@@ -446,6 +446,21 @@ export default function ChatbotActivationPage({
     },
     []
   );
+  const clearActivationPageSelection = useCallback(() => {
+    onPagesChanged?.([]);
+    setPendingTargetPageId("");
+    setPersistedPageContext(null);
+  }, [onPagesChanged]);
+  const reportPagesSyncFailure = useCallback(
+    (reason: string) => {
+      clearActivationPageSelection();
+      pushConfigNotice(
+        "warning",
+        `${reason} La liste des pages importees a ete videe pour eviter des donnees obsoletes.`
+      );
+    },
+    [clearActivationPageSelection, pushConfigNotice]
+  );
 
   // ---- initial load ----
   useEffect(() => {
@@ -581,7 +596,9 @@ export default function ChatbotActivationPage({
     }
 
     if (authResult.status !== "success") {
-      setError(authResult.detail || "Connexion Meta interrompue.");
+      const detail = authResult.detail || "Connexion Meta interrompue.";
+      setError(detail);
+      reportPagesSyncFailure(detail);
       return;
     }
 
@@ -603,20 +620,37 @@ export default function ChatbotActivationPage({
           if (nextTargetId) {
             setPendingTargetPageId(nextTargetId);
           }
+        } else {
+          clearActivationPageSelection();
         }
-        pushConfigNotice("success", "Pages Facebook importees. Selectionnez la page cible pour l'activation.");
+        pushConfigNotice(
+          "success",
+          normalized.length > 0
+            ? "Pages Facebook importees. Selectionnez la page cible pour l'activation."
+            : "Aucune page importee pour le moment. Ouvrez Meta et relancez l'import."
+        );
       } catch (e) {
         const msg = parseApiError(e, "Impossible de recuperer vos pages Facebook.");
         if (msg === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) {
-          pushConfigNotice("warning", msg);
+          setError(null);
+          reportPagesSyncFailure(msg);
           return;
         }
         setError(msg);
+        reportPagesSyncFailure(msg);
       } finally {
         setFbOauthBusy(false);
       }
     })();
-  }, [onPagesChanged, persistedPageContext, pushConfigNotice, resolveToken, selectedPageId]);
+  }, [
+    clearActivationPageSelection,
+    onPagesChanged,
+    persistedPageContext,
+    pushConfigNotice,
+    reportPagesSyncFailure,
+    resolveToken,
+    selectedPageId,
+  ]);
 
   // ---- polling (awaiting step) ----
   useEffect(() => {
@@ -753,15 +787,24 @@ export default function ChatbotActivationPage({
         if (nextTargetId) {
           setPendingTargetPageId(nextTargetId);
         }
+      } else {
+        clearActivationPageSelection();
       }
-      pushConfigNotice("success", "Connexion Meta terminee. Vos pages sont pretes pour selection.");
+      pushConfigNotice(
+        "success",
+        normalized.length > 0
+          ? "Connexion Meta terminee. Vos pages sont pretes pour selection."
+          : "Connexion Meta terminee, mais aucune page n'a ete importee."
+      );
     } catch (e) {
       const msg = parseApiError(e, "Connexion Meta interrompue.");
       if (msg === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) {
-        pushConfigNotice("warning", msg);
+        setError(null);
+        reportPagesSyncFailure(msg);
         return;
       }
       setError(msg);
+      reportPagesSyncFailure(msg);
     } finally {
       setFbOauthBusy(false);
     }
@@ -785,6 +828,8 @@ export default function ChatbotActivationPage({
         if (nextTargetId) {
           setPendingTargetPageId(nextTargetId);
         }
+      } else {
+        clearActivationPageSelection();
       }
       pushConfigNotice(
         "success",
@@ -795,6 +840,7 @@ export default function ChatbotActivationPage({
     } catch (e) {
       const msg = parseApiError(e, "Impossible d'actualiser la liste des pages Facebook.");
       setError(msg);
+      reportPagesSyncFailure(msg);
     } finally {
       setPagesRefreshBusy(false);
     }
