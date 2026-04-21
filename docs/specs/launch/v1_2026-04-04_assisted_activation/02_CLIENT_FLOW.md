@@ -3,7 +3,7 @@
 ## Vue d'ensemble
 
 ```
-Inscription → Espace → Offre → Paiement → Preuve → Formulaire chatbot → Ajout FLARE admin page → Attente → Actif
+Inscription -> Espace -> Offre -> Paiement -> Preuve -> Connexion Facebook / import pages -> Choix page -> Autorisation FLARE sur la page cible -> Attente -> Actif / cockpit
 ```
 
 ---
@@ -22,7 +22,7 @@ Inscription → Espace → Offre → Paiement → Preuve → Formulaire chatbot 
 ### 3. Choix de l'offre
 - le client voit les plans disponibles avec leurs features
 - il selectionne un plan payant (starter, pro, business)
-- le plan est enregistre comme `selected_plan_id` dans la demande, mais **pas encore applique**
+- le plan est enregistre comme `selected_plan_id` dans la demande, mais pas encore applique
 
 ### 4. Paiement manuel
 - le client voit les methodes de paiement disponibles (ex: MVola)
@@ -35,40 +35,33 @@ Inscription → Espace → Offre → Paiement → Preuve → Formulaire chatbot 
   - nom complet du payeur
   - telephone du payeur
   - reference de transaction
-  - upload du recu/screenshot
+  - upload du recu / screenshot
   - notes optionnelles
 - statut passe a `payment_submitted`
 
-### 6. Formulaire de configuration chatbot
-Le client remplit les sections suivantes :
+### 6. Connexion Facebook et choix de la page
+- le client ouvre Facebook depuis FLARE
+- il importe les pages disponibles
+- il selectionne la page a activer
+- il ne remplit pas ici de formulaire lourd chatbot / business
 
-**Contact** : nom complet, email, telephone, WhatsApp
-
-**Entreprise** : nom, secteur, ville, pays, description
-
-**Facebook** : nom de la page, URL de la page, email/admin Facebook de reference
-
-**Chatbot** : nom du bot, langue, ton, message d'accueil
-
-**Vente** : produit/service principal, resume de l'offre, horaires, zones de livraison, moyen de contact
-
-### 7. Ajout du compte FLARE comme admin page
-- instruction claire avec :
-  - nom du compte Facebook operateur FLARE
-  - etapes pour ajouter un admin sur une page Facebook
-- le client coche : "Le compte FLARE a bien ete ajoute comme admin/proprietaire"
-- timestamp stocke
+### 7. Autorisation FLARE sur la page cible
+- le client verifie la page importee et la page cible selectionnee
+- il confirme que FLARE peut utiliser cette connexion Facebook pour activer le chatbot
+- la confirmation est stockee avec horodatage
 
 ### 8. Attente d'activation
 - le client voit un statut en temps reel :
   - `Preuve recue`
   - `Paiement valide`
+  - `Page Facebook selectionnee`
   - `Activation en cours`
   - `Test en cours`
 - il ne peut rien faire de plus a ce stade
 
-### 9. Chatbot actif
+### 9. Chatbot actif et cockpit
 - le client voit son chatbot actif
+- le cockpit devient l'endroit ou il complete les details bot / business apres activation
 - il peut maintenant :
   - modifier les preferences (nom, ton, langue, message d'accueil)
   - modifier l'entreprise
@@ -87,7 +80,9 @@ Le client remplit les sections suivantes :
 | Espace free, pas de demande | "Choisissez votre offre" | Voir les offres |
 | Offre choisie, pas de paiement | "Envoyez votre paiement" | Payer |
 | Paiement soumis | "Preuve recue, verification en cours" | - |
-| Paiement valide, acces page non confirme | "Ajoutez FLARE comme admin page" | Confirmer l'acces |
+| Paiement valide, Facebook a connecter | "Connectez Facebook et importez vos pages" | Ouvrir Facebook |
+| Pages importees, page a selectionner | "Choisissez la page a activer" | Choisir la page |
+| Page selectionnee, autorisation non confirmee | "Autorisez FLARE sur la page cible" | Confirmer l'autorisation |
 | File d'activation | "Activation en cours" | Suivre mon activation |
 | Chatbot actif | Dashboard complet | Gerer |
 | Activation bloquee | "Activation bloquee" + raison | Contacter FLARE |

@@ -880,7 +880,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 <br />
                 <motion.span
                   style={{ opacity: heroWordOpacity, scale: heroWordScale }}
-                  className="font-black tracking-tight text-orange-500 inline-block drop-shadow-xl"
+                  className="inline-block font-black tracking-tight text-black drop-shadow-[0_18px_40px_rgba(0,0,0,0.14)]"
                 >
                   Automatisez.
                 </motion.span>

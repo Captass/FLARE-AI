@@ -128,11 +128,29 @@ function getActivationBanner(
       };
   }
   if (s === "payment_verified" || s === "awaiting_flare_page_admin_access") {
+      const hasImportedPages = Boolean(ar.selected_facebook_pages_count);
+      const hasTargetPage = Boolean(ar.activation_target_page_id);
+      if (!hasImportedPages) {
+        return {
+          label: "Connectez Facebook et importez vos pages",
+          description: "Avant l'activation, importez vos pages Facebook pour que FLARE puisse travailler sur la bonne page.",
+          color: "orange",
+          cta: { label: "Ouvrir l'activation", navTarget: "chatbot-activation" as NavLevel },
+        };
+      }
+      if (!hasTargetPage) {
+        return {
+          label: "Choisissez la page a activer",
+          description: "Vos pages sont importees. Il reste a confirmer la page cible pour l'activation.",
+          color: "orange",
+          cta: { label: "Choisir la page", navTarget: "chatbot-activation" as NavLevel },
+        };
+      }
       return {
-        label: "Ajoutez FLARE comme admin page",
-        description: "Ajoutez le compte FLARE comme administrateur de votre page Facebook pour finaliser l'activation.",
+        label: "Autorisez FLARE sur votre page cible",
+        description: "Dans l'activation, importez vos pages Facebook puis autorisez FLARE a utiliser la page selectionnee.",
         color: "orange",
-        cta: { label: "Confirmer l'acces", navTarget: "chatbot-activation" as NavLevel },
+        cta: { label: "Finaliser l'autorisation", navTarget: "chatbot-activation" as NavLevel },
       };
   }
   if (s === "queued_for_activation" || s === "activation_in_progress" || s === "testing") {

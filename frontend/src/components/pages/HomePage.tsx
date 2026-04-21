@@ -254,7 +254,7 @@ export default function HomePage({
                 Bonjour <span className="text-orange-500">{displayName || "FLARE AI"}</span> 👋
               </h1>
               <p className="mt-4 text-base md:text-lg text-[var(--text-secondary)]">
-                Bienvenue dans votre espace d'automatisation centré sur le Chatbot Facebook.
+                Bienvenue dans votre espace d&apos;automatisation centre sur le Chatbot Facebook.
               </p>
             </div>
 
@@ -392,3 +392,4 @@ export default function HomePage({
     </div>
   );
 }
+

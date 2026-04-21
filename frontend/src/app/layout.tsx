@@ -49,13 +49,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/favicon-v4.ico", type: "image/x-icon" },
-      { url: "/app-icon.svg", type: "image/svg+xml" },
+      { url: "/br-symbol-v4-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/br-symbol-v4-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/brand/flare-mark.png", type: "image/png", sizes: "3917x3174" },
     ],
+    shortcut: "/br-symbol-v4-192.png",
     apple: "/br-symbol-v4-192.png",
     other: [
-      { rel: "icon", type: "image/png", sizes: "192x192", url: "/br-symbol-v4-192.png" },
+      { rel: "apple-touch-icon", type: "image/png", sizes: "192x192", url: "/br-symbol-v4-192.png" },
       { rel: "icon", type: "image/png", sizes: "512x512", url: "/br-symbol-v4-512.png" },
+      { rel: "mask-icon", url: "/app-icon.svg", color: "#050505" },
     ],
   },
   openGraph: {
@@ -147,9 +150,9 @@ export default function RootLayout({
                   "url": "https://flareai.ramsflare.com",
                   "logo": {
                     "@type": "ImageObject",
-                    "url": "https://flareai.ramsflare.com/logo-flare-ai.png",
-                    "width": 200,
-                    "height": 60
+                    "url": "https://flareai.ramsflare.com/brand/flare-mark.png",
+                    "width": 3917,
+                    "height": 3174
                   },
                   "areaServed": [
                     { "@type": "Country", "name": "Madagascar" },
@@ -190,7 +193,9 @@ export default function RootLayout({
                 "url": "https://flareai.ramsflare.com",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://flareai.ramsflare.com/logo-flare-ai.png"
+                  "url": "https://flareai.ramsflare.com/brand/flare-mark.png",
+                  "width": 3917,
+                  "height": 3174
                 },
                 "description": "RAM'S FLARE developpe FLARE AI, une application d'automatisation business pour TPE/PME a Madagascar, avec une preuve concrete actuelle autour du chatbot Facebook assiste.",
                 "areaServed": [

@@ -1,18 +1,36 @@
 # 05 - Configuration chatbot et handoff
 
-## Comment les donnees du formulaire deviennent les preferences live
+## Comment les donnees du cockpit deviennent les preferences live
 
-### A la creation de la demande
+### Pendant l'activation
 
-Quand le client soumet le formulaire d'activation, les donnees alimentent **simultanement** :
+Le client ne complete plus un gros formulaire chatbot / business pendant l'activation.
 
-1. `activation_request` : photo d'onboarding (reference historique)
-2. `ChatbotPreferences` : preferences live du chatbot
+Il :
 
-Mapping :
+1. connecte Facebook depuis FLARE
+2. importe ses pages
+3. selectionne la page a activer
+4. autorise FLARE a utiliser la connexion/page selectionnee pour l'activation
 
-| Champ formulaire | → ChatbotPreferences |
-|-----------------|---------------------|
+Le snapshot `activation_request` conserve seulement les donnees de livraison et de suivi, par exemple :
+
+| Donnee | Usage |
+|--------|-------|
+| selected_plan_id | plan choisi avant activation |
+| activation_target_page_id | page selectionnee |
+| page_name | nom de la page |
+| flare_page_admin_confirmed | confirmation utilisateur d'autorisation FLARE |
+| payment_reference | suivi paiement |
+| payment_proof | preuve soumise |
+| activation_status | suivi du workflow |
+
+### Apres activation, dans le cockpit
+
+Le client complete les details bot / business dans le cockpit.
+
+| Champ cockpit | -> ChatbotPreferences |
+|---------------|----------------------|
 | bot_name | bot_name |
 | primary_language | language |
 | tone | tone |
@@ -26,10 +44,10 @@ Mapping :
 | contact_phone | contact_phone |
 | contact_email | contact_email |
 
-### Apres activation
+Apres activation :
 
-- les preferences live (`ChatbotPreferences`) deviennent la **seule source de verite** du contenu
-- `activation_request` reste une photo d'onboarding
+- `ChatbotPreferences` devient la seule source de verite du contenu live
+- `activation_request` reste une photo de la livraison initiale
 - `activation_request` ne doit jamais ecraser les preferences live apres coup, sauf action explicite d'un operateur
 
 ---
@@ -49,13 +67,13 @@ Mapping :
 ## Ce que le client peut modifier apres activation
 
 | Surface | Elements modifiables |
-|---------|---------------------|
+|---------|----------------------|
 | Personnalisation | nom du bot, langue, ton, message d'accueil, instructions speciales |
 | Entreprise | nom, secteur, ville, pays, description |
 | Catalogue | produits/services (nom, description, prix, image) |
-| Portfolio | projets/references |
+| Portfolio | projets / references |
 | Ventes | script, qualification, objections, signaux hot lead |
-| Controle global | ON/OFF chatbot |
+| Controle global | ON / OFF chatbot |
 | Par conversation | Bot actif / Reprise manuelle |
 
 ### Ce que le client ne peut PAS faire
@@ -94,4 +112,4 @@ Si le test echoue, la demande reste en `testing` et l'operateur investigue.
 - le toggle est accessible aux roles `owner` et `admin`
 - le global OFF coupe tout, y compris les conversations en `Bot actif`
 - le basculement par conversation ne modifie pas le statut global
-- la creation d'une commande **ne bascule pas automatiquement** en reprise manuelle (bascule explicite)
+- la creation d'une commande ne bascule pas automatiquement en reprise manuelle (bascule explicite)

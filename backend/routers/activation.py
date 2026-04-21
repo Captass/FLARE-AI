@@ -19,6 +19,7 @@ from core.database import (
     ACTIVATION_TERMINAL_STATUSES,
     ChatbotOrder,
     ChatbotPreferences,
+    FacebookPageConnection,
     ManualPaymentSubmission,
     REPORT_STATUSES,
     SubscriptionPlan,
@@ -225,6 +226,94 @@ def _resolve_activation_target(
     )
 
 
+def _list_server_connected_pages(
+    db: Session,
+    user_id: str,
+    scope_id: str,
+) -> List[Dict[str, Any]]:
+    rows = db.query(FacebookPageConnection).filter(
+        or_(
+            FacebookPageConnection.user_id == user_id,
+            FacebookPageConnection.organization_slug == user_id,
+            FacebookPageConnection.organization_scope_id == scope_id,
+        ),
+    ).order_by(FacebookPageConnection.updated_at.desc()).all()
+
+    pages: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        page_id = str(row.page_id or "").strip()
+        if not page_id or page_id in seen:
+            continue
+        seen.add(page_id)
+        pages.append({
+            "page_id": page_id,
+            "page_name": str(row.page_name or "").strip(),
+            "is_active": str(row.is_active).lower() == "true",
+        })
+    return pages
+
+
+def _resolve_activation_target_from_server(
+    db: Session,
+    user_id: str,
+    scope_id: str,
+    requested_id: str,
+    requested_name: str,
+    *,
+    require_connected: bool,
+) -> tuple[str, str]:
+    page_id = (requested_id or "").strip()
+    page_name = (requested_name or "").strip()
+    connected_pages = _list_server_connected_pages(db, user_id, scope_id)
+
+    if not connected_pages:
+        if require_connected:
+            raise HTTPException(
+                status_code=400,
+                detail="Connectez Facebook puis importez vos pages cote serveur avant de continuer.",
+            )
+        return "", ""
+
+    if page_id:
+        for page in connected_pages:
+            if str(page.get("page_id") or "").strip() == page_id:
+                return page_id, str(page.get("page_name") or page_name or "").strip()
+        raise HTTPException(
+            status_code=400,
+            detail="La page cible n'est pas connectee cote serveur. Reconnectez Facebook puis reessayez.",
+        )
+
+    if page_name:
+        normalized_requested_name = _normalize_page_name(page_name)
+        name_matches = [
+            page for page in connected_pages
+            if _normalize_page_name(str(page.get("page_name") or "")) == normalized_requested_name
+        ]
+        if len(name_matches) == 1:
+            matched = name_matches[0]
+            return (
+                str(matched.get("page_id") or "").strip(),
+                str(matched.get("page_name") or page_name).strip(),
+            )
+        if len(name_matches) > 1:
+            raise HTTPException(
+                status_code=400,
+                detail="Plusieurs pages connectees portent ce nom. Selectionnez la page cible par identifiant.",
+            )
+        raise HTTPException(
+            status_code=400,
+            detail="La page cible n'est pas connectee cote serveur. Reconnectez Facebook puis reessayez.",
+        )
+
+    active_page = next((page for page in connected_pages if page.get("is_active")), None)
+    fallback_page = active_page or connected_pages[0]
+    return (
+        str(fallback_page.get("page_id") or "").strip(),
+        str(fallback_page.get("page_name") or "").strip(),
+    )
+
+
 def _activation_summary(ar: Optional[ActivationRequest]) -> Optional[Dict[str, Any]]:
     if not ar:
         return None
@@ -279,16 +368,13 @@ DEFAULT_PAYMENT_METHODS: List[Dict[str, Any]] = [
         "currency": "MGA",
         "enabled": True,
     },
-    {
-        "code": "orange_money",
-        "label": "Orange Money",
-        "recipient_name": "FLARE AI",
-        "recipient_number": "034 02 107 31",
-        "instructions": "Envoyez le montant exact via Orange Money au numero ci-dessus, puis saisissez la reference de transaction generee.",
-        "currency": "MGA",
-        "enabled": True,
-    },
 ]
+
+ACTIVATION_PLAN_PRICES_MGA: Dict[str, str] = {
+    "starter": "30 000",
+    "pro": "60 000",
+    "business": "120 000",
+}
 
 
 def _get_manual_payment_methods() -> List[Dict[str, Any]]:
@@ -304,6 +390,98 @@ def _get_manual_payment_methods() -> List[Dict[str, Any]]:
         return configured if configured else DEFAULT_PAYMENT_METHODS
     except Exception:
         return DEFAULT_PAYMENT_METHODS
+
+
+def _amount_for_activation_plan(plan_id: str) -> str:
+    amount = ACTIVATION_PLAN_PRICES_MGA.get(str(plan_id or "").strip().lower())
+    if amount:
+        return amount
+    raise HTTPException(
+        status_code=400,
+        detail="Le plan de la demande n'est pas payable via le tunnel manuel.",
+    )
+
+
+def _connected_facebook_pages_context(db: Session, user_id: str) -> List[Dict[str, Any]]:
+    rows = (
+        db.query(FacebookPageConnection)
+        .filter(
+            or_(
+                FacebookPageConnection.user_id == user_id,
+                FacebookPageConnection.organization_slug == user_id,
+            )
+        )
+        .order_by(FacebookPageConnection.connected_at.desc(), FacebookPageConnection.created_at.desc())
+        .all()
+    )
+    pages: List[Dict[str, Any]] = []
+    seen_page_ids: set[str] = set()
+    for row in rows:
+        page_id = str(row.page_id or "").strip()
+        page_name = str(row.page_name or "").strip()
+        if not page_id or page_id in seen_page_ids:
+            continue
+        seen_page_ids.add(page_id)
+        page_url = ""
+        metadata = row.metadata_json if isinstance(row.metadata_json, dict) else {}
+        if isinstance(metadata, dict):
+            page_url = str(metadata.get("page_url") or "").strip()
+        pages.append(
+            {
+                "page_id": page_id,
+                "page_name": page_name,
+                "page_url": page_url,
+                "is_active": str(row.is_active or "").lower() == "true",
+                "is_selected": str(row.is_active or "").lower() == "true",
+            }
+        )
+    return pages
+
+
+def _page_belongs_to_connected_facebook_context(
+    db: Session,
+    user_id: str,
+    page_id: str,
+) -> bool:
+    resolved_page_id = str(page_id or "").strip()
+    if not resolved_page_id:
+        return False
+    return (
+        db.query(FacebookPageConnection)
+        .filter(
+            or_(
+                FacebookPageConnection.user_id == user_id,
+                FacebookPageConnection.organization_slug == user_id,
+            ),
+            FacebookPageConnection.page_id == resolved_page_id,
+        )
+        .first()
+        is not None
+    )
+
+
+def _page_is_active_for_user(
+    db: Session,
+    user_id: str,
+    page_id: str,
+) -> bool:
+    resolved_page_id = str(page_id or "").strip()
+    if not resolved_page_id:
+        return False
+    return (
+        db.query(FacebookPageConnection)
+        .filter(
+            or_(
+                FacebookPageConnection.user_id == user_id,
+                FacebookPageConnection.organization_slug == user_id,
+            ),
+            FacebookPageConnection.page_id == resolved_page_id,
+            FacebookPageConnection.is_active == "true",
+            FacebookPageConnection.status == "active",
+        )
+        .first()
+        is not None
+    )
 
 
 # ── Launch config ─────────────────────────────────────────────────────────────
@@ -389,15 +567,51 @@ def submit_manual_payment(
         if existing:
             raise HTTPException(status_code=409, detail="Cette reference de transaction a deja ete soumise.")
 
+    activation_request_id = str(req.activation_request_id or "").strip()
+    if not activation_request_id:
+        raise HTTPException(status_code=400, detail="La demande d'activation liee au paiement est requise.")
+
+    ar = db.query(ActivationRequest).filter(
+        ActivationRequest.id == activation_request_id,
+        or_(
+            ActivationRequest.user_id == user_id,
+            ActivationRequest.requester_user_id == user_id,
+            ActivationRequest.organization_scope_id == scope_id,
+        ),
+        ~ActivationRequest.status.in_(ACTIVATION_TERMINAL_STATUSES),
+    ).first()
+    if not ar:
+        raise HTTPException(status_code=404, detail="Demande d'activation introuvable pour ce compte.")
+
+    if ar.payment_status == "verified":
+        raise HTTPException(status_code=409, detail="Le paiement de cette demande est deja verifie.")
+
+    if ar.status in {"blocked", "canceled"}:
+        raise HTTPException(status_code=409, detail="Cette demande d'activation ne peut plus recevoir de paiement.")
+
+    selected_plan_id = str(ar.selected_plan_id or "").strip().lower()
+    if not selected_plan_id:
+        raise HTTPException(status_code=400, detail="Plan d'activation introuvable.")
+
+    plan = db.query(SubscriptionPlan).filter(
+        SubscriptionPlan.id == selected_plan_id,
+        SubscriptionPlan.is_active == "true",
+    ).first()
+    if not plan:
+        raise HTTPException(status_code=400, detail="Le plan lie a cette demande n'est plus disponible.")
+
+    derived_amount = _amount_for_activation_plan(selected_plan_id)
+    derived_currency = "MGA"
+
     submission = ManualPaymentSubmission(
         organization_slug=user_id,
         organization_scope_id=scope_id,
         user_id=user_id,
-        activation_request_id=req.activation_request_id,
-        selected_plan_id=req.selected_plan_id,
+        activation_request_id=ar.id,
+        selected_plan_id=selected_plan_id,
         method_code=req.method_code,
-        amount=req.amount,
-        currency=req.currency,
+        amount=derived_amount,
+        currency=derived_currency,
         payer_full_name=req.payer_full_name,
         payer_phone=req.payer_phone,
         transaction_reference=ref,
@@ -410,18 +624,17 @@ def submit_manual_payment(
     )
     db.add(submission)
 
-    # Update activation request payment status if linked
-    if req.activation_request_id:
-        ar = db.query(ActivationRequest).filter(ActivationRequest.id == req.activation_request_id).first()
-        if ar and (ar.user_id == user_id or ar.requester_user_id == user_id):
-            ar.payment_status = "submitted"
-            if ar.status == "awaiting_payment":
-                ar.status = "payment_submitted"
-            _add_event(db, ar.id, "payment_submitted", "client", user_email, {
-                "submission_id": submission.id,
-                "method": req.method_code,
-                "amount": req.amount,
-            })
+    ar.payment_status = "submitted"
+    if ar.status not in {"active", "canceled", "blocked"}:
+        ar.status = "payment_submitted"
+    _add_event(db, ar.id, "payment_submitted", "client", user_email, {
+        "submission_id": submission.id,
+        "method": req.method_code,
+        "amount": derived_amount,
+        "plan": selected_plan_id,
+        "client_selected_plan_id": str(req.selected_plan_id or "").strip().lower(),
+        "client_amount": str(req.amount or "").strip(),
+    })
 
     db.commit()
     db.refresh(submission)
@@ -542,7 +755,9 @@ def create_activation_request(
     if existing:
         raise HTTPException(status_code=409, detail="Une demande d'activation est deja en cours pour ce compte.")
 
-    selected_pages_context = _normalize_facebook_pages_context(req.selected_facebook_pages)
+    selected_pages_context = _connected_facebook_pages_context(db, user_id)
+    if not selected_pages_context:
+        selected_pages_context = _normalize_facebook_pages_context(req.selected_facebook_pages)
     flare_selected_page_id, flare_selected_page_name = _resolve_flare_selected_page(
         selected_pages_context,
         req.flare_selected_page_id,
@@ -553,6 +768,15 @@ def create_activation_request(
         req.activation_target_page_name or req.facebook_page_name or flare_selected_page_name,
         selected_pages_context,
     )
+    if target_page_id or target_page_name:
+        target_page_id, target_page_name = _resolve_activation_target_from_server(
+            db,
+            user_id,
+            scope_id,
+            target_page_id,
+            target_page_name,
+            require_connected=True,
+        )
     legacy_page_name = (req.facebook_page_name or target_page_name or flare_selected_page_name or "").strip()
 
     ar = ActivationRequest(
@@ -687,11 +911,15 @@ def update_activation_request(
         )
 
     selected_pages_context: Optional[List[Dict[str, Any]]] = None
-    current_pages_context = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
+    current_pages_context = _connected_facebook_pages_context(db, user_id)
+    if not current_pages_context:
+        current_pages_context = _decode_facebook_pages_context(ar.selected_facebook_pages_json)
     if "selected_facebook_pages" in updates:
-        selected_pages_context = _normalize_facebook_pages_context(updates.get("selected_facebook_pages"))
+        selected_pages_context = current_pages_context or _normalize_facebook_pages_context(updates.get("selected_facebook_pages"))
         ar.selected_facebook_pages_json = json.dumps(selected_pages_context, ensure_ascii=False)
         current_pages_context = selected_pages_context
+    elif current_pages_context:
+        ar.selected_facebook_pages_json = json.dumps(current_pages_context, ensure_ascii=False)
 
     for key, value in updates.items():
         if key in {"flare_selected_page_id", "flare_selected_page_name"}:
@@ -720,11 +948,25 @@ def update_activation_request(
             str(updates.get("activation_target_page_name", ar.activation_target_page_name or ar.facebook_page_name) or ""),
             current_pages_context,
         )
-        ar.activation_target_page_id = resolved_target_id
-        ar.activation_target_page_name = resolved_target_name
+        ar.activation_target_page_id, ar.activation_target_page_name = _resolve_activation_target_from_server(
+            db,
+            user_id,
+            scope_id,
+            resolved_target_id,
+            resolved_target_name,
+            require_connected=bool(resolved_target_id or resolved_target_name),
+        )
 
     # Handle FLARE page admin confirmation
     if updates.get("flare_page_admin_confirmed") == "true" and ar.flare_page_admin_confirmed != "true":
+        ar.activation_target_page_id, ar.activation_target_page_name = _resolve_activation_target_from_server(
+            db,
+            user_id,
+            scope_id,
+            ar.activation_target_page_id,
+            ar.activation_target_page_name or ar.facebook_page_name,
+            require_connected=True,
+        )
         ar.flare_page_admin_confirmed = "true"
         ar.flare_page_admin_confirmed_at = datetime.utcnow()
         ar.flare_page_admin_confirmed_by = user_email
@@ -878,7 +1120,11 @@ def admin_verify_payment(
     if s.status != "submitted":
         raise HTTPException(status_code=400, detail="Seuls les paiements soumis peuvent etre verifies.")
 
-    target_plan_id = str(s.selected_plan_id or "").strip().lower()
+    ar: Optional[ActivationRequest] = None
+    if s.activation_request_id:
+        ar = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
+
+    target_plan_id = str((ar.selected_plan_id if ar else s.selected_plan_id) or "").strip().lower()
     plan = db.query(SubscriptionPlan).filter(
         SubscriptionPlan.id == target_plan_id,
         SubscriptionPlan.is_active == "true",
@@ -892,12 +1138,13 @@ def admin_verify_payment(
 
     # Upgrade user plan
     target_user_id = s.user_id
-    if not target_user_id and s.activation_request_id:
-        ar_target = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
-        if ar_target:
-            target_user_id = ar_target.user_id or ar_target.requester_user_id
-            if not s.user_id and target_user_id:
-                s.user_id = target_user_id
+    if ar:
+        activation_owner = ar.user_id or ar.requester_user_id
+        if target_user_id and activation_owner and target_user_id != activation_owner:
+            raise HTTPException(status_code=409, detail="Le paiement et la demande d'activation ne correspondent pas au meme compte.")
+        target_user_id = target_user_id or activation_owner
+        if not s.user_id and target_user_id:
+            s.user_id = target_user_id
     if not target_user_id:
         raise HTTPException(status_code=400, detail="Paiement sans utilisateur cible.")
     sub = db.query(UserSubscription).filter(UserSubscription.user_id == target_user_id).first()
@@ -916,28 +1163,30 @@ def admin_verify_payment(
 
     # Update activation request if linked
     activation_payload: Optional[Dict[str, Any]] = None
-    if s.activation_request_id:
-        ar = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
-        if ar:
-            ar.selected_plan_id = target_plan_id
-            ar.payment_status = "verified"
-            ar.payment_verified_at = datetime.utcnow()
-            if ar.status == "payment_submitted":
-                if ar.flare_page_admin_confirmed == "true":
-                    ar.status = "queued_for_activation"
-                else:
-                    ar.status = "awaiting_flare_page_admin_access"
-            _add_event(db, ar.id, "payment_verified", "admin", admin_email, {
-                "submission_id": s.id,
-                "plan": target_plan_id,
-                "notes": req.notes.strip(),
-            })
-            activation_payload = {
-                "id": ar.id,
-                "payment_status": ar.payment_status,
-                "status": ar.status,
-                "selected_plan_id": ar.selected_plan_id,
-            }
+    if ar:
+        ar.selected_plan_id = target_plan_id
+        ar.payment_status = "verified"
+        ar.payment_verified_at = datetime.utcnow()
+        if ar.status == "payment_submitted":
+            if ar.flare_page_admin_confirmed == "true" and _page_belongs_to_connected_facebook_context(
+                db,
+                target_user_id,
+                ar.activation_target_page_id,
+            ):
+                ar.status = "queued_for_activation"
+            else:
+                ar.status = "awaiting_flare_page_admin_access"
+        _add_event(db, ar.id, "payment_verified", "admin", admin_email, {
+            "submission_id": s.id,
+            "plan": target_plan_id,
+            "notes": req.notes.strip(),
+        })
+        activation_payload = {
+            "id": ar.id,
+            "payment_status": ar.payment_status,
+            "status": ar.status,
+            "selected_plan_id": ar.selected_plan_id,
+        }
 
     db.commit()
     logger.info(f"[activation] Payment verified: {s.id} by {admin_email}")
@@ -983,7 +1232,14 @@ def admin_reject_payment(
     if s.activation_request_id:
         ar = db.query(ActivationRequest).filter(ActivationRequest.id == s.activation_request_id).first()
         if ar:
+            activation_owner = str(ar.user_id or ar.requester_user_id or "").strip()
+            if s.user_id and activation_owner and s.user_id != activation_owner:
+                raise HTTPException(status_code=409, detail="Le paiement et la demande d'activation ne correspondent pas au meme compte.")
             ar.payment_status = "rejected"
+            if ar.status not in {"active", "canceled"}:
+                ar.status = "awaiting_payment"
+            ar.payment_verified_at = None
+            ar.blocked_reason = None
             _add_event(db, ar.id, "payment_rejected", "admin", admin_email, {
                 "submission_id": s.id,
                 "reason": req.reason,
@@ -1151,6 +1407,16 @@ def admin_set_activation_status(
 
     if req.status in {"queued_for_activation", "activation_in_progress", "testing", "active"} and ar.flare_page_admin_confirmed != "true":
         raise HTTPException(status_code=400, detail="L'acces admin FLARE a la page doit etre confirme avant de poursuivre.")
+
+    activation_owner = str(ar.user_id or ar.requester_user_id or "").strip()
+    if req.status in {"queued_for_activation", "activation_in_progress", "testing", "active"}:
+        if not str(ar.activation_target_page_id or "").strip():
+            raise HTTPException(status_code=400, detail="Une page cible verrouillee est requise avant l'activation.")
+        if not _page_belongs_to_connected_facebook_context(db, activation_owner, ar.activation_target_page_id):
+            raise HTTPException(status_code=400, detail="La page cible n'est plus connectee a ce compte.")
+
+    if req.status in {"testing", "active"} and not _page_is_active_for_user(db, activation_owner, ar.activation_target_page_id):
+        raise HTTPException(status_code=400, detail="La page Facebook doit etre activee cote Messenger avant cette transition.")
 
     if req.status == "active" and not ar.tested_at:
         raise HTTPException(status_code=400, detail="Le test Messenger doit etre valide avant de marquer actif.")

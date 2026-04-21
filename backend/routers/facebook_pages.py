@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from core.auth import get_user_email_from_header, get_user_id_from_header
 from core.config import settings
-from core.database import ChatbotPreferences, FacebookPageConnection, SessionLocal, get_db
+from core.database import ActivationRequest, ChatbotPreferences, FacebookPageConnection, SessionLocal, get_db
 from core.encryption_service import encryption_service
 
 logger = logging.getLogger(__name__)
@@ -314,6 +314,58 @@ def _user_safe_last_error(raw: str | None) -> str:
     if "http://" in lower or "https://" in lower or "traceback" in lower or r.strip().startswith("{"):
         return "Une erreur technique est survenue. Réessayez ou reconnectez Facebook dans Paramètres."
     return r[:400] + ("…" if len(r) > 400 else "")
+
+
+def _find_latest_activation_request_for_page(
+    db: Session,
+    user_id: str,
+    page_id: str,
+) -> ActivationRequest | None:
+    resolved_page_id = str(page_id or "").strip()
+    if not resolved_page_id:
+        return None
+    return (
+        db.query(ActivationRequest)
+        .filter(
+            or_(
+                ActivationRequest.user_id == user_id,
+                ActivationRequest.requester_user_id == user_id,
+                ActivationRequest.organization_scope_id == user_id,
+            ),
+            ActivationRequest.activation_target_page_id == resolved_page_id,
+        )
+        .order_by(ActivationRequest.updated_at.desc(), ActivationRequest.created_at.desc())
+        .first()
+    )
+
+
+def _ensure_page_activation_allowed(
+    db: Session,
+    user_id: str,
+    page_id: str,
+) -> ActivationRequest:
+    ar = _find_latest_activation_request_for_page(db, user_id, page_id)
+    if not ar:
+        raise HTTPException(
+            status_code=409,
+            detail="Activez d'abord cette page depuis le tunnel Offre / Activation.",
+        )
+    if ar.payment_status != "verified":
+        raise HTTPException(
+            status_code=409,
+            detail="Le paiement doit etre verifie avant toute activation Facebook.",
+        )
+    if ar.flare_page_admin_confirmed != "true":
+        raise HTTPException(
+            status_code=409,
+            detail="Confirmez d'abord l'acces admin FLARE sur la page cible.",
+        )
+    if ar.status not in {"queued_for_activation", "activation_in_progress", "testing", "active"}:
+        raise HTTPException(
+            status_code=409,
+            detail="Cette page n'est pas encore autorisee pour une activation Messenger.",
+        )
+    return ar
 
 
 def _serialize_connection(row: FacebookPageConnection) -> dict[str, Any]:
@@ -1375,12 +1427,20 @@ async def activate_facebook_page(
     if target_page_id != str(page_id or "").strip():
         raise HTTPException(status_code=400, detail="Page Facebook incoherente.")
 
-    return await _activate_facebook_page_core(
+    ar = _ensure_page_activation_allowed(db, context["user_id"], target_page_id)
+
+    result = await _activate_facebook_page_core(
         db,
         context["user_id"],
         target_page_id,
         actor_email=context["user_email"],
     )
+    if ar.status == "queued_for_activation":
+        ar.status = "activation_in_progress"
+        ar.activation_started_at = _utcnow()
+        ar.updated_at = _utcnow()
+        db.commit()
+    return result
 
 
 @router.post("/pages/{page_id}/deactivate")
@@ -1392,6 +1452,7 @@ async def deactivate_facebook_page(
     """Désactive le bot sur cette page (désinscrit le webhook) sans supprimer la connexion."""
     context = _user_context_from_authorization(authorization, require_edit=True)
     resolved_page_id = str(page_id or "").strip()
+    _ensure_page_activation_allowed(db, context["user_id"], resolved_page_id)
 
     connection = (
         db.query(FacebookPageConnection)

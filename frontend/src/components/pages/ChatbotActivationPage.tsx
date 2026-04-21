@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   CheckCircle2,
   CreditCard,
-  Building2,
   Facebook,
   Clock,
   ArrowLeft,
@@ -18,10 +17,16 @@ import {
   Zap,
 } from "lucide-react";
 import type { NavLevel } from "@/components/NavBreadcrumb";
-import type { FacebookMessengerPage } from "@/lib/facebookMessenger";
+import {
+  consumeFacebookMessengerAuthResult,
+  loadFacebookMessengerStatus,
+  META_PUBLIC_ACCESS_BLOCKED_MESSAGE,
+  resyncFacebookMessengerPages,
+  runFacebookMessengerOAuth,
+  type FacebookMessengerPage,
+} from "@/lib/facebookMessenger";
 import {
   getAssistedLaunchConfig,
-  type LaunchConfig,
   getMyActivationRequest,
   type ActivationRequest,
   createActivationRequest,
@@ -30,8 +35,6 @@ import {
   type PaymentMethod,
   submitManualPayment,
   type ManualPaymentData,
-  getMyManualPayments,
-  type ManualPaymentSubmission,
 } from "@/lib/api";
 import {
   clearRememberedActivationPlan,
@@ -135,6 +138,7 @@ interface ChatbotActivationPageProps {
   onPush: (level: NavLevel) => void;
   availablePages?: FacebookMessengerPage[];
   selectedPageId?: string | null;
+  onPagesChanged?: (pages: FacebookMessengerPage[]) => void;
 }
 
 type WizardStep =
@@ -155,8 +159,8 @@ const STEP_ORDER: WizardStep[] = [
 const STEP_LABELS: Record<WizardStep, string> = {
   choose_plan: "Offre",
   payment: "Paiement",
-  config: "Configuration",
-  flare_admin: "Connexion",
+  config: "Facebook",
+  flare_admin: "Autorisation",
   awaiting: "Activation",
 };
 
@@ -249,29 +253,6 @@ const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
   },
 ];
 
-const SECTORS = [
-  "Commerce",
-  "Restauration",
-  "Services",
-  "Mode",
-  "Tech",
-  "Sante",
-  "Education",
-  "Autre",
-];
-
-const LANGUAGES = [
-  { value: "fr", label: "Francais" },
-  { value: "mg", label: "Malagasy" },
-  { value: "en", label: "Anglais" },
-];
-
-const TONES = [
-  { value: "professionnel", label: "Professionnel" },
-  { value: "amical", label: "Amical" },
-  { value: "decontracte", label: "Decontracte" },
-];
-
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -296,8 +277,7 @@ function statusToStep(ar: any): WizardStep {
     if (ar.flare_page_admin_confirmed === "true") {
       return "awaiting";
     }
-    const hasConfig = ar.activation_target_page_id || ar.facebook_page_name || ar.facebook_page_url;
-    if (hasConfig) {
+    if (ar.activation_target_page_id) {
       return "flare_admin";
     }
     return "config";
@@ -383,6 +363,7 @@ export default function ChatbotActivationPage({
   onPush,
   availablePages = [],
   selectedPageId = null,
+  onPagesChanged,
 }: ChatbotActivationPageProps) {
   // ---- state ----
   const [step, setStep] = useState<WizardStep>("choose_plan");
@@ -391,9 +372,7 @@ export default function ChatbotActivationPage({
   const [error, setError] = useState<string | null>(null);
 
   const [ar, setAr] = useState<ActivationRequest | null>(null);
-  const [launchConfig, setLaunchConfig] = useState<LaunchConfig | null>(null);
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
-  const [submissions, setSubmissions] = useState<ManualPaymentSubmission[]>([]);
 
   // plan selection
   const [selectedPlanId, setSelectedPlanId] = useState<ActivationPlanId>("pro");
@@ -430,6 +409,13 @@ export default function ChatbotActivationPage({
   });
   const [pendingTargetPageId, setPendingTargetPageId] = useState<string>("");
   const [persistedPageContext, setPersistedPageContext] = useState<ActivationPageContext | null>(null);
+  const [configNotice, setConfigNotice] = useState<{
+    tone: "info" | "success" | "warning";
+    message: string;
+  } | null>(null);
+  const [canManageMetaPages, setCanManageMetaPages] = useState(true);
+  const [fbOauthBusy, setFbOauthBusy] = useState(false);
+  const [pagesRefreshBusy, setPagesRefreshBusy] = useState(false);
 
   // flare admin
   const [adminConfirmed, setAdminConfirmed] = useState(false);
@@ -454,6 +440,12 @@ export default function ChatbotActivationPage({
     [importedPages, targetPageId]
   );
   const targetPageUrl = targetPage ? `https://facebook.com/${targetPage.page_id}` : "";
+  const pushConfigNotice = useCallback(
+    (tone: "info" | "success" | "warning", message: string) => {
+      setConfigNotice({ tone, message });
+    },
+    []
+  );
 
   // ---- initial load ----
   useEffect(() => {
@@ -475,10 +467,11 @@ export default function ChatbotActivationPage({
       }
 
       try {
-        const [arRes, lcRes, pmRes] = await Promise.allSettled([
+        const [arRes, lcRes, pmRes, fbRes] = await Promise.allSettled([
           getMyActivationRequest(t),
           getAssistedLaunchConfig(t),
           getManualPaymentMethods(t),
+          loadFacebookMessengerStatus(t),
         ]);
 
         if (cancelled) return;
@@ -491,13 +484,18 @@ export default function ChatbotActivationPage({
           lcRes.status === "fulfilled" ? lcRes.value : null;
         const fetchedPm =
           pmRes.status === "fulfilled" ? pmRes.value.methods : [];
+        const fetchedFacebookStatus =
+          fbRes.status === "fulfilled" ? fbRes.value : null;
 
       setAr(fetchedAr);
-      setLaunchConfig(fetchedLc);
-      if (fetchedAr?.selected_plan_id && ["starter", "pro", "business"].includes(fetchedAr.selected_plan_id)) {
-        setSelectedPlanId(fetchedAr.selected_plan_id as ActivationPlanId);
-        clearRememberedActivationPlan();
-      }
+        setCanManageMetaPages(Boolean(fetchedFacebookStatus?.can_manage_pages));
+        if (fetchedFacebookStatus?.pages) {
+          onPagesChanged?.(fetchedFacebookStatus.pages);
+        }
+        if (fetchedAr?.selected_plan_id && ["starter", "pro", "business"].includes(fetchedAr.selected_plan_id)) {
+          setSelectedPlanId(fetchedAr.selected_plan_id as ActivationPlanId);
+          clearRememberedActivationPlan();
+        }
 
         // merge payment methods from launch config + billing endpoint
         const allMethods = [
@@ -575,6 +573,50 @@ export default function ChatbotActivationPage({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resolveToken]);
+
+  useEffect(() => {
+    const authResult = consumeFacebookMessengerAuthResult();
+    if (!authResult || authResult.provider !== "facebook") {
+      return;
+    }
+
+    if (authResult.status !== "success") {
+      setError(authResult.detail || "Connexion Meta interrompue.");
+      return;
+    }
+
+    setFbOauthBusy(true);
+    pushConfigNotice("info", "Connexion Meta terminee. Chargement des pages importees...");
+
+    void (async () => {
+      try {
+        const t = await resolveToken();
+        if (!t) {
+          throw new Error("Session expiree. Reconnectez-vous puis reessayez.");
+        }
+        const st = await loadFacebookMessengerStatus(t);
+        setCanManageMetaPages(Boolean(st.can_manage_pages));
+        onPagesChanged?.(st.pages || []);
+        const normalized = normalizePageList(st.pages || []);
+        if (normalized.length > 0) {
+          const nextTargetId = getDefaultTargetPageId(normalized, selectedPageId, persistedPageContext);
+          if (nextTargetId) {
+            setPendingTargetPageId(nextTargetId);
+          }
+        }
+        pushConfigNotice("success", "Pages Facebook importees. Selectionnez la page cible pour l'activation.");
+      } catch (e) {
+        const msg = parseApiError(e, "Impossible de recuperer vos pages Facebook.");
+        if (msg === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) {
+          pushConfigNotice("warning", msg);
+          return;
+        }
+        setError(msg);
+      } finally {
+        setFbOauthBusy(false);
+      }
+    })();
+  }, [onPagesChanged, persistedPageContext, pushConfigNotice, resolveToken, selectedPageId]);
 
   // ---- polling (awaiting step) ----
   useEffect(() => {
@@ -683,6 +725,81 @@ export default function ChatbotActivationPage({
   ]);
 
   // ---- actions ----
+  const handleConnectMetaPages = async () => {
+    const t = await resolveToken();
+    if (!t) {
+      setError("Session expiree. Reconnectez-vous a FLARE.");
+      return;
+    }
+    setError(null);
+    setFbOauthBusy(true);
+    setConfigNotice(null);
+    try {
+      const flow = await runFacebookMessengerOAuth(t);
+      if (flow === "redirect") {
+        pushConfigNotice(
+          "info",
+          "Autorisation Meta ouverte. Revenez ici apres validation pour voir les pages importees."
+        );
+        return;
+      }
+
+      const st = await loadFacebookMessengerStatus(t);
+      setCanManageMetaPages(Boolean(st.can_manage_pages));
+      onPagesChanged?.(st.pages || []);
+      const normalized = normalizePageList(st.pages || []);
+      if (normalized.length > 0) {
+        const nextTargetId = getDefaultTargetPageId(normalized, selectedPageId, persistedPageContext);
+        if (nextTargetId) {
+          setPendingTargetPageId(nextTargetId);
+        }
+      }
+      pushConfigNotice("success", "Connexion Meta terminee. Vos pages sont pretes pour selection.");
+    } catch (e) {
+      const msg = parseApiError(e, "Connexion Meta interrompue.");
+      if (msg === META_PUBLIC_ACCESS_BLOCKED_MESSAGE) {
+        pushConfigNotice("warning", msg);
+        return;
+      }
+      setError(msg);
+    } finally {
+      setFbOauthBusy(false);
+    }
+  };
+
+  const handleRefreshImportedPages = async () => {
+    const t = await resolveToken();
+    if (!t) {
+      setError("Session expiree. Reconnectez-vous a FLARE.");
+      return;
+    }
+    setError(null);
+    setPagesRefreshBusy(true);
+    try {
+      const pages = await resyncFacebookMessengerPages(t);
+      setCanManageMetaPages(true);
+      onPagesChanged?.(pages || []);
+      const normalized = normalizePageList(pages || []);
+      if (normalized.length > 0) {
+        const nextTargetId = getDefaultTargetPageId(normalized, selectedPageId, persistedPageContext);
+        if (nextTargetId) {
+          setPendingTargetPageId(nextTargetId);
+        }
+      }
+      pushConfigNotice(
+        "success",
+        normalized.length > 0
+          ? `${normalized.length} page(s) importee(s) depuis Meta.`
+          : "Aucune page importee pour le moment."
+      );
+    } catch (e) {
+      const msg = parseApiError(e, "Impossible d'actualiser la liste des pages Facebook.");
+      setError(msg);
+    } finally {
+      setPagesRefreshBusy(false);
+    }
+  };
+
   const handleChoosePlan = async () => {
         setBusy(true);
     setError(null);
@@ -767,8 +884,9 @@ export default function ChatbotActivationPage({
       await submitManualPayment(data, t);
       // refresh AR
       const refreshed = await getMyActivationRequest(t);
-      setAr(refreshed.activation_request);
-      setStep("awaiting");
+      const refreshedAr = refreshed.activation_request;
+      setAr(refreshedAr);
+      setStep(refreshedAr ? statusToStep(refreshedAr) : "payment");
     } catch (e) {
       const msg = parseApiError(e, "Erreur lors de la soumission du paiement");
       setError(msg);
@@ -779,24 +897,19 @@ export default function ChatbotActivationPage({
 
   const handleSaveConfig = async () => {
     
-    if (importedPages.length > 0 && !targetPageId) {
+    if (importedPages.length === 0) {
+      setError("Connectez Facebook et importez la page a activer avant de continuer.");
+      return;
+    }
+
+    if (!targetPageId) {
       setError("Choisissez la page Facebook a activer.");
       return;
     }
 
-    if (importedPages.length === 0) {
-      if (!cfg.facebook_page_name || !cfg.facebook_page_name.trim()) {
-        setError("Veuillez indiquer le nom de votre page Facebook.");
-        return;
-      }
-      if (!cfg.facebook_page_url || !cfg.facebook_page_url.trim()) {
-        setError("Veuillez indiquer l'URL de votre page Facebook.");
-        return;
-      }
-    }
-
     setBusy(true);
     setError(null);
+    setConfigNotice(null);
     try {
       const t = await resolveToken();
       if (!t) throw new Error("Session expiree");
@@ -912,8 +1025,6 @@ export default function ChatbotActivationPage({
   }
 
   // ---- navigation ----
-  const canGoPrev = stepIndexOf(step) > 0;
-
   const goPrev = () => {
     const idx = stepIndexOf(step);
     if (idx > 0) {
@@ -1001,8 +1112,7 @@ export default function ChatbotActivationPage({
             Activation du chatbot
           </h1>
           <p className="text-sm text-[var(--text-secondary)]">
-            Suivez les etapes pour activer votre chatbot IA sur Facebook
-            Messenger.
+            Suivez les etapes pour autoriser FLARE a activer votre chatbot IA sur Facebook Messenger.
           </p>
         </motion.div>
 
@@ -1188,6 +1298,37 @@ export default function ChatbotActivationPage({
 
               {/* Payment methods */}
               <div>
+                <div className="mb-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-500">
+                    Facebook avant paiement
+                  </p>
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    Pour que l&apos;equipe FLARE sache quelle page connecter, vous pouvez deja importer vos pages Facebook maintenant.
+                    Le parametrage detaille du bot sera complete apres activation.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleConnectMetaPages}
+                      disabled={fbOauthBusy || pagesRefreshBusy || !canManageMetaPages}
+                      title={!canManageMetaPages ? "Seuls le proprietaire ou un admin peuvent connecter Facebook." : undefined}
+                      className="inline-flex items-center gap-2 rounded-xl border border-[#1877F2]/20 bg-[#1877F2]/10 px-4 py-2 text-sm font-semibold text-[#1877F2] transition-colors hover:bg-[#1877F2]/15 disabled:opacity-50"
+                    >
+                      {fbOauthBusy ? <Loader2 size={15} className="animate-spin" /> : <Facebook size={15} />}
+                      Ouvrir Meta
+                    </button>
+                    {importedPages.length > 0 ? (
+                      <span className="text-xs text-[var(--text-secondary)]">
+                        {importedPages.length} page{importedPages.length > 1 ? "s" : ""} importee{importedPages.length > 1 ? "s" : ""}
+                        {resolvedTargetPageName ? ` - cible actuelle : ${resolvedTargetPageName}` : ""}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-[var(--text-muted)]">
+                        Vous pourrez aussi renseigner la page manuellement a l&apos;etape suivante.
+                      </span>
+                    )}
+                  </div>
+                </div>
                 <h3 className="text-sm font-semibold text-[var(--text-secondary)] mb-3 flex items-center gap-2">
                   <CreditCard size={16} className="text-orange-500" />
                   Methodes de paiement
@@ -1333,97 +1474,64 @@ export default function ChatbotActivationPage({
             >
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
-                  Configurez votre chatbot
+                  Autorisez FLARE sur votre page Facebook
                 </h2>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Ces informations seront utilisees pour personnaliser votre bot.
+                  Connectez/importez vos pages Facebook ici, puis selectionnez la page cible de l&apos;activation.
                 </p>
               </div>
 
-              {/* Contact */}
-              <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
-                  <Building2 size={16} />
-                  Contact
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InputField
-                    label="Nom complet"
-                    value={cfg.contact_full_name}
-                    onChange={(v) => updateCfg("contact_full_name", v)}
-                    placeholder="Votre nom complet"
-                  />
-                  <InputField
-                    label="Email"
-                    type="email"
-                    value={cfg.contact_email}
-                    onChange={(v) => updateCfg("contact_email", v)}
-                    placeholder="email@exemple.com"
-                  />
-                  <InputField
-                    label="Telephone"
-                    type="tel"
-                    value={cfg.contact_phone}
-                    onChange={(v) => updateCfg("contact_phone", v)}
-                    placeholder="034 00 000 00"
-                  />
-                  <InputField
-                    label="WhatsApp"
-                    type="tel"
-                    value={cfg.contact_whatsapp}
-                    onChange={(v) => updateCfg("contact_whatsapp", v)}
-                    placeholder="034 00 000 00"
-                  />
-                </div>
-              </fieldset>
-
-              {/* Entreprise */}
-              <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
-                  <Building2 size={16} />
-                  Entreprise
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InputField
-                    label="Nom de l'entreprise"
-                    value={cfg.business_name}
-                    onChange={(v) => updateCfg("business_name", v)}
-                    placeholder="Ma Boutique"
-                  />
-                  <SelectField
-                    label="Secteur d'activite"
-                    value={cfg.business_sector}
-                    onChange={(v) => updateCfg("business_sector", v)}
-                    options={SECTORS.map((s) => ({ value: s, label: s }))}
-                    placeholder="Choisir..."
-                  />
-                  <InputField
-                    label="Ville"
-                    value={cfg.business_city}
-                    onChange={(v) => updateCfg("business_city", v)}
-                    placeholder="Antananarivo"
-                  />
-                  <InputField
-                    label="Pays"
-                    value={cfg.business_country}
-                    onChange={(v) => updateCfg("business_country", v)}
-                    placeholder="Madagascar"
-                  />
-                </div>
-                <TextareaField
-                  label="Description de l'entreprise"
-                  value={cfg.business_description}
-                  onChange={(v) => updateCfg("business_description", v)}
-                  placeholder="Decrivez brievement votre activite..."
-                />
-              </fieldset>
-
-              {/* Facebook */}
               <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
                 <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
                   <Facebook size={16} />
                   Facebook
                 </legend>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={handleConnectMetaPages}
+                    disabled={fbOauthBusy || busy || !canManageMetaPages}
+                    title={!canManageMetaPages ? "Seuls le proprietaire ou un admin peuvent connecter Facebook." : undefined}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-orange-500/35 bg-orange-500/10 px-4 py-2.5 text-sm font-semibold text-orange-500 transition-colors hover:bg-orange-500/15 disabled:opacity-50"
+                  >
+                    {fbOauthBusy ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                    Ouvrir Meta et importer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRefreshImportedPages}
+                    disabled={pagesRefreshBusy || fbOauthBusy || busy || !canManageMetaPages}
+                    title={!canManageMetaPages ? "Seuls le proprietaire ou un admin peuvent synchroniser Facebook." : undefined}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-2.5 text-sm font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-raised)] disabled:opacity-50"
+                  >
+                    {pagesRefreshBusy ? <Loader2 size={16} className="animate-spin" /> : <Facebook size={16} />}
+                    Actualiser les pages importees
+                  </button>
+                </div>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Cette etape ne demande que votre page Facebook. Les details business/chatbot seront completes ensuite dans le cockpit.
+                </p>
+
+                {!canManageMetaPages ? (
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-3 py-2 text-xs text-[var(--text-primary)]">
+                    Seuls le proprietaire ou un admin du compte peuvent connecter Facebook depuis cette etape.
+                  </div>
+                ) : null}
+
+                {configNotice && (
+                  <div
+                    className={`rounded-lg border px-3 py-2 text-xs ${
+                      configNotice.tone === "success"
+                        ? "border-[var(--accent-navy)]/30 bg-[var(--accent-navy)]/10 text-[var(--accent-navy)]"
+                        : configNotice.tone === "warning"
+                        ? "border-orange-500/30 bg-orange-500/10 text-orange-500"
+                        : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
+                    }`}
+                  >
+                    {configNotice.message}
+                  </div>
+                )}
+
                 {importedPages.length > 0 ? (
                   <>
                     <div className="rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3">
@@ -1435,7 +1543,7 @@ export default function ChatbotActivationPage({
                           <span
                             key={page.page_id}
                             className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs ${
-                              page.page_id === selectedPageId
+                              page.page_id === targetPageId
                                 ? "bg-orange-500/15 text-orange-500 border border-orange-500/30"
                                 : "bg-[var(--surface-raised)] text-[var(--text-secondary)] border border-[var(--border-default)]"
                             }`}
@@ -1453,131 +1561,72 @@ export default function ChatbotActivationPage({
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2">
-                        <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">Page selectionnee dans FLARE</p>
+                        <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">
+                          Page actuellement selectionnee dans FLARE
+                        </p>
                         <p className="text-sm text-[var(--text-primary)] font-medium truncate">
                           {selectedPageInFlare?.page_name || "-"}
                         </p>
                       </div>
-                      <SelectField
-                        label="Page a activer (cible)"
-                        value={targetPageId}
-                        onChange={setPendingTargetPageId}
-                        options={importedPages.map((page) => ({
-                          value: page.page_id,
-                          label: page.page_name,
-                        }))}
-                        placeholder="Choisir la page a activer"
-                      />
+                      <label className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-[var(--text-secondary)]">
+                          Page cible de l&apos;activation
+                        </span>
+                        <select
+                          value={targetPageId}
+                          onChange={(e) => {
+                            setPendingTargetPageId(e.target.value);
+                          }}
+                          className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
+                        >
+                          <option value="" disabled>
+                            Choisir la page a activer
+                          </option>
+                          {importedPages.map((page) => (
+                            <option key={page.page_id} value={page.page_id}>
+                              {page.page_name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                     </div>
 
                     {targetPage && (
                       <div className="rounded-lg border border-[var(--accent-navy)]/20 bg-[var(--accent-navy)]/7 px-3 py-2 text-xs text-[var(--text-secondary)]">
-                        <span className="font-semibold text-[var(--text-primary)]">Activation demandee:</span>{" "}
+                        <span className="font-semibold text-[var(--text-primary)]">Page choisie pour activation:</span>{" "}
                         {targetPage.page_name} ({targetPage.page_id})
                       </div>
                     )}
                   </>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InputField
-                      label="Nom de la page"
-                      value={cfg.facebook_page_name}
-                      onChange={(v) => updateCfg("facebook_page_name", v)}
-                      placeholder="Ma Page Facebook"
-                    />
-                    <InputField
-                      label="URL de la page"
-                      value={cfg.facebook_page_url}
-                      onChange={(v) => updateCfg("facebook_page_url", v)}
-                      placeholder="https://facebook.com/mapage"
-                    />
+                  <div className="flex flex-col gap-4">
+                    <div className="rounded-lg border border-orange-500/25 bg-orange-500/10 px-3 py-2 text-xs text-orange-500">
+                      Aucune page importee. Ouvrez Meta puis actualisez la liste avant de continuer. Si Meta bloque l&apos;import, contactez FLARE pour assistance.
+                    </div>
                   </div>
                 )}
+              </fieldset>
+
+              <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
+                <legend className="text-sm font-semibold text-[var(--text-secondary)] mb-1">
+                  Contact activation (optionnel)
+                </legend>
                 <InputField
-                  label="Email admin Facebook"
+                  label="Email de contact Meta"
                   type="email"
                   value={cfg.facebook_admin_email}
                   onChange={(v) => updateCfg("facebook_admin_email", v)}
                   placeholder="admin@exemple.com"
                 />
-              </fieldset>
-
-              {/* Chatbot */}
-              <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
-                  <CheckCircle2 size={16} />
-                  Chatbot
-                </legend>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <InputField
-                    label="Nom du bot"
-                    value={cfg.bot_name}
-                    onChange={(v) => updateCfg("bot_name", v)}
-                    placeholder="FLARE Assistant"
-                  />
-                  <SelectField
-                    label="Langue principale"
-                    value={cfg.primary_language}
-                    onChange={(v) => updateCfg("primary_language", v)}
-                    options={LANGUAGES}
-                  />
-                  <SelectField
-                    label="Ton"
-                    value={cfg.tone}
-                    onChange={(v) => updateCfg("tone", v)}
-                    options={TONES}
-                  />
-                </div>
                 <TextareaField
-                  label="Message d'accueil"
-                  value={cfg.greeting_message}
-                  onChange={(v) => updateCfg("greeting_message", v)}
-                  placeholder="Bonjour ! Comment puis-je vous aider ?"
-                />
-              </fieldset>
-
-              {/* Vente */}
-              <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-orange-500 flex items-center gap-2 mb-1">
-                  <CreditCard size={16} />
-                  Vente
-                </legend>
-                <TextareaField
-                  label="Resume de l'offre"
-                  value={cfg.offer_summary}
-                  onChange={(v) => updateCfg("offer_summary", v)}
-                  placeholder="Decrivez vos produits/services principaux..."
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <InputField
-                    label="Horaires d'ouverture"
-                    value={cfg.opening_hours}
-                    onChange={(v) => updateCfg("opening_hours", v)}
-                    placeholder="Lun-Sam 8h-18h"
-                  />
-                  <InputField
-                    label="Zones de livraison"
-                    value={cfg.delivery_zones}
-                    onChange={(v) => updateCfg("delivery_zones", v)}
-                    placeholder="Antananarivo, Antsirabe..."
-                  />
-                </div>
-              </fieldset>
-
-              {/* Notes */}
-              <fieldset className={`${glass} p-5 flex flex-col gap-4`}>
-                <legend className="text-sm font-semibold text-[var(--text-secondary)] mb-1">
-                  Notes pour FLARE (optionnel)
-                </legend>
-                <TextareaField
-                  label=""
+                  label="Notes pour l'equipe FLARE"
                   value={cfg.notes_for_flare}
                   onChange={(v) => updateCfg("notes_for_flare", v)}
-                  placeholder="Instructions speciales, questions, remarques..."
+                  placeholder="Instructions utiles pour l'activation..."
+                  rows={3}
                 />
               </fieldset>
 
-              {/* Nav */}
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -1589,15 +1638,15 @@ export default function ChatbotActivationPage({
                 </button>
                 <button
                   type="button"
-                  disabled={busy}
+                  disabled={busy || fbOauthBusy || pagesRefreshBusy}
                   onClick={handleSaveConfig}
-              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
                 >
                   {busy ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <>
-                      Suivant
+                      Continuer
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -1618,10 +1667,10 @@ export default function ChatbotActivationPage({
             >
               <div className="text-center">
                 <h2 className="text-lg font-semibold text-[var(--text-primary)] mb-1">
-                  Connexion de votre page Facebook
+                  Autorisation d&apos;activation Facebook
                 </h2>
                 <p className="text-sm text-[var(--text-secondary)]">
-                  Un technicien FLARE va connecter votre chatbot a votre page Facebook.
+                  Confirmez que FLARE peut utiliser la page selectionnee pour activer votre chatbot.
                 </p>
               </div>
 
@@ -1635,19 +1684,18 @@ export default function ChatbotActivationPage({
                       Comment ca marche ?
                     </p>
                     <p className="text-xs text-[var(--text-secondary)] mt-1 leading-relaxed">
-                      Notre equipe technique se chargera de connecter votre chatbot
-                      a votre page Facebook. Vous n&apos;avez rien a faire de votre cote.
+                      FLARE utilisera uniquement la connexion Meta et la page cible indiquees ci-dessous pour preparer puis activer votre chatbot.
                     </p>
                   </div>
                 </div>
 
                 <div className="border-t border-[var(--border-default)] pt-4">
                   <p className="text-sm font-semibold text-[var(--text-secondary)] mb-3">
-                    Informations de votre page :
+                    Contexte de page selectionne :
                   </p>
                   <div className="flex flex-col gap-2 text-sm text-[var(--text-secondary)]">
                     <div className="flex justify-between">
-                      <span>Page selectionnee FLARE</span>
+                      <span>Page selectionnee dans FLARE</span>
                       <span className="text-[var(--text-primary)] font-medium">
                         {selectedPageInFlare?.page_name || "-"}
                       </span>
@@ -1659,13 +1707,13 @@ export default function ChatbotActivationPage({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Page demandee</span>
+                      <span>Page cible d&apos;activation</span>
                       <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">
                         {displayedPageContext.target_page_name || cfg.facebook_page_name || "-"}
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>ID page demandee</span>
+                      <span>ID page cible</span>
                       <span className="text-[var(--text-primary)] font-medium truncate max-w-[60%]">
                         {displayedPageContext.target_page_id || "-"}
                       </span>
@@ -1677,19 +1725,16 @@ export default function ChatbotActivationPage({
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Email admin</span>
+                      <span>Email contact Meta</span>
                       <span className="text-[var(--text-primary)] font-medium">{cfg.facebook_admin_email || "-"}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="rounded-lg bg-[var(--accent-navy)]/6 border border-[var(--accent-navy)]/16 px-4 py-3 text-xs text-[var(--text-secondary)] leading-relaxed">
-                  En cliquant sur &quot;Confirmer&quot;, un technicien FLARE sera notifie
-                  et se chargera de connecter votre chatbot. Vous serez prevenu
-                  des que votre chatbot sera actif.
+                  En cliquant sur &quot;Autoriser&quot;, vous validez l&apos;utilisation de cette connexion/page Facebook pour l&apos;activation de votre chatbot.
                 </div>
 
-                {/* Checkbox */}
                 <label className="flex items-start gap-3 mt-2 cursor-pointer group">
                   <input
                     type="checkbox"
@@ -1698,13 +1743,11 @@ export default function ChatbotActivationPage({
                     className="mt-0.5 h-5 w-5 rounded border-[var(--border-default)] bg-[var(--surface-subtle)] text-orange-500 focus:ring-orange-500/30 accent-orange-500"
                   />
                   <span className="text-sm text-[var(--text-secondary)] group-hover:text-[var(--text-primary)] transition-colors">
-                    Je confirme les informations ci-dessus et je souhaite que
-                    l&apos;equipe FLARE connecte mon chatbot.
+                    J&apos;autorise FLARE a utiliser cette connexion/page Facebook pour finaliser l&apos;activation.
                   </span>
                 </label>
               </div>
 
-              {/* Nav */}
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -1718,13 +1761,13 @@ export default function ChatbotActivationPage({
                   type="button"
                   disabled={busy || !adminConfirmed}
                   onClick={handleConfirmAdmin}
-              className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-orange-600 disabled:opacity-50"
                 >
                   {busy ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <>
-                      Confirmer et notifier l&apos;equipe
+                      Autoriser et notifier l&apos;equipe
                       <ArrowRight size={16} />
                     </>
                   )}
@@ -1819,44 +1862,6 @@ function TextareaField({
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-  placeholder,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  options: { value: string; label: string }[];
-  placeholder?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      {label && (
-        <span className="text-xs font-medium text-[var(--text-secondary)]">{label}</span>
-      )}
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-2 text-sm text-[var(--text-primary)] focus:border-orange-500/50 focus:outline-none focus:ring-1 focus:ring-orange-500/30 transition-colors"
-      >
-        {placeholder && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // Awaiting status display
 // ---------------------------------------------------------------------------
@@ -1910,7 +1915,7 @@ function AwaitingStatus({
       icon: <Clock size={32} className="text-[var(--accent-navy)]" />,
       label: "En file d'attente",
       description:
-        "Votre chatbot est en attente d'activation par notre equipe. Vous serez notifie des que le processus debute.",
+        "Votre chatbot est en attente d&apos;activation par notre equipe. Vous serez notifie des que le processus debute.",
       color: "blue",
     },
     activation_in_progress: {
