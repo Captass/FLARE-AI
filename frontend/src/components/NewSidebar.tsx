@@ -82,8 +82,8 @@ function NavButton({
       title={!expanded ? label : undefined}
       className={`group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-all duration-150 ${
         isActive
-          ? "bg-[var(--bg-active)] text-orange-500 font-medium"
-          : "text-[var(--text-secondary)] hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)]"
+          ? "bg-[#f3e4d2] text-[#f97316] font-medium shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]"
+          : "text-[var(--text-secondary)] hover:bg-white/80 hover:text-[var(--text-primary)]"
       }`}
     >
       {isActive && (
@@ -208,7 +208,7 @@ export default function NewSidebar({
       return;
     }
 
-    const handlePointerDown = (event: MouseEvent) => {
+    const handlePointerDown = (event: PointerEvent) => {
       if (!profileMenuRef.current?.contains(event.target as Node)) {
         setProfileMenuOpen(false);
       }
@@ -220,10 +220,10 @@ export default function NewSidebar({
       }
     };
 
-    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleEscape);
     return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleEscape);
     };
   }, [profileMenuOpen]);
@@ -261,10 +261,11 @@ export default function NewSidebar({
       </AnimatePresence>
 
       <aside
-        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col border-r border-[var(--border-default)] bg-[var(--surface-raised)] shadow-2xl transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 md:bg-[var(--bg-sidebar)] md:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-[110] flex h-[100dvh] ${sidebarWidth} flex-col overflow-hidden border-r border-black/8 bg-[#f6f2ea] shadow-[0_24px_60px_rgba(15,23,42,0.18)] transition-all duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] md:relative md:translate-x-0 md:bg-[var(--bg-sidebar)] md:shadow-none ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(246,242,234,0.98)_100%)] md:hidden" />
         <div className="flex items-center justify-between px-3 pb-3 pt-4">
           <button
             type="button"
@@ -277,11 +278,11 @@ export default function NewSidebar({
               }
               navigate("home");
             }}
-            className="flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left transition-colors hover:bg-[var(--surface-subtle)]"
+            className="relative z-10 flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left transition-colors hover:bg-white/70"
             title={homeLabel}
             aria-label={homeLabel}
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-black/8 bg-white shadow-[0_8px_20px_rgba(15,23,42,0.06)]">
               <FlareMark tone="auto" className="w-[16px]" />
             </div>
             {expanded && (
@@ -293,7 +294,7 @@ export default function NewSidebar({
 
           <button
             onClick={() => setExpanded((current) => !current)}
-            className="hidden h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] transition-all hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] md:flex"
+            className="relative z-10 hidden h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] transition-all hover:bg-white/75 hover:text-[var(--text-primary)] md:flex"
             title={expanded ? collapseLabel : expandLabel}
             aria-label={expanded ? collapseLabel : expandLabel}
           >
@@ -302,14 +303,14 @@ export default function NewSidebar({
 
           <button
             onClick={onClose}
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] md:hidden"
+            className="relative z-10 flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-white/75 hover:text-[var(--text-primary)] md:hidden"
             aria-label={closeLabel}
           >
             <X size={14} />
           </button>
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pt-1">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-2 pt-1">
           <nav className="space-y-0.5" aria-label="Navigation principale">
             {MAIN_ITEMS.map((item) => (
               <NavButton
@@ -341,7 +342,7 @@ export default function NewSidebar({
           <div className="flex-1" />
         </div>
 
-        <div ref={profileMenuRef} className="relative px-2 pb-3">
+        <div ref={profileMenuRef} className="relative z-10 px-2 pb-3">
           <SectionDivider />
 
           <button
@@ -350,7 +351,7 @@ export default function NewSidebar({
             title={profileActionsLabel}
             aria-label={profileActionsLabel}
             aria-expanded={profileMenuOpen}
-            className={`flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition-all hover:border-[var(--border-default)] hover:bg-[var(--surface-subtle)] ${
+            className={`flex w-full items-center gap-2.5 rounded-xl border border-transparent px-2.5 py-2.5 text-left transition-all hover:border-black/8 hover:bg-white/70 ${
               expanded ? "" : "justify-center"
             }`}
           >
@@ -384,7 +385,7 @@ export default function NewSidebar({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 6, scale: 0.98 }}
                 transition={{ duration: 0.16 }}
-                className={`absolute bottom-[72px] z-[140] min-w-[220px] rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-2 shadow-[var(--shadow-card)] ${
+                className={`absolute bottom-[72px] z-[140] min-w-[220px] rounded-2xl border border-black/8 bg-white p-2 shadow-[0_24px_50px_rgba(15,23,42,0.12)] ${
                   expanded ? "left-2 right-2" : "left-[72px]"
                 }`}
               >

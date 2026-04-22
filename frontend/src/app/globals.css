@@ -843,5 +843,10 @@ body.hide-app-sidebar aside, body.hide-app-sidebar aside.fixed, body.hide-app-si
 
 body.sidebar-mobile-open {
   overflow: hidden;
-  touch-action: none;
+  overscroll-behavior: none;
+}
+
+body.landing-mobile-menu-open {
+  overflow: hidden;
+  overscroll-behavior: none;
 }

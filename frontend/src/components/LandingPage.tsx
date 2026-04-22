@@ -12,7 +12,9 @@ import FlareMark from "./FlareMark";
 // Using a local wrapper avoids package export resolution issues during SSG
 const Spline = dynamic(() => import("./SplineScene"), {
   ssr: false,
-  loading: () => <div className="landing-spline-fallback w-full h-full" />,
+  loading: () => (
+    <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
+  ),
 });
 
 /* Tiny error boundary so a Spline crash doesn't kill the page */
@@ -24,7 +26,11 @@ class SplineBoundary extends React.Component<
   static getDerivedStateFromError() { return { hasError: true }; }
   componentDidCatch(err: Error) { console.warn("[Spline]", err.message); }
   render() {
-    if (this.state.hasError) return <div className="landing-spline-fallback w-full h-full bg-[#020305]" />;
+    if (this.state.hasError) {
+      return (
+        <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
+      );
+    }
     return this.props.children;
   }
 }
@@ -219,6 +225,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const [activeFeature, setActiveFeature] = useState<number | null>(0);
   const [activeScenario, setActiveScenario] = useState(0);
   const enableRichEffects = !isMobile && !prefersReducedMotion;
+  const shouldRenderHeroSpline = !prefersReducedMotion;
 
   const { scrollY, scrollYProgress } = useScroll();
 
@@ -248,6 +255,21 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       document.body.classList.remove("is-public-landing");
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    if (mobileMenuOpen) {
+      document.body.classList.add("landing-mobile-menu-open");
+      return () => {
+        document.body.classList.remove("landing-mobile-menu-open");
+      };
+    }
+
+    document.body.classList.remove("landing-mobile-menu-open");
+  }, [mobileMenuOpen]);
 
   const handleInstallClick = () => {
     window.location.href = "/download";
@@ -345,7 +367,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       };
 
       if (isMobile && app.renderer) {
-        app.renderer.setPixelRatio(0.75);
+        app.renderer.setPixelRatio(0.65);
       }
 
       const allObjects = app.getAllObjects();
@@ -712,7 +734,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 p-8"
+            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 overflow-y-auto overscroll-contain bg-[#f6f1e8] p-8"
           >
             <button className="landing-mobile-trigger self-end" onClick={() => setMobileMenuOpen(false)}>
               <X size={32} />
@@ -754,7 +776,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </nav>
             <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
                <button onClick={() => onStart("login")} className="landing-mobile-secondary w-full py-4 uppercase border rounded-2xl">Se connecter</button>
-               <button onClick={() => onStart("signup")} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Demarrer la mise en route</button>
+               <button onClick={handleInstallClick} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Telecharger</button>
             </div>
           </motion.div>
         )}
@@ -803,22 +825,30 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION
          ══════════════════════════════════════════════════════ */}
-      <section className="relative w-full h-screen flex flex-col items-center justify-center sm:block">
+      <section className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden sm:block">
         {/* 3D Robot Background */}
-        <div className="landing-hero-scene absolute inset-0 z-0 opacity-40 grayscale-[80%]">
-          {enableRichEffects ? (
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(251,247,240,0.84)_0%,rgba(247,239,228,0.58)_34%,rgba(249,247,242,0.12)_64%,rgba(249,247,242,0)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_72%_24%,rgba(255,255,255,0.98),rgba(255,247,237,0.74)_24%,rgba(249,247,242,0.18)_46%,transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_76%_30%,rgba(249,115,22,0.14),transparent_30%)] sm:bg-[radial-gradient(circle_at_74%_34%,rgba(249,115,22,0.1),transparent_34%)]" />
+
+        <div className="landing-hero-scene absolute left-0 right-0 top-0 z-0 h-[42svh] opacity-[0.96] grayscale-0 sm:inset-0 sm:h-auto sm:opacity-[0.62] sm:grayscale-[26%]">
+          {shouldRenderHeroSpline ? (
             <SplineBoundary>
-              <Suspense fallback={<div className="landing-spline-fallback w-full h-full bg-[#020305]" />}>
+              <Suspense
+                fallback={
+                  <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
+                }
+              >
                 <Spline
                   scene="https://prod.spline.design/JD2om2Ai-FFKwh9D/scene.splinecode"
                   onLoad={onLoad}
                   className="w-full h-full"
-                  style={{ pointerEvents: 'auto' }}
+                  style={{ pointerEvents: "auto", touchAction: isMobile ? "pan-y" : "auto" }}
                 />
               </Suspense>
             </SplineBoundary>
           ) : (
-            <div className="landing-spline-fallback w-full h-full bg-[#020305]" />
+            <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
           )}
         </div>
 
@@ -847,7 +877,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             <div className="flex items-center gap-2 md:gap-5 cursor-auto pointer-events-auto">
               <button
                 onClick={() => onStart("login")}
-                className="landing-plain-button transition-colors text-[10px] md:text-xs uppercase font-medium hidden xs:block"
+                className="landing-plain-button rounded-full border border-black/10 bg-white/65 px-4 py-2 text-[10px] font-medium uppercase transition-colors hover:bg-white md:px-6 md:text-xs"
               >
                 Se connecter
               </button>
@@ -861,12 +891,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           </motion.header>
 
           {/* ── Hero Content (AIDA Marketing Flow) ── */}
-          <main className="flex-1 flex flex-col justify-center min-h-[70vh] relative z-20 pointer-events-none">
+          <main className="relative z-20 flex min-h-[74vh] flex-1 flex-col justify-end pointer-events-none pt-[18svh] sm:min-h-[70vh] sm:justify-center sm:pt-0">
             <motion.div
               variants={containerVariants}
               initial="hidden"
               animate={isLoaded ? "visible" : "hidden"}
-              className="max-w-3xl pt-10 md:pt-20 relative z-30 pointer-events-auto"
+              className="relative z-30 max-w-3xl pt-10 pointer-events-auto md:pt-20"
             >
               {/* 1. ATTENTION (Headline) */}
               <motion.h1
@@ -900,35 +930,17 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 </motion.p>
               </div>
 
-              {/* 3. ACTION (CTAs directly in flow) */}
-              <motion.div 
-                variants={itemVariants}
-                className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-16"
-              >
-                <motion.button
-                  onClick={() => onStart("signup")}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="landing-cta-hero group relative flex w-full sm:w-auto items-center justify-center gap-3 rounded-full bg-orange-500 px-8 py-5 md:px-10 md:py-5 text-[14px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_20px_40px_rgba(249,115,22,0.4)] hover:bg-orange-600 hover:shadow-[0_20px_50px_rgba(249,115,22,0.6)] border border-orange-400"
-                >
-                  <motion.div
-                    className="absolute inset-0 rounded-full bg-white opacity-0 group-hover:opacity-20"
-                    initial={false}
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 1, repeat: Infinity }}
-                  />
-                  Demarrer la mise en route
-                  <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </motion.button>
-
+              <motion.div variants={itemVariants} className="mb-6 flex justify-start">
                 <button
                   onClick={handleInstallClick}
-                  className="flex items-center justify-center gap-3 rounded-full border-2 border-black/10 bg-white/50 backdrop-blur-md px-8 py-4 md:py-5 text-[13px] font-bold uppercase transition-all hover:bg-white hover:border-black/20 hover:scale-105 w-full sm:w-auto"
+                  className="inline-flex items-center justify-center gap-3 rounded-full border border-black/10 bg-white/68 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all hover:bg-white hover:border-black/20 sm:px-7"
                 >
-                  <Download size={16} className="text-black/60" />
-                  Windows / Android / Web
+                  <Download size={15} className="text-black/60" />
+                  Telecharger
                 </button>
               </motion.div>
+
+              <div className="mb-16" />
 
               {/* 4. DESIRE / VALIDATION (Metrics) */}
               <motion.div
