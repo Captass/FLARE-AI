@@ -606,22 +606,22 @@ export default function ChatbotHomePage({
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-5 py-4"
+                className="mb-4 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-5 py-4 shadow-[0_10px_30px_rgba(15,23,42,0.04)]"
               >
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-[var(--text-secondary)]">
                     Plan actif
                   </span>
-                  <span className="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[11px] font-semibold text-orange-500">
+                  <span className="rounded-full bg-[#fff3e0] px-2.5 py-0.5 text-[11px] font-semibold text-[#b45309]">
                     {currentPlanLabel}
                   </span>
                   {activationRequest?.selected_plan_id && (
-                    <span className="rounded-full bg-[var(--bg-card)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                       Demande: {activationRequest.selected_plan_id}
                     </span>
                   )}
                   {activationRequest?.subscription_status && (
-                    <span className="rounded-full bg-[var(--bg-card)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
+                    <span className="rounded-full bg-[var(--surface-subtle)] px-2.5 py-0.5 text-[11px] font-medium text-[var(--text-secondary)]">
                       Abonnement: {activationRequest.subscription_status}
                     </span>
                   )}
@@ -714,8 +714,8 @@ export default function ChatbotHomePage({
         </motion.div>
 
         {canAccessChatbot && !hasPageSelected && pages.length > 0 && (
-           <div className="text-center p-4 text-orange-500 bg-orange-500/10 rounded-xl border border-orange-500/20">
-             Veuillez selectionner une page ci-dessus pour configurer son chatbot.
+           <div className="rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] px-4 py-3 text-sm text-[var(--text-secondary)] shadow-[0_10px_25px_rgba(15,23,42,0.04)]">
+             Selectionnez une page ci-dessus pour acceder a sa configuration et a ses statistiques.
            </div>
         )}
 
@@ -730,7 +730,7 @@ export default function ChatbotHomePage({
             {/* Statut (aligne spec + donnees reelles overview) */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-                className="flex items-center justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4"
+                className="flex items-center justify-between rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-base)] p-4 shadow-[0_10px_25px_rgba(15,23,42,0.04)]"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--text-muted)]">Statut chatbot</p>
@@ -756,7 +756,7 @@ export default function ChatbotHomePage({
               </div>
               <div
                 className={`p-2.5 rounded-xl ${
-                  botFullyLive ? "bg-emerald-500/18 text-emerald-700 dark:text-emerald-200" : "bg-orange-500/16 text-orange-700 dark:text-orange-100"
+                  botFullyLive ? "bg-[#ecfdf3] text-[#166534]" : "bg-[#fff3e0] text-[#b45309]"
                 }`}
               >
                 <Bot size={20} />
@@ -766,7 +766,7 @@ export default function ChatbotHomePage({
             {/* Messages */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-                className="flex items-center justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4"
+                className="flex items-center justify-between rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-base)] p-4 shadow-[0_10px_25px_rgba(15,23,42,0.04)]"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--text-muted)]">Messages traites</p>
@@ -778,7 +778,7 @@ export default function ChatbotHomePage({
                   )}
                 </div>
               </div>
-              <div className="bg-navy-500/10 text-[var(--accent-navy)] dark:text-[rgb(183,203,255)] p-2.5 rounded-xl">
+              <div className="rounded-xl bg-[#eff6ff] p-2.5 text-[#1d4ed8]">
                 <MessageSquare size={20} />
               </div>
             </motion.div>
@@ -786,7 +786,7 @@ export default function ChatbotHomePage({
             {/* Contacts */}
             <motion.div
               whileHover={{ scale: 1.02 }}
-                className="flex items-center justify-between rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-4"
+                className="flex items-center justify-between rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-base)] p-4 shadow-[0_10px_25px_rgba(15,23,42,0.04)]"
             >
               <div>
                 <p className="text-sm font-medium text-[var(--text-muted)]">Contacts captes</p>
@@ -798,7 +798,7 @@ export default function ChatbotHomePage({
                   )}
                 </div>
               </div>
-              <div className="bg-orange-500/10 text-orange-500 p-2.5 rounded-xl">
+              <div className="rounded-xl bg-[#fff3e0] p-2.5 text-[#b45309]">
                 <Users size={20} />
               </div>
             </motion.div>

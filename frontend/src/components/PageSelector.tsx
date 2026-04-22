@@ -77,37 +77,41 @@ export default function PageSelector({
   const showActivate = typeof onActivatePage === "function";
   const showDeactivate = typeof onDeactivatePage === "function";
   const showRemove = typeof onRemovePage === "function";
+  const hasConnectionWarning =
+    (connectionSummary?.permissionWarningCount || 0) > 0 ||
+    connectionSummary?.oauthConfigured === false ||
+    connectionSummary?.directServiceConfigured === false;
 
   if (pages.length === 0) {
     return (
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full overflow-hidden rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-8 text-center"
+        className="relative w-full overflow-hidden rounded-[28px] border border-[var(--border-default)] bg-[var(--surface-base)] p-8 text-center shadow-[0_20px_60px_rgba(15,23,42,0.04)]"
       >
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-orange-500/10 blur-[80px]" />
+        <div className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#f59e0b]/10 blur-[80px]" />
 
         <div className="relative z-10 flex flex-col items-center gap-4">
-          <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1877F2]/30 bg-gradient-to-br from-[#1877F2]/20 to-transparent">
+          <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-2xl border border-[#1877F2]/25 bg-[#eff6ff]">
             <Facebook className="h-8 w-8 text-[#1877F2]" />
           </div>
           <div>
-            <h3 className="mb-1 text-lg font-semibold text-[var(--text-primary)]">Aucune page Facebook enregistree</h3>
-            <p className="mx-auto max-w-lg text-left text-sm leading-relaxed text-[var(--text-secondary)] sm:text-center">
-              <strong className="text-[var(--text-primary)]">Etape 1 - Autorisation Facebook :</strong> une fenetre Facebook se lance. Autorisez votre compte pour importer vos pages dans FLARE.
-              <br />
-              <strong className="text-[var(--text-primary)]">Etape 2 - Activation :</strong> vos pages apparaissent ici ; choisissez-en une puis cliquez sur <strong className="text-[var(--text-primary)]">Activer</strong>.
+            <h3 className="mb-1 text-lg font-semibold text-[var(--text-primary)]">Aucune page Facebook connectee</h3>
+            <p className="mx-auto max-w-lg text-sm leading-relaxed text-[var(--text-secondary)]">
+              Ouvrez Meta pour importer vos pages, puis activez celle que vous voulez piloter avec FLARE.
             </p>
-            <div className="mx-auto mt-3 max-w-lg rounded-xl border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-left text-xs leading-relaxed text-[var(--text-primary)] sm:text-center">
-              Si Facebook affiche <strong>&quot;Fonctionnalite indisponible&quot;</strong>, le blocage vient de Meta. FLARE ne peut pas terminer l&apos;import tant que l&apos;app Meta n&apos;est pas ouverte aux nouveaux comptes publics.
-            </div>
+            {hasConnectionWarning ? (
+              <div className="mx-auto mt-4 max-w-lg rounded-2xl border border-[#f59e0b]/20 bg-[#fff7ed] px-4 py-3 text-xs leading-relaxed text-[#7c2d12]">
+                Si Meta affiche <strong>&quot;Fonctionnalite indisponible&quot;</strong>, le blocage vient de Facebook avant le retour vers FLARE.
+              </div>
+            ) : null}
           </div>
           <button
             type="button"
             onClick={() => onConnectMetaPages()}
             disabled={metaDisabled}
             title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
-            className="mt-2 flex items-center gap-2 rounded-xl border border-orange-500/40 bg-orange-500/18 px-6 py-2.5 font-medium text-orange-700 shadow-[0_0_20px_rgba(249,115,22,0.1)] transition-all hover:bg-orange-500/28 hover:shadow-[0_0_25px_rgba(249,115,22,0.2)] disabled:pointer-events-none disabled:opacity-45 dark:text-orange-100"
+            className="mt-2 flex items-center gap-2 rounded-xl border border-[#1877F2]/20 bg-[#1877F2] px-6 py-2.5 font-medium text-white shadow-[0_18px_40px_rgba(24,119,242,0.18)] transition-all hover:translate-y-[-1px] hover:bg-[#1666d5] disabled:pointer-events-none disabled:opacity-45"
           >
             {connectMetaBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Ouvrir Meta et importer mes pages
@@ -123,60 +127,76 @@ export default function PageSelector({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4 border-b border-[var(--divide-default)] pb-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-5">
+      <div className="rounded-[28px] border border-[var(--border-default)] bg-[linear-gradient(180deg,#ffffff_0%,#faf7f2_100%)] p-5 shadow-[0_20px_50px_rgba(15,23,42,0.05)]">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--text-primary)]">
             <Facebook className="h-5 w-5 text-[#1877F2]" />
             Vos pages Facebook
           </h2>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-secondary)]">
+              Une seule surface pour connecter Meta, choisir la page active et piloter l&apos;etat du bot sans bruit technique.
+            </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {onSyncPagesList ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {onSyncPagesList ? (
+              <button
+                type="button"
+                onClick={() => onSyncPagesList()}
+                disabled={syncDisabled}
+                title="Synchroniser les pages si vous en avez ajoute a l'autorisation existante"
+                className="inline-flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-base)] px-3.5 py-2 text-xs font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)] disabled:pointer-events-none disabled:opacity-40"
+              >
+                {syncListBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                Actualiser
+              </button>
+            ) : null}
+
             <button
               type="button"
-              onClick={() => onSyncPagesList()}
-              disabled={syncDisabled}
-              title="Synchroniser les pages si vous en avez ajoute a l'autorisation existante"
-              className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-raised)] disabled:pointer-events-none disabled:opacity-40"
+              onClick={() => onConnectMetaPages()}
+              disabled={metaDisabled}
+              title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#1877F2]/15 bg-[#1877F2] px-3.5 py-2 text-xs font-medium text-white transition-colors hover:bg-[#1666d5] disabled:pointer-events-none disabled:opacity-40"
             >
-              {syncListBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-              Actualiser la liste
+              {connectMetaBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+              Ouvrir Meta
             </button>
-          ) : null}
+          </div>
+        </div>
 
-          <button
-            type="button"
-            onClick={() => onConnectMetaPages()}
-            disabled={metaDisabled}
-            title={!canManagePages ? "Reserve au proprietaire ou a un admin du compte." : undefined}
-            className="inline-flex items-center gap-2 rounded-lg border border-[#1877F2]/35 bg-[#1877F2]/16 px-3 py-1.5 text-xs font-medium text-[#1d4ed8] transition-colors hover:bg-[#1877F2]/22 disabled:pointer-events-none disabled:opacity-40 dark:text-[#cce0ff]"
-          >
-            {connectMetaBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
-            Ouvrir Meta
-          </button>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <QuickStatChip label="Pages importees" value={String(pages.length)} tone="neutral" />
+          <QuickStatChip
+            label="Pages actives"
+            value={String(pages.filter((page) => page.is_active && page.webhook_subscribed).length)}
+            tone="success"
+          />
+          <QuickStatChip
+            label="Gestion"
+            value={canManagePages ? "Admin" : "Lecture seule"}
+            tone={canManagePages ? "neutral" : "warning"}
+          />
+          {hasConnectionWarning ? (
+            <QuickStatChip label="Etat" value="Verification requise" tone="warning" />
+          ) : null}
         </div>
       </div>
 
       {!canManagePages ? (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm leading-snug text-[var(--text-primary)]">
+        <div className="rounded-2xl border border-red-500/18 bg-[#fef2f2] px-4 py-3 text-sm leading-snug text-[#7f1d1d]">
           Seuls le proprietaire ou un admin du compte peuvent gerer Facebook.
         </div>
       ) : null}
 
-      <div className="rounded-lg border border-[var(--border-default)] bg-[var(--surface-subtle)] p-3 text-xs leading-relaxed text-[var(--text-secondary)]">
-        <strong className="text-[var(--text-primary)]">Choisir dans FLARE :</strong> cliquez sur une carte pour configurer la personnalisation. <strong className="text-[var(--text-primary)]">Messenger :</strong> utilisez le toggle <strong className="text-emerald-700 dark:text-emerald-200">ON</strong> / <strong className="text-red-700 dark:text-red-300">OFF</strong> pour activer ou desactiver le bot sur cette page.
-      </div>
+      <ConnectionSummaryCard pages={pages} canManagePages={canManagePages} connectionSummary={connectionSummary} />
 
-      <div className="rounded-lg border border-orange-500/20 bg-orange-500/10 px-4 py-3 text-xs leading-relaxed text-[var(--text-primary)]">
-        Si la popup Facebook affiche <strong>&quot;Fonctionnalite indisponible&quot;</strong>, le blocage vient de Meta avant le retour vers FLARE.
-      </div>
-
-      <ConnectionSummaryCard
-        pages={pages}
-        canManagePages={canManagePages}
-        connectionSummary={connectionSummary}
-      />
+      {hasConnectionWarning ? (
+        <div className="rounded-2xl border border-[#f59e0b]/20 bg-[#fff7ed] px-4 py-3 text-xs leading-relaxed text-[#7c2d12]">
+          Si la popup Facebook affiche <strong>&quot;Fonctionnalite indisponible&quot;</strong>, le blocage vient de Meta avant le retour vers FLARE.
+        </div>
+      ) : null}
 
       <motion.div variants={staggerContainer} initial="hidden" animate="show" className="grid gap-3">
         {pages.map((page) => {
@@ -186,19 +206,21 @@ export default function PageSelector({
           const isPartiallyActive = page.is_active || page.webhook_subscribed || page.direct_service_synced;
           const isBusy = busyPageId === page.page_id;
           const initialBadge = page.page_name.substring(0, 2).toUpperCase();
+          const statusTone = page.status === "reconnect_required" ? "danger" : isBotOn ? "success" : "muted";
+          const statusLabel = page.status === "reconnect_required" ? "Reconnexion requise" : isBotOn ? "Bot actif" : "Bot inactif";
 
           return (
             <motion.div
               key={page.page_id}
               variants={itemAnim}
-              className={`group relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all sm:flex-row sm:items-center ${
+              className={`group relative flex flex-col gap-4 rounded-[26px] border p-5 text-left transition-all sm:flex-row sm:items-center ${
                 isSelected
-                  ? "border-orange-500/40 bg-orange-500/[0.06] shadow-[0_0_28px_rgba(249,115,22,0.1)]"
-                  : "border-[var(--border-default)] bg-[var(--surface-base)] hover:border-[var(--border-strong)]"
+                  ? "border-[#f59e0b]/45 bg-[linear-gradient(180deg,#fffaf2_0%,#fff7ed_100%)] shadow-[0_22px_50px_rgba(245,158,11,0.12)]"
+                  : "border-[var(--border-default)] bg-[var(--surface-base)] hover:border-[#cbd5e1] hover:shadow-[0_12px_30px_rgba(15,23,42,0.05)]"
               }`}
             >
               {isSelected ? (
-                <div className="absolute inset-x-0 -bottom-px mx-auto h-px w-2/3 bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
+                <div className="absolute inset-x-0 -bottom-px mx-auto h-px w-2/3 bg-gradient-to-r from-transparent via-[#f59e0b]/60 to-transparent" />
               ) : null}
 
               <div
@@ -219,13 +241,13 @@ export default function PageSelector({
                     <img
                       src={page.page_picture_url}
                       alt={page.page_name}
-                      className={`h-11 w-11 rounded-full border object-cover ${isSelected ? "border-orange-500/50" : "border-[var(--border-default)]"}`}
+                      className={`h-11 w-11 rounded-full border object-cover ${isSelected ? "border-[#f59e0b]/45" : "border-[var(--border-default)]"}`}
                     />
                   ) : (
                     <div
                       className={`flex h-11 w-11 items-center justify-center rounded-full border text-sm font-bold ${
                         isSelected
-                          ? "border-orange-500/40 bg-orange-500/16 text-orange-700 dark:text-orange-100"
+                          ? "border-[#f59e0b]/35 bg-[#fff3e0] text-[#b45309]"
                           : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
                       }`}
                     >
@@ -241,27 +263,42 @@ export default function PageSelector({
                 </div>
 
                 <div className="flex min-w-0 flex-col">
-                  <span className="truncate text-base font-semibold text-[var(--text-primary)]">{page.page_name}</span>
-                  <span className="truncate font-mono text-sm text-[var(--text-secondary)]">ID - {page.page_id}</span>
-                  <span className="mt-0.5 text-sm">
-                    {isBotOn ? (
-                      <span className="font-medium text-emerald-700 dark:text-emerald-200">Bot ON (reponses actives)</span>
-                    ) : page.status === "reconnect_required" ? (
-                      <span className="font-medium text-red-700 dark:text-red-200">Reconnexion requise</span>
-                    ) : (
-                      <span className="font-medium text-red-700 dark:text-red-200">Bot OFF (aucune reponse)</span>
-                    )}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-base font-semibold text-[var(--text-primary)]">{page.page_name}</span>
+                    <span
+                      className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                        statusTone === "success"
+                          ? "bg-[#ecfdf3] text-[#166534]"
+                          : statusTone === "danger"
+                            ? "bg-[#fef2f2] text-[#991b1b]"
+                            : "bg-[var(--surface-subtle)] text-[var(--text-secondary)]"
+                      }`}
+                    >
+                      {statusLabel}
+                    </span>
+                    {isSelected ? (
+                      <span className="inline-flex rounded-full bg-[#fff3e0] px-2.5 py-1 text-[11px] font-semibold text-[#b45309]">
+                        Page active dans FLARE
+                      </span>
+                    ) : null}
+                  </div>
+                  <span className="mt-1 text-sm text-[var(--text-secondary)]">
+                    {isBotOn
+                      ? "Le chatbot repond sur Messenger."
+                      : page.status === "reconnect_required"
+                        ? "L'autorisation Facebook doit etre renouvelee."
+                        : "Le chatbot est present mais coupe sur cette page."}
                   </span>
                   {hasDirectSyncLag ? (
                     <span
-                      className="mt-0.5 truncate text-xs text-[var(--text-secondary)]"
+                      className="mt-1 truncate text-xs text-[var(--text-secondary)]"
                       title="Le bot repond deja, mais la synchronisation des stats Messenger est encore indisponible."
                     >
-                      Reponses actives. Synchronisation dashboard en attente.
+                      Stats Messenger en attente de synchronisation.
                     </span>
                   ) : null}
                   {page.last_error ? (
-                    <span className="mt-0.5 truncate text-xs text-red-700 dark:text-red-200" title={page.last_error}>
+                    <span className="mt-1 truncate text-xs text-[#991b1b]" title={page.last_error}>
                       {page.last_error}
                     </span>
                   ) : null}
@@ -269,15 +306,10 @@ export default function PageSelector({
               </div>
 
               <div className="flex shrink-0 items-center gap-3 sm:pl-2">
-                {isSelected ? (
-                  <span className="mr-1 hidden text-xs font-semibold uppercase tracking-wide text-orange-700 dark:text-orange-100 sm:inline">
-                    Selection FLARE
-                  </span>
-                ) : null}
-
                 {(showActivate || showDeactivate) && canManagePages ? (
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold uppercase tracking-widest ${isBotOn ? "text-emerald-700 dark:text-emerald-200" : "text-red-700 dark:text-red-200"}`}>
+                  <div className="rounded-2xl border border-black/5 bg-white/70 px-3 py-2 shadow-[0_10px_20px_rgba(15,23,42,0.04)]">
+                    <div className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold uppercase tracking-widest ${isBotOn ? "text-[#166534]" : "text-[#991b1b]"}`}>
                       {isBotOn ? "ON" : "OFF"}
                     </span>
                     <button
@@ -293,8 +325,8 @@ export default function PageSelector({
                       }}
                       className={`relative flex h-8 w-14 items-center rounded-full border transition-all ${
                         isBotOn
-                          ? "border-emerald-500/45 bg-emerald-500/24"
-                          : "border-red-500/35 bg-red-500/16"
+                          ? "border-[#10b981]/35 bg-[#d1fae5]"
+                          : "border-[#f97316]/30 bg-[#ffedd5]"
                       } ${isBusy ? "opacity-60" : "cursor-pointer hover:opacity-90"}`}
                       title={isBotOn ? "Desactiver le bot sur cette page" : "Activer le bot sur cette page"}
                     >
@@ -305,11 +337,12 @@ export default function PageSelector({
                           layout
                           transition={{ type: "spring", stiffness: 500, damping: 30 }}
                           className={`h-6 w-6 rounded-full shadow-md ${
-                            isBotOn ? "ml-[26px] bg-emerald-300" : "ml-1 bg-red-300"
+                            isBotOn ? "ml-[26px] bg-[#10b981]" : "ml-1 bg-[#f97316]"
                           }`}
                         />
                       )}
                     </button>
+                    </div>
                   </div>
                 ) : null}
 
@@ -336,7 +369,7 @@ export default function PageSelector({
                           event.stopPropagation();
                           setPendingRemovePageId(null);
                         }}
-                        className="rounded-md border border-[var(--border-default)] bg-[var(--surface-base)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-primary)] disabled:opacity-50"
+                      className="rounded-md border border-[var(--border-default)] bg-[var(--surface-base)] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--text-primary)] disabled:opacity-50"
                       >
                         Non
                       </button>
@@ -349,7 +382,7 @@ export default function PageSelector({
                         event.stopPropagation();
                         setPendingRemovePageId(page.page_id);
                       }}
-                      className="inline-flex items-center rounded-lg border border-red-500/20 bg-red-500/10 p-2 text-red-600 transition-colors hover:bg-red-500/20 disabled:opacity-50 dark:text-red-300"
+                      className="inline-flex items-center rounded-lg border border-red-500/20 bg-[#fef2f2] p-2 text-[#b91c1c] transition-colors hover:bg-red-500/10 disabled:opacity-50"
                       title="Supprimer cette page"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -382,30 +415,58 @@ function ConnectionSummaryCard({
   const lineItems: string[] = [];
   lineItems.push(`${pages.length} page(s) importee(s)`);
   lineItems.push(activeCount > 0 ? `${activeCount} active(s)` : "Aucune page active");
-  if (oauthConfigured === false) lineItems.push("OAuth Meta non configure");
-  if (directServiceConfigured === false) lineItems.push("Service Messenger a finaliser");
+  if (oauthConfigured === false) lineItems.push("Connexion Meta a verifier");
+  if (directServiceConfigured === false) lineItems.push("Synchronisation Messenger a finaliser");
   if (!canManagePages) lineItems.push("Gestion reservee owner/admin");
-  if (warningCount > 0) lineItems.push(`${warningCount} page(s) avec permissions incompletes`);
+  if (warningCount > 0) lineItems.push(`${warningCount} page(s) a verifier`);
 
   return (
-    <div className="w-full rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] p-4 text-left">
-      <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Resume connexion Facebook</p>
-      <p className="mt-1 text-xs text-[var(--text-secondary)]">
-        Ce bloc affiche uniquement l&apos;etat de connexion FLARE. Aucun detail OAuth sensible n&apos;est expose.
-      </p>
+    <div className="w-full rounded-[24px] border border-[var(--border-default)] bg-[var(--surface-base)] p-4 text-left shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.14em] text-[var(--text-muted)]">Connexion Facebook</p>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Vue simplifiee cote client. Les details techniques Meta restent masques.
+          </p>
+        </div>
+        {connectionSummary?.accessMessage ? (
+          <p className="text-xs text-[var(--text-secondary)] sm:max-w-[280px] sm:text-right">{connectionSummary.accessMessage}</p>
+        ) : null}
+      </div>
       <div className="mt-3 flex flex-wrap gap-2">
         {lineItems.map((item) => (
           <span
             key={item}
-            className="rounded-full border border-[var(--border-default)] bg-[var(--surface-base)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]"
+            className="rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-secondary)]"
           >
             {item}
           </span>
         ))}
       </div>
-      {connectionSummary?.accessMessage ? (
-        <p className="mt-3 text-xs text-[var(--text-secondary)]">{connectionSummary.accessMessage}</p>
-      ) : null}
+    </div>
+  );
+}
+
+function QuickStatChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: "neutral" | "success" | "warning";
+}) {
+  const toneClasses =
+    tone === "success"
+      ? "border-[#bbf7d0] bg-[#ecfdf3] text-[#166534]"
+      : tone === "warning"
+        ? "border-[#fed7aa] bg-[#fff7ed] text-[#b45309]"
+        : "border-[var(--border-default)] bg-[var(--surface-base)] text-[var(--text-secondary)]";
+
+  return (
+    <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 ${toneClasses}`}>
+      <span className="text-[10px] font-semibold uppercase tracking-[0.12em]">{label}</span>
+      <span className="text-xs font-semibold">{value}</span>
     </div>
   );
 }
