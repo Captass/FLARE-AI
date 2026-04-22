@@ -228,21 +228,6 @@ export default function NewSidebar({
     };
   }, [profileMenuOpen]);
 
-  useEffect(() => {
-    if (typeof document === "undefined") {
-      return;
-    }
-
-    if (open) {
-      document.body.classList.add("sidebar-mobile-open");
-      return () => {
-        document.body.classList.remove("sidebar-mobile-open");
-      };
-    }
-
-    document.body.classList.remove("sidebar-mobile-open");
-  }, [open]);
-
   return (
     <>
       <AnimatePresence>
@@ -266,7 +251,7 @@ export default function NewSidebar({
         }`}
       >
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.82)_0%,rgba(246,242,234,0.98)_100%)] md:hidden" />
-        <div className="flex items-center justify-between px-3 pb-3 pt-4">
+        <div className="flex items-center justify-between px-3 pb-3 pt-[calc(1rem+env(safe-area-inset-top,0px))]">
           <button
             type="button"
             onClick={() => {
@@ -294,7 +279,7 @@ export default function NewSidebar({
 
           <button
             onClick={() => setExpanded((current) => !current)}
-            className="relative z-10 hidden h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] transition-all hover:bg-white/75 hover:text-[var(--text-primary)] md:flex"
+            className="relative z-10 hidden h-11 w-11 items-center justify-center rounded-xl text-[var(--text-muted)] transition-all hover:bg-white/75 hover:text-[var(--text-primary)] md:flex"
             title={expanded ? collapseLabel : expandLabel}
             aria-label={expanded ? collapseLabel : expandLabel}
           >
@@ -303,7 +288,7 @@ export default function NewSidebar({
 
           <button
             onClick={onClose}
-            className="relative z-10 flex h-7 w-7 items-center justify-center rounded-lg text-[var(--text-muted)] hover:bg-white/75 hover:text-[var(--text-primary)] md:hidden"
+            className="relative z-10 flex h-11 w-11 items-center justify-center rounded-xl text-[var(--text-muted)] hover:bg-white/75 hover:text-[var(--text-primary)] md:hidden"
             aria-label={closeLabel}
           >
             <X size={14} />
@@ -342,7 +327,7 @@ export default function NewSidebar({
           <div className="flex-1" />
         </div>
 
-        <div ref={profileMenuRef} className="relative z-10 px-2 pb-3">
+        <div ref={profileMenuRef} className="relative z-10 px-2 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px))]">
           <SectionDivider />
 
           <button

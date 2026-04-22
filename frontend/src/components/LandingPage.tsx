@@ -227,7 +227,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const enableRichEffects = !isMobile && !prefersReducedMotion;
   const shouldRenderHeroSpline = !prefersReducedMotion;
 
-  const { scrollY, scrollYProgress } = useScroll();
+  const { scrollY, scrollYProgress } = useScroll({ container: containerRef });
 
   useEffect(() => {
     const checkMobile = () => {
@@ -734,9 +734,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
-            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 overflow-y-auto overscroll-contain bg-[#f6f1e8] p-8"
+            className="landing-mobile-menu fixed inset-0 z-[70] flex flex-col gap-8 overflow-y-auto overscroll-contain bg-[#f6f1e8] px-8 pb-[calc(2rem+env(safe-area-inset-bottom,0px))] pt-[calc(2rem+env(safe-area-inset-top,0px))]"
           >
-            <button className="landing-mobile-trigger self-end" onClick={() => setMobileMenuOpen(false)}>
+            <button className="landing-mobile-trigger flex h-11 w-11 items-center justify-center self-end rounded-2xl" onClick={() => setMobileMenuOpen(false)}>
               <X size={32} />
             </button>
             <nav className="flex flex-col gap-6 mt-12">
