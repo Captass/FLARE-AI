@@ -2,25 +2,23 @@
 
 ## Vue d'ensemble
 
-Cette V1 n'utilise plus n8n ni FLARE AI pour les reponses live.
-Le flux est maintenant :
+Le service direct reste compatible, mais la source de verite des reponses Messenger doit etre le backend FLARE AI.
+Le flux cible est maintenant :
 
-1. Meta envoie les messages a notre webhook Cloud Run
-2. Le service recupere le message Messenger
-3. Le service classe rapidement le message
-4. Le service demande une reponse a Google Gemini `gemini-2.5-flash-lite`
-5. Le service compacte et securise la reponse si besoin
-6. Le service repond sur Messenger
-7. Le service journalise localement en SQLite
-8. Le service archive les events recents dans Google Cloud Storage
-9. Le service notifie Telegram seulement en cas important
-10. Telegram permet aussi de passer un contact en mode humain ou de rendre la main a l'agent
+1. Meta envoie les messages au backend FLARE AI ou, en compatibilite, au webhook Cloud Run
+2. Si le direct service recoit le message, il le relaie vers le backend FLARE AI
+3. Le backend applique les preferences chatbot de la page
+4. Le direct service ne traite localement qu'en secours, si le contexte page est complet
+5. Le service journalise localement en SQLite
+6. Le service archive les events recents dans Google Cloud Storage
+7. Le service notifie Telegram seulement en cas important
+8. Telegram permet aussi de passer un contact en mode humain ou de rendre la main a l'agent
 
 ## URLs live
 
 - Service public : `https://messenger-direct-236458687422.europe-west9.run.app`
 - Health : `https://messenger-direct-236458687422.europe-west9.run.app/health`
-- Webhook Meta : `https://messenger-direct-236458687422.europe-west9.run.app/webhook/facebook`
+- Webhook de compatibilite : `https://messenger-direct-236458687422.europe-west9.run.app/webhook/facebook`
 
 Le dashboard direct n'est plus un point d'entree public.
 Le cockpit operateur passe par FLARE AI.
@@ -35,6 +33,8 @@ Variables importantes :
 - `META_PAGE_ACCESS_TOKEN` : Token d'accès de la page Facebook
 - `META_APP_SECRET` : Clé secrète de l'application Facebook
 - `DASHBOARD_ACCESS_KEY` : Clé d'accès au dashboard
+- `BACKEND_URL` : URL du backend FLARE AI cible pour le relay
+- `FLARE_BACKEND_WEBHOOK_URL` : URL explicite du webhook backend si on veut court-circuiter l'ancienne detection
 - `META_GRAPH_VERSION` : Version de l'API Graph Meta
 - `TELEGRAM_BOT_TOKEN` : Token du bot Telegram
 - `TELEGRAM_CHAT_ID` : ID du chat Telegram
@@ -56,7 +56,8 @@ Variables importantes :
 
 Utiliser dans Meta :
 
-- Callback URL : `https://messenger-direct-236458687422.europe-west9.run.app/webhook/facebook`
+- Callback URL prioritaire : backend FLARE AI
+- Callback URL de compatibilite : `https://messenger-direct-236458687422.europe-west9.run.app/webhook/facebook`
 - Verify token : `Ramsflare2026`
 
 ## IA et comportement

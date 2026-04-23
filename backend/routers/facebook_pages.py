@@ -467,10 +467,37 @@ def _serialize_chatbot_preferences_for_direct_service(
     }
 
 
+def _chatbot_preferences_for_page_sync(
+    db: Session,
+    organization_scope_id: str,
+    page_id: str | None = None,
+) -> ChatbotPreferences | None:
+    base_query = (
+        db.query(ChatbotPreferences)
+        .filter(
+            or_(
+                ChatbotPreferences.user_id == organization_scope_id,
+                ChatbotPreferences.organization_slug == organization_scope_id,
+            )
+        )
+        .order_by(ChatbotPreferences.updated_at.desc(), ChatbotPreferences.created_at.desc())
+    )
+    resolved_page_id = str(page_id or "").strip()
+    if resolved_page_id:
+        scoped = base_query.filter(ChatbotPreferences.page_id == resolved_page_id).first()
+        if scoped:
+            return scoped
+    fallback = base_query.filter(ChatbotPreferences.page_id.is_(None)).first()
+    if fallback:
+        return fallback
+    return base_query.first()
+
+
 def _messenger_direct_headers_optional() -> dict[str, str] | None:
     """Headers pour le service Messenger Direct. None si non configuré (sync ignorée, pas d'erreur bloquante)."""
     dashboard_key = str(settings.MESSENGER_DIRECT_DASHBOARD_KEY or "").strip()
-    if not dashboard_key:
+    base_url = str(settings.MESSENGER_DIRECT_URL or "").strip()
+    if not dashboard_key or not base_url:
         return None
     return {
         "Accept": "application/json",
@@ -1352,28 +1379,40 @@ async def _activate_facebook_page_core(
 
     try:
         chatbot_preferences = _serialize_chatbot_preferences_for_direct_service(
-            db.query(ChatbotPreferences)
-            .filter(
-                or_(
-                    ChatbotPreferences.user_id == user_id,
-                    ChatbotPreferences.organization_slug == user_id,
-                )
-            )
-            .first()
+            _chatbot_preferences_for_page_sync(db, user_id, target_page_id)
         )
         await _subscribe_page_to_app(target_page_id, page_access_token)
         subscribed_target = True
-        direct_synced = await _sync_page_to_direct_service(
-            connection,
-            page_access_token,
-            chatbot_preferences=chatbot_preferences,
-        )
+        direct_synced = False
+        direct_sync_error: str | None = None
+        try:
+            direct_synced = await _sync_page_to_direct_service(
+                connection,
+                page_access_token,
+                chatbot_preferences=chatbot_preferences,
+            )
+        except HTTPException as exc:
+            direct_sync_error = str(exc.detail)
+            logger.warning(
+                "Messenger Direct sync failed during activation page=%s user=%s: %s",
+                target_page_id,
+                user_id,
+                direct_sync_error,
+            )
+        except Exception as exc:
+            direct_sync_error = "La messagerie automatisee n'a pas pu se synchroniser."
+            logger.exception(
+                "Unexpected Messenger Direct sync failure during activation page=%s user=%s: %s",
+                target_page_id,
+                user_id,
+                exc,
+            )
         now = _utcnow()
         connection.status = "active"
         connection.is_active = "true"
         connection.webhook_subscribed = "true"
         connection.direct_service_synced = "true" if direct_synced else "false"
-        connection.last_error = None
+        connection.last_error = direct_sync_error
         connection.last_synced_at = now
         connection.updated_at = now
 
@@ -1410,6 +1449,21 @@ async def _activate_facebook_page_core(
         connection.updated_at = _utcnow()
         db.commit()
         raise
+    except Exception as exc:
+        if subscribed_target:
+            try:
+                await _unsubscribe_page_from_app(target_page_id, page_access_token)
+            except HTTPException:
+                pass
+        logger.exception("Unexpected Facebook activation failure page=%s user=%s: %s", target_page_id, user_id, exc)
+        connection.status = _status_for_sync_error("Activation Messenger interrompue.")
+        connection.is_active = "false"
+        connection.webhook_subscribed = "false"
+        connection.direct_service_synced = "false"
+        connection.last_error = "Activation Messenger interrompue. Reessayez dans quelques instants."
+        connection.updated_at = _utcnow()
+        db.commit()
+        raise HTTPException(status_code=502, detail="Activation Messenger interrompue. Reessayez dans quelques instants.")
 
     db.refresh(connection)
     return {"status": "ok", "page": _serialize_connection(connection)}

@@ -262,6 +262,7 @@ async def _sync_active_pages_for_org(
         page_access_token = encryption_service.decrypt(page.page_access_token_encrypted or "")
         if not page_access_token:
             page.status = "reconnect_required"
+            page.is_active = "false"
             page.direct_service_synced = "false"
             page.last_error = "Token de page indisponible. Reconnectez Facebook."
             page.updated_at = datetime.utcnow()

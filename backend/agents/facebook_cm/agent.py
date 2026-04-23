@@ -15,6 +15,7 @@ from core.llm_factory import get_llm
 from core.memory import SessionMemory
 from .tools import (
     get_user_profile,
+    _load_page_connection,
     send_text_message,
 )
 from sqlalchemy import or_
@@ -527,17 +528,12 @@ def _load_page_context(page_id: Optional[str]) -> dict:
     if not resolved_page_id:
         return {}
 
+    connection = _load_page_connection(resolved_page_id)
+    if not connection:
+        return {}
+
     db = SessionLocal()
     try:
-        connection = (
-            db.query(FacebookPageConnection)
-            .filter(FacebookPageConnection.page_id == resolved_page_id)
-            .order_by(FacebookPageConnection.updated_at.desc())
-            .first()
-        )
-        if not connection:
-            return {}
-
         org_slug = str(connection.organization_slug or connection.user_id or "").strip().lower()
         owner_user_id = str(connection.user_id or "").strip().lower()
         if not org_slug:
@@ -554,6 +550,7 @@ def _load_page_context(page_id: Optional[str]) -> dict:
                 or_(*preferences_scope),
                 ChatbotPreferences.page_id == resolved_page_id,
             )
+            .order_by(ChatbotPreferences.updated_at.desc(), ChatbotPreferences.created_at.desc())
             .first()
         )
         if not preferences:
@@ -563,6 +560,7 @@ def _load_page_context(page_id: Optional[str]) -> dict:
                     or_(*preferences_scope),
                     ChatbotPreferences.page_id.is_(None),
                 )
+                .order_by(ChatbotPreferences.updated_at.desc(), ChatbotPreferences.created_at.desc())
                 .first()
             )
 

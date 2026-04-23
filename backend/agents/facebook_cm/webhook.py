@@ -7,7 +7,7 @@ import logging
 from typing import Any, Optional
 
 from .agent import get_cm_agent
-from .tools import send_text_message, _load_page_connection
+from .tools import _load_page_connection, _resolve_page_access_token, send_text_message
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ def _is_page_bot_active(page_id: str) -> bool:
     connection = _load_page_connection(page_id)
     if not connection:
         return False
-    return str(getattr(connection, "is_active", "false")).lower() == "true"
+    if str(getattr(connection, "is_active", "false")).lower() != "true":
+        return False
+    return bool(_resolve_page_access_token(page_id=page_id))
 
 
 def _conversation_id_for_event(page_id: str, sender_id: str) -> str:
@@ -43,7 +45,34 @@ async def process_webhook_event(payload: dict) -> None:
     Traite un evenement webhook Meta Graph.
     Dispatche les messages aux bons handlers.
     """
-    cm_agent = get_cm_agent()
+    try:
+        cm_agent = get_cm_agent()
+        agent_init_error: Exception | None = None
+    except Exception as exc:
+        cm_agent = None
+        agent_init_error = exc
+        logger.exception("Impossible d'initialiser l'agent Messenger Facebook: %s", exc)
+
+    def _send_checked(recipient_id: str, text: str, *, page_id: str) -> None:
+        result = send_text_message(recipient_id, text, page_id=page_id)
+        if isinstance(result, dict) and result.get("error"):
+            raise RuntimeError(str(result.get("error") or "Envoi Messenger echoue."))
+
+    def _send_unavailable_reply(recipient_id: str, *, page_id: str, reason: str) -> None:
+        try:
+            _send_checked(
+                recipient_id,
+                "Desole, un souci technique est survenu. Reessaie dans quelques instants ou ecris-nous encore.",
+                page_id=page_id,
+            )
+        except Exception as fallback_exc:
+            logger.error(
+                "Erreur fallback Messenger %s sur page=%s apres indisponibilite agent (%s): %s",
+                recipient_id,
+                page_id or "?",
+                reason,
+                fallback_exc,
+            )
 
     for entry in payload.get("entry", []):
         for event in entry.get("messaging", []):
@@ -73,6 +102,10 @@ async def process_webhook_event(payload: dict) -> None:
                 conversation_id = _conversation_id_for_event(page_id, sender_id)
                 logger.info("Message recu de %s sur page=%s", sender_id, page_id or "?")
 
+                if agent_init_error or cm_agent is None:
+                    _send_unavailable_reply(sender_id, page_id=page_id, reason="agent_init")
+                    continue
+
                 try:
                     await cm_agent.handle_message(
                         psid=sender_id,
@@ -85,7 +118,7 @@ async def process_webhook_event(payload: dict) -> None:
                 except Exception as exc:
                     logger.error("Erreur traitement message %s: %s", sender_id, exc)
                     try:
-                        send_text_message(
+                        _send_checked(
                             sender_id,
                             "Desole, un souci technique est survenu. Reessaie dans quelques instants ou ecris-nous encore.",
                             page_id=page_id,
@@ -104,6 +137,10 @@ async def process_webhook_event(payload: dict) -> None:
                 conversation_id = _conversation_id_for_event(page_id, sender_id)
                 logger.info("Postback de %s sur page=%s: %s", sender_id, page_id or "?", postback_payload)
 
+                if agent_init_error or cm_agent is None:
+                    _send_unavailable_reply(sender_id, page_id=page_id, reason="agent_init")
+                    continue
+
                 try:
                     await cm_agent.handle_message(
                         psid=sender_id,
@@ -116,7 +153,7 @@ async def process_webhook_event(payload: dict) -> None:
                 except Exception as exc:
                     logger.error("Erreur traitement postback %s: %s", sender_id, exc)
                     try:
-                        send_text_message(
+                        _send_checked(
                             sender_id,
                             "Desole, un souci technique est survenu. Reessaie dans quelques instants ou ecris-nous encore.",
                             page_id=page_id,
@@ -135,13 +172,19 @@ async def process_webhook_event(payload: dict) -> None:
                 logger.info("Attachment(s) recu de %s sur page=%s: %s", sender_id, page_id or "?", att_types)
 
                 if "audio" in att_types:
-                    send_text_message(
-                        sender_id,
-                        "J'ai bien recu ton message vocal. Pour l'instant, merci d'utiliser les messages texte. Comment puis-je t'aider ?",
-                        page_id=page_id,
-                    )
+                    try:
+                        _send_checked(
+                            sender_id,
+                            "J'ai bien recu ton message vocal. Pour l'instant, merci d'utiliser les messages texte. Comment puis-je t'aider ?",
+                            page_id=page_id,
+                        )
+                    except Exception as exc:
+                        logger.warning("Erreur envoi accuse reception audio %s sur page=%s: %s", sender_id, page_id or "?", exc)
                 elif any(t in att_types for t in ("image", "video", "file")):
                     # Traiter comme un message texte avec contexte
+                    if agent_init_error or cm_agent is None:
+                        _send_unavailable_reply(sender_id, page_id=page_id, reason="agent_init")
+                        continue
                     try:
                         attachment_mid = str(event.get("message", {}).get("mid") or "").strip() or None
                         conversation_id = _conversation_id_for_event(page_id, sender_id)
@@ -158,7 +201,7 @@ async def process_webhook_event(payload: dict) -> None:
                 elif "fallback" not in att_types:
                     # Stickers ou types inconnus — accuser reception
                     try:
-                        send_text_message(
+                        _send_checked(
                             sender_id,
                             "Merci pour ton message ! Comment puis-je t'aider ?",
                             page_id=page_id,

@@ -5,11 +5,12 @@ Solution directe sans n8n pour Facebook Messenger.
 ## URL publique
 
 - Service: `https://messenger-direct-236458687422.europe-west9.run.app`
-- Webhook Meta: `https://messenger-direct-236458687422.europe-west9.run.app/webhook/facebook`
+- Webhook de compatibilite / relay: `https://messenger-direct-236458687422.europe-west9.run.app/webhook/facebook`
 - Health: `https://messenger-direct-236458687422.europe-west9.run.app/health`
 
 Le dashboard direct n'est plus un point d'entree public.
 Le cockpit operateur passe maintenant par FLARE AI.
+Le webhook Meta principal doit pointer vers le backend FLARE AI quand c'est possible.
 
 ## Regle de test
 
@@ -33,10 +34,10 @@ Le service direct reste derriere, mais il ne sert plus de surface produit princi
 
 ## Ce que fait le service
 
-1. verifie le webhook Meta
+1. verifie le webhook Meta ou relaie proprement vers le backend FLARE AI
 2. recoit les messages Messenger
-3. demande une reponse a Google Gemini `gemini-2.5-flash-lite`
-4. repond au client sur Messenger
+3. privilegie le backend FLARE AI pour les reponses et preferences page-specifiques
+4. garde un traitement local de secours seulement si le contexte page est complet
 5. enregistre les contacts, events, tokens, couts et latences en SQLite
 6. synchronise automatiquement Google Sheets pour les contacts, conversations, messages, leads, devis, rendez-vous et KPI journaliers
 7. archive aussi les events sur 24h dans Google Cloud Storage

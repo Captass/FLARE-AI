@@ -14,7 +14,7 @@ import time
 from html import escape as html_escape
 from pathlib import Path
 from typing import Any
-from urllib.parse import parse_qs, quote, urlparse
+from urllib.parse import parse_qs, quote, urlparse, urlunparse
 
 import httpx
 from dotenv import load_dotenv
@@ -25,6 +25,8 @@ from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger("messenger_direct")
+DASHBOARD_ACCESS_HEADER = "X-FLARE-Dashboard-Key"
+PRODUCTION_BACKEND_FALLBACK_URL = "https://flare-backend-ab5h.onrender.com"
 
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = BASE_DIR / "runtime_config.json"
@@ -57,7 +59,9 @@ def load_config() -> dict[str, str]:
         "google_api_key": pick("GOOGLE_API_KEY", "google_api_key"),
         "google_genai_model": pick("GOOGLE_GENAI_MODEL", "google_genai_model", "gemini-2.5-flash-lite"),
         "archive_bucket_name": pick("ARCHIVE_BUCKET_NAME", "archive_bucket_name"),
+        "backend_url": pick("BACKEND_URL", "backend_url"),
         "flare_chat_url": pick("FLARE_CHAT_URL", "flare_chat_url"),
+        "flare_backend_webhook_url": pick("FLARE_BACKEND_WEBHOOK_URL", "flare_backend_webhook_url"),
         "flare_chat_mode": pick("FLARE_CHAT_MODE", "flare_chat_mode", "rapide"),
         "google_sheet_id": pick("GOOGLE_SHEET_ID", "google_sheet_id"),
         "google_service_account_json": pick("GOOGLE_SERVICE_ACCOUNT_JSON", "google_service_account_json"),
@@ -218,6 +222,97 @@ GOOGLE_SHEETS_CACHE: dict[str, Any] = {
 
 def dashboard_access_key() -> str:
     return str(CONFIG.get("dashboard_access_key") or "").strip()
+
+
+def _normalize_url_base(value: str) -> str:
+    candidate = str(value or "").strip().rstrip("/")
+    if not candidate:
+        return ""
+    parsed = urlparse(candidate)
+    if not parsed.scheme or not parsed.netloc:
+        return ""
+    path = parsed.path.rstrip("/")
+    for suffix in ("/webhook/facebook/relay", "/api/webhook/facebook", "/webhook/facebook", "/chat"):
+        if path.endswith(suffix):
+            path = path[: -len(suffix)]
+            break
+    return urlunparse((parsed.scheme, parsed.netloc, path, "", "", "")).rstrip("/")
+
+
+def backend_base_url() -> str:
+    explicit = str(CONFIG.get("flare_backend_webhook_url") or "").strip()
+    if explicit:
+        normalized = _normalize_url_base(explicit)
+        if normalized:
+            return normalized
+
+    configured_backend = str(CONFIG.get("backend_url") or "").strip()
+    if configured_backend:
+        normalized = _normalize_url_base(configured_backend)
+        if normalized:
+            return normalized
+
+    if str(CONFIG.get("app_env") or "").strip().lower() == "production":
+        return PRODUCTION_BACKEND_FALLBACK_URL
+
+    flare_chat_url = str(CONFIG.get("flare_chat_url") or "").strip()
+    if not flare_chat_url:
+        return ""
+
+    return _normalize_url_base(flare_chat_url)
+
+
+def backend_relay_targets(signature: str) -> list[tuple[str, dict[str, str]]]:
+    base_url = backend_base_url()
+    if not base_url:
+        return []
+
+    targets: list[tuple[str, dict[str, str]]] = []
+    relay_key = dashboard_access_key()
+    if relay_key:
+        targets.append(
+            (
+                f"{base_url}/webhook/facebook/relay",
+                {
+                    "Content-Type": "application/json",
+                    DASHBOARD_ACCESS_HEADER: relay_key,
+                },
+            )
+        )
+
+    signature_headers = {
+        "Content-Type": "application/json",
+        "X-Hub-Signature-256": signature,
+    }
+    targets.append((f"{base_url}/webhook/facebook", signature_headers))
+    targets.append((f"{base_url}/api/webhook/facebook", signature_headers))
+    return targets
+
+
+def _iter_payload_page_ids(payload: dict[str, Any]) -> list[str]:
+    page_ids: list[str] = []
+    for entry in payload.get("entry", []):
+        entry_page_id = str(entry.get("id") or "").strip()
+        for messaging in entry.get("messaging", []):
+            if messaging.get("delivery") or messaging.get("read"):
+                continue
+            if messaging.get("message", {}).get("is_echo"):
+                continue
+            page_id = str(messaging.get("recipient", {}).get("id") or entry_page_id).strip()
+            if page_id:
+                page_ids.append(page_id)
+    return page_ids
+
+
+def payload_can_be_processed_locally(payload: dict[str, Any]) -> bool:
+    page_ids = _iter_payload_page_ids(payload)
+    if not page_ids:
+        return True
+    for page_id in page_ids:
+        page_context = resolve_page_context(page_id)
+        if bool(page_context.get("is_active")) and bool(str(page_context.get("page_access_token") or "").strip()):
+            return True
+    return False
 
 
 def has_dashboard_access(request: Request) -> bool:
@@ -5754,5 +5849,36 @@ async def incoming_webhook(request: Request) -> JSONResponse:
         raise HTTPException(status_code=403, detail="Invalid signature")
 
     payload = json.loads(raw_body.decode("utf-8"))
+    relay_failures: list[str] = []
+    for relay_url, relay_headers in backend_relay_targets(signature):
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(8.0, connect=3.0)) as client:
+                relay_response = await client.post(
+                    relay_url,
+                    content=raw_body,
+                    headers=relay_headers,
+                )
+            if relay_response.status_code < 400:
+                LOGGER.info("Messenger webhook relayed to backend successfully: %s", relay_url)
+                return JSONResponse({"status": "accepted", "relay": "backend"})
+            relay_failures.append(f"{relay_url} -> {relay_response.status_code}")
+            LOGGER.warning(
+                "Messenger webhook relay failed status=%s body=%s target=%s",
+                relay_response.status_code,
+                relay_response.text[:400],
+                relay_url,
+            )
+        except Exception as exc:
+            relay_failures.append(f"{relay_url} -> {exc}")
+            LOGGER.warning("Messenger webhook relay exception target=%s error=%s", relay_url, exc)
+
+    if not payload_can_be_processed_locally(payload):
+        LOGGER.error(
+            "Messenger webhook cannot be processed locally and backend relay failed. page_ids=%s failures=%s",
+            _iter_payload_page_ids(payload),
+            relay_failures,
+        )
+        raise HTTPException(status_code=503, detail="Messenger relay indisponible. Reessayez plus tard.")
+
     asyncio.create_task(process_message(payload))
-    return JSONResponse({"status": "accepted"})
+    return JSONResponse({"status": "accepted", "relay": "local"})

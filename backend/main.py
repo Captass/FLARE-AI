@@ -16,7 +16,7 @@ from core.config import settings
 from core.database import init_db, SessionLocal, Skill
 from routers.chat import router as chat_router
 from routers.agents import router as agents_router
-from routers.webhooks import router as webhooks_router
+from routers.webhooks import router as webhooks_router, legacy_router as legacy_webhooks_router
 from routers.memory import router as memory_router
 from routers.skills import router as skills_router
 from routers.dashboard import router as dashboard_router
@@ -260,6 +260,7 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(agents_router)
 app.include_router(webhooks_router)
+app.include_router(legacy_webhooks_router)
 app.include_router(memory_router)
 app.include_router(skills_router)
 app.include_router(dashboard_router)
