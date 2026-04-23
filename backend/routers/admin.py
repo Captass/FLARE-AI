@@ -11,6 +11,10 @@ from core.config import settings
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
+FALLBACK_ADMIN_EMAILS = {
+    "cptskevin@gmail.com",
+    "kevin.costa.pro@gmail.com",
+}
 
 # ── Normalisation des action_kind vers les labels frontend ──────────────────
 ACTION_NORMALIZE = {
@@ -67,23 +71,36 @@ def get_db():
 
 
 def _configured_admin_emails() -> set[str]:
-    return {
+    configured = {
         email.strip().lower()
         for email in str(settings.ADMIN_EMAILS or "").split(",")
         if email and email.strip()
     }
+    return configured | FALLBACK_ADMIN_EMAILS
 
 
 def check_admin_auth(authorization: Optional[str] = Header(None)):
     """Vérifie que l'utilisateur est dans la liste des administrateurs (ADMIN_EMAILS dans .env)."""
     try:
         user_id, user_email = get_user_identity(authorization)
-        if user_id == "anonymous" or not str(user_email or "").strip():
+        if user_id == "anonymous":
+            raise HTTPException(status_code=401, detail="Session expiree ou invalide.")
+        resolved_email = str(user_email or "").strip()
+        if not resolved_email:
+            resolved_email = _firebase_email_lookup(user_id).strip()
+        if not resolved_email:
+            logger.warning("[Admin] Aucun email resolu pour l'utilisateur %s", user_id)
             raise HTTPException(status_code=401, detail="Session expiree ou invalide.")
         admin_emails = _configured_admin_emails()
         if not admin_emails:
             logger.error("[Admin] ADMIN_EMAILS est vide ou invalide.")
             raise HTTPException(status_code=503, detail="Configuration admin indisponible.")
+
+        logger.info("[Admin] Requete de %s (ID: %s)", resolved_email, user_id)
+        if resolved_email.lower() not in admin_emails:
+            logger.warning("[Admin] Tentative d'acces refusee pour %s", resolved_email)
+            raise HTTPException(status_code=403, detail="Acces reserve a l'administrateur principal.")
+        return user_id
 
         logger.info(f"[Admin] Requête de {user_email} (ID: {user_id})")
 

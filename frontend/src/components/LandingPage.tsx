@@ -17,6 +17,8 @@ const Spline = dynamic(() => import("./SplineScene"), {
   ),
 });
 
+const HERO_SPLINE_SCENE = "https://prod.spline.design/kuXZvk779k9Nhcwp/scene.splinecode";
+
 /* Tiny error boundary so a Spline crash doesn't kill the page */
 class SplineBoundary extends React.Component<
   { children: React.ReactNode },
@@ -827,11 +829,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
          ══════════════════════════════════════════════════════ */}
       <section className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden sm:block">
         {/* 3D Robot Background */}
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(251,247,240,0.84)_0%,rgba(247,239,228,0.58)_34%,rgba(249,247,242,0.12)_64%,rgba(249,247,242,0)_100%)]" />
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_72%_24%,rgba(255,255,255,0.98),rgba(255,247,237,0.74)_24%,rgba(249,247,242,0.18)_46%,transparent_70%)]" />
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_76%_30%,rgba(249,115,22,0.14),transparent_30%)] sm:bg-[radial-gradient(circle_at_74%_34%,rgba(249,115,22,0.1),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(252,248,242,0.72)_0%,rgba(248,241,231,0.38)_30%,rgba(249,247,242,0.06)_58%,rgba(249,247,242,0)_100%)] sm:bg-[linear-gradient(180deg,rgba(251,247,240,0.84)_0%,rgba(247,239,228,0.58)_34%,rgba(249,247,242,0.12)_64%,rgba(249,247,242,0)_100%)]" />
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_68%_16%,rgba(255,255,255,0.94),rgba(255,247,237,0.62)_22%,rgba(249,247,242,0.08)_42%,transparent_66%)] sm:bg-[radial-gradient(circle_at_72%_24%,rgba(255,255,255,0.98),rgba(255,247,237,0.74)_24%,rgba(249,247,242,0.18)_46%,transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_72%_20%,rgba(249,115,22,0.10),transparent_24%)] sm:bg-[radial-gradient(circle_at_74%_34%,rgba(249,115,22,0.1),transparent_34%)]" />
 
-        <div className="landing-hero-scene absolute left-0 right-0 top-0 z-0 h-[42svh] opacity-[0.96] grayscale-0 sm:inset-0 sm:h-auto sm:opacity-[0.62] sm:grayscale-[26%]">
+        <div className="landing-hero-scene absolute inset-x-0 top-[-4svh] z-0 h-[58svh] opacity-[0.98] grayscale-0 sm:inset-0 sm:h-auto sm:opacity-[0.62] sm:grayscale-[26%]">
           {shouldRenderHeroSpline ? (
             <SplineBoundary>
               <Suspense
@@ -839,12 +841,14 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
                 }
               >
-                <Spline
-                  scene="https://prod.spline.design/JD2om2Ai-FFKwh9D/scene.splinecode"
-                  onLoad={onLoad}
-                  className="w-full h-full"
-                  style={{ pointerEvents: "auto", touchAction: isMobile ? "pan-y" : "auto" }}
-                />
+                <div className="h-full w-full scale-[1.18] translate-y-[-2%] sm:scale-100 sm:translate-y-0">
+                  <Spline
+                    scene={HERO_SPLINE_SCENE}
+                    onLoad={onLoad}
+                    className="h-full w-full"
+                    style={{ pointerEvents: "auto", touchAction: isMobile ? "pan-y" : "auto" }}
+                  />
+                </div>
               </Suspense>
             </SplineBoundary>
           ) : (
@@ -891,7 +895,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           </motion.header>
 
           {/* ── Hero Content (AIDA Marketing Flow) ── */}
-          <main className="relative z-20 flex min-h-[74vh] flex-1 flex-col justify-end pointer-events-none pt-[18svh] sm:min-h-[70vh] sm:justify-center sm:pt-0">
+          <main className="relative z-20 flex min-h-[74vh] flex-1 flex-col justify-end pointer-events-none pt-[24svh] sm:min-h-[70vh] sm:justify-center sm:pt-0">
             <motion.div
               variants={containerVariants}
               initial="hidden"
