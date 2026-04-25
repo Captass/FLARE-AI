@@ -795,7 +795,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               variants={containerVariants}
               initial="hidden"
               animate={isLoaded ? "visible" : "hidden"}
-              className="relative z-30 max-w-3xl pt-10 pointer-events-auto md:pt-20"
+              className="pointer-events-none relative z-30 max-w-3xl pt-10 md:pt-20"
             >
               {/* 1. ATTENTION (Headline) */}
               <motion.h1
@@ -829,7 +829,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 </motion.p>
               </div>
 
-              <motion.div variants={itemVariants} className="mb-6 flex justify-start">
+              <motion.div variants={itemVariants} className="pointer-events-auto mb-6 flex justify-start">
                 <button
                   onClick={handleInstallClick}
                   className="landing-cinematic-download inline-flex items-center justify-center gap-3 rounded-full border border-black/10 bg-white/68 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all hover:bg-white hover:border-black/20 sm:px-7"
