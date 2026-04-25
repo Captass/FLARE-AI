@@ -1,8 +1,8 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ContactShadows, Text } from "@react-three/drei";
-import { useCallback, useRef, useState } from "react";
+import { ContactShadows, OrbitControls, Text } from "@react-three/drei";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 interface AutomationDeskSceneProps {
@@ -25,6 +25,12 @@ const KEY_ROWS: KeyItem[][] = [
     { label: "ENTREE", value: "ENTER", width: 0.5 },
   ],
 ];
+
+const PHYSICAL_KEY_MAP: Record<string, KeyItem> = KEY_ROWS.flat().reduce<Record<string, KeyItem>>((map, item) => {
+  map[item.label] = item;
+  if (item.value.length === 1) map[item.value.toUpperCase()] = item;
+  return map;
+}, {});
 
 function ScreenLine({ x, y, width, opacity = 0.42, color = "#dbeafe" }: { x: number; y: number; width: number; opacity?: number; color?: string }) {
   return (
@@ -141,20 +147,49 @@ function useKeyClickSound() {
       audioContext.resume().catch(() => undefined);
     }
 
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
+    const now = audioContext.currentTime;
+    const duration = 0.045;
+    const sampleCount = Math.max(1, Math.floor(audioContext.sampleRate * duration));
+    const buffer = audioContext.createBuffer(1, sampleCount, audioContext.sampleRate);
+    const channel = buffer.getChannelData(0);
 
-    oscillator.type = "triangle";
-    oscillator.frequency.setValueAtTime(180, audioContext.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(90, audioContext.currentTime + 0.045);
-    gain.gain.setValueAtTime(0.0001, audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.045, audioContext.currentTime + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.055);
+    for (let index = 0; index < sampleCount; index += 1) {
+      const envelope = 1 - index / sampleCount;
+      channel[index] = (Math.random() * 2 - 1) * envelope;
+    }
 
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + 0.06);
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buffer;
+
+    const filter = audioContext.createBiquadFilter();
+    filter.type = "bandpass";
+    filter.frequency.setValueAtTime(2600, now);
+    filter.Q.setValueAtTime(7.5, now);
+
+    const clickGain = audioContext.createGain();
+    clickGain.gain.setValueAtTime(0.0001, now);
+    clickGain.gain.exponentialRampToValueAtTime(0.085, now + 0.004);
+    clickGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    const transient = audioContext.createOscillator();
+    const transientGain = audioContext.createGain();
+    transient.type = "square";
+    transient.frequency.setValueAtTime(1550, now);
+    transient.frequency.exponentialRampToValueAtTime(780, now + 0.026);
+    transientGain.gain.setValueAtTime(0.0001, now);
+    transientGain.gain.exponentialRampToValueAtTime(0.025, now + 0.002);
+    transientGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.028);
+
+    noise.connect(filter);
+    filter.connect(clickGain);
+    clickGain.connect(audioContext.destination);
+    transient.connect(transientGain);
+    transientGain.connect(audioContext.destination);
+
+    noise.start(now);
+    noise.stop(now + duration);
+    transient.start(now);
+    transient.stop(now + 0.03);
   }, []);
 }
 
@@ -194,6 +229,10 @@ function InteractiveKey({
         if (typeof document !== "undefined") document.body.style.cursor = "";
       }}
     >
+      <mesh position={[0, 0.012, 0]} renderOrder={10}>
+        <boxGeometry args={[width + 0.045, 0.09, 0.175]} />
+        <meshBasicMaterial transparent opacity={0} depthWrite={false} />
+      </mesh>
       <mesh castShadow receiveShadow>
         <boxGeometry args={[width, 0.055, 0.14]} />
         <meshStandardMaterial
@@ -236,6 +275,33 @@ function InteractiveKeyboard({ setTypedText }: { setTypedText: React.Dispatch<Re
     },
     [playKeyClick, setTypedText],
   );
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable='true']")) return;
+
+      const normalizedKey =
+        event.key === " "
+          ? "ESPACE"
+          : event.key === "Backspace"
+            ? "EFFACER"
+            : event.key === "Enter"
+              ? "ENTREE"
+              : event.key.length === 1
+                ? event.key.toUpperCase()
+                : "";
+
+      const item = PHYSICAL_KEY_MAP[normalizedKey];
+      if (!item) return;
+
+      event.preventDefault();
+      handlePress(item);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handlePress]);
 
   return (
     <group position={[0.08, 0.01, 0.58]}>
@@ -356,11 +422,6 @@ function AutomationOffice({ reducedMotion = false }: AutomationDeskSceneProps) {
       </group>
 
       <InteractiveKeyboard setTypedText={setTypedText} />
-
-      <mesh position={[1.34, 1.34, -0.22]} rotation={[0.08, -0.35, 0]}>
-        <torusGeometry args={[0.32, 0.01, 12, 96, Math.PI * 1.35]} />
-        <meshBasicMaterial color="#fb923c" transparent opacity={0.32} />
-      </mesh>
     </group>
   );
 }
@@ -382,6 +443,19 @@ export default function AutomationDeskScene({ reducedMotion = false }: Automatio
         <pointLight position={[-2.1, 1.1, 1.4]} intensity={1.35} color="#60a5fa" distance={5.4} />
         <AutomationOffice reducedMotion={reducedMotion} />
         <ContactShadows position={[0, -0.58, 0]} opacity={0.38} scale={7} blur={2.2} far={3.5} />
+        <OrbitControls
+          enabled={!reducedMotion}
+          enablePan={false}
+          enableZoom={false}
+          enableDamping
+          dampingFactor={0.08}
+          rotateSpeed={0.32}
+          minAzimuthAngle={-0.42}
+          maxAzimuthAngle={0.38}
+          minPolarAngle={1.12}
+          maxPolarAngle={1.5}
+          target={[0.65, 0.3, -0.32]}
+        />
       </Canvas>
     </div>
   );

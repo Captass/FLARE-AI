@@ -743,10 +743,10 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.76)_36%,rgba(5,7,11,0.1)_66%,rgba(5,7,11,0)_100%)]" />
 
         <div className="landing-hero-scene absolute inset-0 z-0">
-          <div className="absolute bottom-[18svh] right-[-44vw] top-[-1svh] w-[138vw] opacity-[0.82] sm:bottom-[-9vh] sm:right-0 sm:top-[7vh] sm:w-[68vw] sm:opacity-100">
+          <div className="absolute bottom-[18svh] right-[-44vw] top-[-1svh] w-[138vw] opacity-[0.82] sm:bottom-[-9vh] sm:right-[-3vw] sm:top-[7vh] sm:w-[66vw] sm:opacity-100">
             <AutomationDeskScene reducedMotion={Boolean(prefersReducedMotion)} />
           </div>
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.9)_0%,rgba(5,7,11,0.58)_36%,rgba(5,7,11,0.04)_68%,transparent_100%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.94)_0%,rgba(5,7,11,0.84)_40%,rgba(5,7,11,0.28)_62%,rgba(5,7,11,0.04)_82%,transparent_100%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.1)_0%,transparent_34%,rgba(5,7,11,0.18)_78%,rgba(15,10,8,0.72)_100%)]" />
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[24vh] bg-[linear-gradient(180deg,transparent_0%,rgba(8,7,8,0.34)_34%,#17100c_72%,#f9f7f2_100%)]" />
