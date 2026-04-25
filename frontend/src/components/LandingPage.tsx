@@ -1,47 +1,24 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 /* eslint-disable @next/next/no-img-element */
 import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, ChevronDown, CheckCircle2, Clock3, Download, Facebook, Globe, Instagram, Linkedin, Mail, Menu, MessageSquare, ShieldCheck, TrendingUp, Workflow, X, Zap } from "lucide-react";
 import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useReducedMotion, type Variants } from "framer-motion";
 import dynamic from "next/dynamic";
-import React from "react";
 import FlareMark from "./FlareMark";
 
-// SplineScene is a browser-only 3D engine wrapper — must stay client-side only
-// Using a local wrapper avoids package export resolution issues during SSG
-const Spline = dynamic(() => import("./SplineScene"), {
+const AutomationDeskScene = dynamic(() => import("./landing/AutomationDeskScene"), {
   ssr: false,
   loading: () => (
-    <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
+    <div className="h-full w-full bg-[radial-gradient(circle_at_72%_34%,rgba(249,115,22,0.18),transparent_38%),linear-gradient(120deg,#05070b,#10131b_52%,#25170f)]" />
   ),
 });
 
-const HERO_SPLINE_SCENE = "https://prod.spline.design/kuXZvk779k9Nhcwp/scene.splinecode";
-
-/* Tiny error boundary so a Spline crash doesn't kill the page */
-class SplineBoundary extends React.Component<
-  { children: React.ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
-  componentDidCatch(err: Error) { console.warn("[Spline]", err.message); }
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
-      );
-    }
-    return this.props.children;
-  }
-}
-
 /* Preserve the historical hero reveal while keeping Hooks valid. */
 function WordReveal({ word, index, scrollYProgress }: { word: string; index: number; scrollYProgress: any }) {
-  const wordScroll = useTransform(scrollYProgress, [0, 0.1 + index * 0.05], [0, 1]);
-  const wordY = useTransform(wordScroll, [0, 1], [12, 0]);
-  const wordScale = useTransform(wordScroll, [0, 1], [0.985, 1]);
+  const wordScroll = useTransform(scrollYProgress, [0, 0.1 + index * 0.05], [1, 1]);
+  const wordY = useTransform(wordScroll, [0, 1], [0, 0]);
+  const wordScale = useTransform(wordScroll, [0, 1], [1, 1]);
   return (
     <motion.span
       style={{ opacity: wordScroll, y: wordY, scale: wordScale }}
@@ -214,20 +191,15 @@ interface LandingPageProps {
 
 export default function LandingPage({ onStart }: LandingPageProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const splineAppRef = useRef<any>(null);
-  const splineTargetsRef = useRef<{ head: any; eyeL: any; eyeR: any } | null>(null);
-  const lastPointerRef = useRef({ x: 0, y: 0 });
   const prefersReducedMotion = useReducedMotion();
 
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [heroSplineReady, setHeroSplineReady] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState<number | null>(0);
   const [activeScenario, setActiveScenario] = useState(0);
   const enableRichEffects = !isMobile && !prefersReducedMotion;
-  const shouldRenderHeroSpline = !prefersReducedMotion;
 
   const { scrollY, scrollYProgress } = useScroll({ container: containerRef });
 
@@ -263,19 +235,38 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       return;
     }
 
+    const landingScroller = containerRef.current;
     if (mobileMenuOpen) {
       document.body.classList.add("landing-mobile-menu-open");
+      landingScroller?.classList.add("landing-scroll-locked");
       return () => {
         document.body.classList.remove("landing-mobile-menu-open");
+        landingScroller?.classList.remove("landing-scroll-locked");
       };
     }
 
     document.body.classList.remove("landing-mobile-menu-open");
+    landingScroller?.classList.remove("landing-scroll-locked");
   }, [mobileMenuOpen]);
 
   const handleInstallClick = () => {
     window.location.href = "/download";
   };
+
+  const scrollLandingTo = useCallback((target: HTMLElement | null, offset = 96) => {
+    if (!target) return;
+    const container = containerRef.current;
+    if (!container) {
+      target.scrollIntoView({ behavior: "smooth" });
+      return;
+    }
+    const containerTop = container.getBoundingClientRect().top;
+    const targetTop = target.getBoundingClientRect().top;
+    container.scrollTo({
+      top: container.scrollTop + targetTop - containerTop - offset,
+      behavior: "smooth",
+    });
+  }, []);
 
   const springX = useSpring(0, { stiffness: 150, damping: 20 });
   const springY = useSpring(0, { stiffness: 150, damping: 20 });
@@ -291,7 +282,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         const x = (e.clientX / window.innerWidth - 0.5) * 2;
         const y = (e.clientY / window.innerHeight - 0.5) * 2;
 
-        lastPointerRef.current = { x, y };
         springX.set(x);
         springY.set(y);
       });
@@ -304,50 +294,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     };
   }, [enableRichEffects, springX, springY]);
 
-  useEffect(() => {
-    if (!enableRichEffects || !heroSplineReady || !splineTargetsRef.current) return;
-
-    const updateSpline = () => {
-      const x = springX.get();
-      const y = springY.get();
-      let targets = splineTargetsRef.current;
-      if ((!targets?.head && !targets?.eyeL && !targets?.eyeR) && splineAppRef.current) {
-        targets = {
-          head: splineAppRef.current.findObjectByName("Head"),
-          eyeL: splineAppRef.current.findObjectByName("Eye_L") || splineAppRef.current.findObjectByName("Eye Left"),
-          eyeR: splineAppRef.current.findObjectByName("Eye_R") || splineAppRef.current.findObjectByName("Eye Right"),
-        };
-        splineTargetsRef.current = targets;
-      }
-
-      if (!targets) return;
-      const { head, eyeL, eyeR } = targets;
-
-      if (head) {
-        head.rotation.y = x * 0.8;
-        head.rotation.x = y * 0.4;
-      }
-      if (eyeL) {
-        eyeL.rotation.y = x * 0.4;
-        eyeL.rotation.x = y * 0.2;
-      }
-      if (eyeR) {
-        eyeR.rotation.y = x * 0.4;
-        eyeR.rotation.x = y * 0.2;
-      }
-    };
-
-    updateSpline();
-
-    const unsubX = springX.on("change", updateSpline);
-    const unsubY = springY.on("change", updateSpline);
-
-    return () => {
-      unsubX();
-      unsubY();
-    };
-  }, [enableRichEffects, heroSplineReady, springX, springY]);
-
   const rotateX = useTransform(springY, (v) => v * -1.5);
   const rotateY = useTransform(springX, (v) => v * 1.5);
   const mousePosX = useTransform(springX, (v) => (v + 1) * 50 + "%");
@@ -357,40 +303,6 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
   const logoParallaxX = useTransform(springX, (v) => v * 6);
   const logoParallaxY = useTransform(springY, (v) => v * 6);
-
-  function onLoad(app: any) {
-    if (!app) return;
-    splineAppRef.current = app;
-    try {
-      splineTargetsRef.current = {
-        head: app.findObjectByName("Head"),
-        eyeL: app.findObjectByName("Eye_L") || app.findObjectByName("Eye Left"),
-        eyeR: app.findObjectByName("Eye_R") || app.findObjectByName("Eye Right"),
-      };
-
-      if (isMobile && app.renderer) {
-        app.renderer.setPixelRatio(0.65);
-      }
-
-      const allObjects = app.getAllObjects();
-      if (allObjects) {
-        allObjects.forEach((obj: any) => {
-          if (isMobile && obj.shadow) {
-            obj.castShadow = false;
-            obj.receiveShadow = false;
-          }
-          if (obj && obj.text !== undefined) obj.visible = false;
-        });
-      }
-    } catch (e) {
-      console.warn("Spline onLoad manipulation failed:", e);
-    }
-    setHeroSplineReady(true);
-    setIsLoaded(true);
-    const { x, y } = lastPointerRef.current;
-    springX.set(x);
-    springY.set(y);
-  }
 
   /* ── Metrics visibles sur le hero ── */
   const METRICS = [
@@ -698,8 +610,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <Magnetic>
                 <button
                   onClick={() => {
-                    const el = document.getElementById("story");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                    scrollLandingTo(document.getElementById("story"));
                   }}
                   className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
                 >
@@ -767,8 +678,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               ))}
               <button
                 onClick={() => {
-                  const el = document.getElementById("story");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                  scrollLandingTo(document.getElementById("story"));
                   setMobileMenuOpen(false);
                 }}
                 className="landing-mobile-link text-2xl font-semibold uppercase text-left"
@@ -816,7 +726,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         </div>
 
         <motion.div
-          animate={{ y: [0, 8, 0], opacity: [0.3, 1, 0.3] }}
+          animate={prefersReducedMotion ? { opacity: 0.65 } : { y: [0, 8, 0], opacity: [0.3, 1, 0.3] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
           className="flex flex-col items-center gap-2"
         >
@@ -827,42 +737,27 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       {/* ══════════════════════════════════════════════════════
           HERO SECTION
          ══════════════════════════════════════════════════════ */}
-      <section className="relative flex h-screen w-full flex-col items-center justify-center overflow-hidden sm:block">
-        {/* 3D Robot Background */}
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(180deg,rgba(252,248,242,0.72)_0%,rgba(248,241,231,0.38)_30%,rgba(249,247,242,0.06)_58%,rgba(249,247,242,0)_100%)] sm:bg-[linear-gradient(180deg,rgba(251,247,240,0.84)_0%,rgba(247,239,228,0.58)_34%,rgba(249,247,242,0.12)_64%,rgba(249,247,242,0)_100%)]" />
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_68%_16%,rgba(255,255,255,0.94),rgba(255,247,237,0.62)_22%,rgba(249,247,242,0.08)_42%,transparent_66%)] sm:bg-[radial-gradient(circle_at_72%_24%,rgba(255,255,255,0.98),rgba(255,247,237,0.74)_24%,rgba(249,247,242,0.18)_46%,transparent_70%)]" />
-        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_72%_20%,rgba(249,115,22,0.10),transparent_24%)] sm:bg-[radial-gradient(circle_at_74%_34%,rgba(249,115,22,0.1),transparent_34%)]" />
+      <section className="landing-cinematic-hero relative flex h-screen w-full flex-col items-center justify-start overflow-hidden bg-[#05070b] sm:block">
+        {/* Local hero visual */}
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_76%_36%,rgba(249,115,22,0.22),transparent_34%),radial-gradient(circle_at_46%_22%,rgba(96,165,250,0.10),transparent_26%),#05070b]" />
+        <div className="pointer-events-none absolute inset-0 z-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.96)_0%,rgba(5,7,11,0.76)_36%,rgba(5,7,11,0.1)_66%,rgba(5,7,11,0)_100%)]" />
 
-        <div className="landing-hero-scene absolute inset-x-0 top-[-4svh] z-0 h-[58svh] opacity-[0.98] grayscale-0 sm:inset-0 sm:h-auto sm:opacity-[0.62] sm:grayscale-[26%]">
-          {shouldRenderHeroSpline ? (
-            <SplineBoundary>
-              <Suspense
-                fallback={
-                  <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
-                }
-              >
-                <div className="h-full w-full scale-[1.18] translate-y-[-2%] sm:scale-100 sm:translate-y-0">
-                  <Spline
-                    scene={HERO_SPLINE_SCENE}
-                    onLoad={onLoad}
-                    className="h-full w-full"
-                    style={{ pointerEvents: "auto", touchAction: isMobile ? "pan-y" : "auto" }}
-                  />
-                </div>
-              </Suspense>
-            </SplineBoundary>
-          ) : (
-            <div className="landing-spline-fallback h-full w-full bg-[radial-gradient(circle_at_72%_28%,rgba(255,255,255,0.94),rgba(255,247,237,0.72)_28%,rgba(249,247,242,0.16)_56%,transparent_76%),linear-gradient(180deg,#fbf7f0_0%,#f5ede1_100%)]" />
-          )}
+        <div className="landing-hero-scene absolute inset-0 z-0">
+          <div className="absolute bottom-[18svh] right-[-44vw] top-[-1svh] w-[138vw] opacity-[0.82] sm:bottom-[-9vh] sm:right-0 sm:top-[7vh] sm:w-[68vw] sm:opacity-100">
+            <AutomationDeskScene reducedMotion={Boolean(prefersReducedMotion)} />
+          </div>
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.9)_0%,rgba(5,7,11,0.58)_36%,rgba(5,7,11,0.04)_68%,transparent_100%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.1)_0%,transparent_34%,rgba(5,7,11,0.18)_78%,rgba(15,10,8,0.72)_100%)]" />
         </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[24vh] bg-[linear-gradient(180deg,transparent_0%,rgba(8,7,8,0.34)_34%,#17100c_72%,#f9f7f2_100%)]" />
 
         {/* Header */}
-        <div className="relative z-10 w-full flex flex-col px-6 pt-2 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
+        <div className="pointer-events-none relative z-10 w-full flex flex-col px-6 pt-5 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
           <motion.header
             initial={{ opacity: 0 }}
             animate={{ opacity: isLoaded ? 1 : 0 }}
             transition={{ duration: 1.5, delay: 0.5 }}
-            className="flex items-center justify-between w-full"
+            className="pointer-events-auto flex items-center justify-between w-full"
           >
             <div className="flex items-center gap-2 md:gap-4 group cursor-pointer">
               <motion.div
@@ -878,7 +773,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 md:gap-5 cursor-auto pointer-events-auto">
+            <div className="hidden items-center gap-2 cursor-auto pointer-events-auto sm:flex md:gap-5">
               <button
                 onClick={() => onStart("login")}
                 className="landing-plain-button rounded-full border border-black/10 bg-white/65 px-4 py-2 text-[10px] font-medium uppercase transition-colors hover:bg-white md:px-6 md:text-xs"
@@ -895,7 +790,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           </motion.header>
 
           {/* ── Hero Content (AIDA Marketing Flow) ── */}
-          <main className="relative z-20 flex min-h-[74vh] flex-1 flex-col justify-end pointer-events-none pt-[24svh] sm:min-h-[70vh] sm:justify-center sm:pt-0">
+          <main className="relative z-20 flex min-h-[70vh] flex-1 flex-col justify-end pointer-events-none pt-[18svh] sm:min-h-[70vh] sm:justify-center sm:pt-0">
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -915,7 +810,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 <br />
                 <motion.span
                   style={{ opacity: heroWordOpacity, scale: heroWordScale }}
-                  className="inline-block font-black tracking-tight text-black drop-shadow-[0_18px_40px_rgba(0,0,0,0.14)]"
+                  className="landing-cinematic-accent-word inline-block font-black tracking-tight text-black drop-shadow-[0_18px_40px_rgba(0,0,0,0.14)]"
                 >
                   Automatisez.
                 </motion.span>
@@ -937,14 +832,14 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <motion.div variants={itemVariants} className="mb-6 flex justify-start">
                 <button
                   onClick={handleInstallClick}
-                  className="inline-flex items-center justify-center gap-3 rounded-full border border-black/10 bg-white/68 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all hover:bg-white hover:border-black/20 sm:px-7"
+                  className="landing-cinematic-download inline-flex items-center justify-center gap-3 rounded-full border border-black/10 bg-white/68 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all hover:bg-white hover:border-black/20 sm:px-7"
                 >
                   <Download size={15} className="text-black/60" />
                   Telecharger
                 </button>
               </motion.div>
 
-              <div className="mb-16" />
+              <div className="mb-10 sm:mb-16" />
 
               {/* 4. DESIRE / VALIDATION (Metrics) */}
               <motion.div
@@ -965,7 +860,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         {/* Trust Section ends here */}
       </section>
 
-      <section className="relative z-20 border-t border-black/5 bg-[#F9F7F2] px-6 py-14 sm:px-16 md:px-24">
+      <section className="landing-proof-section relative z-20 overflow-hidden bg-[#F9F7F2] px-6 pb-14 pt-24 sm:px-16 md:px-24 md:pt-28">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[linear-gradient(180deg,#17100c_0%,rgba(249,247,242,0.72)_48%,rgba(249,247,242,0)_100%)]" />
+        <div className="pointer-events-none absolute right-[-12rem] top-10 h-80 w-80 rounded-full border border-orange-500/10" />
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
             <motion.div
@@ -1901,20 +1798,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           NOTRE HISTOIRE
          ══════════════════════════════════════════════════════ */}
       <section id="story" className="landing-section-base relative overflow-hidden px-6 py-24 sm:px-16 md:px-24 md:py-32">
-        {/* Brain 3D — arrière-plan, pointer-events désactivé pour ne pas capturer le scroll */}
-        {enableRichEffects ? (
-          <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
-            <SplineBoundary>
-              <Suspense fallback={null}>
-                <Spline
-                  scene="https://prod.spline.design/rIcJ6LXEuI7u6Tn6/scene.splinecode"
-                  className="w-full h-full"
-                  style={{ pointerEvents: 'none' }}
-                />
-              </Suspense>
-            </SplineBoundary>
-          </div>
-        ) : null}
+        <div className="pointer-events-none absolute inset-0 z-0 opacity-40">
+          <div className="absolute right-[-8%] top-10 h-72 w-72 rounded-full border border-orange-500/20" />
+          <div className="absolute right-[8%] top-28 h-40 w-40 rounded-full border border-white/10" />
+          <div className="absolute bottom-12 left-[-5%] h-56 w-56 rounded-full border border-white/10" />
+        </div>
         {/* Overlay pour lisibilité */}
         <div className="landing-story-overlay absolute inset-0 z-[1] bg-gradient-to-r from-[#020305] via-[#020305]/85 to-[#020305]/60" />
 
@@ -2064,7 +1952,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                   rel={social.href.startsWith("/") ? undefined : "noopener noreferrer"}
                   className="flex flex-col items-center gap-4 cursor-pointer"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+                  <div className="landing-social-icon flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
                     <social.icon size={24} style={{ color: social.color }} />
                   </div>
                   <span className="text-[12px] font-black uppercase tracking-[0.2em] text-white">
@@ -2109,6 +1997,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         .landing-shell {
           background: #fbf7f0;
           color: #000000;
+          overflow-x: hidden;
+        }
+
+        .landing-scroll-locked {
+          overflow: hidden !important;
+          overscroll-behavior: none;
         }
         
         .landing-shell strong {
@@ -2152,8 +2046,75 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         }
 
         .landing-hero-scene {
-          opacity: 0.8;
-          filter: contrast(1.1);
+          filter: brightness(1.16) contrast(1.08) saturate(1.14);
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-headline,
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-brand-title,
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-brand-subtitle,
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-copy,
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-metric-value,
+        .landing-cinematic-hero .landing-headline,
+        .landing-cinematic-hero .landing-brand-title,
+        .landing-cinematic-hero .landing-brand-subtitle,
+        .landing-cinematic-hero .landing-copy,
+        .landing-cinematic-hero .landing-metric-value {
+          color: #ffffff !important;
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-headline,
+        .landing-cinematic-hero .landing-headline {
+          text-shadow: 0 24px 70px rgba(0, 0, 0, 0.78);
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-cinematic-accent-word,
+        .landing-cinematic-hero .landing-cinematic-accent-word {
+          color: #ffffff !important;
+          text-shadow: 0 20px 56px rgba(249, 115, 22, 0.28), 0 28px 78px rgba(0, 0, 0, 0.78);
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-brand-subtitle,
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-copy,
+        .landing-cinematic-hero .landing-brand-subtitle,
+        .landing-cinematic-hero .landing-copy {
+          opacity: 0.92 !important;
+          text-shadow: 0 14px 42px rgba(0, 0, 0, 0.72);
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-metric-label,
+        .landing-cinematic-hero .landing-metric-label {
+          color: #fb923c !important;
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-plain-button,
+        .landing-cinematic-hero .landing-plain-button {
+          background: rgba(255, 255, 255, 0.08) !important;
+          border-color: rgba(255, 255, 255, 0.18) !important;
+          color: rgba(255, 255, 255, 0.88) !important;
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-cinematic-download,
+        .landing-cinematic-hero .landing-cinematic-download {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border-color: rgba(255, 255, 255, 0.22) !important;
+          color: #ffffff !important;
+          box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+          backdrop-filter: blur(16px);
+        }
+
+        html.light .landing-theme-scope .landing-cinematic-hero .landing-cinematic-download svg,
+        .landing-cinematic-hero .landing-cinematic-download svg {
+          color: rgba(255, 255, 255, 0.76) !important;
+          stroke: currentColor !important;
+        }
+
+        .landing-cinematic-hero .landing-mark-frame {
+          background: rgba(255, 255, 255, 0.9) !important;
+          border-color: rgba(255, 255, 255, 0.25) !important;
+        }
+
+        .landing-cinematic-hero .landing-scroll-arrow {
+          color: rgba(255, 255, 255, 0.72) !important;
         }
 
         .landing-mark-chip,

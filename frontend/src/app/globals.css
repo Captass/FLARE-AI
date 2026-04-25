@@ -192,6 +192,11 @@ html.light .landing-theme-scope .theme-dark-override svg * {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
+html.light .landing-theme-scope .theme-dark-override .landing-social-icon svg,
+html.light .landing-theme-scope .theme-dark-override .landing-social-icon svg * {
+  color: inherit !important;
+  stroke: currentColor !important;
+}
 html.light .landing-theme-scope .theme-dark-override .text-orange-500,
 html.light .landing-theme-scope .theme-dark-override .text-orange-500 * {
   color: #f97316 !important;
