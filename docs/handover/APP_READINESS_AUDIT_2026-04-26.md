@@ -20,7 +20,7 @@ La base web, le backend Render, Messenger Direct, l'auth, les APIs admin et les 
 | Downloads web | BLOQUE jusqu'a publication release | `render.yaml` configure les URLs GitHub Release pour Windows/Android. Les pages `/download`, `/downloads/windows`, `/downloads/android` existent et repondent 200. Mais les assets GitHub n'existent pas encore tant que le workflow release echoue. |
 | Windows natif | OK local | `scripts/build-windows-desktop.ps1` a regenere `artifacts/native/windows/flare-ai-windows-setup.exe` apres compilation Tauri/NSIS. |
 | Android natif | OK local | Keystore release locale generee dans `infra/credentials/android/` (ignoree Git). `scripts/build-android-apk.ps1 -BuildType Release` a produit `artifacts/native/android/flare-ai-android.apk`. Signature APK verifiee avec `apksigner`. |
-| GitHub Release | BLOQUE | Workflow `.github/workflows/native-release.yml` valide apres correction de `runner.temp` dans `jobs.env`, mais le run `24961366807` echoue a l'etape `Validate required Android signing secrets`. Il manque un ou plusieurs secrets: `FLARE_ANDROID_KEYSTORE_BASE64`, `FLARE_ANDROID_KEYSTORE_PASSWORD`, `FLARE_ANDROID_KEY_ALIAS`, `FLARE_ANDROID_KEY_PASSWORD`. Localement, `gh`, `GITHUB_TOKEN` et `GH_TOKEN` sont absents; je ne peux pas configurer les secrets du repo depuis cette machine. |
+| GitHub Release | BLOQUE | Workflow `.github/workflows/native-release.yml` valide apres correction de `runner.temp` dans `jobs.env`, mais le run `24961552219` echoue a l'etape `Validate required Android signing secrets`. Il manque un ou plusieurs secrets: `FLARE_ANDROID_KEYSTORE_BASE64`, `FLARE_ANDROID_KEYSTORE_PASSWORD`, `FLARE_ANDROID_KEY_ALIAS`, `FLARE_ANDROID_KEY_PASSWORD`. Localement, `gh`, `GITHUB_TOKEN` et `GH_TOKEN` sont absents; je ne peux pas configurer les secrets du repo depuis cette machine. |
 | Render deploy | A verifier apres push main | `render.yaml` est pret. Pas de `RENDER_API_KEY` local pour declencher/verifier le deploy via API. Le push sur `main` doit declencher le deploy selon la configuration existante. |
 
 ## Tests executes
@@ -30,6 +30,7 @@ La base web, le backend Render, Messenger Direct, l'auth, les APIs admin et les 
 - `npm run lint` - OK, aucun avertissement ESLint.
 - `npm run build` - OK, Next.js 14 compile et prerender 14 pages.
 - `python -m py_compile backend/main.py backend/routers/activation.py backend/routers/admin.py backend/routers/chatbot.py backend/routers/facebook_pages.py backend/routers/dashboard.py backend/agents/facebook_cm/agent.py backend/agents/facebook_cm/webhook.py` - OK.
+- GitHub Quality Gates sur `b6e0647`: backend OK, frontend OK apres ajout des variables publiques de build dans `.github/workflows/quality.yml`.
 
 ### Endpoints live publics
 
