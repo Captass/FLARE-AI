@@ -2,9 +2,9 @@
 
 ## Verdict
 
-**Verdict global: non pret a distribuer tant que la GitHub Release est bloquee; pret fonctionnellement pour beta assistee conditionnelle apres correction des secrets GitHub et preuve Messenger reelle. Pas pret pour self-serve public complet.**
+**Verdict global: pret a distribuer en beta assistee conditionnelle; pas pret pour self-serve public complet.**
 
-La base web, le backend Render, Messenger Direct, l'auth, les APIs admin et les builds natifs locaux sont operationnels. Les deux blocages actuels sont la publication GitHub Release, arretee sur les secrets Android signing manquants, et la preuve bout-en-bout Messenger en production: la page Facebook FLARE AI est connectee et active, mais le dashboard live ne contient encore aucune conversation recente et aucun test Messenger reel controle n'a ete observe pendant cet audit. Le profil business du chatbot est aussi incomplet, ce qui limite la qualite des reponses.
+La base web, le backend Render, Messenger Direct, l'auth, les APIs admin, les builds natifs locaux et la GitHub Release sont operationnels. Le blocage produit restant est la preuve bout-en-bout Messenger en production: la page Facebook FLARE AI est connectee et active, mais le dashboard live ne contient encore aucune conversation recente et aucun test Messenger reel controle n'a ete observe pendant cet audit. Le profil business du chatbot est aussi incomplet, ce qui limite la qualite des reponses.
 
 ## Synthese par surface
 
@@ -17,10 +17,10 @@ La base web, le backend Render, Messenger Direct, l'auth, les APIs admin et les 
 | Messenger Direct | OK technique, preuve fonctionnelle incomplete | `https://messenger-direct-236458687422.europe-west9.run.app/health` repond 200. Status backend confirme `direct_service_configured=true`. Il manque un test utilisateur Messenger reel avec trace dashboard. |
 | Admin | OK conditionnel | APIs paiements, activations, commandes, reports, connected-users, new-accounts repondent. Actions sur donnees test: note operateur OK, transition invalide rejetee en 400, paiement test rejete OK. Warning: `new-accounts` melange encore des comptes reels et des pseudo-lignes organisationnelles. |
 | Billing manuel | OK conditionnel | Methodes manuelles disponibles, soumission paiement test OK, rejet admin OK, relecture client OK. Warning: la prod expose MVola uniquement pendant cet audit. |
-| Downloads web | BLOQUE jusqu'a publication release | `render.yaml` configure les URLs GitHub Release pour Windows/Android. Les pages `/download`, `/downloads/windows`, `/downloads/android` existent et repondent 200. Mais les assets GitHub n'existent pas encore tant que le workflow release echoue. |
+| Downloads web | OK | `render.yaml` configure les URLs GitHub Release pour Windows/Android. Les pages `/download`, `/downloads/windows`, `/downloads/android` existent, repondent 200, et contiennent les URLs `v0.1.0-beta.20260426`. |
 | Windows natif | OK local | `scripts/build-windows-desktop.ps1` a regenere `artifacts/native/windows/flare-ai-windows-setup.exe` apres compilation Tauri/NSIS. |
 | Android natif | OK local | Keystore release locale generee dans `infra/credentials/android/` (ignoree Git). `scripts/build-android-apk.ps1 -BuildType Release` a produit `artifacts/native/android/flare-ai-android.apk`. Signature APK verifiee avec `apksigner`. |
-| GitHub Release | BLOQUE | Workflow `.github/workflows/native-release.yml` valide apres correction de `runner.temp` dans `jobs.env`, mais le run `24961552219` echoue a l'etape `Validate required Android signing secrets`. Il manque un ou plusieurs secrets: `FLARE_ANDROID_KEYSTORE_BASE64`, `FLARE_ANDROID_KEYSTORE_PASSWORD`, `FLARE_ANDROID_KEY_ALIAS`, `FLARE_ANDROID_KEY_PASSWORD`. Localement, `gh`, `GITHUB_TOKEN` et `GH_TOKEN` sont absents; je ne peux pas configurer les secrets du repo depuis cette machine. |
+| GitHub Release | OK | Secrets Android signing configures dans GitHub via API authentifiee. Workflow `.github/workflows/native-release.yml` run `24961552219`, tentative 2, termine en succes. Release `v0.1.0-beta.20260426` publiee avec `flare-ai-windows-setup.exe` et `flare-ai-android.apk`. |
 | Render deploy | A verifier apres push main | `render.yaml` est pret. Pas de `RENDER_API_KEY` local pour declencher/verifier le deploy via API. Le push sur `main` doit declencher le deploy selon la configuration existante. |
 
 ## Tests executes
@@ -31,6 +31,7 @@ La base web, le backend Render, Messenger Direct, l'auth, les APIs admin et les 
 - `npm run build` - OK, Next.js 14 compile et prerender 14 pages.
 - `python -m py_compile backend/main.py backend/routers/activation.py backend/routers/admin.py backend/routers/chatbot.py backend/routers/facebook_pages.py backend/routers/dashboard.py backend/agents/facebook_cm/agent.py backend/agents/facebook_cm/webhook.py` - OK.
 - GitHub Quality Gates sur `b6e0647`: backend OK, frontend OK apres ajout des variables publiques de build dans `.github/workflows/quality.yml`.
+- GitHub Native Release run `24961552219`, tentative 2: OK apres configuration des secrets Android signing.
 
 ### Endpoints live publics
 
@@ -113,13 +114,13 @@ APK signing:
 1. **Messenger reel non prouve pendant cet audit.** Le statut technique est bon, mais la beta assistee doit inclure un test conversationnel reel: envoyer un message a la page FLARE AI, verifier la reponse bot, puis verifier la trace dans `/dashboard/messenger`.
 2. **Profil business incomplet.** `has_business_profile=false`; il faut remplir description entreprise, offres/produits, consignes et limites avant de promettre une reponse client fiable.
 3. **Self-serve Facebook OAuth non pret.** L'incident documente de recuperation des pages OAuth reste incompatible avec une promesse self-serve publique complete.
-4. **GitHub Release bloquee par secrets Android signing.** Une keystore release locale existe dans `infra/credentials/android/` et les valeurs a mettre en GitHub Secrets sont dans le fichier local ignore `release-keystore.local.json`. Sans `gh`/token local je ne peux pas les envoyer au repo depuis cette machine.
+4. **Secrets Android signing a proteger.** Les secrets ont ete configures dans GitHub. Le fichier local ignore `infra/credentials/android/release-keystore.local.json` contient encore les valeurs sources et doit rester hors Git.
 5. **Render deploy non verifiable via API locale.** Les variables sont dans `render.yaml`; le deploiement live dependra du push `main` et du redeploiement Render.
 6. **Admin metrics a nettoyer.** `new-accounts` inclut des pseudo-entrees organisationnelles, ce qui peut fausser la lecture business des nouveaux comptes.
 
 ## Decision release
 
-Release recommandee: **attendre la publication GitHub Release, puis beta assistee uniquement**.
+Release recommandee: **beta assistee uniquement**.
 
 Conditions minimales avant d'envoyer le lien a un vrai client:
 
