@@ -72,6 +72,18 @@ services:
         value: "461942823604"
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
         value: "1:461942823604:web:46b2d179d027b7849195e1"
+      - key: NEXT_PUBLIC_WINDOWS_RELEASE_ASSET_URL
+        value: "https://github.com/Captass/FLARE-AI/releases/download/v0.1.0-beta.20260426/flare-ai-windows-setup.exe"
+      - key: NEXT_PUBLIC_ANDROID_RELEASE_ASSET_URL
+        value: "https://github.com/Captass/FLARE-AI/releases/download/v0.1.0-beta.20260426/flare-ai-android.apk"
+      - key: NEXT_PUBLIC_WINDOWS_RELEASE_VERSION
+        value: "0.1.0-beta.20260426"
+      - key: NEXT_PUBLIC_ANDROID_RELEASE_VERSION
+        value: "0.1.0-beta.20260426"
+      - key: NEXT_PUBLIC_WINDOWS_RELEASE_DATE
+        value: "2026-04-26"
+      - key: NEXT_PUBLIC_ANDROID_RELEASE_DATE
+        value: "2026-04-26"
 
 databases:
   - name: flare-db
