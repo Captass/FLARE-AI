@@ -2019,12 +2019,11 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           left: 50%;
           top: 50%;
           transform: translate(-50%, -50%);
-          gap: 0.25rem;
-          border-radius: 999px;
-          border: 1px solid rgba(0, 0, 0, 0.06);
-          background: rgba(255, 255, 255, 0.34);
-          padding: 0.25rem;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+          gap: 2rem;
+          border: 0;
+          background: transparent;
+          padding: 0;
+          box-shadow: none;
         }
 
         .landing-nav-actions {
@@ -2042,27 +2041,34 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         }
 
         .landing-nav-link {
-          color: rgba(0, 0, 0, 0.62);
+          color: rgba(0, 0, 0, 0.78);
           position: relative;
           display: inline-flex;
-          min-width: 7.35rem;
-          height: 2.25rem;
           align-items: center;
           justify-content: center;
-          border-radius: 999px;
-          padding: 0 0.85rem;
+          padding: 0;
           font-size: 10px;
-          font-weight: 700;
+          font-weight: 800;
+          letter-spacing: 0.02em;
           line-height: 1;
           text-align: center;
           text-transform: uppercase;
           white-space: nowrap;
-          transition: background-color 180ms ease, color 180ms ease;
+          transform: none !important;
+          transition: none;
         }
         
         .landing-nav-link:hover {
-          background: rgba(255, 255, 255, 0.64);
+          background: transparent;
           color: #000000;
+          text-decoration: underline;
+          text-underline-offset: 0.45rem;
+        }
+
+        .landing-nav-link:focus-visible {
+          outline: 2px solid rgba(255, 122, 24, 0.72);
+          outline-offset: 0.45rem;
+          transform: none !important;
         }
 
         .landing-login-button {
