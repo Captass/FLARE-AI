@@ -20,7 +20,7 @@ La base web, le backend Render, Messenger Direct, l'auth, les APIs admin et les 
 | Downloads web | OK apres deploy Render | `render.yaml` configure les URLs GitHub Release pour Windows/Android. Les pages `/download`, `/downloads/windows`, `/downloads/android` existent et repondent 200. Redirection finale depend du redeploiement Render avec les nouvelles variables. |
 | Windows natif | OK local | `scripts/build-windows-desktop.ps1` a regenere `artifacts/native/windows/flare-ai-windows-setup.exe` apres compilation Tauri/NSIS. |
 | Android natif | OK local | Keystore release locale generee dans `infra/credentials/android/` (ignoree Git). `scripts/build-android-apk.ps1 -BuildType Release` a produit `artifacts/native/android/flare-ai-android.apk`. Signature APK verifiee avec `apksigner`. |
-| GitHub Release | A verifier apres push tag | Workflow `.github/workflows/native-release.yml` existe et publiera les deux assets sur tag `v0.1.0-beta.20260426`. Localement, `gh`, `GITHUB_TOKEN` et `GH_TOKEN` sont absents; la presence des GitHub Secrets de signing ne peut donc pas etre confirmee depuis cette machine. |
+| GitHub Release | A verifier apres push tag | Workflow `.github/workflows/native-release.yml` existe et publiera les deux assets sur tag `v0.1.0-beta.20260426`. Le blocage de validation GitHub sur `runner.temp` dans `jobs.env` a ete corrige. Localement, `gh`, `GITHUB_TOKEN` et `GH_TOKEN` sont absents; la presence des GitHub Secrets de signing ne peut donc pas etre confirmee depuis cette machine. |
 | Render deploy | A verifier apres push main | `render.yaml` est pret. Pas de `RENDER_API_KEY` local pour declencher/verifier le deploy via API. Le push sur `main` doit declencher le deploy selon la configuration existante. |
 
 ## Tests executes
@@ -126,4 +126,3 @@ Conditions minimales avant d'envoyer le lien a un vrai client:
 - Render redeploy termine et pages de telechargement pointent vers les assets GitHub.
 - Profil business du chatbot FLARE AI complete.
 - Test Messenger reel controle passe avec trace dashboard.
-

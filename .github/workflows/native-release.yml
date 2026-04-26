@@ -24,7 +24,7 @@ jobs:
     runs-on: windows-latest
     env:
       RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
-      FLARE_ANDROID_KEYSTORE_PATH: ${{ runner.temp }}\flare-ai-release.jks
+      FLARE_ANDROID_KEYSTORE_PATH: ${{ github.workspace }}\flare-ai-release.jks
       FLARE_ANDROID_KEYSTORE_PASSWORD: ${{ secrets.FLARE_ANDROID_KEYSTORE_PASSWORD }}
       FLARE_ANDROID_KEY_ALIAS: ${{ secrets.FLARE_ANDROID_KEY_ALIAS }}
       FLARE_ANDROID_KEY_PASSWORD: ${{ secrets.FLARE_ANDROID_KEY_PASSWORD }}
