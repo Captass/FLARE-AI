@@ -166,7 +166,9 @@ export default function NewSidebar({
   const sidebarWidth = expanded ? "w-[240px]" : "w-[64px]";
 
   const isAdmin = canAccessAdmin;
-  const activeMainItem = (
+  const activeMainItem = (["billing", "chatbot-activation"] as string[]).includes(activeView as string)
+    ? "billing"
+    : (
     [
       "chatbot",
       "facebook",
@@ -177,13 +179,10 @@ export default function NewSidebar({
       "chatbot-clients",
       "chatbot-client-detail",
       "chatbot-orders",
-      "chatbot-activation",
     ] as string[]
   ).includes(activeView as string)
     ? "chatbot"
-    : (["billing"] as string[]).includes(activeView as string)
-      ? "billing"
-      : (["settings", "guide", "contact"] as string[]).includes(activeView as string)
+    : (["settings", "guide", "contact"] as string[]).includes(activeView as string)
       ? "settings"
       : activeView === ("admin" as NavLevel)
         ? "admin"

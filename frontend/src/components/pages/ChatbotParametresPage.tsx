@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
 
 import PageSelector from "@/components/PageSelector";
@@ -294,7 +294,23 @@ export default function ChatbotParametresPage({
                 }}
               />
             </div>
-          ) : null}
+          ) : (
+            <div className="mt-6 rounded-2xl border border-[var(--border-default)] bg-[var(--surface-base)] p-5 shadow-[0_10px_30px_rgba(15,23,42,0.04)]">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">Etat Facebook indisponible</p>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                Les controles ne peuvent pas etre affiches tant que FLARE ne recupere pas l&apos;etat de vos pages Facebook.
+              </p>
+              <button
+                type="button"
+                onClick={() => void loadData(true)}
+                disabled={loading}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-2 text-sm font-medium text-[var(--text-primary)] transition-colors hover:border-[var(--border-strong)] hover:bg-[var(--surface-raised)] disabled:pointer-events-none disabled:opacity-50"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Reessayer
+              </button>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

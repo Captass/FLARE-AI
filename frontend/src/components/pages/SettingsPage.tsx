@@ -484,9 +484,17 @@ export default function SettingsPage({
   };
 
   // ── Password reset ──
+  const hasPasswordProvider = Boolean(
+    user?.providerData?.some((provider) => provider.providerId === "password")
+  );
+
   const handlePasswordReset = async () => {
     const email = user?.email;
     if (!email) { setPwdError(tx.errorPwdEmail); return; }
+    if (!hasPasswordProvider) {
+      setPwdError("Ce compte utilise Google. Le mot de passe se gere depuis votre compte Google.");
+      return;
+    }
     setResettingPwd(true);
     setPwdError(null);
     try {
@@ -599,36 +607,45 @@ export default function SettingsPage({
 
         {/* ── Sécurité ── */}
         <SectionCard icon={KeyRound} title={tx.security} delay={0.1}>
-          <FieldRow label={tx.passwordLabel} hint="Un lien de réinitialisation sera envoyé par email">
+          <FieldRow
+            label={tx.passwordLabel}
+            hint={hasPasswordProvider ? "Un lien de reinitialisation sera envoye par email" : "Ce compte est connecte avec Google"}
+          >
             <div className="flex flex-col gap-2">
-              <button
-                id="settings-reset-password-btn"
-                onClick={handlePasswordReset}
-                disabled={resettingPwd || pwdResetSent}
-                className={`flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-medium
-                            border transition-all duration-200 w-fit
-                            ${pwdResetSent
-                              ? "bg-navy-500/10 border-navy-500/30 text-navy-400"
-                              : "bg-[var(--surface-subtle)] border-[var(--border-default)] text-[var(--text-primary)] hover:text-orange-500 hover:border-orange-500/30 hover:bg-orange-500/10"
-                            }
-                            disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                {resettingPwd ? (
-                  <Loader2 size={14} className="animate-spin" />
-                ) : pwdResetSent ? (
-                  <Check size={14} />
-                ) : (
-                  <Send size={14} />
-                )}
-                {resettingPwd
-                  ? tx.sending
-                  : pwdResetSent
-                  ? `${tx.resetSent} ${user?.email}`
-                  : tx.sendReset}
-                {!resettingPwd && !pwdResetSent && (
-                  <ChevronRight size={14} className="ml-1 opacity-40" />
-                )}
-              </button>
+              {hasPasswordProvider ? (
+                <button
+                  id="settings-reset-password-btn"
+                  onClick={handlePasswordReset}
+                  disabled={resettingPwd || pwdResetSent}
+                  className={`flex items-center gap-2.5 rounded-xl px-4 py-2.5 text-sm font-medium
+                              border transition-all duration-200 w-fit
+                              ${pwdResetSent
+                                ? "bg-navy-500/10 border-navy-500/30 text-navy-400"
+                                : "bg-[var(--surface-subtle)] border-[var(--border-default)] text-[var(--text-primary)] hover:text-orange-500 hover:border-orange-500/30 hover:bg-orange-500/10"
+                              }
+                              disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  {resettingPwd ? (
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : pwdResetSent ? (
+                    <Check size={14} />
+                  ) : (
+                    <Send size={14} />
+                  )}
+                  {resettingPwd
+                    ? tx.sending
+                    : pwdResetSent
+                    ? `${tx.resetSent} ${user?.email}`
+                    : tx.sendReset}
+                  {!resettingPwd && !pwdResetSent && (
+                    <ChevronRight size={14} className="ml-1 opacity-40" />
+                  )}
+                </button>
+              ) : (
+                <div className="w-fit rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--text-secondary)]">
+                  Votre connexion est geree par Google. Utilisez Google pour modifier ou recuperer ce mot de passe.
+                </div>
+              )}
               {pwdError && <p className="text-xs text-red-400">{pwdError}</p>}
             </div>
           </FieldRow>

@@ -1,7 +1,7 @@
 "use client";
 
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, OrbitControls, Text } from "@react-three/drei";
+import { ContactShadows, OrbitControls, RoundedBox, Text } from "@react-three/drei";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
@@ -175,76 +175,189 @@ function ScreenDashboard({ typedText, reducedMotion }: { typedText: string; redu
 
 function PhoneAutomationScreen({ reducedMotion }: { reducedMotion: boolean }) {
   const indicatorRef = useRef<THREE.Mesh>(null);
+  const progressRef = useRef<THREE.Mesh>(null);
+  const typingDotRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
-    if (reducedMotion || !indicatorRef.current) return;
-    const material = indicatorRef.current.material as THREE.MeshBasicMaterial;
-    material.opacity = 0.42 + (Math.sin(state.clock.elapsedTime * 2.6) + 1) * 0.22;
+    if (reducedMotion) return;
+    if (indicatorRef.current) {
+      const material = indicatorRef.current.material as THREE.MeshBasicMaterial;
+      material.opacity = 0.46 + (Math.sin(state.clock.elapsedTime * 2.8) + 1) * 0.22;
+    }
+    if (progressRef.current) {
+      progressRef.current.scale.x = 0.64 + (Math.sin(state.clock.elapsedTime * 1.45) + 1) * 0.18;
+    }
+    if (typingDotRef.current) {
+      typingDotRef.current.children.forEach((child, index) => {
+        const mesh = child as THREE.Mesh;
+        const material = mesh.material as THREE.MeshBasicMaterial;
+        material.opacity = 0.28 + (Math.sin(state.clock.elapsedTime * 4.8 + index * 0.9) + 1) * 0.32;
+      });
+    }
   });
 
   return (
     <group position={[0, 0, 0.049]}>
-      <mesh position={[0, 0, -0.004]}>
-        <boxGeometry args={[0.54, 0.94, 0.012]} />
-        <meshBasicMaterial color="#07111f" />
-      </mesh>
+      <RoundedBox args={[0.55, 0.96, 0.016]} radius={0.055} smoothness={8} position={[0, 0, -0.005]}>
+        <meshBasicMaterial color="#0a1a2d" />
+      </RoundedBox>
 
-      <mesh position={[0, 0.42, 0.01]}>
-        <boxGeometry args={[0.18, 0.028, 0.014]} />
+      <mesh position={[0, 0.42, 0.012]}>
+        <boxGeometry args={[0.17, 0.027, 0.014]} />
         <meshBasicMaterial color="#020305" transparent opacity={0.92} />
       </mesh>
+      <mesh position={[0.12, 0.421, 0.02]}>
+        <circleGeometry args={[0.012, 20]} />
+        <meshBasicMaterial color="#111827" transparent opacity={0.88} />
+      </mesh>
 
-      <Text position={[-0.21, 0.34, 0.02]} fontSize={0.037} anchorX="left" anchorY="middle" color="#f8fafc">
-        FLARE
+      <Text position={[-0.21, 0.375, 0.022]} fontSize={0.019} anchorX="left" anchorY="middle" color="#cbd5e1">
+        09:41
       </Text>
-      <Text position={[0.21, 0.34, 0.02]} fontSize={0.023} anchorX="right" anchorY="middle" color="#fb923c">
-        auto
-      </Text>
-      <ScreenLine x={0} y={0.275} width={0.42} opacity={0.13} color="#dbeafe" />
+      <ScreenLine x={0.142} y={0.375} width={0.038} opacity={0.46} color="#dbeafe" />
+      <ScreenLine x={0.19} y={0.375} width={0.052} opacity={0.78} color="#22c55e" />
+      <mesh position={[0.226, 0.375, 0.022]}>
+        <boxGeometry args={[0.012, 0.014, 0.006]} />
+        <meshBasicMaterial color="#22c55e" transparent opacity={0.72} />
+      </mesh>
 
-      <group position={[0, 0.16, 0.006]}>
-        <mesh position={[0, 0, -0.002]}>
-          <boxGeometry args={[0.44, 0.22, 0.01]} />
-          <meshBasicMaterial color="#0d1725" transparent opacity={0.96} />
+      <group position={[0, 0.302, 0.006]}>
+        <RoundedBox args={[0.45, 0.11, 0.012]} radius={0.026} smoothness={6} position={[0, 0, -0.002]}>
+          <meshBasicMaterial color="#0e2035" transparent opacity={0.98} />
+        </RoundedBox>
+        <mesh position={[-0.178, 0.002, 0.021]}>
+          <circleGeometry args={[0.032, 24]} />
+          <meshBasicMaterial color="#fb923c" transparent opacity={0.95} />
         </mesh>
-        <StatusDot x={-0.17} y={0.065} color="#22c55e" opacity={0.74} />
-        <Text position={[-0.12, 0.065, 0.02]} fontSize={0.024} anchorX="left" anchorY="middle" color="#dbeafe">
-          bot actif
+        <Text position={[-0.178, 0.001, 0.026]} fontSize={0.024} anchorX="center" anchorY="middle" color="#111827">
+          F
         </Text>
-        <Text position={[-0.17, -0.045, 0.02]} fontSize={0.032} anchorX="left" anchorY="middle" color="#f8fafc">
-          12 leads traites
+        <Text position={[-0.125, 0.017, 0.024]} fontSize={0.026} anchorX="left" anchorY="middle" color="#f8fafc">
+          FLARE AI
+        </Text>
+        <Text position={[-0.125, -0.026, 0.024]} fontSize={0.018} anchorX="left" anchorY="middle" color="#94a3b8">
+          Messenger automation
+        </Text>
+        <StatusDot x={0.172} y={0.018} color="#22c55e" opacity={0.86} />
+        <Text position={[0.205, -0.019, 0.024]} fontSize={0.018} anchorX="right" anchorY="middle" color="#22c55e">
+          LIVE
         </Text>
       </group>
 
-      <group position={[0, -0.075, 0.008]}>
-        <mesh position={[0, 0, -0.002]}>
-          <boxGeometry args={[0.44, 0.18, 0.01]} />
-          <meshBasicMaterial color="#0a1018" transparent opacity={0.96} />
+      <group position={[0, 0.145, 0.008]}>
+        <RoundedBox args={[0.45, 0.182, 0.012]} radius={0.026} smoothness={6} position={[0, 0, -0.002]}>
+          <meshBasicMaterial color="#091525" transparent opacity={0.98} />
+        </RoundedBox>
+        <mesh position={[-0.17, 0.054, 0.02]}>
+          <circleGeometry args={[0.026, 22]} />
+          <meshBasicMaterial color="#334155" transparent opacity={0.96} />
         </mesh>
-        <Text position={[-0.17, 0.045, 0.02]} fontSize={0.024} anchorX="left" anchorY="middle" color="#94a3b8">
-          Messenger
+        <Text position={[-0.168, 0.054, 0.026]} fontSize={0.018} anchorX="center" anchorY="middle" color="#f8fafc">
+          K
         </Text>
-        <Text position={[-0.17, -0.035, 0.02]} fontSize={0.026} anchorX="left" anchorY="middle" color="#f8fafc">
-          reponse envoyee
+        <RoundedBox args={[0.255, 0.072, 0.01]} radius={0.018} smoothness={5} position={[0.035, 0.054, 0.014]}>
+          <meshBasicMaterial color="#16263a" transparent opacity={0.98} />
+        </RoundedBox>
+        <Text position={[-0.074, 0.064, 0.024]} fontSize={0.017} anchorX="left" anchorY="middle" color="#cbd5e1">
+          Bonjour, prix service ?
         </Text>
-        <mesh ref={indicatorRef} position={[0.17, -0.035, 0.02]}>
-          <circleGeometry args={[0.026, 20]} />
-          <meshBasicMaterial color="#fb923c" transparent opacity={0.72} />
+        <Text position={[-0.074, 0.033, 0.024]} fontSize={0.014} anchorX="left" anchorY="middle" color="#64748b">
+          Messenger - il y a 12 s
+        </Text>
+        <RoundedBox args={[0.28, 0.078, 0.01]} radius={0.018} smoothness={5} position={[0.042, -0.046, 0.014]}>
+          <meshBasicMaterial color="#fb923c" transparent opacity={0.94} />
+        </RoundedBox>
+        <Text position={[-0.078, -0.034, 0.024]} fontSize={0.016} anchorX="left" anchorY="middle" color="#111827">
+          Offre adaptee envoyee
+        </Text>
+        <Text position={[-0.078, -0.064, 0.024]} fontSize={0.014} anchorX="left" anchorY="middle" color="#431407">
+          Devis + CTA envoyes
+        </Text>
+        <group ref={typingDotRef} position={[0.184, -0.085, 0.024]}>
+          {[0, 1, 2].map((index) => (
+            <mesh key={index} position={[index * 0.014, 0, 0]}>
+              <circleGeometry args={[0.0048, 12]} />
+              <meshBasicMaterial color="#f8fafc" transparent opacity={0.5} />
+            </mesh>
+          ))}
+        </group>
+      </group>
+
+      <group position={[0, -0.07, 0.008]}>
+        <RoundedBox args={[0.45, 0.19, 0.012]} radius={0.026} smoothness={6} position={[0, 0, -0.002]}>
+          <meshBasicMaterial color="#0d1d31" transparent opacity={0.98} />
+        </RoundedBox>
+        <Text position={[-0.18, 0.064, 0.022]} fontSize={0.021} anchorX="left" anchorY="middle" color="#cbd5e1">
+          Analyse automatique
+        </Text>
+        <Text position={[0.19, 0.064, 0.022]} fontSize={0.017} anchorX="right" anchorY="middle" color="#22c55e">
+          97%
+        </Text>
+        <mesh position={[0, 0.018, 0.019]}>
+          <boxGeometry args={[0.348, 0.012, 0.008]} />
+          <meshBasicMaterial color="#243247" transparent opacity={0.86} />
+        </mesh>
+        <mesh ref={progressRef} position={[-0.062, 0.018, 0.021]}>
+          <boxGeometry args={[0.215, 0.015, 0.01]} />
+          <meshBasicMaterial color="#22c55e" transparent opacity={0.86} />
+        </mesh>
+        {[
+          { x: -0.145, y: -0.042, label: "devis", color: "#fb923c" },
+          { x: 0, y: -0.042, label: "lead", color: "#60a5fa" },
+          { x: 0.145, y: -0.042, label: "relance", color: "#cbd5e1" },
+        ].map((item) => (
+          <group key={item.label} position={[item.x, item.y, 0.02]}>
+            <mesh>
+              <circleGeometry args={[0.021, 18]} />
+              <meshBasicMaterial color={item.color} transparent opacity={0.86} />
+            </mesh>
+            <Text position={[0, -0.04, 0.006]} fontSize={0.014} anchorX="center" anchorY="middle" color="#cbd5e1">
+              {item.label}
+            </Text>
+          </group>
+        ))}
+        <mesh ref={indicatorRef} position={[0.194, -0.086, 0.02]}>
+          <circleGeometry args={[0.018, 20]} />
+          <meshBasicMaterial color="#fb923c" transparent opacity={0.74} />
         </mesh>
       </group>
 
-      <group position={[0, -0.285, 0.008]}>
-        <mesh position={[0, 0, -0.002]}>
-          <boxGeometry args={[0.44, 0.16, 0.01]} />
-          <meshBasicMaterial color="#0d1725" transparent opacity={0.96} />
-        </mesh>
-        <Text position={[-0.17, 0.035, 0.02]} fontSize={0.023} anchorX="left" anchorY="middle" color="#94a3b8">
-          prochaine action
+      <group position={[0, -0.263, 0.008]}>
+        <RoundedBox args={[0.45, 0.16, 0.012]} radius={0.026} smoothness={6} position={[0, 0, -0.002]}>
+          <meshBasicMaterial color="#101c2c" transparent opacity={0.98} />
+        </RoundedBox>
+        <Text position={[-0.18, 0.048, 0.022]} fontSize={0.02} anchorX="left" anchorY="middle" color="#94a3b8">
+          Aujourd hui
         </Text>
-        <Text position={[-0.17, -0.04, 0.02]} fontSize={0.027} anchorX="left" anchorY="middle" color="#fb923c">
-          relance 15 min
+        {[
+          { x: -0.142, value: "18", label: "msg" },
+          { x: 0, value: "7", label: "leads" },
+          { x: 0.142, value: "3", label: "relances" },
+        ].map((metric) => (
+          <group key={metric.label} position={[metric.x, -0.03, 0.02]}>
+            <Text position={[0, 0.022, 0.006]} fontSize={0.032} anchorX="center" anchorY="middle" color="#f8fafc">
+              {metric.value}
+            </Text>
+            <Text position={[0, -0.022, 0.006]} fontSize={0.014} anchorX="center" anchorY="middle" color="#94a3b8">
+              {metric.label}
+            </Text>
+          </group>
+        ))}
+      </group>
+
+      <group position={[0, -0.382, 0.01]}>
+        <RoundedBox args={[0.34, 0.052, 0.012]} radius={0.026} smoothness={6} position={[0, 0, -0.002]}>
+          <meshBasicMaterial color="#fb923c" transparent opacity={0.95} />
+        </RoundedBox>
+        <Text position={[0, 0.001, 0.023]} fontSize={0.019} anchorX="center" anchorY="middle" color="#111827">
+          automatisation en cours
         </Text>
       </group>
+
+      <mesh position={[0.12, 0.04, 0.031]} rotation={[0, 0, -0.33]}>
+        <boxGeometry args={[0.018, 0.68, 0.006]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={0.08} />
+      </mesh>
     </group>
   );
 }
@@ -264,53 +377,82 @@ function useKeyClickSound() {
     const audioContext = audioContextRef.current ?? new AudioContextCtor();
     audioContextRef.current = audioContext;
 
+    const playMechanicalClick = () => {
+      const now = audioContext.currentTime + 0.004;
+      const pitchJitter = 1 + (Math.random() - 0.5) * 0.12;
+
+      const scheduleNoiseBurst = (start: number, duration: number, peak: number, frequency: number, q: number) => {
+        const sampleCount = Math.max(1, Math.floor(audioContext.sampleRate * duration));
+        const buffer = audioContext.createBuffer(1, sampleCount, audioContext.sampleRate);
+        const channel = buffer.getChannelData(0);
+
+        for (let index = 0; index < sampleCount; index += 1) {
+          const envelope = Math.pow(1 - index / sampleCount, 2.4);
+          channel[index] = (Math.random() * 2 - 1) * envelope;
+        }
+
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+
+        const highpass = audioContext.createBiquadFilter();
+        highpass.type = "highpass";
+        highpass.frequency.setValueAtTime(1700, start);
+        highpass.Q.setValueAtTime(0.8, start);
+
+        const bandpass = audioContext.createBiquadFilter();
+        bandpass.type = "bandpass";
+        bandpass.frequency.setValueAtTime(frequency * pitchJitter, start);
+        bandpass.Q.setValueAtTime(q, start);
+
+        const gain = audioContext.createGain();
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.linearRampToValueAtTime(peak, start + 0.002);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        source.connect(highpass);
+        highpass.connect(bandpass);
+        bandpass.connect(gain);
+        gain.connect(audioContext.destination);
+        source.start(start);
+        source.stop(start + duration);
+      };
+
+      const scheduleTick = (
+        start: number,
+        duration: number,
+        peak: number,
+        fromFrequency: number,
+        toFrequency: number,
+        type: OscillatorType,
+      ) => {
+        const oscillator = audioContext.createOscillator();
+        const gain = audioContext.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(fromFrequency * pitchJitter, start);
+        oscillator.frequency.exponentialRampToValueAtTime(toFrequency * pitchJitter, start + duration);
+        gain.gain.setValueAtTime(0.0001, start);
+        gain.gain.linearRampToValueAtTime(peak, start + 0.0015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+        oscillator.connect(gain);
+        gain.connect(audioContext.destination);
+        oscillator.start(start);
+        oscillator.stop(start + duration);
+      };
+
+      scheduleNoiseBurst(now, 0.016, 0.07, 4300, 5.8);
+      scheduleTick(now + 0.001, 0.011, 0.022, 3800, 2400, "square");
+      scheduleNoiseBurst(now + 0.027, 0.012, 0.034, 6200, 4.6);
+      scheduleTick(now + 0.03, 0.009, 0.012, 5200, 3900, "triangle");
+    };
+
     if (audioContext.state === "suspended") {
-      audioContext.resume().catch(() => undefined);
+      audioContext.resume().then(playMechanicalClick).catch(() => undefined);
+      return;
     }
 
-    const now = audioContext.currentTime;
-    const duration = 0.045;
-    const sampleCount = Math.max(1, Math.floor(audioContext.sampleRate * duration));
-    const buffer = audioContext.createBuffer(1, sampleCount, audioContext.sampleRate);
-    const channel = buffer.getChannelData(0);
-
-    for (let index = 0; index < sampleCount; index += 1) {
-      const envelope = 1 - index / sampleCount;
-      channel[index] = (Math.random() * 2 - 1) * envelope;
-    }
-
-    const noise = audioContext.createBufferSource();
-    noise.buffer = buffer;
-
-    const filter = audioContext.createBiquadFilter();
-    filter.type = "bandpass";
-    filter.frequency.setValueAtTime(2600, now);
-    filter.Q.setValueAtTime(7.5, now);
-
-    const clickGain = audioContext.createGain();
-    clickGain.gain.setValueAtTime(0.0001, now);
-    clickGain.gain.exponentialRampToValueAtTime(0.085, now + 0.004);
-    clickGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-
-    const transient = audioContext.createOscillator();
-    const transientGain = audioContext.createGain();
-    transient.type = "square";
-    transient.frequency.setValueAtTime(1550, now);
-    transient.frequency.exponentialRampToValueAtTime(780, now + 0.026);
-    transientGain.gain.setValueAtTime(0.0001, now);
-    transientGain.gain.exponentialRampToValueAtTime(0.025, now + 0.002);
-    transientGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.028);
-
-    noise.connect(filter);
-    filter.connect(clickGain);
-    clickGain.connect(audioContext.destination);
-    transient.connect(transientGain);
-    transientGain.connect(audioContext.destination);
-
-    noise.start(now);
-    noise.stop(now + duration);
-    transient.start(now);
-    transient.stop(now + 0.03);
+    playMechanicalClick();
   }, []);
 }
 
@@ -519,12 +661,19 @@ function AutomationOffice({ reducedMotion = false }: AutomationDeskSceneProps) {
         </mesh>
       </group>
 
-      <group position={[-0.62, 0.5, 0.32]} rotation={[-0.18, -0.24, -0.06]} scale={1.08}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[0.66, 1.16, 0.075]} />
+      <group position={[-0.5, 0.51, 0.34]} rotation={[-0.16, -0.13, -0.055]} scale={1.1}>
+        <RoundedBox args={[0.68, 1.18, 0.082]} radius={0.075} smoothness={10} castShadow receiveShadow>
           <meshStandardMaterial color="#06080d" roughness={0.28} metalness={0.56} />
+        </RoundedBox>
+        <mesh position={[-0.362, 0.18, 0]}>
+          <boxGeometry args={[0.018, 0.18, 0.035]} />
+          <meshStandardMaterial color="#111827" roughness={0.36} metalness={0.46} />
         </mesh>
-        <pointLight position={[0, 0, 0.22]} color="#60a5fa" intensity={0.72} distance={1.65} />
+        <mesh position={[0.362, 0.08, 0]}>
+          <boxGeometry args={[0.018, 0.26, 0.035]} />
+          <meshStandardMaterial color="#111827" roughness={0.36} metalness={0.46} />
+        </mesh>
+        <pointLight position={[0, 0, 0.22]} color="#60a5fa" intensity={0.9} distance={1.75} />
         <mesh position={[0, -0.53, 0.045]}>
           <circleGeometry args={[0.025, 24]} />
           <meshBasicMaterial color="#111827" transparent opacity={0.72} />

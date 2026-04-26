@@ -493,12 +493,20 @@ export default function ChatbotHomePage({
   const messagesTraites = dashData?.totals?.messages24h ?? dashData?.periodStats?.[0]?.messages ?? 0;
   const contactsCaptes = dashData?.totals?.contacts ?? 0;
   const alertCount = overview?.pending_human_count ?? pendingHumanCount;
-  const botFullyLive =
-    overview?.step === "complete" &&
-    Boolean(
-      overview?.active_page?.is_active &&
-      overview?.active_page?.webhook_subscribed
-    );
+  const selectedPage = selectedPageId
+    ? pages.find((page) => page.page_id === selectedPageId) ?? null
+    : null;
+  const selectedPageLive = Boolean(
+    selectedPage?.is_active &&
+    selectedPage?.webhook_subscribed &&
+    selectedPage?.direct_service_synced
+  );
+  const overviewPageLive = Boolean(
+    overview?.active_page?.is_active &&
+    overview?.active_page?.webhook_subscribed &&
+    overview?.active_page?.direct_service_synced
+  );
+  const botFullyLive = selectedPageLive || overviewPageLive;
 
   const activationBanner = getActivationBanner(
     currentPlanId,

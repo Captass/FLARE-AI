@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, FormEvent, KeyboardEvent, ClipboardEvent }
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Loader2, Mail, Lock, Eye, EyeOff, ArrowRight, ArrowLeft,
-  Shield, KeyRound, RefreshCw, Chrome, Sparkles,
+  Shield, HelpCircle, RefreshCw, Chrome, Sparkles,
 } from "lucide-react";
 import FlareMark from "./FlareMark";
 
@@ -24,7 +24,7 @@ interface LoginScreenProps {
   onBack?: () => void;
 }
 
-type Mode = "login" | "signup" | "magic" | "reset" | "pin";
+type Mode = "login" | "signup" | "magic" | "reset" | "emailHelp" | "pin";
 
 const VARIANTS = {
   enter: { opacity: 0, y: 14 },
@@ -92,12 +92,16 @@ export default function LoginScreen({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLocalError(null);
-    if (!email.trim()) return;
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setLocalError("Indiquez votre adresse email.");
+      return;
+    }
 
     if (mode === "magic") {
       setLocalLoading(true);
       try {
-        await onLogin(email.trim());
+        await onLogin(normalizedEmail);
         setEmailSent(true);
       } catch {
         // error géré par le parent via prop error
@@ -105,7 +109,11 @@ export default function LoginScreen({
         setLocalLoading(false);
       }
     } else if (mode === "login") {
-      await onLoginWithPassword(email.trim(), password);
+      if (!password) {
+        setLocalError("Entrez votre mot de passe.");
+        return;
+      }
+      await onLoginWithPassword(normalizedEmail, password);
     } else if (mode === "signup") {
       if (!password || password.length < 6) {
         setLocalError("Le mot de passe doit contenir au moins 6 caractères.");
@@ -113,7 +121,7 @@ export default function LoginScreen({
       }
       setLocalLoading(true);
       try {
-        await onSignUpWithPassword(email.trim(), password);
+        await onSignUpWithPassword(normalizedEmail, password);
         setEmailSent(true);
       } catch {
         // erreur gérée par le parent
@@ -123,8 +131,7 @@ export default function LoginScreen({
     } else if (mode === "reset") {
       setLocalLoading(true);
       try {
-        await onResetPassword(email.trim());
-        alert("Si un compte est associé à cet e-mail, un lien de réinitialisation a été envoyé.");
+        await onResetPassword(normalizedEmail);
         setEmailSent(true);
       } catch {
         // géré par le parent
@@ -246,6 +253,7 @@ export default function LoginScreen({
                 {mode === "signup" && "Créer un compte"}
                 {mode === "magic" && (emailSent ? "Email envoyé !" : "Lien magique")}
                 {mode === "reset" && (emailSent ? "Email envoyé !" : "Mot de passe oublié")}
+                {mode === "emailHelp" && "Email oublié"}
                 {mode === "pin" && "Vérification email"}
               </h1>
               <p className="text-sm text-[var(--text-muted)] mt-1">
@@ -255,6 +263,7 @@ export default function LoginScreen({
                 {mode === "magic" && emailSent && `Cliquez sur le lien envoyé à ${email}`}
                 {mode === "reset" && !emailSent && "Réinitialisez votre mot de passe"}
                 {mode === "reset" && emailSent && `Consultez votre boîte mail : ${email}`}
+                {mode === "emailHelp" && "Retrouvez l'adresse utilisée avec FLARE AI"}
                 {mode === "pin" && `Code envoyé à ${email}`}
               </p>
             </div>
@@ -269,8 +278,8 @@ export default function LoginScreen({
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/20"
                 >
-                  <span className="text-red-400 mt-0.5">⚠</span>
-                  <p className="text-sm text-red-300">{displayError}</p>
+                  <span className="text-red-600 mt-0.5">⚠</span>
+                  <p className="text-sm text-red-700">{displayError}</p>
                 </motion.div>
               )}
 
@@ -321,7 +330,7 @@ export default function LoginScreen({
                     onClick={handleVerifyPin}
                     disabled={pinLoading || pinDigits.join("").length !== 6}
                     className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm
-                      bg-white text-black hover:bg-white/90 transition-colors
+                      bg-orange-500 text-white hover:bg-orange-600 transition-colors
                       disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {pinLoading ? (
@@ -344,7 +353,7 @@ export default function LoginScreen({
                       <button
                         onClick={handleResendPin}
                         disabled={isLoading}
-                        className="inline-flex items-center gap-1.5 text-xs text-white/70 hover:text-white transition-colors disabled:opacity-50"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-black/60 hover:text-black transition-colors disabled:opacity-50"
                       >
                         <RefreshCw className="w-3 h-3" />
                         Renvoyer le code
@@ -364,7 +373,7 @@ export default function LoginScreen({
               )}
 
               {/* ── Formulaire principal (login / signup / magic / reset) ── */}
-              {mode !== "pin" && !emailSent && (
+              {mode !== "pin" && mode !== "emailHelp" && !emailSent && (
                 <form onSubmit={handleSubmit} className="space-y-4">
                   {/* Email */}
                   <div className="space-y-1.5">
@@ -400,7 +409,7 @@ export default function LoginScreen({
                           <button
                             type="button"
                             onClick={() => switchMode("reset")}
-                            className="text-xs text-white/70 hover:text-white transition-colors"
+                            className="text-xs font-medium text-black/60 hover:text-black transition-colors"
                           >
                             Oublié ?
                           </button>
@@ -476,6 +485,39 @@ export default function LoginScreen({
                 </form>
               )}
 
+              {mode === "emailHelp" && (
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-black/10 bg-black/[0.025] p-4 text-left">
+                    <div className="mb-3 flex items-center gap-2 text-sm font-bold text-black">
+                      <HelpCircle className="h-4 w-4 text-orange-500" />
+                      Retrouver le bon email
+                    </div>
+                    <ul className="space-y-2 text-sm leading-relaxed text-black/65">
+                      <li>• Cherchez “FLARE AI” ou “ramsflare” dans vos boîtes Gmail, Outlook et Apple Mail.</li>
+                      <li>• Essayez aussi la connexion Google si le compte a été créé avec Google.</li>
+                      <li>• Si vous avez payé ou demandé une activation, l&apos;équipe peut vérifier le dossier.</li>
+                    </ul>
+                  </div>
+
+                  <a
+                    href="mailto:contact@ramsflare.com?subject=Email%20oubli%C3%A9%20FLARE%20AI"
+                    className="flex w-full items-center justify-center gap-2 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-bold text-black shadow-sm transition-colors hover:bg-black/[0.04]"
+                  >
+                    <Mail className="h-4 w-4 text-orange-500" />
+                    Contacter le support
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => switchMode("login")}
+                    className="flex w-full items-center justify-center gap-2 text-sm font-medium text-black/60 transition-colors hover:text-black"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Retour à la connexion
+                  </button>
+                </div>
+              )}
+
               {/* ── Confirmation email envoyé ── */}
               {emailSent && mode !== "pin" && (
                 <div className="text-center py-2 space-y-3">
@@ -491,7 +533,7 @@ export default function LoginScreen({
                   </p>
                   <button
                     onClick={() => { setEmailSent(false); switchMode("login"); }}
-                    className="text-sm text-white/70 hover:text-white transition-colors"
+                    className="text-sm font-medium text-black/60 hover:text-black transition-colors"
                   >
                     Retour à la connexion
                   </button>
@@ -500,16 +542,30 @@ export default function LoginScreen({
             </div>
 
             {/* Footer liens */}
-            {mode !== "pin" && !emailSent && (
+            {mode !== "pin" && mode !== "emailHelp" && !emailSent && (
               <div className="px-8 pb-6 flex flex-col items-center gap-3">
                 {mode === "login" && (
                   <>
-                    <button
-                      onClick={() => switchMode("reset")}
-                      className="text-xs text-black/60 hover:text-black font-medium transition-colors"
-                    >
-                      Mot de passe oublié ?
-                    </button>
+                    <div className="flex flex-wrap justify-center gap-x-3 gap-y-2 text-xs">
+                      <button
+                        onClick={() => switchMode("reset")}
+                        className="text-black/60 hover:text-black font-medium transition-colors"
+                      >
+                        Mot de passe oublié ?
+                      </button>
+                      <button
+                        onClick={() => switchMode("emailHelp")}
+                        className="text-black/60 hover:text-black font-medium transition-colors"
+                      >
+                        Email oublié ?
+                      </button>
+                      <button
+                        onClick={() => switchMode("magic")}
+                        className="text-orange-500 hover:text-orange-600 font-bold transition-colors"
+                      >
+                        Lien email
+                      </button>
+                    </div>
                     <div className="flex items-center gap-1.5 text-xs text-black/50">
                       <span>Pas encore de compte ?</span>
                       <button

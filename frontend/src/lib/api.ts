@@ -11,6 +11,7 @@
 import { getPlatformApiBaseUrl } from "@/lib/platform/runtime";
 
 const PRODUCTION_BACKEND_URL = "https://flare-backend-ab5h.onrender.com";
+const LOCAL_BACKEND_URL = "http://localhost:8000";
 
 const PROD_FRONTEND_HOSTS = new Set([
   "flareai.ramsflare.com",
@@ -27,26 +28,55 @@ function isRenderStaticHost(hostname: string): boolean {
   return hostname.endsWith(".onrender.com");
 }
 
+function sanitizeApiBaseUrl(value?: string | null): string {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function getStoredApiBaseUrlOverride(): string {
+  if (typeof window === "undefined") return "";
+
+  try {
+    return sanitizeApiBaseUrl(window.localStorage.getItem("flare_api_base_url"));
+  } catch {
+    return "";
+  }
+}
+
+function shouldForceLocalBackend(): boolean {
+  if (typeof window === "undefined") return false;
+
+  try {
+    return window.localStorage.getItem("flare_use_local_backend") === "true";
+  } catch {
+    return false;
+  }
+}
+
 export function getApiBaseUrl(): string {
   const platformUrl = getPlatformApiBaseUrl();
   if (platformUrl) {
     return platformUrl;
   }
 
-  const configuredUrl = process.env.NEXT_PUBLIC_API_URL?.trim();
+  const configuredUrl = sanitizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
   if (configuredUrl) {
-    return configuredUrl.replace(/\/+$/, "");
+    return configuredUrl;
   }
 
   if (typeof window !== "undefined") {
-    const { hostname, protocol } = window.location;
+    const { hostname } = window.location;
+    const storedOverride = getStoredApiBaseUrlOverride();
+
+    if (storedOverride) {
+      return storedOverride;
+    }
 
     if (PROD_FRONTEND_HOSTS.has(hostname) || isRenderStaticHost(hostname)) {
       return PRODUCTION_BACKEND_URL;
     }
 
     if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return "http://localhost:8000";
+      return shouldForceLocalBackend() ? LOCAL_BACKEND_URL : PRODUCTION_BACKEND_URL;
     }
 
     // Unknown hosted domains should still use production backend.

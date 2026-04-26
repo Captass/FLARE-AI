@@ -423,23 +423,18 @@ function HomeContent() {
   const [lang, setLang] = useState<'fr' | 'en'>('fr');
   const hasHistoryBack = navStack.length > 1;
   const showStandaloneBack = activeView !== "home" && !hasHistoryBack;
+  const authIntentParam = searchParams?.get("auth");
+  const routeAuthMode = authIntentParam === "signup" || authIntentParam === "login" ? authIntentParam : null;
+  const shouldShowAuth = showAuth || Boolean(routeAuthMode);
+  const loginScreenMode = routeAuthMode ?? authMode;
 
   // Read ?auth= param from the landing page CTAs (e.g. /app?auth=signup)
   useEffect(() => {
-    const authIntent = searchParams?.get("auth");
-    if (authIntent === "signup" || authIntent === "login") {
-      setAuthMode(authIntent);
+    if (routeAuthMode) {
+      setAuthMode(routeAuthMode);
       setShowAuth(true);
     }
-  }, [searchParams]);
-
-  useEffect(() => {
-    const requestedView = searchParams?.get("view");
-    if (!isAppView(requestedView)) {
-      return;
-    }
-    setNavStack(resolveDefaultNavStack(requestedView));
-  }, [searchParams]);
+  }, [routeAuthMode]);
 
   useEffect(() => {
     const savedLang = localStorage.getItem('flare-lang') as 'fr' | 'en' | null;
@@ -975,7 +970,9 @@ function HomeContent() {
   const guideBottomClassName =
   activeView === "assistant" || activeView === "chat"
       ? "bottom-[168px] md:bottom-8"
-      : "bottom-4 md:bottom-6";
+      : activeView === "billing" || activeView === "chatbot-activation" || activeView === "facebook" || activeView === "chatbot"
+        ? "bottom-24 md:bottom-6"
+        : "bottom-4 md:bottom-6";
   const guideVisible =
     !sidebarOpen &&
     !isSettingsModalOpen &&
@@ -1020,14 +1017,32 @@ function HomeContent() {
         requestAuth("login");
         return;
       }
+      if ((view as AppView) === "admin" && adminAccessState === "checking") {
+        return;
+      }
       if ((view as AppView) === "admin" && !canAccessAdmin) {
         pushAppNotice("Cette vue est reservee a l'equipe FLARE.");
+        setNavStack(resolveDefaultNavStack("home"));
         return;
       }
       setNavStack(resolveDefaultNavStack(view as AppView));
     },
-    [canAccessAdmin, pushAppNotice, requestAuth, user]
+    [adminAccessState, canAccessAdmin, pushAppNotice, requestAuth, user]
   );
+
+  useEffect(() => {
+    const requestedView = searchParams?.get("view");
+    if (!isAppView(requestedView)) {
+      return;
+    }
+    if (authLoading && !user) {
+      return;
+    }
+    if (requestedView === "admin" && adminAccessState === "checking") {
+      return;
+    }
+    navigateWithAccess(requestedView);
+  }, [adminAccessState, authLoading, navigateWithAccess, searchParams, user]);
 
   const handleGuideNavigate = useCallback(
     (target: string) => {
@@ -1074,10 +1089,17 @@ function HomeContent() {
   );
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user && GUEST_LOCKED_VIEWS.includes(activeView as ActiveView)) {
       setNavStack(resolveDefaultNavStack("home"));
+      return;
     }
-  }, [activeView, user]);
+    if (activeView === "admin" && adminAccessState !== "checking" && !canAccessAdmin) {
+      setNavStack(resolveDefaultNavStack("home"));
+    }
+  }, [activeView, adminAccessState, authLoading, canAccessAdmin, user]);
 
   const handleHeaderBack = useCallback(() => {
     if (hasHistoryBack) {
@@ -1091,7 +1113,7 @@ function HomeContent() {
 
 
   // ── Landing page publique, connexion, puis application ──
-  if (!user && !showAuth && authLoading) {
+  if (!user && !shouldShowAuth && authLoading) {
     return (
       <div style={{
           position: 'fixed',
@@ -1178,7 +1200,7 @@ function HomeContent() {
     );
   }
 
-  if (!user && showAuth) {
+  if (!user && shouldShowAuth) {
     return (
       <LoginScreen
         onLogin={login}
@@ -1190,8 +1212,13 @@ function HomeContent() {
         onVerifyPin={verifySignupPin}
         loading={authLoading}
         error={authError}
-        initialMode={authMode}
-        onBack={() => setShowAuth(false)}
+        initialMode={loginScreenMode}
+        onBack={() => {
+          setShowAuth(false);
+          if (routeAuthMode && typeof window !== "undefined") {
+            window.history.replaceState(null, "", "/");
+          }
+        }}
       />
     );
   }
@@ -1407,7 +1434,7 @@ function HomeContent() {
 
         {/* Sidebar */}
         <NewSidebar
-          activeView={activeView as NavLevel}
+          activeView={sidebarActiveView}
           onNavigate={(v) => { navigateWithAccess(v); setSidebarOpen(false); }}
           onNavigateHome={() => { navigateWithAccess("home"); setSidebarOpen(false); }}
           onOpenReport={() => setIsReportModalOpen(true)}
@@ -1440,12 +1467,12 @@ function HomeContent() {
         }`}
       >
         {/* Header Gemini Type */}
-        <div className="z-20 flex w-full items-center justify-between gap-3 border-b border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 md:px-5">
-          <div className="flex items-center gap-2 md:gap-4 min-w-0">
+        <div className="z-20 grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-2 border-b border-[var(--border-default)] bg-[var(--surface-base)] px-3 py-2 md:px-5">
+          <div className="flex min-w-0 items-center gap-1.5 md:gap-4">
              <button
                id="tour-sidebar"
                onClick={() => setSidebarOpen(true)}
-               className="md:hidden p-2 rounded-xl text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all active-press"
+               className="shrink-0 rounded-xl p-2 text-[var(--text-muted)] transition-all hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] active-press md:hidden"
                title="Menu"
              >
                <Menu size={20} strokeWidth={1.5} />
@@ -1459,38 +1486,38 @@ function HomeContent() {
                 <button
                   onClick={handleHeaderBack}
                   aria-label="Retour"
-                  className="inline-flex items-center gap-1 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-1.5 text-[var(--text-secondary)] transition-all hover:text-[var(--text-primary)] hover:bg-[var(--surface-raised)]"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2 py-1.5 text-[var(--text-secondary)] transition-all hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)] sm:px-2.5"
                 >
                   <ArrowLeft size={15} />
                   <span className="hidden text-xs font-medium sm:inline">Retour</span>
                 </button>
               )}
                {breadcrumbStack.length > 1 && (
-                 <div className="flex-1 min-w-0">
+                 <div className="hidden min-w-0 flex-1 md:block">
                   <NavBreadcrumb navStack={breadcrumbStack} onPop={onPop} />
                  </div>
                )}
               {activeView !== "home" && (
                 <div className="flex min-w-0 flex-col items-start">
-                  <span className="truncate text-[15px] md:text-[18px] font-medium text-[var(--text-primary)] tracking-wide font-sans">{resolvedViewTitle}</span>
+                  <span className="max-w-[42vw] truncate font-sans text-[15px] font-medium tracking-wide text-[var(--text-primary)] sm:max-w-[220px] md:max-w-none md:text-[18px]">{resolvedViewTitle}</span>
                 </div>
               )}
           </div>
 
 
           {/* Droite : Actions SystÃ¨me & Account */}
-          <div className="flex items-center justify-end gap-1.5 md:gap-6">
+          <div className="flex min-w-0 shrink-0 items-center justify-end gap-1 md:gap-4">
              {/* Indicateur Online/Offline */}
-             <div className="flex items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5">
+             <div className="hidden items-center gap-2 rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-3 py-1.5 sm:flex">
                 <div className={`h-2 w-2 rounded-full ${backendOnline === null ? 'bg-orange-500 animate-pulse' : backendOnline ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.35)]' : 'bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.28)]'}`} />
                 <span className={`text-[9px] font-bold tracking-[0.1em] uppercase ${backendOnline === null ? 'text-orange-700 dark:text-orange-200' : backendOnline ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}`}>
                    {backendOnline === null ? '...' : backendOnline ? 'Online' : 'Offline'}
                 </span>
              </div>
 
-              <div className={`flex items-center gap-1.5 md:gap-3 ${activeView !== "home" ? "md:border-l md:border-[var(--border-muted)] md:pl-4" : ""}`}>
+              <div className={`flex shrink-0 items-center gap-1.5 md:gap-3 ${activeView !== "home" ? "md:border-l md:border-[var(--border-muted)] md:pl-4" : ""}`}>
                  {/* Org switcher */}
-                 <div className="flex items-center gap-2">
+                 <div className="flex shrink-0 items-center gap-1.5 md:gap-2">
                  {user ? (
                    <ThemeToggle
                      theme={theme}
@@ -1500,8 +1527,8 @@ function HomeContent() {
                    />
                  ) : null}
                  {user ? (
-                   <div className="flex items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2.5 py-2 text-left md:gap-3 md:px-3">
-                     <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)]">
+                   <div className="flex max-w-[52px] items-center gap-2 rounded-xl border border-[var(--border-default)] bg-[var(--surface-subtle)] px-1.5 py-1.5 text-left sm:max-w-[190px] sm:px-2.5 sm:py-2 md:gap-3 md:px-3">
+                     <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--border-default)] bg-[var(--surface-raised)] md:h-9 md:w-9">
                        {resolvedUserAvatarUrl ? (
                          // eslint-disable-next-line @next/next/no-img-element
                          <img src={resolvedUserAvatarUrl} alt={resolvedUserDisplayName} className="h-full w-full object-cover" />
@@ -1511,7 +1538,7 @@ function HomeContent() {
                          </span>
                        )}
                      </div>
-                     <div className={`min-w-0 ${activeView === "home" ? "" : "max-w-[120px] md:max-w-[160px]"}`}>
+                     <div className={`hidden min-w-0 sm:block ${activeView === "home" ? "" : "max-w-[120px] md:max-w-[160px]"}`}>
                        <p className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-muted)]">Compte</p>
                        <p className="mt-1 truncate text-sm font-medium text-[var(--text-primary)]">
                          {resolvedWorkspaceName}
@@ -1677,7 +1704,7 @@ function HomeContent() {
           <motion.div key="files" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden">
             <FilesPanel token={token} onOpenArtifact={(artifact) => setActiveArtifact(artifact)} />
           </motion.div>
-        ) : activeView === "admin" ? (
+        ) : activeView === "admin" && canAccessAdmin ? (
           <motion.div key="admin" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden">
             <AdminPanel token={token} />
           </motion.div>

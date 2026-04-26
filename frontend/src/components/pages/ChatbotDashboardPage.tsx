@@ -76,10 +76,9 @@ export default function ChatbotDashboardPage({
         setDashData(null);
       }
 
-      const [overviewResult, dashboardResult] = await Promise.allSettled([
+      const overviewResult = await Promise.allSettled([
         getChatbotOverview(freshToken, selectedPageId),
-        loadMessengerDashboardData(freshToken, selectedPageId),
-      ]);
+      ]).then(([result]) => result);
 
       if (overviewResult.status === "fulfilled") {
         setOverview(overviewResult.value);
@@ -87,17 +86,25 @@ export default function ChatbotDashboardPage({
         setOverview(null);
       }
 
-      if (dashboardResult.status === "fulfilled") {
+      const effectivePageId =
+        selectedPageId || (overviewResult.status === "fulfilled" ? overviewResult.value.active_page?.page_id : null);
+      const dashboardResult = effectivePageId
+        ? await Promise.allSettled([
+            loadMessengerDashboardData(freshToken, effectivePageId),
+          ]).then(([result]) => result)
+        : null;
+
+      if (dashboardResult?.status === "fulfilled") {
         setDashData(dashboardResult.value);
       } else if (!silent) {
         setDashData(null);
       }
 
-      if (overviewResult.status === "rejected" && dashboardResult.status === "rejected" && !silent) {
+      if (overviewResult.status === "rejected" && dashboardResult?.status === "rejected" && !silent) {
         setError("Erreur de chargement du tableau de bord.");
       }
 
-      if (overviewResult.status === "fulfilled" || dashboardResult.status === "fulfilled") {
+      if (overviewResult.status === "fulfilled" || dashboardResult?.status === "fulfilled") {
         setLastKpiUpdate(new Date());
       }
 
@@ -126,10 +133,14 @@ export default function ChatbotDashboardPage({
   }, [loadAll, selectedPageId]);
 
   const isLive =
-    overview?.step === "complete" &&
-    Boolean(overview.active_page?.is_active && overview.active_page?.webhook_subscribed);
+    Boolean(
+      overview?.active_page?.is_active &&
+      overview.active_page.webhook_subscribed &&
+      overview.active_page.direct_service_synced
+    );
   const activePage = overview?.active_page ?? null;
   const hasImportedPages = (overview?.total_pages ?? 0) > 0;
+  const hasDashboardPage = Boolean(activePage);
   const messagesHandled = dashData?.totals?.messages24h ?? dashData?.periodStats?.[0]?.messages ?? 0;
   const trackedContacts = dashData?.totals?.contacts ?? 0;
   const pendingHuman = overview?.pending_human_count ?? dashData?.totals?.needsAttentionContacts ?? 0;
@@ -194,14 +205,15 @@ export default function ChatbotDashboardPage({
           </motion.div>
         ) : null}
 
-        {lastKpiUpdate && !loading ? (
+        {lastKpiUpdate && !loading && hasDashboardPage ? (
           <p className="-mt-4 text-sm text-[var(--text-muted)]">
             Donnees synchronisees avec le serveur - actualisation automatique toutes les{" "}
             {Math.round(KPI_POLL_INTERVAL_MS / 1000)} s
           </p>
         ) : null}
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {loading || hasDashboardPage ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
           {loading ? (
             <>
               <SkeletonCard />
@@ -288,11 +300,12 @@ export default function ChatbotDashboardPage({
               </motion.div>
             </>
           )}
-        </div>
+          </div>
+        ) : null}
 
-        <ChatbotRealtimeChart data={dashData} loading={loading} />
+        {loading || hasDashboardPage ? <ChatbotRealtimeChart data={dashData} loading={loading} /> : null}
 
-        <motion.div
+        {loading || hasDashboardPage ? <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -361,7 +374,7 @@ export default function ChatbotDashboardPage({
               </div>
             )}
           </div>
-        </motion.div>
+        </motion.div> : null}
       </div>
     </div>
   );

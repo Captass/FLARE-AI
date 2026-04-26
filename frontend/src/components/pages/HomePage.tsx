@@ -63,7 +63,7 @@ function KpiCard({
   );
 }
 
-function getActivationCopy(activation: ActivationRequest | null, planId: string | null) {
+function getActivationCopy(activation: ActivationRequest | null, planId: string | null, botFullyLive: boolean) {
   if (!planId || planId === "free") {
     return {
       title: "Choisissez votre offre",
@@ -96,8 +96,8 @@ function getActivationCopy(activation: ActivationRequest | null, planId: string 
       target: "billing",
     },
     awaiting_flare_page_admin_access: {
-      title: "Plan applique, acces page requis",
-      body: "Votre paiement est valide. Ajoutez maintenant FLARE comme admin de votre page Facebook pour poursuivre.",
+      title: "Plan applique, acces page a confirmer",
+      body: "Votre paiement est valide. Confirmez que FLARE dispose bien de l'acces necessaire pour finaliser l'activation Facebook.",
       action: "Confirmer l'acces",
       target: "billing",
     },
@@ -120,9 +120,11 @@ function getActivationCopy(activation: ActivationRequest | null, planId: string 
       target: "billing",
     },
     active: {
-      title: "Chatbot actif",
-      body: "Votre abonnement est actif et votre chatbot Facebook est en ligne.",
-      action: "Ouvrir mon chatbot",
+      title: botFullyLive ? "Chatbot actif" : "Abonnement actif",
+      body: botFullyLive
+        ? "Votre abonnement est actif et votre chatbot Facebook est en ligne."
+        : "Votre abonnement est actif. Verifiez la page Facebook pour confirmer la mise en ligne Messenger.",
+      action: botFullyLive ? "Ouvrir mon chatbot" : "Verifier le chatbot",
       target: "chatbot",
     },
     blocked: {
@@ -208,10 +210,16 @@ export default function HomePage({
     };
   }, [fetchHub, token]);
 
-  const isActive = overview?.step === "complete";
+  const activePage = overview?.active_page;
+  const botFullyLive =
+    Boolean(activePage?.is_active && activePage?.webhook_subscribed && activePage?.direct_service_synced);
   const messagesCount = dashStats?.period?.messages ?? dashStats?.messages?.total ?? 0;
   const contactsCount = dashStats?.conversations?.messenger ?? dashStats?.conversations?.total ?? 0;
   const planId = billing?.plan_id ?? activationRequest?.applied_plan_id ?? null;
+  const subscriptionActive =
+    activationRequest?.subscription_status === "active" ||
+    Boolean(planId && planId !== "free" && activationRequest?.status === "active");
+  const botStatusLabel = botFullyLive ? "En ligne" : subscriptionActive ? "A verifier" : "En attente";
   const planLabel = useMemo(() => {
     const map: Record<string, string> = {
       free: "Free",
@@ -221,7 +229,7 @@ export default function HomePage({
     };
     return map[String(planId || "free")] ?? String(planId || "Free");
   }, [planId]);
-  const activationCopy = getActivationCopy(activationRequest, planId);
+  const activationCopy = getActivationCopy(activationRequest, planId, botFullyLive);
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -282,7 +290,7 @@ export default function HomePage({
 
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard label="Plan actif" value={loadingKpi ? "..." : planLabel} icon={CreditCard} tone="orange" loading={loadingKpi} delay={0.05} />
-          <KpiCard label="Statut bot" value={loadingKpi ? "..." : isActive ? "En ligne" : "En attente"} icon={Bot} tone={isActive ? "navy" : "neutral"} loading={loadingKpi} delay={0.1} />
+          <KpiCard label="Statut bot" value={loadingKpi ? "..." : botStatusLabel} icon={Bot} tone={botFullyLive ? "navy" : "neutral"} loading={loadingKpi} delay={0.1} />
           <KpiCard label="Messages" value={loadingKpi ? "..." : String(messagesCount)} icon={MessageSquare} loading={loadingKpi} delay={0.15} />
           <KpiCard label="Leads / contacts" value={loadingKpi ? "..." : String(contactsCount)} icon={Users} loading={loadingKpi} delay={0.2} />
         </div>
