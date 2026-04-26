@@ -49,15 +49,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/br-symbol-v4-192.png", type: "image/png", sizes: "192x192" },
-      { url: "/br-symbol-v4-512.png", type: "image/png", sizes: "512x512" },
+      { url: "/favicon-v5.ico", type: "image/x-icon" },
+      { url: "/br-symbol-v5-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/br-symbol-v5-512.png", type: "image/png", sizes: "512x512" },
     ],
-    shortcut: "/br-symbol-v4-192.png",
-    apple: "/br-symbol-v4-192.png",
+    shortcut: "/favicon-v5.ico",
+    apple: "/br-symbol-v5-192.png",
     other: [
-      { rel: "apple-touch-icon", type: "image/png", sizes: "192x192", url: "/br-symbol-v4-192.png" },
-      { rel: "icon", type: "image/png", sizes: "512x512", url: "/br-symbol-v4-512.png" },
-      { rel: "icon", type: "image/png", sizes: "512x512", url: "/maskable-icon-512.png" },
+      { rel: "apple-touch-icon", type: "image/png", sizes: "192x192", url: "/br-symbol-v5-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", url: "/br-symbol-v5-512.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", url: "/maskable-icon-v5-512.png" },
     ],
   },
   openGraph: {
@@ -75,6 +76,12 @@ export const metadata: Metadata = {
         height: 630,
         alt: "FLARE AI - Automatisation business pour TPE/PME a Madagascar",
       },
+      {
+        url: "/og-flare-ai.png",
+        width: 1200,
+        height: 630,
+        alt: "FLARE AI - nouveau logo et automatisation business",
+      },
     ],
   },
   twitter: {
@@ -83,7 +90,7 @@ export const metadata: Metadata = {
     description:
       "Automatisation business pour TPE/PME a Madagascar, avec preuve actuelle sur le chatbot Facebook assiste et paiement local.",
     creator: "@ramsflare",
-    images: ["/screenshot.png"],
+    images: ["/og-flare-ai.png"],
   },
   robots: {
     index: true,
@@ -140,7 +147,7 @@ export default function RootLayout({
                 "operatingSystem": "Windows, Android, macOS Web, iPhone Web",
                 "description": "FLARE AI est une application d'automatisation business pour les TPE et PME a Madagascar. Aujourd'hui, la preuve concrete la plus visible est le chatbot Facebook assiste, avec paiement local, validation FLARE et activation accompagnee.",
                 "url": "https://flareai.ramsflare.com",
-                "screenshot": "https://flareai.ramsflare.com/screenshot.png",
+                "screenshot": "https://flareai.ramsflare.com/og-flare-ai.png",
                 "softwareVersion": "4.0",
                 "inLanguage": ["fr", "mg"],
                 "author": {
@@ -149,9 +156,9 @@ export default function RootLayout({
                   "url": "https://flareai.ramsflare.com",
                   "logo": {
                     "@type": "ImageObject",
-                    "url": "https://flareai.ramsflare.com/brand/flare-mark.png",
-                    "width": 3917,
-                    "height": 3174
+                    "url": "https://flareai.ramsflare.com/br-symbol-v5-512.png",
+                    "width": 512,
+                    "height": 512
                   },
                   "areaServed": [
                     { "@type": "Country", "name": "Madagascar" },
@@ -192,9 +199,9 @@ export default function RootLayout({
                 "url": "https://flareai.ramsflare.com",
                 "logo": {
                   "@type": "ImageObject",
-                  "url": "https://flareai.ramsflare.com/brand/flare-mark.png",
-                  "width": 3917,
-                  "height": 3174
+                  "url": "https://flareai.ramsflare.com/br-symbol-v5-512.png",
+                  "width": 512,
+                  "height": 512
                 },
                 "description": "FLARE AI est une application d'automatisation business pour TPE/PME a Madagascar, avec une preuve concrete actuelle autour du chatbot Facebook assiste.",
                 "areaServed": [
