@@ -51,14 +51,13 @@ export const metadata: Metadata = {
     icon: [
       { url: "/br-symbol-v4-192.png", type: "image/png", sizes: "192x192" },
       { url: "/br-symbol-v4-512.png", type: "image/png", sizes: "512x512" },
-      { url: "/brand/flare-mark.png", type: "image/png", sizes: "3917x3174" },
     ],
     shortcut: "/br-symbol-v4-192.png",
     apple: "/br-symbol-v4-192.png",
     other: [
       { rel: "apple-touch-icon", type: "image/png", sizes: "192x192", url: "/br-symbol-v4-192.png" },
       { rel: "icon", type: "image/png", sizes: "512x512", url: "/br-symbol-v4-512.png" },
-      { rel: "mask-icon", url: "/app-icon.svg", color: "#050505" },
+      { rel: "icon", type: "image/png", sizes: "512x512", url: "/maskable-icon-512.png" },
     ],
   },
   openGraph: {

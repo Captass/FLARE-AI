@@ -1,13 +1,4 @@
 <svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="512" height="512" rx="144" fill="#0A0B0D"/>
-  <rect x="72" y="72" width="368" height="368" rx="120" fill="url(#g)" stroke="rgba(255,255,255,0.12)"/>
-  <circle cx="196" cy="196" r="44" fill="white" fill-opacity="0.16"/>
-  <circle cx="316" cy="196" r="24" fill="white" fill-opacity="0.09"/>
-  <circle cx="256" cy="288" r="58" fill="#FF7C1A" fill-opacity="0.88"/>
-  <defs>
-    <linearGradient id="g" x1="96" y1="88" x2="416" y2="432" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#1B1E24"/>
-      <stop offset="1" stop-color="#111319"/>
-    </linearGradient>
-  </defs>
+  <rect width="512" height="512" rx="118" fill="#FFFFFF"/>
+  <image href="/br-symbol-v4-512.png" x="0" y="0" width="512" height="512" preserveAspectRatio="xMidYMid meet"/>
 </svg>
