@@ -166,17 +166,44 @@ def build_dynamic_prompt(
             "Invite le client a contacter l'equipe pour plus d'informations."
         )
 
-    # Handoff keywords -> instruction dans le prompt
+    # Handoff mode/keywords -> instruction dans le prompt
     handoff_section = ""
     handoff_mode = str(prefs.handoff_mode or "auto").strip().lower()
+    handoff_msg = prefs.handoff_message or "Je vous mets en contact avec un membre de notre equipe. Merci de patienter."
     try:
         kws = _json.loads(prefs.handoff_keywords or "[]")
-        if isinstance(kws, list) and kws and handoff_mode != "disabled":
-            kw_list = ", ".join(f'"{k}"' for k in kws[:10])
-            handoff_msg = prefs.handoff_message or "Je vous mets en contact avec un membre de notre equipe. Merci de patienter."
+        valid_keywords = [str(k).strip() for k in kws if str(k).strip()] if isinstance(kws, list) else []
+        if handoff_mode == "disabled":
+            handoff_section = (
+                "\n## Transfert vers un humain\n"
+                "Le transfert humain est desactive. Continue a aider le client avec les informations disponibles, "
+                "sans promettre une reprise humaine automatique."
+            )
+        elif handoff_mode == "manual":
+            if valid_keywords:
+                kw_list = ", ".join(f'"{k}"' for k in valid_keywords[:10])
+                handoff_section = (
+                    f"\n## Transfert vers un humain\n"
+                    f"Mode manuel: si le client utilise l'un de ces mots ou expressions : {kw_list}, "
+                    f"reponds uniquement avec ce message de transfert et ne continue pas : "
+                    f'"{handoff_msg}"'
+                )
+            else:
+                handoff_section = (
+                    "\n## Transfert vers un humain\n"
+                    "Mode manuel active, mais aucun mot-cle n'est configure. Ne declenche pas de transfert automatique."
+                )
+        else:
+            keyword_instruction = ""
+            if valid_keywords:
+                kw_list = ", ".join(f'"{k}"' for k in valid_keywords[:10])
+                keyword_instruction = f" Declenche aussi le transfert si le client utilise : {kw_list}."
             handoff_section = (
                 f"\n## Transfert vers un humain\n"
-                f"Si le client utilise l'un de ces mots ou expressions : {kw_list}, "
+                "Mode automatique: propose une reprise humaine si le client demande explicitement un humain, "
+                "exprime une reclamation, une urgence, un blocage de paiement/livraison, une demande sur mesure "
+                "ou une situation que tu ne peux pas traiter avec certitude."
+                f"{keyword_instruction} "
                 f"reponds uniquement avec ce message de transfert et ne continue pas : "
                 f'"{handoff_msg}"'
             )

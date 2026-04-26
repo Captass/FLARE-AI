@@ -34,10 +34,10 @@ Le service direct reste derriere, mais il ne sert plus de surface produit princi
 
 ## Ce que fait le service
 
-1. verifie le webhook Meta ou relaie proprement vers le backend FLARE AI
+1. verifie le webhook Meta et traite directement les pages connues localement
 2. recoit les messages Messenger
-3. privilegie le backend FLARE AI pour les reponses et preferences page-specifiques
-4. garde un traitement local de secours seulement si le contexte page est complet
+3. utilise la configuration page synchronisee depuis FLARE AI pour repondre
+4. relaie vers le backend FLARE AI seulement si la page n'est pas connue localement
 5. enregistre les contacts, events, tokens, couts et latences en SQLite
 6. synchronise automatiquement Google Sheets pour les contacts, conversations, messages, leads, devis, rendez-vous et KPI journaliers
 7. archive aussi les events sur 24h dans Google Cloud Storage

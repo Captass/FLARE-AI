@@ -2,9 +2,9 @@
 
 import { Loader2, Save } from "lucide-react";
 
-import type { ChatbotPreferences, ChatbotTone } from "@/lib/api";
+import type { ChatbotPreferences, ChatbotPrimaryRole, ChatbotTone } from "@/lib/api";
 import { SectionCard, SelectField, TextareaField, InputField } from "@/components/chatbot/ChatbotUi";
-import { LANGUAGE_OPTIONS, TONE_OPTIONS } from "@/components/chatbot/chatbotWorkspaceUtils";
+import { LANGUAGE_OPTIONS, PRIMARY_ROLE_OPTIONS, TONE_OPTIONS } from "@/components/chatbot/chatbotWorkspaceUtils";
 
 interface ChatbotIdentityTabProps {
   preferences: ChatbotPreferences;
@@ -44,6 +44,13 @@ export default function ChatbotIdentityTab({
           value={preferences.bot_name}
           onChange={(bot_name) => onChange({ ...preferences, bot_name })}
           placeholder="Ex: Alex, Sofia, Aina"
+          disabled={isLocked}
+        />
+        <SelectField
+          label="Role principal"
+          value={preferences.primary_role}
+          onChange={(primary_role) => onChange({ ...preferences, primary_role: primary_role as ChatbotPrimaryRole })}
+          options={PRIMARY_ROLE_OPTIONS}
           disabled={isLocked}
         />
         <SelectField

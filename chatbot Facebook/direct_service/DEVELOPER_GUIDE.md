@@ -6,9 +6,9 @@ Le service direct reste compatible, mais la source de verite des reponses Messen
 Le flux cible est maintenant :
 
 1. Meta envoie les messages au backend FLARE AI ou, en compatibilite, au webhook Cloud Run
-2. Si le direct service recoit le message, il le relaie vers le backend FLARE AI
-3. Le backend applique les preferences chatbot de la page
-4. Le direct service ne traite localement qu'en secours, si le contexte page est complet
+2. Si le direct service recoit le message et connait deja la page, il traite localement pour garantir une reponse Messenger
+3. La configuration page vient de FLARE AI via la synchro `/internal/page-connections`
+4. Le direct service relaie vers le backend FLARE AI seulement si la page n'est pas connue localement
 5. Le service journalise localement en SQLite
 6. Le service archive les events recents dans Google Cloud Storage
 7. Le service notifie Telegram seulement en cas important

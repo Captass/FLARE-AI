@@ -5849,6 +5849,10 @@ async def incoming_webhook(request: Request) -> JSONResponse:
         raise HTTPException(status_code=403, detail="Invalid signature")
 
     payload = json.loads(raw_body.decode("utf-8"))
+    if payload_can_be_processed_locally(payload):
+        asyncio.create_task(process_message(payload))
+        return JSONResponse({"status": "accepted", "relay": "local"})
+
     relay_failures: list[str] = []
     for relay_url, relay_headers in backend_relay_targets(signature):
         try:
@@ -5872,13 +5876,9 @@ async def incoming_webhook(request: Request) -> JSONResponse:
             relay_failures.append(f"{relay_url} -> {exc}")
             LOGGER.warning("Messenger webhook relay exception target=%s error=%s", relay_url, exc)
 
-    if not payload_can_be_processed_locally(payload):
-        LOGGER.error(
-            "Messenger webhook cannot be processed locally and backend relay failed. page_ids=%s failures=%s",
-            _iter_payload_page_ids(payload),
-            relay_failures,
-        )
-        raise HTTPException(status_code=503, detail="Messenger relay indisponible. Reessayez plus tard.")
-
-    asyncio.create_task(process_message(payload))
-    return JSONResponse({"status": "accepted", "relay": "local"})
+    LOGGER.error(
+        "Messenger webhook cannot be processed locally and backend relay failed. page_ids=%s failures=%s",
+        _iter_payload_page_ids(payload),
+        relay_failures,
+    )
+    raise HTTPException(status_code=503, detail="Messenger relay indisponible. Reessayez plus tard.")
