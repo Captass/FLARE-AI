@@ -6,6 +6,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, Bot, Chevro
 import { motion, useSpring, useTransform, useScroll, useMotionValueEvent, AnimatePresence, useMotionValue, useReducedMotion, type Variants } from "framer-motion";
 import dynamic from "next/dynamic";
 import FlareMark from "./FlareMark";
+import { isInstalledAppRuntime } from "@/lib/platform/runtime";
 
 const AutomationDeskScene = dynamic(() => import("./landing/AutomationDeskScene"), {
   ssr: false,
@@ -199,6 +200,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeFeature, setActiveFeature] = useState<number | null>(0);
   const [activeScenario, setActiveScenario] = useState(0);
+  const [isInstalledApp, setIsInstalledApp] = useState(false);
   const enableRichEffects = !isMobile && !prefersReducedMotion;
 
   const { scrollY, scrollYProgress } = useScroll({ container: containerRef });
@@ -227,6 +229,20 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     document.body.classList.add("is-public-landing");
     return () => {
       document.body.classList.remove("is-public-landing");
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateInstalledRuntime = () => {
+      setIsInstalledApp(isInstalledAppRuntime());
+    };
+
+    updateInstalledRuntime();
+    const standaloneQuery = window.matchMedia?.("(display-mode: standalone)");
+    standaloneQuery?.addEventListener?.("change", updateInstalledRuntime);
+
+    return () => {
+      standaloneQuery?.removeEventListener?.("change", updateInstalledRuntime);
     };
   }, []);
 
@@ -684,7 +700,9 @@ export default function LandingPage({ onStart }: LandingPageProps) {
             </nav>
             <div className="landing-mobile-actions mt-auto flex flex-col gap-4 border-t border-white/5 pt-8">
                <button onClick={() => onStart("login")} className="landing-mobile-secondary w-full py-4 uppercase border rounded-2xl">Se connecter</button>
-               <button onClick={handleInstallClick} className="landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Telecharger</button>
+               {!isInstalledApp ? (
+                 <button onClick={handleInstallClick} className="landing-install-cta landing-mobile-cta w-full py-4 bg-orange-500 uppercase rounded-2xl">Telecharger</button>
+               ) : null}
             </div>
           </motion.div>
         )}
@@ -825,15 +843,17 @@ export default function LandingPage({ onStart }: LandingPageProps) {
                 </motion.p>
               </div>
 
-              <motion.div variants={itemVariants} className="pointer-events-auto mb-6 flex justify-start">
-                <button
-                  onClick={handleInstallClick}
-                  className="landing-cinematic-download inline-flex items-center justify-center gap-3 rounded-full border border-black/10 bg-white/68 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all hover:bg-white hover:border-black/20 sm:px-7"
-                >
-                  <Download size={15} className="text-black/60" />
-                  Telecharger
-                </button>
-              </motion.div>
+              {!isInstalledApp ? (
+                <motion.div variants={itemVariants} className="landing-install-cta pointer-events-auto mb-6 flex justify-start">
+                  <button
+                    onClick={handleInstallClick}
+                    className="landing-cinematic-download inline-flex items-center justify-center gap-3 rounded-full border border-black/10 bg-white/68 px-6 py-3 text-[11px] font-bold uppercase tracking-[0.18em] transition-all hover:bg-white hover:border-black/20 sm:px-7"
+                  >
+                    <Download size={15} className="text-black/60" />
+                    Telecharger
+                  </button>
+                </motion.div>
+              ) : null}
 
               <div className="mb-10 sm:mb-16" />
 
@@ -2186,6 +2206,18 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         .landing-cinematic-hero .landing-cinematic-download svg {
           color: rgba(255, 255, 255, 0.76) !important;
           stroke: currentColor !important;
+        }
+
+        html[data-runtime-platform="android"] .landing-install-cta,
+        html[data-runtime-platform="windows"] .landing-install-cta,
+        html[data-installed-app="true"] .landing-install-cta {
+          display: none !important;
+        }
+
+        @media (display-mode: standalone), (display-mode: fullscreen) {
+          .landing-install-cta {
+            display: none !important;
+          }
         }
 
         .landing-cinematic-hero .landing-mark-frame {

@@ -70,6 +70,21 @@ export function isNativeRuntime(): boolean {
   return detectRuntimePlatform() !== "web";
 }
 
+export function isStandaloneWebApp(): boolean {
+  const win = getWindowLike() as (Window & typeof globalThis & { navigator: Navigator & { standalone?: boolean } }) | null;
+  if (!win) return false;
+
+  return Boolean(
+    win.matchMedia?.("(display-mode: standalone)")?.matches ||
+    win.matchMedia?.("(display-mode: fullscreen)")?.matches ||
+    win.navigator.standalone
+  );
+}
+
+export function isInstalledAppRuntime(): boolean {
+  return isNativeRuntime() || isStandaloneWebApp();
+}
+
 export function shouldUseRedirectAuthFlow(): boolean {
   return isNativeRuntime();
 }
@@ -443,5 +458,6 @@ export function bootstrapRuntimeEnvironment(): void {
 
   const root = win.document.documentElement;
   root.dataset.runtimePlatform = detectRuntimePlatform();
+  root.dataset.installedApp = isInstalledAppRuntime() ? "true" : "false";
   root.dataset.networkStatus = win.navigator.onLine ? "online" : "offline";
 }
