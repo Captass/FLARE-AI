@@ -4,7 +4,7 @@
   <!-- Page principale / Landing -->
   <url>
     <loc>https://flareai.ramsflare.com/</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -12,7 +12,7 @@
   <!-- Page de téléchargement / App -->
   <url>
     <loc>https://flareai.ramsflare.com/download</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -20,21 +20,21 @@
   <!-- Pages légales (requises Meta / conformité) -->
   <url>
     <loc>https://flareai.ramsflare.com/privacy-policy</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
 
   <url>
     <loc>https://flareai.ramsflare.com/terms</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
 
   <url>
     <loc>https://flareai.ramsflare.com/data-deletion</loc>
-    <lastmod>2026-04-15</lastmod>
+    <lastmod>2026-04-26</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
