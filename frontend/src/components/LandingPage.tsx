@@ -253,6 +253,12 @@ export default function LandingPage({ onStart }: LandingPageProps) {
     window.location.href = "/download";
   };
 
+  const landingNavLinks = [
+    { label: "Comment ca marche", href: "/comment-ca-marche" },
+    { label: "Cas d'usage", href: "/cas-usage" },
+    { label: "Offres", href: "/offres" },
+  ];
+
   const scrollLandingTo = useCallback((target: HTMLElement | null, offset = 96) => {
     if (!target) return;
     const container = containerRef.current;
@@ -587,42 +593,32 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               <span className="landing-brand-title hidden uppercase sm:block">FLARE AI</span>
             </div>
 
-            <div className="hidden md:flex items-center gap-8">
-              <Magnetic>
-                <button
-                  onClick={() => document.getElementById("hero")?.scrollTo({ top: 0, behavior: "smooth" })}
-                  className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
-                >
-                  Accueil
-                </button>
-              </Magnetic>
-              {[
-                { label: "Comment ca marche", href: "/comment-ca-marche" },
-                { label: "Cas d'usage", href: "/cas-usage" },
-                { label: "Offres", href: "/offres" },
-              ].map((link) => (
-                <Magnetic key={link.href}>
-                  <a href={link.href} className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1">
-                    {link.label}
-                  </a>
-                </Magnetic>
+            <div className="landing-nav-menu hidden xl:flex items-center">
+              <button
+                onClick={() => document.getElementById("hero")?.scrollTo({ top: 0, behavior: "smooth" })}
+                className="landing-nav-link"
+              >
+                Accueil
+              </button>
+              {landingNavLinks.map((link) => (
+                <a key={link.href} href={link.href} className="landing-nav-link">
+                  {link.label}
+                </a>
               ))}
-              <Magnetic>
-                <button
-                  onClick={() => {
-                    scrollLandingTo(document.getElementById("story"));
-                  }}
-                  className="landing-nav-link text-[10px] uppercase transition-colors font-medium pb-1"
-                >
-                  Notre histoire
-                </button>
-              </Magnetic>
+              <button
+                onClick={() => {
+                  scrollLandingTo(document.getElementById("story"));
+                }}
+                className="landing-nav-link"
+              >
+                Notre histoire
+              </button>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="landing-nav-actions flex items-center gap-3">
               <button
                 onClick={() => onStart("login")}
-                className="landing-plain-button text-[10px] uppercase font-medium hidden sm:block"
+                className="landing-login-button hidden sm:inline-flex"
               >
                 Se connecter
               </button>
@@ -632,7 +628,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
               >
                 Commencer
               </button>
-              <button className="landing-mobile-trigger md:hidden" onClick={() => setMobileMenuOpen(true)}>
+              <button className="landing-mobile-trigger xl:hidden" onClick={() => setMobileMenuOpen(true)}>
                 <Menu size={20} />
               </button>
             </div>
@@ -749,7 +745,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(5,7,11,0.94)_0%,rgba(5,7,11,0.84)_40%,rgba(5,7,11,0.28)_62%,rgba(5,7,11,0.04)_82%,transparent_100%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(5,7,11,0.1)_0%,transparent_34%,rgba(5,7,11,0.18)_78%,rgba(15,10,8,0.72)_100%)]" />
         </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-[24vh] bg-[linear-gradient(180deg,transparent_0%,rgba(8,7,8,0.34)_34%,#17100c_72%,#f9f7f2_100%)]" />
+        <div className="landing-hero-to-proof pointer-events-none absolute inset-x-0 bottom-[-1px] z-10 h-[42vh]" />
 
         {/* Header */}
         <div className="pointer-events-none relative z-10 w-full flex flex-col px-6 pt-5 pb-4 sm:px-16 sm:pt-0 sm:pb-6 md:px-24">
@@ -861,7 +857,7 @@ export default function LandingPage({ onStart }: LandingPageProps) {
       </section>
 
       <section className="landing-proof-section relative z-20 overflow-hidden bg-[#F9F7F2] px-6 pb-14 pt-24 sm:px-16 md:px-24 md:pt-28">
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-36 bg-[linear-gradient(180deg,#17100c_0%,rgba(249,247,242,0.72)_48%,rgba(249,247,242,0)_100%)]" />
+        <div className="landing-proof-top-blend pointer-events-none absolute inset-x-0 top-0 h-44" />
         <div className="pointer-events-none absolute right-[-12rem] top-10 h-80 w-80 rounded-full border border-orange-500/10" />
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-6 xl:grid-cols-[1.05fr_0.95fr] xl:items-start">
@@ -2018,6 +2014,24 @@ export default function LandingPage({ onStart }: LandingPageProps) {
           -webkit-backdrop-filter: blur(16px);
         }
 
+        .landing-nav-menu {
+          position: absolute;
+          left: 50%;
+          top: 50%;
+          transform: translate(-50%, -50%);
+          gap: 0.25rem;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 0, 0, 0.06);
+          background: rgba(255, 255, 255, 0.34);
+          padding: 0.25rem;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.32);
+        }
+
+        .landing-nav-actions {
+          border-left: 1px solid rgba(0, 0, 0, 0.08);
+          padding-left: 1rem;
+        }
+
         .landing-mobile-menu {
           background: #fbf7f0;
           z-index: 100;
@@ -2028,11 +2042,48 @@ export default function LandingPage({ onStart }: LandingPageProps) {
         }
 
         .landing-nav-link {
-          color: rgba(0, 0, 0, 0.6);
+          color: rgba(0, 0, 0, 0.62);
           position: relative;
+          display: inline-flex;
+          min-width: 7.35rem;
+          height: 2.25rem;
+          align-items: center;
+          justify-content: center;
+          border-radius: 999px;
+          padding: 0 0.85rem;
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1;
+          text-align: center;
+          text-transform: uppercase;
+          white-space: nowrap;
+          transition: background-color 180ms ease, color 180ms ease;
         }
         
         .landing-nav-link:hover {
+          background: rgba(255, 255, 255, 0.64);
+          color: #000000;
+        }
+
+        .landing-login-button {
+          align-items: center;
+          justify-content: center;
+          min-width: 8.5rem;
+          height: 2.4rem;
+          border-radius: 999px;
+          border: 1px solid rgba(0, 0, 0, 0.08);
+          background: rgba(255, 255, 255, 0.44);
+          color: rgba(0, 0, 0, 0.68);
+          font-size: 10px;
+          font-weight: 700;
+          line-height: 1;
+          text-transform: uppercase;
+          transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+        }
+
+        .landing-login-button:hover {
+          border-color: rgba(0, 0, 0, 0.16);
+          background: rgba(255, 255, 255, 0.72);
           color: #000000;
         }
 
@@ -2047,6 +2098,29 @@ export default function LandingPage({ onStart }: LandingPageProps) {
 
         .landing-hero-scene {
           filter: brightness(1.16) contrast(1.08) saturate(1.14);
+        }
+
+        .landing-hero-to-proof {
+          background:
+            linear-gradient(
+              180deg,
+              rgba(5, 7, 11, 0) 0%,
+              rgba(5, 7, 11, 0.05) 34%,
+              rgba(10, 8, 8, 0.58) 62%,
+              #24140f 84%,
+              #8c7865 100%
+            );
+        }
+
+        .landing-proof-top-blend {
+          background:
+            linear-gradient(
+              180deg,
+              rgba(140, 120, 101, 0.72) 0%,
+              rgba(225, 215, 202, 0.82) 34%,
+              rgba(249, 247, 242, 0.72) 66%,
+              rgba(249, 247, 242, 0) 100%
+            );
         }
 
         html.light .landing-theme-scope .landing-cinematic-hero .landing-headline,
