@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { motion, type Variants } from "framer-motion";
-import { ArrowLeft, Download, Globe, Monitor, ShieldCheck, Smartphone } from "lucide-react";
+import { ArrowLeft, Download, Globe, Monitor, Smartphone } from "lucide-react";
 import Link from "next/link";
 import FlareMark from "@/components/FlareMark";
 import {
   getAndroidDownloadRoute,
-  hasAndroidDownload,
   getPreferredInstallChannel,
   getSimpleWebAppUrl,
   getWindowsDownloadRoute,
+  hasAndroidDownload,
   hasWindowsDownload,
   type InstallChannel,
 } from "@/lib/platform/runtime";
@@ -20,10 +19,8 @@ type OptionChannel = "windows-native" | "android-native" | "simple-web";
 type DownloadOption = {
   channel: OptionChannel;
   title: string;
-  chip: string;
-  modeLabel: string;
+  subtitle: string;
   actionLabel: string;
-  helperText: string;
   href: string;
   available: boolean;
   icon: ReactNode;
@@ -41,170 +38,110 @@ export default function DownloadPage() {
       {
         channel: "windows-native",
         title: "Windows",
-        chip: "Windows 10 et 11",
-        modeLabel: "Installateur Windows",
-        actionLabel: hasWindowsDownload()
-          ? "Telecharger FLARE AI pour Windows"
-          : "Ouvrir le lien FLARE Windows",
-        helperText: hasWindowsDownload()
-          ? "Installateur officiel FLARE AI distribue depuis la release."
-          : "Lien release non configure. Le chemin stable reste /downloads/windows.",
+        subtitle: "Installateur .exe",
+        actionLabel: "Telecharger",
         href: getWindowsDownloadRoute(),
         available: hasWindowsDownload(),
-        icon: <Monitor className="h-8 w-8" />,
+        icon: <Monitor className="h-5 w-5" />,
       },
       {
         channel: "android-native",
         title: "Android",
-        chip: "Telephone et tablette",
-        modeLabel: "APK release signee",
-        actionLabel: hasAndroidDownload() ? "Telecharger l'APK Android" : "Ouvrir le lien FLARE Android",
-        helperText: hasAndroidDownload()
-          ? "APK natif signe distribue depuis la release."
-          : "Lien release non configure. Le chemin stable reste /downloads/android.",
+        subtitle: "APK signe",
+        actionLabel: "Telecharger",
         href: getAndroidDownloadRoute(),
         available: hasAndroidDownload(),
-        icon: <Smartphone className="h-8 w-8" />,
+        icon: <Smartphone className="h-5 w-5" />,
       },
       {
         channel: "simple-web",
-        title: "macOS et iPhone",
-        chip: "Safari / Chrome",
-        modeLabel: "Web app simple (PWA)",
-        actionLabel: "Ouvrir la web app",
-        helperText: "Sur iPhone: Partager > Ajouter a l'ecran d'accueil.",
+        title: "Web app",
+        subtitle: "macOS, iPhone, navigateur",
+        actionLabel: "Ouvrir",
         href: getSimpleWebAppUrl(),
         available: true,
-        icon: <Globe className="h-8 w-8" />,
+        icon: <Globe className="h-5 w-5" />,
       },
     ],
     []
   );
 
-  const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.08 } },
-  };
-
-  const itemVariants: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: "easeOut" } },
-  };
-
   return (
-    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[#F9F7F2] p-6 font-sans text-black selection:bg-orange-500 selection:text-white">
-      <div className="pointer-events-none absolute left-1/2 top-0 h-[480px] w-full max-w-3xl -translate-x-1/2 rounded-full bg-orange-500/10 blur-[120px] opacity-50" />
-
-      <div className="absolute left-0 top-0 z-50 w-full p-6 lg:p-10">
-        <Link
-          href="/"
-          className="group inline-flex cursor-pointer items-center gap-3 text-black/55 transition-colors hover:text-black"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-black/5 transition-colors group-hover:bg-black/10">
-            <ArrowLeft size={16} />
+    <main className="min-h-screen bg-[#f8f5ee] px-5 py-6 font-sans text-black selection:bg-orange-500 selection:text-white sm:px-8">
+      <div className="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-5xl flex-col">
+        <header className="flex items-center justify-between">
+          <Link
+            href="/"
+            className="inline-flex h-10 items-center gap-3 rounded-full text-xs font-bold uppercase tracking-[0.18em] text-black/55 transition hover:text-black"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white">
+              <ArrowLeft size={16} />
+            </span>
+            Retour
+          </Link>
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-black/10 bg-white shadow-sm">
+            <FlareMark tone="auto" className="w-6" />
           </div>
-          <span className="text-xs font-bold uppercase tracking-widest">Retour au site</span>
-        </Link>
-      </div>
+        </header>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="z-10 mx-auto flex w-full max-w-5xl flex-col items-center"
-      >
-        <motion.div
-          variants={itemVariants}
-          className="mb-10 flex h-20 w-20 items-center justify-center rounded-3xl border border-black/5 bg-white shadow-xl shadow-orange-500/10"
-        >
-          <FlareMark tone="auto" className="w-10" />
-        </motion.div>
+        <section className="flex flex-1 flex-col justify-center py-14">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-600">FLARE AI</p>
+            <h1 className="mt-4 max-w-3xl text-4xl font-black leading-[0.95] tracking-tighter sm:text-6xl font-[family-name:var(--font-outfit)]">
+              Télécharger l&apos;application
+            </h1>
+            <p className="mt-5 max-w-xl text-base font-medium leading-relaxed text-black/60">
+              Choisissez votre plateforme. Les fichiers viennent de la release officielle.
+            </p>
+          </div>
 
-        <motion.div variants={itemVariants} className="mb-14 max-w-3xl text-center">
-          <h1 className="mb-6 text-4xl font-black tracking-tighter md:text-6xl font-[family-name:var(--font-outfit)]">
-            Choisissez votre acces <span className="bg-gradient-to-r from-orange-400 to-orange-600 bg-clip-text text-transparent">FLARE AI</span>
-          </h1>
-          <p className="text-lg font-medium leading-relaxed text-black/62 md:text-xl">
-            Android APK release signee, Windows installateur, macOS + iPhone web app only.
-          </p>
-        </motion.div>
+          <div className="mt-12 grid gap-3 md:grid-cols-3">
+            {options.map((option) => {
+              const isRecommended =
+                preferredChannel === option.channel ||
+                (preferredChannel === "web" && option.channel === "simple-web");
 
-        <motion.div variants={containerVariants} className="mb-14 grid w-full grid-cols-1 gap-6 md:grid-cols-3">
-          {options.map((option) => {
-            const isRecommended =
-              preferredChannel === option.channel ||
-              (preferredChannel === "web" && option.channel === "simple-web");
-
-            return (
-              <motion.div
-                key={option.channel}
-                variants={itemVariants}
-                whileHover={{ y: -4, scale: 1.01 }}
-                className={`group relative flex flex-col gap-6 overflow-hidden rounded-[32px] border p-8 transition-all duration-300 ${
-                  isRecommended
-                    ? "border-orange-500/30 bg-orange-500/[0.03] shadow-2xl shadow-orange-500/10"
-                    : "border-black/5 bg-white hover:border-black/10 hover:shadow-xl"
-                }`}
-              >
-                {isRecommended ? (
-                  <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-400 to-orange-600" />
-                ) : null}
-
-                <div className="flex items-start justify-between">
-                  <div
-                    className={`rounded-2xl p-4 ${
-                      isRecommended ? "bg-orange-500/10 text-orange-600" : "bg-black/5 text-black"
-                    }`}
-                  >
-                    {option.icon}
-                  </div>
-                  {isRecommended ? (
-                    <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-orange-600">
-                      Recommande
+              return (
+                <a
+                  key={option.channel}
+                  href={option.href}
+                  className={`group flex min-h-[190px] flex-col justify-between rounded-[22px] border bg-white p-5 transition hover:-translate-y-0.5 hover:border-black/20 hover:shadow-xl hover:shadow-black/5 ${
+                    isRecommended ? "border-orange-500/45 shadow-lg shadow-orange-500/10" : "border-black/10"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-2xl ${
+                        isRecommended ? "bg-orange-500 text-white" : "bg-black/[0.04] text-black"
+                      }`}
+                    >
+                      {option.icon}
                     </span>
-                  ) : null}
-                </div>
+                    {isRecommended ? (
+                      <span className="rounded-full bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-orange-600">
+                        recommande
+                      </span>
+                    ) : null}
+                  </div>
 
-                <div>
-                  <h3 className="text-2xl font-black text-black">{option.title}</h3>
-                  <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-black/42">{option.chip}</p>
-                </div>
+                  <div>
+                    <h2 className="text-2xl font-black tracking-tight">{option.title}</h2>
+                    <p className="mt-1 text-sm font-semibold text-black/50">{option.subtitle}</p>
+                  </div>
 
-                <div className="mt-auto border-t border-black/5 pt-5">
-                  <p className="mb-3 text-[11px] font-black uppercase tracking-widest text-black/52">{option.modeLabel}</p>
-                  <a
-                    href={option.href}
-                    className={`flex w-full items-center justify-center gap-3 rounded-xl py-4 text-xs font-black uppercase tracking-widest transition-all ${
-                      isRecommended
-                        ? "bg-orange-500 text-white shadow-xl shadow-orange-500/20 hover:bg-orange-600"
-                        : "bg-black/5 text-black hover:bg-black/10"
-                    }`}
-                  >
-                    <Download size={16} />
-                    {option.actionLabel}
-                  </a>
-                  <p className="mt-3 text-center text-[10px] font-medium uppercase tracking-wider text-black/35">{option.helperText}</p>
-                  {!option.available ? (
-                    <p className="mt-2 text-center text-[10px] font-medium uppercase tracking-wider text-orange-600/80">
-                      Lien prive non publie dans cet environnement
-                    </p>
-                  ) : null}
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-
-        <motion.div
-          variants={itemVariants}
-          className="rounded-2xl border border-black/10 bg-white/70 px-5 py-4 text-center text-sm font-medium text-black/62"
-        >
-          <div className="flex items-center justify-center gap-2 text-black/72">
-            <ShieldCheck size={14} />
-            <span>Distribution actuelle: Android APK signe, Windows installateur, macOS + iPhone web app only.</span>
+                  <div className="flex items-center justify-between border-t border-black/10 pt-4">
+                    <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.16em] text-black">
+                      <Download size={14} />
+                      {option.available ? option.actionLabel : "Indisponible"}
+                    </span>
+                    <span className="text-black/30 transition group-hover:translate-x-0.5 group-hover:text-black">→</span>
+                  </div>
+                </a>
+              );
+            })}
           </div>
-        </motion.div>
-      </motion.div>
+        </section>
+      </div>
     </main>
   );
 }
