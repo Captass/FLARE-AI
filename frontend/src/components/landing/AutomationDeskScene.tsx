@@ -661,7 +661,11 @@ function AutomationOffice({ reducedMotion = false }: AutomationDeskSceneProps) {
         </mesh>
       </group>
 
-      <group position={[-0.5, 0.51, 0.34]} rotation={[-0.16, -0.13, -0.055]} scale={1.1}>
+      <group position={[-1.48, 0.255, 0.06]} rotation={[-1.13, -0.16, -0.16]} scale={0.58}>
+        <mesh position={[0.02, -0.03, -0.075]} rotation={[0, 0, 0.03]} receiveShadow>
+          <boxGeometry args={[0.78, 0.06, 1.08]} />
+          <meshStandardMaterial color="#0c1118" roughness={0.62} metalness={0.16} />
+        </mesh>
         <RoundedBox args={[0.68, 1.18, 0.082]} radius={0.075} smoothness={10} castShadow receiveShadow>
           <meshStandardMaterial color="#06080d" roughness={0.28} metalness={0.56} />
         </RoundedBox>
