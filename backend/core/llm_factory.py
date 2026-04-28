@@ -24,6 +24,11 @@ _PLACEHOLDER_TOKENS = {
 }
 
 
+def _is_real_key(value: Optional[str]) -> bool:
+    """Vérifie qu'une clé API n'est ni vide ni un placeholder."""
+    return bool(value) and str(value).strip().lower() not in _PLACEHOLDER_TOKENS
+
+
 def _validated_api_key(raw_value: Optional[str], *, provider: str, purpose: str) -> str:
     value = str(raw_value or "").strip()
     if value.lower() in _PLACEHOLDER_TOKENS:
@@ -70,13 +75,18 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
         effective_model = model_override or settings.GEMINI_MODEL
 
         # Logique de fallback multi-clés Gemini
-        api_key = settings.GEMINI_API_KEY_GLOBAL
-        if purpose == "chatbot" and settings.GEMINI_API_KEY_CHATBOT:
+        # IMPORTANT: vérifier que la clé n'est PAS un placeholder avant de l'utiliser
+        api_key = None
+        if purpose == "chatbot" and _is_real_key(settings.GEMINI_API_KEY_CHATBOT):
             api_key = settings.GEMINI_API_KEY_CHATBOT
-        elif purpose == "assistant_reasoning" and settings.GEMINI_API_KEY_ASSISTANT_REASONING:
+        elif purpose == "assistant_reasoning" and _is_real_key(settings.GEMINI_API_KEY_ASSISTANT_REASONING):
             api_key = settings.GEMINI_API_KEY_ASSISTANT_REASONING
-        elif purpose == "assistant_fast" and settings.GEMINI_API_KEY_ASSISTANT_FAST:
+        elif purpose == "assistant_fast" and _is_real_key(settings.GEMINI_API_KEY_ASSISTANT_FAST):
             api_key = settings.GEMINI_API_KEY_ASSISTANT_FAST
+
+        # Fallback vers la clé globale si aucune clé spécifique valide n'a été trouvée
+        if not _is_real_key(api_key):
+            api_key = settings.GEMINI_API_KEY_GLOBAL
         api_key = _validated_api_key(api_key, provider="Gemini", purpose=purpose)
 
         # Configuration de base
@@ -113,9 +123,3 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
         base_url=settings.OLLAMA_BASE_URL,
         temperature=temperature,
     )
-
-
-
-
-
-

@@ -59,6 +59,11 @@ class GmailReplyPayload(GmailAnalyzePayload):
     recommendedAction: Optional[str] = None
     instruction: Optional[str] = None
     currentDraft: Optional[str] = None
+    # Préférences utilisateur (envoyées depuis le frontend)
+    tone: Optional[str] = None          # "professional" | "friendly" | "formal" | "direct"
+    language: Optional[str] = None      # "auto" | "fr" | "en"
+    signature: Optional[str] = None     # Signature personnalisée
+    permanentRules: Optional[str] = None  # Consignes permanentes de l'utilisateur
 
 
 class GmailSendReplyPayload(BaseModel):
@@ -529,41 +534,97 @@ async def generate_reply_with_ai(
     recommended_action: str,
     instruction: Optional[str] = None,
     current_draft: Optional[str] = None,
+    tone: Optional[str] = None,
+    language: Optional[str] = None,
+    signature: Optional[str] = None,
+    permanent_rules: Optional[str] = None,
 ) -> dict[str, Any]:
     fallback = generate_reply(category, subject, recommended_action)
-    prompt = f"""
-Redige une reponse email professionnelle, courte, claire et directement envoyable.
 
-Contraintes:
-- Reponds uniquement avec le corps de l'email. Pas d'objet, pas de meta-commentaire.
-- Reponds au nom de l'utilisateur, pas au nom d'une entreprise, sauf si l'instruction le demande explicitement.
-- N'ecris jamais "l'equipe FLARE AI" ou "FLARE AI" dans la reponse.
-- N'invente pas de faits, montants, dates, pieces jointes, numeros de telephone ou promesses.
-- Ne promets aucune action impossible ou non mentionnee dans le mail source.
-- Si l'email est une newsletter ou une notification automatique, reponds exactement: Aucune reponse necessaire.
-- Detecte la langue du mail source : si le mail est en francais, reponds en francais. Si en anglais, reponds en anglais. Sinon, reponds en francais par defaut.
-- Ton: professionnel, simple, humain.
-- Longueur: 3 a 6 phrases maximum.
+    # Map du ton utilisateur
+    tone_map = {
+        "professional": "Professionnel et courtois",
+        "friendly": "Amical et chaleureux, tout en restant professionnel",
+        "formal": "Formel et solennel (vouvoiement strict, formules de politesse élaborées)",
+        "direct": "Direct et concis, va droit au but sans fioritures",
+    }
+    tone_instruction = tone_map.get(tone or "", "Professionnel, simple et humain")
 
-Email source:
-Expediteur: {from_email}
-Sujet: {subject}
-Categorie: {category}
-Action recommandee: {recommended_action}
-Extrait: {snippet}
-Corps:
-{body_text[:2500] or "(corps indisponible)"}
+    # Map de la langue
+    lang_map = {
+        "fr": "Réponds impérativement en français.",
+        "en": "Reply strictly in English.",
+        "auto": "Détecte la langue du mail source : si le mail est en français, réponds en français. Si en anglais, réponds en anglais. Sinon, réponds en français par défaut.",
+    }
+    lang_instruction = lang_map.get(language or "", lang_map["auto"])
 
-Instruction utilisateur:
-{instruction or "Aucune instruction specifique."}
+    # Construction du prompt
+    prompt_parts = [
+        "Tu es un assistant email intelligent. Rédige une réponse email directement envoyable.",
+        "",
+        "=== RÈGLES STRICTES ===",
+        f"- Ton : {tone_instruction}",
+        f"- Langue : {lang_instruction}",
+        "- Réponds uniquement avec le corps de l'email. Pas d'objet, pas de méta-commentaire, pas de 'Voici ma réponse:'.",
+        "- N'écris JAMAIS 'l'équipe FLARE AI', 'FLARE AI' ou le nom d'un logiciel dans la réponse.",
+        "- N'invente pas de faits, montants, dates, pièces jointes, numéros de téléphone ou promesses.",
+        "- Ne promets aucune action impossible ou non mentionnée dans le mail source.",
+        "- Si l'email est une newsletter ou notification automatique, réponds exactement : 'Aucune réponse nécessaire.'",
+        "- Longueur : 3 à 8 phrases maximum selon le contexte.",
+    ]
 
-Brouillon actuel a ameliorer si utile:
-{current_draft or fallback}
-""".strip()
+    # Consignes permanentes de l'utilisateur
+    if permanent_rules and permanent_rules.strip():
+        prompt_parts.extend([
+            "",
+            "=== CONSIGNES PERMANENTES DE L'UTILISATEUR ===",
+            permanent_rules.strip(),
+        ])
+
+    # Instruction spécifique pour ce mail
+    if instruction and instruction.strip():
+        prompt_parts.extend([
+            "",
+            "=== INSTRUCTION SPÉCIFIQUE POUR CE MAIL ===",
+            instruction.strip(),
+        ])
+
+    # Contexte du mail source
+    body_preview = (body_text or "").strip()[:2500] or "(corps indisponible)"
+    prompt_parts.extend([
+        "",
+        "=== EMAIL SOURCE ===",
+        f"Expéditeur : {from_email}",
+        f"Sujet : {subject}",
+        f"Catégorie détectée : {category}",
+        f"Action recommandée : {recommended_action}",
+        f"Extrait : {snippet}",
+        "",
+        "Corps du mail :",
+        body_preview,
+    ])
+
+    # Brouillon existant à améliorer
+    if current_draft and current_draft.strip() and current_draft.strip() != fallback:
+        prompt_parts.extend([
+            "",
+            "=== BROUILLON EXISTANT À AMÉLIORER ===",
+            current_draft.strip(),
+        ])
+
+    # Signature personnalisée
+    if signature and signature.strip():
+        prompt_parts.extend([
+            "",
+            f"=== TERMINE LA RÉPONSE AVEC CETTE SIGNATURE ===",
+            signature.strip(),
+        ])
+
+    prompt = "\n".join(prompt_parts)
 
     try:
         llm = get_llm(
-            temperature=0.25,
+            temperature=0.3,
             model_override=settings.GEMINI_ROUTING_MODEL or "gemini-2.5-flash-lite",
             purpose="assistant_fast",
         )
@@ -571,10 +632,50 @@ Brouillon actuel a ameliorer si utile:
         content = str(getattr(response, "content", "") or "").strip()
         if not content:
             raise RuntimeError("empty AI response")
+        # Nettoyer les artefacts de réponse IA (préfixes inutiles)
+        for prefix in ["Voici la réponse :", "Voici ma réponse :", "Réponse :", "Here is the reply:", "Reply:"]:
+            if content.lower().startswith(prefix.lower()):
+                content = content[len(prefix):].strip()
         return {"suggestedReply": content[:2400], "aiUsed": True, "model": settings.GEMINI_ROUTING_MODEL or "gemini-2.5-flash-lite"}
     except Exception:
         logger.exception("Gmail AI reply generation failed, falling back to rule-based reply")
         return {"suggestedReply": fallback, "aiUsed": False, "model": "rule-based"}
+
+
+@router.post("/generate-reply")
+async def gmail_generate_reply(
+    payload: GmailReplyPayload,
+    authorization: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    user_id = _require_user_id(authorization)
+    record = gmail_token_store.get(db, user_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Gmail is not connected.")
+    if not payload.message_id:
+        raise HTTPException(status_code=400, detail="message_id is required.")
+
+    try:
+        gmail = build("gmail", "v1", credentials=_credentials(record.refresh_token), cache_discovery=False)
+        context = _load_message_context(gmail, payload.message_id)
+    except Exception as exc:
+        logger.exception("Unable to load Gmail message context for reply generation")
+        raise HTTPException(status_code=502, detail="Impossible de charger le contexte du mail pour generer une reponse.") from exc
+
+    return await generate_reply_with_ai(
+        subject=context["subject"],
+        snippet=context["snippet"],
+        body_text=context.get("bodyText", ""),
+        from_email=context["from"],
+        category=context["category"],
+        recommended_action=context["recommendedAction"],
+        instruction=payload.instruction,
+        current_draft=payload.currentDraft,
+        tone=payload.tone,
+        language=payload.language,
+        signature=payload.signature,
+        permanent_rules=payload.permanentRules,
+    )
 
 
 def _reply_subject(subject: str) -> str:
@@ -1093,36 +1194,6 @@ def gmail_analyze(payload: GmailAnalyzePayload):
     return analyze_mail(payload.subject, payload.snippet, payload.from_email)
 
 
-@router.post("/generate-reply")
-async def gmail_generate_reply(
-    payload: GmailReplyPayload,
-    authorization: Optional[str] = Header(None),
-    db: Session = Depends(get_db),
-):
-    user_id = _require_user_id(authorization)
-    record = gmail_token_store.get(db, user_id)
-    if not record:
-        raise HTTPException(status_code=404, detail="Gmail is not connected.")
-    if not payload.message_id:
-        raise HTTPException(status_code=400, detail="message_id is required.")
-
-    try:
-        gmail = build("gmail", "v1", credentials=_credentials(record.refresh_token), cache_discovery=False)
-        context = _load_message_context(gmail, payload.message_id)
-    except Exception as exc:
-        logger.exception("Unable to load Gmail message context for reply generation")
-        raise HTTPException(status_code=502, detail="Impossible de charger le contexte du mail pour generer une reponse.") from exc
-
-    return await generate_reply_with_ai(
-        subject=context["subject"],
-        snippet=context["snippet"],
-        body_text=context.get("bodyText", ""),
-        from_email=context["from"],
-        category=context["category"],
-        recommended_action=context["recommendedAction"],
-        instruction=payload.instruction,
-        current_draft=payload.currentDraft,
-    )
 
 
 @router.post("/send-reply")

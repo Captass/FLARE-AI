@@ -446,6 +446,11 @@ export interface GenerateGmailReplyPayload {
   message_id: string;
   instruction?: string;
   currentDraft?: string;
+  // Préférences utilisateur
+  tone?: string;          // "professional" | "friendly" | "formal" | "direct"
+  language?: string;      // "auto" | "fr" | "en"
+  signature?: string;
+  permanentRules?: string;
 }
 
 export interface GenerateGmailReplyResponse {

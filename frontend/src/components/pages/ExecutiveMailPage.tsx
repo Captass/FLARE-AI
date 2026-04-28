@@ -306,6 +306,27 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [showAiSettings, setShowAiSettings] = useState(false);
+
+  // Préférences IA (persistées en localStorage)
+  const [aiTone, setAiTone] = useState<string>(() => {
+    try { return window.localStorage.getItem("flare_ai_tone") || "professional"; } catch { return "professional"; }
+  });
+  const [aiLanguage, setAiLanguage] = useState<string>(() => {
+    try { return window.localStorage.getItem("flare_ai_language") || "auto"; } catch { return "auto"; }
+  });
+  const [aiSignature, setAiSignature] = useState<string>(() => {
+    try { return window.localStorage.getItem("flare_ai_signature") || ""; } catch { return ""; }
+  });
+  const [aiPermanentRules, setAiPermanentRules] = useState<string>(() => {
+    try { return window.localStorage.getItem("flare_ai_rules") || ""; } catch { return ""; }
+  });
+
+  // Persister les préférences IA
+  useEffect(() => { try { window.localStorage.setItem("flare_ai_tone", aiTone); } catch {} }, [aiTone]);
+  useEffect(() => { try { window.localStorage.setItem("flare_ai_language", aiLanguage); } catch {} }, [aiLanguage]);
+  useEffect(() => { try { window.localStorage.setItem("flare_ai_signature", aiSignature); } catch {} }, [aiSignature]);
+  useEffect(() => { try { window.localStorage.setItem("flare_ai_rules", aiPermanentRules); } catch {} }, [aiPermanentRules]);
 
   const { registerPush, pushStatus } = usePushNotifications();
 
@@ -567,10 +588,14 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
         message_id: selectedMail.id,
         instruction: replyInstruction,
         currentDraft: replyDraft,
+        tone: aiTone,
+        language: aiLanguage,
+        signature: aiSignature || undefined,
+        permanentRules: aiPermanentRules || undefined,
       }, token);
       setReplyDraft(response.suggestedReply);
       updateMailDraft(selectedMail.id, response.suggestedReply);
-      setAiMeta(response.aiUsed ? `IA légère · ${response.model || "Gemini Flash Lite"}` : "Réponse fallback rule-based");
+      setAiMeta(response.aiUsed ? `IA · ${response.model || "Gemini Flash"}` : "Réponse fallback rule-based");
       saveActivity((current) => ({
         ...current,
         [selectedMail.id]: {
@@ -1295,8 +1320,73 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
                               <Bot size={16} className="text-violet-600" />
                               Demander à l&apos;IA de rédiger la réponse
                             </h3>
-                            {aiMeta && <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-700 uppercase tracking-wide">{aiMeta}</span>}
+                            <div className="flex items-center gap-2">
+                              {aiMeta && <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-700 uppercase tracking-wide">{aiMeta}</span>}
+                              <button
+                                type="button"
+                                onClick={() => setShowAiSettings(!showAiSettings)}
+                                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide transition ${showAiSettings ? "bg-violet-100 text-violet-700 border border-violet-300" : "bg-[var(--bg-card)] text-[var(--text-secondary)] border border-[var(--border-default)] hover:border-violet-300 hover:text-violet-600"}`}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                                Réglages IA
+                              </button>
+                            </div>
                           </div>
+
+                          {/* Panneau de préférences IA */}
+                          {showAiSettings && (
+                            <div className="mt-4 rounded-2xl border border-violet-200 bg-violet-50/50 p-5 space-y-4">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-[11px] font-bold uppercase tracking-wider text-violet-700 mb-1.5">Ton de la réponse</label>
+                                  <select
+                                    value={aiTone}
+                                    onChange={(e) => setAiTone(e.target.value)}
+                                    className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-sm font-semibold text-[var(--text-primary)] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                                  >
+                                    <option value="professional">🤝 Professionnel</option>
+                                    <option value="friendly">😊 Amical</option>
+                                    <option value="formal">📋 Formel</option>
+                                    <option value="direct">⚡ Direct</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-[11px] font-bold uppercase tracking-wider text-violet-700 mb-1.5">Langue de réponse</label>
+                                  <select
+                                    value={aiLanguage}
+                                    onChange={(e) => setAiLanguage(e.target.value)}
+                                    className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-sm font-semibold text-[var(--text-primary)] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                                  >
+                                    <option value="auto">🌍 Auto (détection)</option>
+                                    <option value="fr">🇫🇷 Français</option>
+                                    <option value="en">🇬🇧 English</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold uppercase tracking-wider text-violet-700 mb-1.5">Signature personnalisée</label>
+                                <input
+                                  type="text"
+                                  value={aiSignature}
+                                  onChange={(e) => setAiSignature(e.target.value)}
+                                  placeholder="Ex : Cordialement, Kevin — RAM'S FLARE"
+                                  className="w-full rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[11px] font-bold uppercase tracking-wider text-violet-700 mb-1.5">Consignes permanentes</label>
+                                <textarea
+                                  value={aiPermanentRules}
+                                  onChange={(e) => setAiPermanentRules(e.target.value)}
+                                  placeholder="Ex : Toujours proposer un rendez-vous. Ne jamais tutoyer. Mentionner mon numéro de téléphone..."
+                                  rows={2}
+                                  className="w-full resize-y rounded-xl border border-violet-200 bg-white px-3 py-2.5 text-sm text-[var(--text-primary)] outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-200"
+                                />
+                              </div>
+                              <p className="text-[10px] text-violet-500 font-medium">💡 Ces réglages sont sauvegardés et appliqués à chaque génération.</p>
+                            </div>
+                          )}
+
                           <div className="mt-4 relative">
                             <textarea
                               value={replyInstruction}
