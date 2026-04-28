@@ -39,6 +39,7 @@ from routers.users import router as users_router
 from routers.content_studio import router as content_studio_router
 from routers.activation import router as activation_router
 from routers.app_version import router as app_version_router
+from routers.gmail import router as gmail_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -294,6 +295,7 @@ app.include_router(users_router)
 app.include_router(content_studio_router)
 app.include_router(activation_router)
 app.include_router(app_version_router)
+app.include_router(gmail_router)
 
 
 def _active_model() -> str:
