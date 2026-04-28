@@ -426,15 +426,18 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
 
   const getMailActivity = useCallback((mail: Pick<GmailAssistantMessage, "id">) => mailActivity[mail.id], [mailActivity]);
 
-  const connectGmail = async () => {
+  const handleConnect = async () => {
     if (!token) {
       setError("Connectez-vous à FLARE AI avant de connecter Gmail.");
       return;
     }
     try {
+      setIsSyncing(true);
       const returnUrl = `${window.location.origin}/app?view=executive-mail`;
       const { url } = await getGmailAuthUrl(token, returnUrl);
-      window.location.href = url;
+      if (url) {
+        window.location.href = url;
+      }
     } catch (err) {
       const apiError = humanizeApiError(err);
       if (apiError === "Google OAuth is not configured.") {
@@ -442,19 +445,24 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
       } else {
         setError(apiError || "Connexion Gmail indisponible pour le moment. Vérifiez la configuration Google OAuth.");
       }
+    } finally {
+      setIsSyncing(false);
     }
   };
 
   const handleDisconnect = async () => {
     if (!token) return;
     try {
+      setIsSyncing(true);
       await disconnectGmail(token);
       setConnected(false);
       setGmailEmail(null);
       setTriage(EMPTY_TRIAGE);
       showNotice("Gmail déconnecté.");
     } catch {
-      showNotice("La déconnexion Gmail sera disponible bientôt.");
+      setError("Erreur lors de la déconnexion.");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -629,36 +637,6 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
       }
     } finally {
       setSendingReply(false);
-    }
-  };
-
-  const handleConnect = async () => {
-    try {
-      setIsSyncing(true);
-      const { url } = await getGmailAuthUrl(window.location.href);
-      if (url) {
-        window.location.href = url;
-      }
-    } catch (err) {
-      console.error("Failed to get Gmail auth URL", err);
-      setError("Impossible de lancer la connexion Gmail. Vérifiez votre connexion internet.");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleDisconnect = async () => {
-    try {
-      setIsSyncing(true);
-      await disconnectGmail(token);
-      setConnected(false);
-      setGmailEmail(null);
-      setTriage(EMPTY_TRIAGE);
-      showNotice("Gmail déconnecté.");
-    } catch (err) {
-      setError("Erreur lors de la déconnexion.");
-    } finally {
-      setIsSyncing(false);
     }
   };
 
