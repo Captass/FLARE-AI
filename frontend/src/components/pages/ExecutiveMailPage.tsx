@@ -305,6 +305,7 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
   const [aiMeta, setAiMeta] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { registerPush, pushStatus } = usePushNotifications();
 
@@ -631,6 +632,36 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
     }
   };
 
+  const handleConnect = async () => {
+    try {
+      setIsSyncing(true);
+      const { url } = await getGmailAuthUrl(window.location.href);
+      if (url) {
+        window.location.href = url;
+      }
+    } catch (err) {
+      console.error("Failed to get Gmail auth URL", err);
+      setError("Impossible de lancer la connexion Gmail. Vérifiez votre connexion internet.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleDisconnect = async () => {
+    try {
+      setIsSyncing(true);
+      await disconnectGmail(token);
+      setConnected(false);
+      setGmailEmail(null);
+      setTriage(EMPTY_TRIAGE);
+      showNotice("Gmail déconnecté.");
+    } catch (err) {
+      setError("Erreur lors de la déconnexion.");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const handleDownloadAttachment = async (attachment: GmailAttachmentMetadata) => {
     if (!selectedMail || !token) return;
     setDownloadingAttachmentId(attachment.attachmentId);
@@ -868,7 +899,12 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
           <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
             <div>
               <div className="mb-4 flex flex-wrap gap-2">
-                <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${connected ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 shadow-[0_0_12px_rgba(16,185,129,0.15)]" : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)]"}`}>
+                <button 
+                  type="button"
+                  onClick={handleConnect}
+                  disabled={isSyncing}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold transition-all hover:scale-105 ${connected ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 shadow-[0_0_12px_rgba(16,185,129,0.15)]" : "border-orange-500/30 bg-orange-500/10 text-orange-600 hover:bg-orange-500/20"}`}
+                >
                   <div className="relative">
                     <Mail size={14} />
                     {connected && activeTriage.counts.total > 0 && activeTriage.messages?.some(m => m.isUnread) && (
@@ -878,8 +914,8 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
                       </span>
                     )}
                   </div>
-                  {connected ? `Connecté · ${gmailEmail || "Gmail"}` : "Non connecté"}
-                </span>
+                  {connected ? `Connecté · ${gmailEmail || "Gmail"}` : isSyncing ? "Connexion..." : "Non connecté (Cliquer pour connecter)"}
+                </button>
               </div>
               <h1 className="flex items-center gap-3 text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-[40px]">
                 <GmailIcon size={40} /> Assistant Mail
@@ -925,6 +961,17 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
                     </span>
                   )}
                 </>
+              )}
+              {!connected && (
+                <button
+                  type="button"
+                  onClick={handleConnect}
+                  disabled={isSyncing}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-6 py-3.5 text-base font-black text-white shadow-lg shadow-orange-500/25 transition-all hover:bg-orange-600 hover:scale-105 active:scale-95 disabled:opacity-50"
+                >
+                  <Mail size={20} />
+                  {isSyncing ? "Ouverture..." : "Connecter mon Gmail"}
+                </button>
               )}
             </div>
           </div>
