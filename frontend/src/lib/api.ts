@@ -8,7 +8,7 @@
  * Doit rester alignÃ© avec le backend Render actuel (voir `render.yaml` / DEVELOPER_GUIDE).
  * Lâ€™ancienne URL Cloud Run ne doit plus Ãªtre utilisÃ©e en prod.
  */
-import { getPlatformApiBaseUrl } from "@/lib/platform/runtime";
+import { getPlatformApiBaseUrl, detectRuntimePlatform } from "@/lib/platform/runtime";
 
 const PRODUCTION_BACKEND_URL = "https://flare-backend-ab5h.onrender.com";
 const LOCAL_BACKEND_URL = "http://localhost:8000";
@@ -79,6 +79,10 @@ export function getApiBaseUrl(): string {
     }
 
     if (hostname === "localhost" || hostname === "127.0.0.1") {
+      // Sur les apps natives (Capacitor/Tauri), on ne veut JAMAIS localhost par défaut car c'est le hostname de l'app elle-même.
+      const isNative = detectRuntimePlatform() !== "web";
+      if (isNative) return PRODUCTION_BACKEND_URL;
+      
       return shouldForceLocalBackend() ? LOCAL_BACKEND_URL : PRODUCTION_BACKEND_URL;
     }
 

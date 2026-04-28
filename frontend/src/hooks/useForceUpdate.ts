@@ -36,6 +36,7 @@ function compareVersions(a: string, b: string): number {
 function getApiBaseUrl(): string {
   if (typeof window === "undefined") return "";
   const h = window.location.hostname;
+  // Si on est sur le web local, on peut utiliser localhost, sinon TOUJOURS la production (indispensable pour mobile)
   if (h === "localhost" || h === "127.0.0.1") return "http://localhost:8000";
   return "https://flare-backend-ab5h.onrender.com";
 }
@@ -79,6 +80,7 @@ export function useForceUpdate() {
   // ── Vérification de la version min requise depuis le backend ─────────────
   useEffect(() => {
     const platform = detectRuntimePlatform(); // "web" | "android" | "windows"
+    console.log("[ForceUpdate] Platform detected:", platform);
     setStatus("checking");
 
     fetch(`${getApiBaseUrl()}/api/app/version`)
