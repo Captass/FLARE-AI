@@ -41,6 +41,12 @@ services:
         value: "a_remplir"
       - key: GEMINI_API_KEY_ASSISTANT_FAST
         value: "a_remplir"
+      # --- Google OAuth (Gmail Assistant) ---
+      - key: GOOGLE_CLIENT_ID
+        sync: false   # À remplir manuellement dans Render Dashboard
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false   # À remplir manuellement dans Render Dashboard
+      # GOOGLE_REDIRECT_URI est auto-calculé depuis BACKEND_URL si absent
       # --- Meta Facebook (À remplir manuellement dans Render Dashboard) ---
       # - key: META_APP_ID
       # - key: META_APP_SECRET
