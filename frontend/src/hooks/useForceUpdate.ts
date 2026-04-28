@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { detectRuntimePlatform } from "@/lib/platform/runtime";
+import { trackClientEvent } from "@/lib/api";
 
 // Version actuelle de cette build du frontend
 export const APP_CURRENT_VERSION = "2.0.1";
@@ -115,7 +116,13 @@ export function useForceUpdate() {
           }
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[ForceUpdate] Fetch failed:", err);
+        trackClientEvent("force_update_check_error", { 
+          platform, 
+          error: String(err),
+          url: `${getApiBaseUrl()}/api/app/version`
+        });
         // En cas d'erreur réseau, on ne bloque pas l'utilisateur
         setStatus("up_to_date");
       });

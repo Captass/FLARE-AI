@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     BACKEND_URL: str = "http://localhost:8000"
     # Origines CORS supplémentaires (séparées par des virgules), ex. preview Render static
     EXTRA_CORS_ORIGINS: str = ""
-    NATIVE_CORS_ORIGINS: str = "capacitor://localhost,tauri://localhost,http://tauri.localhost"
+    NATIVE_CORS_ORIGINS: str = "capacitor://localhost,https://localhost,tauri://localhost,http://tauri.localhost"
     NATIVE_ANDROID_CALLBACK_URL: str = "flareai://oauth/android"
     NATIVE_WINDOWS_CALLBACK_URL: str = "flareai://oauth/windows"
     NATIVE_MACOS_CALLBACK_URL: str = "flareai://oauth/macos"
@@ -182,9 +182,3 @@ MEDIA_PRICING = {
     "doc_gen": 0.005,        # $ par document Word généré
     "sheet_gen": 0.005,      # $ par tableur Excel généré
 }
-
-
-
-
-
-
