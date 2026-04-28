@@ -843,7 +843,7 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
               </div>
               <button
                 type="button"
-                onClick={connectGmail}
+                onClick={handleConnect}
                 disabled={loadingStatus}
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-4 text-sm font-black text-white shadow-lg shadow-blue-500/30 transition-all hover:bg-blue-700 hover:-translate-y-0.5 disabled:opacity-60"
               >
