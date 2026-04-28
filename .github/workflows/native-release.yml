@@ -45,8 +45,8 @@ jobs:
       NEXT_PUBLIC_ANDROID_RELEASE_ASSET_URL: https://github.com/${{ github.repository }}/releases/download/${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}/flare-ai-android.apk
       NEXT_PUBLIC_WINDOWS_RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
       NEXT_PUBLIC_ANDROID_RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.ref_name }}
-      NEXT_PUBLIC_WINDOWS_RELEASE_DATE: "2026-04-26"
-      NEXT_PUBLIC_ANDROID_RELEASE_DATE: "2026-04-26"
+      NEXT_PUBLIC_WINDOWS_RELEASE_DATE: "2026-04-28"
+      NEXT_PUBLIC_ANDROID_RELEASE_DATE: "2026-04-28"
     steps:
       - uses: actions/checkout@v4
 
