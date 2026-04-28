@@ -46,9 +46,12 @@ function shouldForceLocalBackend(): boolean {
   if (typeof window === "undefined") return false;
 
   try {
-    return window.localStorage.getItem("flare_use_local_backend") === "true";
+    const flag = window.localStorage.getItem("flare_use_local_backend");
+    // Local dev should default to local backend unless explicitly disabled.
+    if (flag === null) return true;
+    return flag === "true";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -227,7 +230,7 @@ async function apiRequest<T>(
   const url = `${getApiBaseUrl()}${endpoint}`;
   const method = (options?.method || "GET").toUpperCase();
   const shouldRetry = method === "GET";
-  const timeoutMs = shouldRetry ? 15000 : 60000;
+  const timeoutMs = shouldRetry ? (endpoint.startsWith("/api/gmail/") ? 25000 : 15000) : 60000;
   const attempts = shouldRetry ? 2 : 1;
   let lastError: Error | null = null;
 
@@ -324,6 +327,153 @@ export async function healthCheck(): Promise<boolean> {
   }
 
   return false;
+}
+
+export interface GmailStatusResponse {
+  connected: boolean;
+  email?: string;
+}
+
+export type GmailBucketKey = "priority" | "review" | "low" | "sent" | "app_sent";
+
+export interface GmailAssistantMessage {
+  id: string;
+  threadId?: string;
+  labelIds?: string[];
+  from: string;
+  email?: string;
+  replyTo?: string;
+  messageIdHeader?: string;
+  subject: string;
+  snippet: string;
+  date: string;
+  category: string;
+  priority: "Haute" | "Normale" | "Basse";
+  status: string;
+  summary: string;
+  recommendedAction: string;
+  suggestedReply: string;
+  score?: number;
+  bucket?: GmailBucketKey;
+  reasons?: string[];
+  bodyText?: string;
+  bodyHtml?: string;
+  bodyTruncated?: boolean;
+  hasAttachments?: boolean;
+  attachmentCount?: number;
+  attachments?: GmailAttachmentMetadata[];
+  isUnread?: boolean;
+  isStarred?: boolean;
+  isImportant?: boolean;
+}
+
+export interface GmailAttachmentMetadata {
+  attachmentId: string;
+  partId?: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  inline?: boolean;
+}
+
+export interface GmailTriageCounts {
+  priority: number;
+  review: number;
+  low: number;
+  sent: number;
+  app_sent: number;
+  total: number;
+}
+
+export interface GmailMessagesResponse {
+  priority: GmailAssistantMessage[];
+  review: GmailAssistantMessage[];
+  low: GmailAssistantMessage[];
+  sent: GmailAssistantMessage[];
+  app_sent: GmailAssistantMessage[];
+  counts: GmailTriageCounts;
+  messages?: GmailAssistantMessage[];
+}
+
+export interface GmailAttachmentDataResponse {
+  attachmentId: string;
+  filename: string;
+  mimeType: string;
+  size: number;
+  dataBase64: string;
+}
+
+export async function getGmailStatus(token?: string | null): Promise<GmailStatusResponse> {
+  return apiRequest<GmailStatusResponse>("/api/gmail/status", {}, token);
+}
+
+export async function getGmailAuthUrl(token?: string | null, returnUrl?: string): Promise<{ url: string }> {
+  const params = new URLSearchParams();
+  if (returnUrl) params.set("return_url", returnUrl);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiRequest<{ url: string }>(`/api/gmail/auth-url${query}`, {}, token);
+}
+
+export async function getGmailMessages(token?: string | null): Promise<GmailMessagesResponse> {
+  return apiRequest<GmailMessagesResponse>("/api/gmail/messages", {}, token);
+}
+
+export async function getGmailMessageDetail(
+  messageId: string,
+  token?: string | null,
+  bodyMaxChars: number = 20000,
+): Promise<GmailAssistantMessage> {
+  return apiRequest<GmailAssistantMessage>(`/api/gmail/messages/${messageId}?body_max_chars=${bodyMaxChars}`, {}, token);
+}
+
+export async function getGmailAttachmentData(
+  messageId: string,
+  attachmentId: string,
+  token?: string | null,
+): Promise<GmailAttachmentDataResponse> {
+  return apiRequest<GmailAttachmentDataResponse>(`/api/gmail/messages/${messageId}/attachments/${attachmentId}`, {}, token);
+}
+
+export async function disconnectGmail(token?: string | null): Promise<GmailStatusResponse> {
+  return apiRequest<GmailStatusResponse>("/api/gmail/disconnect", { method: "POST", body: JSON.stringify({}) }, token);
+}
+
+export interface GenerateGmailReplyPayload {
+  message_id: string;
+  instruction?: string;
+  currentDraft?: string;
+}
+
+export interface GenerateGmailReplyResponse {
+  suggestedReply: string;
+  aiUsed?: boolean;
+  model?: string;
+}
+
+export async function generateGmailReply(
+  payload: GenerateGmailReplyPayload,
+  token?: string | null,
+): Promise<GenerateGmailReplyResponse> {
+  return apiRequest<GenerateGmailReplyResponse>("/api/gmail/generate-reply", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
+}
+
+export interface SendGmailReplyPayload {
+  message_id: string;
+  body: string;
+  idempotency_key?: string;
+}
+
+export async function sendGmailReply(
+  payload: SendGmailReplyPayload,
+  token?: string | null,
+): Promise<{ sent: boolean; id?: string; threadId?: string }> {
+  return apiRequest<{ sent: boolean; id?: string; threadId?: string }>("/api/gmail/send-reply", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, token);
 }
 // â”€â”€â”€ Chat API â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 

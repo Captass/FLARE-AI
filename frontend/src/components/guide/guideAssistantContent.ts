@@ -4,6 +4,14 @@ export type GuideAudience = "user" | "operator";
 
 export type GuideViewKey =
   | "home"
+  | "global-dashboard"
+  | "business-desk"
+  | "enterprise-desk"
+  | "executive-desk"
+  | "executive-mail"
+  | "executive-planning"
+  | "executive-contacts"
+  | "executive-files"
   | "assistant"
   | "chatbot"
   | "chatbot-activation"
@@ -95,6 +103,113 @@ const GUIDE_CONTENT_BY_VIEW: Record<GuideViewKey, GuideContentEntry> = {
       { id: "to-chatbot", label: "Ouvrir Chatbot Facebook", target: "chatbot", tone: "primary" },
       { id: "to-billing", label: "Voir les offres", target: "billing" },
     ],
+  },
+  "global-dashboard": {
+    audience: "user",
+    title: "Tableau de bord global",
+    summary: "Ici tu vois les trois espaces FLARE AI et les modules disponibles pour la demonstration.",
+    steps: [
+      { id: "scan", label: "Lire l'etat des trois desks", status: "next" },
+      { id: "open", label: "Ouvrir le desk utile", status: "todo" },
+    ],
+    warnings: [],
+    ctas: [
+      { id: "to-executive", label: "Executive Desk", target: "executive-desk", tone: "primary" },
+      { id: "to-business", label: "Business Desk", target: "business-desk" },
+    ],
+  },
+  "business-desk": {
+    audience: "user",
+    title: "Business Desk",
+    summary: "Ici tu retrouves le parcours business actuel autour du chatbot Facebook, des leads et de la relation client.",
+    steps: [
+      { id: "chatbot", label: "Ouvrir le chatbot Facebook", status: "next" },
+      { id: "leads", label: "Suivre les leads et contacts", status: "todo" },
+    ],
+    warnings: [],
+    ctas: [
+      { id: "to-chatbot", label: "Chatbot Facebook", target: "chatbot", tone: "primary" },
+      { id: "to-leads", label: "Leads / Contacts", target: "chatbot-clients" },
+    ],
+  },
+  "enterprise-desk": {
+    audience: "user",
+    title: "Enterprise Desk",
+    summary: "Cette vue presente la future organisation des demandes internes, documents et rapports.",
+    steps: [
+      { id: "review", label: "Parcourir les cartes de capacites", status: "next" },
+      { id: "return", label: "Revenir a un module actif si besoin", status: "todo" },
+    ],
+    warnings: ["Cette page est une demonstration, sans integration backend pour le moment."],
+    ctas: [
+      { id: "to-business", label: "Business Desk", target: "business-desk", tone: "primary" },
+      { id: "to-home", label: "Accueil", target: "home" },
+    ],
+  },
+  "executive-desk": {
+    audience: "user",
+    title: "Executive Desk",
+    summary: "Ici tu vois la journee, les priorites et les prochaines actions personnelles ou professionnelles.",
+    steps: [
+      { id: "read", label: "Lire le resume de la journee", status: "next" },
+      { id: "mail", label: "Ouvrir Assistant Mail", status: "todo" },
+      { id: "planning", label: "Verifier le planning", status: "todo" },
+    ],
+    warnings: ["Les donnees Executive sont simulees pour cette V1."],
+    ctas: [
+      { id: "to-mail", label: "Assistant Mail", target: "executive-mail", tone: "primary" },
+      { id: "to-planning", label: "Planning", target: "executive-planning" },
+    ],
+  },
+  "executive-mail": {
+    audience: "user",
+    title: "Assistant Mail",
+    summary: "Ici tu filtres les mails importants et tu consultes les reponses proposees.",
+    steps: [
+      { id: "filter", label: "Filtrer par priorite ou statut", status: "next" },
+      { id: "reply", label: "Voir une reponse proposee", status: "todo" },
+    ],
+    warnings: ["Aucun compte Gmail n'est connecte dans cette demo."],
+    ctas: [
+      { id: "to-planning", label: "Planning", target: "executive-planning", tone: "primary" },
+      { id: "to-executive", label: "Vue du jour", target: "executive-desk" },
+    ],
+  },
+  "executive-planning": {
+    audience: "user",
+    title: "Planning",
+    summary: "Ici tu organises la journee entre rendez-vous, taches et obligations.",
+    steps: [
+      { id: "agenda", label: "Lire l'agenda du jour", status: "next" },
+      { id: "optimize", label: "Generer la simulation optimisee", status: "todo" },
+    ],
+    warnings: ["Aucun Google Calendar n'est connecte dans cette demo."],
+    ctas: [
+      { id: "to-mail", label: "Assistant Mail", target: "executive-mail", tone: "primary" },
+      { id: "to-files", label: "Fichiers", target: "executive-files" },
+    ],
+  },
+  "executive-contacts": {
+    audience: "user",
+    title: "Contacts intelligents",
+    summary: "Ici tu filtres les contacts importants et prepares des rappels.",
+    steps: [
+      { id: "filter", label: "Filtrer par categorie", status: "next" },
+      { id: "reminder", label: "Creer un rappel simule", status: "todo" },
+    ],
+    warnings: ["Les contacts sont des donnees de demonstration."],
+    ctas: [{ id: "to-executive", label: "Vue du jour", target: "executive-desk", tone: "primary" }],
+  },
+  "executive-files": {
+    audience: "user",
+    title: "Organisation fichiers",
+    summary: "Ici tu vois comment FLARE proposerait un tri, un dossier et un nouveau nom.",
+    steps: [
+      { id: "review", label: "Lire les propositions de tri", status: "next" },
+      { id: "apply", label: "Appliquer une simulation", status: "todo" },
+    ],
+    warnings: ["Aucun fichier local n'est modifie dans cette demo."],
+    ctas: [{ id: "to-executive", label: "Vue du jour", target: "executive-desk", tone: "primary" }],
   },
   assistant: {
     audience: "user",

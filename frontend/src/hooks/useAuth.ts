@@ -65,6 +65,20 @@ function translateFirebaseError(code: string): string {
   return map[code] || "Une erreur est survenue. Veuillez réessayer.";
 }
 
+async function getIdTokenWithTimeout(user: User, forceRefresh = false, timeoutMs = 7000): Promise<string | null> {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  try {
+    return await Promise.race([
+      user.getIdToken(forceRefresh),
+      new Promise<null>((resolve) => {
+        timeoutId = setTimeout(() => resolve(null), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 export function useAuth(): AuthState {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -79,7 +93,7 @@ export function useAuth(): AuthState {
     }
 
     try {
-      const nextToken = await currentUser.getIdToken(forceRefresh);
+      const nextToken = await getIdTokenWithTimeout(currentUser, forceRefresh);
       setToken(nextToken);
       return nextToken;
     } catch (nextError) {
@@ -92,16 +106,26 @@ export function useAuth(): AuthState {
   useEffect(() => {
     let mounted = true;
     let refreshInterval: ReturnType<typeof setInterval> | null = null;
+    const authTimeout = setTimeout(() => {
+      if (mounted) {
+        console.warn("Firebase auth initialization timed out.");
+        setLoading(false);
+      }
+    }, 8000);
 
     // S'abonner aux changements d'état d'authentification
     const unsubscribe = onAuthStateChanged(auth, async (currentUser: User | null) => {
       if (!mounted) return;
+      clearTimeout(authTimeout);
       setUser(currentUser);
       setToken(null);
       if (currentUser) {
         try {
-          const idToken = await currentUser.getIdToken();
+          const idToken = await getIdTokenWithTimeout(currentUser);
           if (mounted) setToken(idToken);
+          if (!idToken) {
+            console.warn("Firebase token fetch timed out; continuing without blocking the app shell.");
+          }
         } catch (e) {
           console.error("Initial token fetch failed:", e);
           if (mounted) setToken(null);
@@ -110,8 +134,8 @@ export function useAuth(): AuthState {
         if (refreshInterval) clearInterval(refreshInterval);
         refreshInterval = setInterval(async () => {
           try {
-            const freshToken = await currentUser.getIdToken(true);
-            if (mounted) setToken(freshToken);
+            const freshToken = await getIdTokenWithTimeout(currentUser, true);
+            if (mounted && freshToken) setToken(freshToken);
           } catch (e) {
             console.error("Token refresh failed:", e);
           }
@@ -137,7 +161,7 @@ export function useAuth(): AuthState {
       }
     }
 
-    return () => { mounted = false; unsubscribe(); if (refreshInterval) clearInterval(refreshInterval); };
+    return () => { mounted = false; clearTimeout(authTimeout); unsubscribe(); if (refreshInterval) clearInterval(refreshInterval); };
   }, []);
 
   const login = useCallback(async (email: string) => {

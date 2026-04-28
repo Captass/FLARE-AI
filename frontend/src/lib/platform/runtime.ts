@@ -365,7 +365,21 @@ export async function openExternalUrl(url: string): Promise<void> {
 
 export async function registerServiceWorker(): Promise<void> {
   const win = getWindowLike();
-  if (!win || process.env.NODE_ENV !== "production" || !("serviceWorker" in win.navigator)) {
+  if (!win || !("serviceWorker" in win.navigator)) {
+    return;
+  }
+
+  if (win.location.hostname === "localhost" || win.location.hostname === "127.0.0.1") {
+    try {
+      const registrations = await win.navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map((registration) => registration.unregister()));
+    } catch (error) {
+      console.warn("Failed to clear local service workers", error);
+    }
+    return;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
     return;
   }
 

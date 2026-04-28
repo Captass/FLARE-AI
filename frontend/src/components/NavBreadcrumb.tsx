@@ -5,6 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export type NavLevel =
   | "home"
+  | "global-dashboard"
+  | "business-desk"
+  | "enterprise-desk"
+  | "executive-desk"
+  | "executive-mail"
+  | "executive-planning"
+  | "executive-contacts"
+  | "executive-files"
   | "automations"
   | "facebook"
   | "google"
@@ -38,6 +46,14 @@ export type NavLevel =
 
 export const NAV_LABELS: Record<NavLevel, string> = {
   home: "Accueil",
+  "global-dashboard": "Tableau de bord global",
+  "business-desk": "Business Desk",
+  "enterprise-desk": "Enterprise Desk",
+  "executive-desk": "Vue du jour",
+  "executive-mail": "Assistant Mail",
+  "executive-planning": "Planning",
+  "executive-contacts": "Contacts intelligents",
+  "executive-files": "Organisation fichiers",
   automations: "Automatisations",
   facebook: "Facebook",
   google: "Google",

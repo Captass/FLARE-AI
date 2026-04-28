@@ -206,6 +206,18 @@ class LocalKnowledgeDoc(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class FcmDeviceToken(Base):
+    """Tokens Firebase Cloud Messaging pour les notifications multi-plateformes."""
+    __tablename__ = "fcm_device_tokens"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, index=True, nullable=False)
+    platform = Column(String, default="web")  # web, android, windows
+    token = Column(String, unique=True, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 class SystemSetting(Base):
     """Paramètres système de l'OS (ex: System Prompt personnalisé, etc.)"""
     __tablename__ = "system_settings"

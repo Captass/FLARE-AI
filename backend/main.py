@@ -206,14 +206,25 @@ async def lifespan(app: FastAPI):
         "ollama": settings.OLLAMA_MODEL,
     }.get(settings.LLM_PROVIDER, settings.LLM_PROVIDER)
     logger.info(f"Base de données prête — LLM: {settings.LLM_PROVIDER} / {model_name}")
+
+    import asyncio
+    async def email_poller():
+        while True:
+            await asyncio.sleep(600)  # Toutes les 10 minutes
+            logger.info("Background Email Poller: vérification des mails...")
+            # La logique de scan complet devrait s'exécuter ici
+            
+    poller_task = asyncio.create_task(email_poller())
+
     yield
+    poller_task.cancel()
     logger.info("FLARE AI arrêté.")
 
 
 app = FastAPI(
     title="FLARE AI",
     description="Orchestrateur IA central de FLARE AI",
-    version="2.0.0",
+    version="2.0.1",
     lifespan=lifespan,
 )
 

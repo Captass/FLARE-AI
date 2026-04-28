@@ -24,196 +24,6 @@ interface AutomationHubPanelProps {
   token?: string | null;
 }
 
-export default function AutomationHubPanel({ onNavigate, token }: AutomationHubPanelProps) {
-  const [overview, setOverview] = useState<ChatbotOverview | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!token) return;
-    setLoading(true);
-    getChatbotOverview(token)
-      .then(setOverview)
-      .catch(() => setOverview(null))
-      .finally(() => setLoading(false));
-  }, [token]);
-
-  const isComplete = overview?.step === "complete";
-  const isConnected = overview?.step !== "connect_page" && overview?.step !== "need_org";
-  const activePage = overview?.active_page;
-  const prefs = overview?.preferences;
-
-  const chatbotStatusLabel = !overview || loading
-    ? "Chargement…"
-    : isComplete
-    ? "Opérationnel"
-    : overview.step === "connect_page"
-    ? "Page non connectée"
-    : "Configuration requise";
-
-  return (
-    <div className="flex-1 overflow-y-auto bg-[var(--background)]">
-      <div className="mx-auto flex w-full max-w-[860px] flex-col gap-8 px-4 py-8 md:px-6 md:py-12">
-
-        {/* Header */}
-        <motion.section
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-1"
-        >
-          <p className="text-[10px] uppercase tracking-[0.14em] text-white/25 mb-5">Automatisations</p>
-          <h1 className="text-[28px] md:text-[34px] font-semibold tracking-[-0.03em] text-white">
-            Vos outils automatisés
-          </h1>
-          <p className="mt-2 text-[14px] text-white/35 font-light">
-            {isComplete
-              ? "Votre chatbot est actif. Gérez vos conversations, leads et dépenses."
-              : "Configurez votre chatbot Facebook pour démarrer."}
-          </p>
-        </motion.section>
-
-        {/* Chatbot Facebook — module actif */}
-        <motion.section
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-        >
-          <div
-            className="rounded-2xl bg-white/[0.03] p-5 hover:bg-white/[0.05] transition-all cursor-pointer"
-            onClick={() => onNavigate?.("chatbot")}
-          >
-            <div className="flex items-start gap-4">
-              <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
-                isComplete
-                  ? "bg-emerald-500/10 text-emerald-400"
-                  : "bg-orange-500/10 text-orange-400"
-              }`}>
-                <Bot size={20} />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-[17px] font-medium tracking-tight text-white">
-                    Chatbot Facebook
-                  </h2>
-                  {isComplete ? (
-                    <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-medium text-emerald-400 uppercase tracking-wide">
-                      <CheckCircle2 size={9} />
-                      Actif
-                    </span>
-                  ) : (
-                    <span className="rounded-full bg-orange-500/10 px-2.5 py-0.5 text-[10px] font-medium text-orange-400 uppercase tracking-wide">
-                      {loading ? "…" : "Action requise"}
-                    </span>
-                  )}
-                </div>
-
-                {activePage && (
-                  <p className="mt-1 text-[13px] text-white/40">
-                    Page connectée :{" "}
-                    <span className="text-white/60 font-medium">{activePage.page_name}</span>
-                  </p>
-                )}
-
-                {prefs && (
-                  <p className="mt-0.5 text-[12px] text-white/25">
-                    Assistant : {prefs.bot_name} · Ton {prefs.tone}
-                  </p>
-                )}
-
-                {!isComplete && !loading && (
-                  <p className="mt-1 text-[13px] text-white/30">{chatbotStatusLabel}</p>
-                )}
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {isComplete ? (
-                    <>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onNavigate?.("conversations"); }}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white transition-all"
-                      >
-                        <MessageCircle size={11} />
-                        Conversations
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onNavigate?.("leads"); }}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white transition-all"
-                      >
-                        <Users size={11} />
-                        Leads
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onNavigate?.("expenses"); }}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white transition-all"
-                      >
-                        <Wallet size={11} />
-                        Budget
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onNavigate?.("chatbot"); }}
-                        className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-white/40 bg-white/[0.03] hover:bg-white/[0.06] hover:text-white transition-all"
-                      >
-                        <Settings size={11} />
-                        Paramètres
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onNavigate?.("chatbot"); }}
-                      className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-[11px] font-medium uppercase tracking-widest text-orange-400 bg-orange-500/10 hover:bg-orange-500/20 transition-all"
-                    >
-                      <Zap size={11} />
-                      {overview?.step === "connect_page" ? "Connecter ma page" : "Terminer la configuration"}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <ArrowUpRight size={14} className="mt-1 shrink-0 text-white/15" />
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Modules à venir */}
-        <section>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-white/20 mb-4 px-1">
-            Prochainement
-          </p>
-          <div className="grid gap-3 md:grid-cols-2">
-            {LOCKED_MODULES.map((mod, i) => (
-              <motion.div
-                key={mod.id}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.08 + i * 0.04 }}
-                className="rounded-2xl bg-white/[0.015] p-5 opacity-60"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-white/25">
-                    <mod.icon size={17} />
-                    <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[var(--background)] border border-white/[0.06]">
-                      <Lock size={8} className="text-white/30" />
-                    </div>
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[14px] font-medium text-white/60">{mod.title}</h3>
-                      <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[9px] font-medium text-white/20 uppercase tracking-wide">
-                        Bientôt
-                      </span>
-                    </div>
-                    <p className="mt-1 text-[12px] leading-5 text-white/25">{mod.description}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-      </div>
-    </div>
-  );
-}
-
 const LOCKED_MODULES = [
   {
     id: "prospection",
@@ -240,3 +50,198 @@ const LOCKED_MODULES = [
     icon: Crown,
   },
 ];
+
+export default function AutomationHubPanel({ onNavigate, token }: AutomationHubPanelProps) {
+  const [overview, setOverview] = useState<ChatbotOverview | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    setLoading(true);
+    getChatbotOverview(token)
+      .then(setOverview)
+      .catch(() => setOverview(null))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  const isComplete = overview?.step === "complete";
+  const activePage = overview?.active_page;
+  const prefs = overview?.preferences;
+
+  const chatbotStatusLabel = !overview || loading
+    ? "Chargement..."
+    : isComplete
+      ? "Opérationnel"
+      : overview.step === "connect_page"
+        ? "Page non connectée"
+        : "Configuration requise";
+
+  return (
+    <div className="flex-1 overflow-y-auto bg-[var(--background)]">
+      <div className="mx-auto flex w-full max-w-[920px] flex-col gap-8 px-4 py-8 md:px-6 md:py-12">
+        <motion.section
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-[28px] border border-[var(--border-default)] bg-[var(--bg-card)] p-6 md:p-8"
+        >
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-xs font-semibold text-orange-600 dark:text-orange-300">
+            <Workflow size={14} />
+            Automatisations Business
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-[var(--text-primary)] md:text-4xl">
+            Vos outils automatisés
+          </h1>
+          <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--text-secondary)]">
+            {isComplete
+              ? "Votre chatbot est actif. Gérez vos conversations, leads et dépenses."
+              : "Configurez votre chatbot Facebook pour démarrer les automatisations utiles."}
+          </p>
+        </motion.section>
+
+        <motion.section
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+        >
+          <button
+            type="button"
+            className="group w-full rounded-[24px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5 text-left shadow-[0_12px_30px_rgba(15,23,42,0.04)] transition-all hover:border-orange-500/25 hover:bg-[var(--surface-subtle)]"
+            onClick={() => onNavigate?.("chatbot")}
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-start">
+              <div
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
+                  isComplete
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                    : "bg-orange-500/10 text-orange-500"
+                }`}
+              >
+                <Bot size={21} />
+              </div>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-xl font-bold text-[var(--text-primary)]">Chatbot Facebook</h2>
+                  {isComplete ? (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                      <CheckCircle2 size={12} />
+                      Actif
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-2.5 py-1 text-xs font-semibold text-orange-600 dark:text-orange-300">
+                      {loading ? "Chargement" : "Action requise"}
+                    </span>
+                  )}
+                </div>
+
+                {activePage ? (
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">
+                    Page connectée : <span className="font-semibold text-[var(--text-primary)]">{activePage.page_name}</span>
+                  </p>
+                ) : null}
+
+                {prefs ? (
+                  <p className="mt-1 text-sm text-[var(--text-secondary)]">
+                    Assistant : {prefs.bot_name} · Ton {prefs.tone}
+                  </p>
+                ) : null}
+
+                {!isComplete && !loading ? (
+                  <p className="mt-2 text-sm text-[var(--text-secondary)]">{chatbotStatusLabel}</p>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {isComplete ? (
+                    <>
+                      <HubButton icon={MessageCircle} label="Conversations" onClick={() => onNavigate?.("conversations")} />
+                      <HubButton icon={Users} label="Leads" onClick={() => onNavigate?.("leads")} />
+                      <HubButton icon={Wallet} label="Budget" onClick={() => onNavigate?.("expenses")} />
+                      <HubButton icon={Settings} label="Paramètres" onClick={() => onNavigate?.("chatbot")} />
+                    </>
+                  ) : (
+                    <HubButton
+                      icon={Zap}
+                      label={overview?.step === "connect_page" ? "Connecter ma page" : "Terminer la configuration"}
+                      onClick={() => onNavigate?.("chatbot")}
+                      tone="orange"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <ArrowUpRight size={17} className="hidden shrink-0 text-orange-500 md:block" />
+            </div>
+          </button>
+        </motion.section>
+
+        <section>
+          <p className="mb-4 px-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+            Prochainement
+          </p>
+          <div className="grid gap-3 md:grid-cols-2">
+            {LOCKED_MODULES.map((module, index) => {
+              const Icon = module.icon;
+              return (
+                <motion.div
+                  key={module.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.08 + index * 0.04 }}
+                  className="rounded-[22px] border border-[var(--border-default)] bg-[var(--bg-card)] p-5"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[var(--surface-subtle)] text-[var(--text-secondary)]">
+                      <Icon size={17} />
+                      <div className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full border border-[var(--border-default)] bg-[var(--bg-card)]">
+                        <Lock size={8} className="text-[var(--text-secondary)]" />
+                      </div>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-bold text-[var(--text-primary)]">{module.title}</h3>
+                        <span className="rounded-full border border-[var(--border-default)] bg-[var(--surface-subtle)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-[var(--text-secondary)]">
+                          Bientôt
+                        </span>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-[var(--text-secondary)]">{module.description}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function HubButton({
+  icon: Icon,
+  label,
+  onClick,
+  tone = "neutral",
+}: {
+  icon: typeof MessageCircle;
+  label: string;
+  onClick: () => void;
+  tone?: "neutral" | "orange";
+}) {
+  return (
+    <button
+      type="button"
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick();
+      }}
+      className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-[11px] font-bold uppercase tracking-[0.08em] transition-all ${
+        tone === "orange"
+          ? "border-orange-500/20 bg-orange-500/10 text-orange-600 hover:bg-orange-500/20"
+          : "border-[var(--border-default)] bg-[var(--surface-subtle)] text-[var(--text-secondary)] hover:bg-[var(--surface-raised)] hover:text-[var(--text-primary)]"
+      }`}
+    >
+      <Icon size={12} />
+      {label}
+    </button>
+  );
+}

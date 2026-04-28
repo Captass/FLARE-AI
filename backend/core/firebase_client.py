@@ -1,9 +1,23 @@
 import logging
 from typing import List, Optional, Dict, Any
 from google.cloud import storage as gcs_storage
+import firebase_admin
+from firebase_admin import credentials, messaging
+
 from .config import settings
 
 logger = logging.getLogger(__name__)
+
+# Initialisation globale de Firebase Admin si les credentials sont présents
+try:
+    if not firebase_admin._apps:
+        # Si vous avez un google-services.json ou serviceAccountKey.json
+        # vous pouvez utiliser credentials.Certificate("chemin")
+        # Par défaut, Firebase Admin utilise les Default Credentials (idéal sur GCP)
+        firebase_admin.initialize_app()
+        logger.info("[Firebase Admin] Initialisé avec succès.")
+except Exception as e:
+    logger.error(f"Erreur d'initialisation Firebase Admin: {e}")
 
 
 class FirebaseStorageManager:
@@ -141,6 +155,45 @@ class KnowledgeManager:
 # Singleton interfaces
 firebase_storage = FirebaseStorageManager()
 knowledge_manager = KnowledgeManager()
+
+
+class FcmNotificationManager:
+    """Gère l'envoi de notifications push via Firebase Cloud Messaging."""
+    
+    def send_notification(self, tokens: List[str], title: str, body: str, data: Dict[str, str] = None) -> Dict[str, Any]:
+        """
+        Envoie une notification push à une liste de tokens FCM.
+        Retourne un résumé des succès et échecs.
+        """
+        if not firebase_admin._apps:
+            logger.warning("Impossible d'envoyer la notification: Firebase Admin non initialisé.")
+            return {"success": 0, "failure": len(tokens)}
+        
+        if not tokens:
+            return {"success": 0, "failure": 0}
+
+        try:
+            # On construit le message multicast
+            message = messaging.MulticastMessage(
+                notification=messaging.Notification(
+                    title=title,
+                    body=body,
+                ),
+                data=data or {},
+                tokens=tokens
+            )
+            
+            response = messaging.send_each_for_multicast(message)
+            logger.info(f"[FCM] Notification envoyée: {response.success_count} succès, {response.failure_count} échecs.")
+            
+            # Vous pourriez identifier et supprimer les tokens invalides ici si response.failure_count > 0
+            
+            return {"success": response.success_count, "failure": response.failure_count}
+        except Exception as e:
+            logger.error(f"[FCM] Erreur d'envoi de notification: {e}")
+            return {"success": 0, "failure": len(tokens)}
+
+fcm_manager = FcmNotificationManager()
 
 
 

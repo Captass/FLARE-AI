@@ -85,3 +85,52 @@ self.addEventListener("fetch", (event) => {
     })
   );
 });
+
+// --- Push Notifications (FCM via Web Push API) ---
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  try {
+    const data = event.data.json();
+    const title = data.notification?.title || "Notification FLARE AI";
+    const body = data.notification?.body || "";
+    const icon = "/logo.png";
+    const badge = "/logo.png"; // Idéalement une icône monochrome 96x96
+    const url = data.data?.url || "/app";
+
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body,
+        icon,
+        badge,
+        data: { url },
+        vibrate: [200, 100, 200],
+      })
+    );
+  } catch (error) {
+    console.error("[SW] Erreur parsing push data:", error);
+  }
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const urlToOpen = event.notification.data?.url || "/app";
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {
+      // Si une fenêtre est déjà ouverte, on la focus et on navigue
+      for (let client of windowClients) {
+        if (client.url.includes(self.location.origin) && "focus" in client) {
+          client.focus();
+          return client.navigate(urlToOpen);
+        }
+      }
+      // Sinon on ouvre une nouvelle fenêtre
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});

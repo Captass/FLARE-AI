@@ -68,6 +68,16 @@ Reference : [instructions/DEVELOPER_GUIDE.md](instructions/DEVELOPER_GUIDE.md)
 - le systeme d'espaces / organisations n'est plus le modele actif de l'app connectee vendue aujourd'hui
 - la verification admin d'un paiement reste la seule source de verite pour appliquer le plan choisi au compte client
 
+## Update 2026-04-27 - demo modulaire dans l'app connectee
+
+L'app connectee expose maintenant une demo de plateforme modulaire avec trois espaces :
+
+- `Business Desk` : hub leger qui renvoie vers le cockpit `Chatbot Facebook`, les leads/contacts et les automatisations business existantes.
+- `Enterprise Desk` : teaser de demonstration pour demandes internes, assistant IA interne, base documentaire et reporting.
+- `Executive Desk` : demo frontend locale avec donnees mockees pour mails, planning, contacts, priorites et organisation de fichiers.
+
+Cette evolution ne change pas la verite produit publique : la beta vendue reste centree sur le `Chatbot Facebook`, avec paiement manuel local et activation assistee. Les pages Executive / Enterprise n'ont pas de connexion Gmail, Google Calendar, IA live, backend dedie, ni acces disque local.
+
 ## Statut applicatif actuel
 
 Pour comprendre rapidement comment le produit est organise aujourd'hui :

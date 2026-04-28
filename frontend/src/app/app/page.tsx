@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -47,6 +47,14 @@ import ChatbotClientsPage from "@/components/pages/ChatbotClientsPage";
 import ChatbotClientDetailPage from "@/components/pages/ChatbotClientDetailPage";
 import ChatbotActivationPage from "@/components/pages/ChatbotActivationPage";
 import ChatbotOrdersPage from "@/components/pages/ChatbotOrdersPage";
+import GlobalDashboardPage from "@/components/pages/GlobalDashboardPage";
+import BusinessDeskPage from "@/components/pages/BusinessDeskPage";
+import EnterpriseDeskPage from "@/components/pages/EnterpriseDeskPage";
+import ExecutiveDeskPage from "@/components/pages/ExecutiveDeskPage";
+import ExecutiveMailPage from "@/components/pages/ExecutiveMailPage";
+import ExecutivePlanningPage from "@/components/pages/ExecutivePlanningPage";
+import ExecutiveContactsPage from "@/components/pages/ExecutiveContactsPage";
+import ExecutiveFilesPage from "@/components/pages/ExecutiveFilesPage";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import SignalementModal from "@/components/SignalementModal";
 import FloatingContextualGuide from "@/components/guide/FloatingContextualGuide";
@@ -90,7 +98,16 @@ export type ActiveView =
   | "prompts"
   | "knowledge"
   | "files"
-  | "admin";
+  | "admin"
+  | "home"
+  | "global-dashboard"
+  | "business-desk"
+  | "enterprise-desk"
+  | "executive-desk"
+  | "executive-mail"
+  | "executive-planning"
+  | "executive-contacts"
+  | "executive-files";
 
 type AppView = NavLevel | ActiveView;
 
@@ -221,6 +238,14 @@ const DEFAULT_NAV_STACKS: Record<AppView, AppView[]> = {
   content: ["home", "automations", "content"],
   followup: ["home", "automations", "followup"],
   agents: ["home", "automations", "agents"],
+  "global-dashboard": ["home", "global-dashboard"],
+  "business-desk": ["home", "business-desk"],
+  "enterprise-desk": ["home", "enterprise-desk"],
+  "executive-desk": ["home", "executive-desk"],
+  "executive-mail": ["home", "executive-desk", "executive-mail"],
+  "executive-planning": ["home", "executive-desk", "executive-planning"],
+  "executive-contacts": ["home", "executive-desk", "executive-contacts"],
+  "executive-files": ["home", "executive-desk", "executive-files"],
 };
 
 function resolveDefaultNavStack(view: AppView): AppView[] {
@@ -1566,6 +1591,22 @@ function HomeContent() {
 
         {activeView === "home" ? (
           <motion.div key="home" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} token={token} /></motion.div>
+        ) : activeView === "global-dashboard" ? (
+          <motion.div key="global-dashboard" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><GlobalDashboardPage onPush={onPush} /></motion.div>
+        ) : activeView === "business-desk" ? (
+          <motion.div key="business-desk" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><BusinessDeskPage onPush={onPush} /></motion.div>
+        ) : activeView === "enterprise-desk" ? (
+          <motion.div key="enterprise-desk" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><EnterpriseDeskPage /></motion.div>
+        ) : activeView === "executive-desk" ? (
+          <motion.div key="executive-desk" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveDeskPage onPush={onPush} token={token} /></motion.div>
+        ) : activeView === "executive-mail" ? (
+          <motion.div key="executive-mail" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveMailPage token={token} /></motion.div>
+        ) : activeView === "executive-planning" ? (
+          <motion.div key="executive-planning" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutivePlanningPage /></motion.div>
+        ) : activeView === "executive-contacts" ? (
+          <motion.div key="executive-contacts" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveContactsPage /></motion.div>
+        ) : activeView === "executive-files" ? (
+          <motion.div key="executive-files" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveFilesPage /></motion.div>
         ) : activeView === "automations" ? (
           <motion.div key="automations" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><HomePage onPush={onPush} displayName={resolvedUserDisplayName} token={token} /></motion.div>
         ) : activeView === "facebook" ? (
@@ -1716,7 +1757,7 @@ function HomeContent() {
         </AnimatePresence>
       </main>
 
-      <FloatingContextualGuide
+      {/* <FloatingContextualGuide
         enabled={guideAssistantEnabled}
         visible={guideVisible}
         activeView={activeView}
@@ -1724,7 +1765,7 @@ function HomeContent() {
         onNavigate={handleGuideNavigate}
         canAccessAdmin={canAccessAdmin}
         bottomClassName={guideBottomClassName}
-      />
+      /> */}
     </div>
 
 
