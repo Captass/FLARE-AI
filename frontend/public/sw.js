@@ -1,4 +1,4 @@
-const CACHE_NAME = "flare-ai-os-v16";
+const CACHE_NAME = "flare-ai-os-v17";
 const APP_SHELL_URL = "/app?utm_source=pwa";
 const PRECACHE_URLS = ["/", APP_SHELL_URL, "/logo.png"];
 
@@ -133,4 +133,16 @@ self.addEventListener("notificationclick", (event) => {
       }
     })
   );
+});
+// --- Update Management ---
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting().then(() => {
+        // Optionnel: notifier les clients que le SW a sauté l'attente
+        self.clients.matchAll().then(clients => {
+            clients.forEach(client => client.postMessage({ type: "SW_UPDATED" }));
+        });
+    });
+  }
 });

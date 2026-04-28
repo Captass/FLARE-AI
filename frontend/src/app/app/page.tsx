@@ -60,6 +60,8 @@ import SignalementModal from "@/components/SignalementModal";
 import FloatingContextualGuide from "@/components/guide/FloatingContextualGuide";
 import type { GuideContext } from "@/components/guide/guideAssistantContent";
 import { useThemePreference } from "@/hooks/useThemePreference";
+import { useForceUpdate } from "@/hooks/useForceUpdate";
+import ForceUpdateModal from "@/components/ForceUpdateModal";
 import { rememberActivationPlan, type ActivationPlanId } from "@/lib/activationFlow";
 
 import {
@@ -413,6 +415,7 @@ const LOCKED_MODULES: Record<LockedModuleView, LockedModuleConfig> = {
 
 function HomeContent() {
   const { user, token, loading: authLoading, error: authError, getFreshToken, login, loginWithPassword, signUpWithPassword, loginWithGoogle, resetPassword, logout, sendSignupPin, verifySignupPin } = useAuth();
+  const { status: updateStatus, updateInfo, applyUpdate } = useForceUpdate();
   const [navStack, setNavStack] = useState<AppView[]>(["home"]);
   const activeView = navStack[navStack.length - 1];
   const onPush = useCallback((level: NavLevel) => {
@@ -1783,6 +1786,11 @@ function HomeContent() {
         onStartTour={() => {}}
       />
 
+      <ForceUpdateModal 
+        status={updateStatus} 
+        updateInfo={updateInfo} 
+        onApplyUpdate={applyUpdate} 
+      />
     </>
   );
 }
