@@ -162,8 +162,7 @@ class FcmNotificationManager:
     
     def send_notification(self, tokens: List[str], title: str, body: str, data: Dict[str, str] = None) -> Dict[str, Any]:
         """
-        Envoie une notification push à une liste de tokens FCM.
-        Retourne un résumé des succès et échecs.
+        Envoie une notification push à une liste de tokens FCM avec support multi-plateforme riche.
         """
         if not firebase_admin._apps:
             logger.warning("Impossible d'envoyer la notification: Firebase Admin non initialisé.")
@@ -173,6 +172,35 @@ class FcmNotificationManager:
             return {"success": 0, "failure": 0}
 
         try:
+            icon_url = "https://flareai.ramsflare.com/br-symbol-v4-192.png"
+            
+            # Configuration spécifique pour le Web (Windows / PWA / Chrome)
+            webpush = messaging.WebpushConfig(
+                notification=messaging.WebpushNotification(
+                    title=title,
+                    body=body,
+                    icon=icon_url,
+                    badge=icon_url,
+                    tag="priority-mail",
+                    renotify=True,
+                ),
+                fcm_options=messaging.WebpushFcmOptions(
+                    link=data.get("url") if data else "https://flareai.ramsflare.com/app?view=executive-mail"
+                )
+            )
+
+            # Configuration spécifique pour Android (APK)
+            android = messaging.AndroidConfig(
+                priority="high",
+                notification=messaging.AndroidNotification(
+                    title=title,
+                    body=body,
+                    icon="stock_ticker_update", # Doit correspondre à une ressource drawable si possible, sinon FCM gère
+                    color="#000000",
+                    click_action="OPEN_MAIL_DETAIL",
+                )
+            )
+
             # On construit le message multicast
             message = messaging.MulticastMessage(
                 notification=messaging.Notification(
@@ -180,17 +208,17 @@ class FcmNotificationManager:
                     body=body,
                 ),
                 data=data or {},
-                tokens=tokens
+                tokens=tokens,
+                webpush=webpush,
+                android=android
             )
             
             response = messaging.send_each_for_multicast(message)
-            logger.info(f"[FCM] Notification envoyée: {response.success_count} succès, {response.failure_count} échecs.")
-            
-            # Vous pourriez identifier et supprimer les tokens invalides ici si response.failure_count > 0
+            logger.info(f"[FCM] Notification riche envoyée: {response.success_count} succès, {response.failure_count} échecs.")
             
             return {"success": response.success_count, "failure": response.failure_count}
         except Exception as e:
-            logger.error(f"[FCM] Erreur d'envoi de notification: {e}")
+            logger.error(f"[FCM] Erreur d'envoi de notification riche: {e}")
             return {"success": 0, "failure": len(tokens)}
 
 fcm_manager = FcmNotificationManager()

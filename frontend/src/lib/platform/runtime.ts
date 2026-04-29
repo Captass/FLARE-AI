@@ -185,7 +185,7 @@ export function getWindowsDownloadUrl(): string {
     readFirstEnvValue(
       process.env.NEXT_PUBLIC_WINDOWS_RELEASE_ASSET_URL,
       process.env.NEXT_PUBLIC_WINDOWS_DOWNLOAD_URL
-    )
+    ) || "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-windows-setup.exe"
   );
 }
 
@@ -198,7 +198,7 @@ export function getAndroidDownloadUrl(): string {
     readFirstEnvValue(
       process.env.NEXT_PUBLIC_ANDROID_RELEASE_ASSET_URL,
       process.env.NEXT_PUBLIC_ANDROID_DOWNLOAD_URL
-    )
+    ) || "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-android.apk"
   );
 }
 
@@ -220,18 +220,18 @@ export function getAndroidDownloadRoute(): string {
 
 export function getReleaseVersion(platform: NativeReleasePlatform): string {
   if (platform === "android") {
-    return readFirstEnvValue(process.env.NEXT_PUBLIC_ANDROID_RELEASE_VERSION);
+    return readFirstEnvValue(process.env.NEXT_PUBLIC_ANDROID_RELEASE_VERSION) || "2.0.2";
   }
 
-  return readFirstEnvValue(process.env.NEXT_PUBLIC_WINDOWS_RELEASE_VERSION);
+  return readFirstEnvValue(process.env.NEXT_PUBLIC_WINDOWS_RELEASE_VERSION) || "2.0.2";
 }
 
 export function getReleaseDate(platform: NativeReleasePlatform): string {
   if (platform === "android") {
-    return readFirstEnvValue(process.env.NEXT_PUBLIC_ANDROID_RELEASE_DATE);
+    return readFirstEnvValue(process.env.NEXT_PUBLIC_ANDROID_RELEASE_DATE) || "2026-04-29";
   }
 
-  return readFirstEnvValue(process.env.NEXT_PUBLIC_WINDOWS_RELEASE_DATE);
+  return readFirstEnvValue(process.env.NEXT_PUBLIC_WINDOWS_RELEASE_DATE) || "2026-04-29";
 }
 
 export function getWebAppUrl(path = "/app"): string {

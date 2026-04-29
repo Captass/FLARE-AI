@@ -19,14 +19,14 @@ def notify_user_priority_mail(user_id: str, mail_subject: str, mail_snippet: str
 
         token_list = [t.token for t in tokens_db]
         
-        # Titre et corps
-        title = "Mail Prioritaire 📧"
-        body = f"{mail_subject}\n{mail_snippet[:100]}..." if mail_snippet else mail_subject
+        # Titre et corps formatés pour le prestige
+        title = "Nouveau Mail Prioritaire 📧"
+        body = f"{mail_subject}\n{mail_snippet[:120]}..." if mail_snippet else mail_subject
         
         # Data payload (utilisé pour le routage au clic)
         data = {
             "type": "priority_mail",
-            "url": f"/app/executive-desk/mail?id={mail_id}",
+            "url": f"https://flareai.ramsflare.com/app?view=executive-mail&mail_id={mail_id}",
             "mail_id": mail_id
         }
         

@@ -5,7 +5,7 @@ import { detectRuntimePlatform } from "@/lib/platform/runtime";
 import { trackClientEvent } from "@/lib/api";
 
 // Version actuelle de cette build du frontend
-export const APP_CURRENT_VERSION = "2.0.1";
+export const APP_CURRENT_VERSION = "2.0.2";
 
 export type UpdateStatus =
   | "idle"
@@ -39,7 +39,7 @@ function getApiBaseUrl(): string {
   const h = window.location.hostname;
   // Si on est sur le web local, on peut utiliser localhost, sinon TOUJOURS la production (indispensable pour mobile)
   if (h === "localhost" || h === "127.0.0.1") return "http://localhost:8000";
-  return "https://flare-backend-ab5h.onrender.com";
+  return "https://flare-backend-jyyz.onrender.com";
 }
 
 export function useForceUpdate() {

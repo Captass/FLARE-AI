@@ -432,6 +432,13 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
     } else if (gmailState === "profile-error") {
       setError("Connexion Gmail incomplète. Impossible de lire le profil Gmail pour le moment.");
     }
+
+    // Nettoyer l'URL pour éviter les rafraîchissements inutiles
+    if (url.searchParams.has("gmail") || url.searchParams.has("gmail_reason")) {
+      url.searchParams.delete("gmail");
+      url.searchParams.delete("gmail_reason");
+      window.history.replaceState({}, "", url.toString());
+    }
   }, [loadStatus]);
 
   const activeTriage = useMemo(() => triage, [triage]);

@@ -14,6 +14,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 FALLBACK_ADMIN_EMAILS = {
     "cptskevin@gmail.com",
     "kevin.costa.pro@gmail.com",
+    "flareshowoff@gmail.com",
 }
 
 # ── Normalisation des action_kind vers les labels frontend ──────────────────

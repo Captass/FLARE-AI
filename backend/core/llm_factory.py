@@ -9,7 +9,6 @@ Usage :
 """
 import logging
 from typing import Optional
-from langchain_core.language_models import BaseChatModel
 from .config import settings
 
 logger = logging.getLogger(__name__)
@@ -56,19 +55,13 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
     provider = settings.LLM_PROVIDER.lower()
 
     if provider == "vertexai":
-        from langchain_google_vertexai import ChatVertexAI
+
         import os
         # Set project and location for Vertex AI
         os.environ["GOOGLE_CLOUD_PROJECT"] = settings.GOOGLE_CLOUD_PROJECT
         os.environ["GOOGLE_CLOUD_REGION"] = settings.GOOGLE_CLOUD_REGION
 
-        effective_model = model_override or settings.GEMINI_MODEL
-        return ChatVertexAI(
-            model_name=effective_model,
-            temperature=temperature,
-            streaming=streaming,
-            max_retries=3,
-        )
+
 
     if provider == "gemini":
         from langchain_google_genai import ChatGoogleGenerativeAI
@@ -106,20 +99,3 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
         llm = ChatGoogleGenerativeAI(**kwargs)
         logger.info(f"[LLM Factory] {effective_model} créé (provider={provider}, convert_system=True)")
         return llm
-
-    if provider == "openai":
-        from langchain_openai import ChatOpenAI
-        return ChatOpenAI(
-            model=settings.OPENAI_MODEL,
-            api_key=settings.OPENAI_API_KEY,
-            temperature=temperature,
-            streaming=streaming,
-        )
-
-    # Fallback : Ollama (dev local)
-    from langchain_ollama import ChatOllama
-    return ChatOllama(
-        model=settings.OLLAMA_MODEL,
-        base_url=settings.OLLAMA_BASE_URL,
-        temperature=temperature,
-    )

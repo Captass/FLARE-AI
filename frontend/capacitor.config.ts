@@ -5,7 +5,7 @@ const config = {
   bundledWebRuntime: false,
   server: {
     androidScheme: "https",
-    allowNavigation: ["flare-backend-ab5h.onrender.com"],
+    allowNavigation: ["flare-backend-jyyz.onrender.com"],
   },
   plugins: {
     SplashScreen: {

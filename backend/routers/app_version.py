@@ -13,12 +13,12 @@ router = APIRouter(prefix="/api/app", tags=["app-version"])
 # Incrémentez ces valeurs pour forcer une mise à jour obligatoire sur chaque plateforme.
 # Format: "MAJOR.MINOR.PATCH"
 MIN_REQUIRED_VERSIONS = {
-    "android": "2.0.1",
-    "windows": "2.0.1",
-    "web":     "2.0.1",
+    "android": "2.0.2",
+    "windows": "2.0.2",
+    "web":     "2.0.2",
 }
 
-APP_VERSION = "2.0.1"
+APP_VERSION = "2.0.2"
 
 @router.get("/version")
 def get_app_version():
