@@ -1603,7 +1603,7 @@ function HomeContent() {
         ) : activeView === "executive-desk" ? (
           <motion.div key="executive-desk" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveDeskPage onPush={onPush} token={token} /></motion.div>
         ) : activeView === "executive-mail" ? (
-          <motion.div key="executive-mail" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveMailPage token={token} /></motion.div>
+          <motion.div key="executive-mail" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutiveMailPage token={token} getFreshToken={getFreshToken} /></motion.div>
         ) : activeView === "executive-planning" ? (
           <motion.div key="executive-planning" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }} className="flex-1 flex flex-col overflow-hidden"><ExecutivePlanningPage /></motion.div>
         ) : activeView === "executive-contacts" ? (

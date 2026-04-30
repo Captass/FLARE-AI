@@ -50,6 +50,7 @@ import { Bell, BellRing } from "lucide-react";
 
 interface ExecutiveMailPageProps {
   token?: string | null;
+  getFreshToken?: (forceRefresh?: boolean) => Promise<string | null>;
 }
 
 interface MailActivityEntry {
@@ -105,7 +106,6 @@ function makeTriage(
 function normalizeTriage(
   response?: Partial<GmailMessagesResponse> | null,
   userEmail?: string | null,
-  activity?: Record<string, MailActivityEntry>
 ): GmailMessagesResponse {
   const allMessages = response?.messages || [];
   const normalizedUserEmail = userEmail?.toLowerCase().trim();
@@ -283,7 +283,7 @@ function StatCard({
   );
 }
 
-export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
+export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMailPageProps) {
   const [connected, setConnected] = useState(false);
   const [gmailEmail, setGmailEmail] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
@@ -303,6 +303,7 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
   const [sendingReply, setSendingReply] = useState(false);
   const [confirmSend, setConfirmSend] = useState(false);
   const [aiMeta, setAiMeta] = useState<string | null>(null);
+  const [replyError, setReplyError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -352,6 +353,13 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
     });
   }, [activityStorageKey]);
 
+  const resolveGmailToken = useCallback(async (forceRefresh = false) => {
+    if (getFreshToken) {
+      return getFreshToken(forceRefresh);
+    }
+    return token || null;
+  }, [getFreshToken, token]);
+
   const loadStatus = useCallback(async () => {
     if (!token) {
       setConnected(false);
@@ -376,10 +384,12 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
   }, [token]);
 
   const loadMessages = useCallback(async () => {
-    if (!token || !connected) return;
+    if (!connected) return;
+    const accessToken = await resolveGmailToken();
+    if (!accessToken) return;
     setLoadingMessages(true);
     try {
-      const response = normalizeTriage(await getGmailMessages(token), gmailEmail, mailActivity);
+      const response = normalizeTriage(await getGmailMessages(accessToken), gmailEmail);
       setTriage(response);
       setError(null);
     } catch {
@@ -387,7 +397,7 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
     } finally {
       setLoadingMessages(false);
     }
-  }, [connected, token]);
+  }, [connected, gmailEmail, resolveGmailToken]);
 
   useEffect(() => {
     void loadStatus();
@@ -535,6 +545,7 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
     setReplyInstruction("");
     setConfirmSend(false);
     setAiMeta(null);
+    setReplyError(null);
     setDetailError(null);
     saveActivity((current) => ({
       ...current,
@@ -561,6 +572,7 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
     setReplyInstruction("");
     setConfirmSend(false);
     setAiMeta(null);
+    setReplyError(null);
   };
 
   const updateMailStatus = (mailId: string, status: string) => {
@@ -588,8 +600,14 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
 
   const handleGenerateReply = async () => {
     if (!selectedMail) return;
+    const accessToken = await resolveGmailToken(true);
+    if (!accessToken) {
+      setReplyError("Votre session FLARE AI a expiré. Reconnectez-vous puis réessayez.");
+      return;
+    }
     setGeneratingReply(true);
     setConfirmSend(false);
+    setReplyError(null);
     try {
       const response = await generateGmailReply({
         message_id: selectedMail.id,
@@ -599,10 +617,13 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
         language: aiLanguage,
         signature: aiSignature || undefined,
         permanentRules: aiPermanentRules || undefined,
-      }, token);
+      }, accessToken);
       setReplyDraft(response.suggestedReply);
       updateMailDraft(selectedMail.id, response.suggestedReply);
-      setAiMeta(response.aiUsed ? `IA · ${response.model || "Gemini Flash"}` : "Réponse fallback rule-based");
+      setAiMeta(response.aiUsed ? `IA · ${response.model || "Gemini Flash"}` : "Fallback local");
+      if (!response.aiUsed) {
+        setReplyError("L'IA serveur n'a pas répondu. FLARE a préparé une réponse locale simple à vérifier avant envoi.");
+      }
       saveActivity((current) => ({
         ...current,
         [selectedMail.id]: {
@@ -611,9 +632,9 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
           aiGeneratedAt: new Date().toISOString(),
         },
       }));
-      showNotice(response.aiUsed ? "Réponse générée par IA." : "Réponse générée avec le fallback local.");
+      showNotice(response.aiUsed ? "Réponse générée par IA." : "Réponse locale préparée.");
     } catch (err) {
-      setError(humanizeApiError(err) || "Impossible de générer la réponse pour le moment.");
+      setReplyError(humanizeApiError(err) || "Impossible de générer la réponse pour le moment.");
     } finally {
       setGeneratingReply(false);
     }
@@ -1328,7 +1349,11 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
                               Demander à l&apos;IA de rédiger la réponse
                             </h3>
                             <div className="flex items-center gap-2">
-                              {aiMeta && <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-bold text-violet-700 uppercase tracking-wide">{aiMeta}</span>}
+                              {aiMeta && (
+                                <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${aiMeta === "Fallback local" ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"}`}>
+                                  {aiMeta}
+                                </span>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => setShowAiSettings(!showAiSettings)}
@@ -1411,6 +1436,11 @@ export default function ExecutiveMailPage({ token }: ExecutiveMailPageProps) {
                               {generatingReply ? "Génération..." : replyInstruction ? "Rédiger avec ces consignes" : "Générer une réponse auto"}
                             </button>
                           </div>
+                          {replyError && (
+                            <div className="mt-4 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-800">
+                              {replyError}
+                            </div>
+                          )}
                         </div>
 
                         <div className="rounded-[24px] border border-orange-500/20 bg-orange-500/5 p-6 shadow-sm">

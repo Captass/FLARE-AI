@@ -74,9 +74,9 @@ L'app connectee expose maintenant une demo de plateforme modulaire avec trois es
 
 - `Business Desk` : hub leger qui renvoie vers le cockpit `Chatbot Facebook`, les leads/contacts et les automatisations business existantes.
 - `Enterprise Desk` : teaser de demonstration pour demandes internes, assistant IA interne, base documentaire et reporting.
-- `Executive Desk` : demo frontend locale avec donnees mockees pour mails, planning, contacts, priorites et organisation de fichiers.
+- `Executive Desk` : demo produit modulaire ; `Assistant Mail` dispose maintenant d'une integration Gmail V1 en validation, tandis que planning, contacts, priorites et fichiers restent principalement mockes.
 
-Cette evolution ne change pas la verite produit publique : la beta vendue reste centree sur le `Chatbot Facebook`, avec paiement manuel local et activation assistee. Les pages Executive / Enterprise n'ont pas de connexion Gmail, Google Calendar, IA live, backend dedie, ni acces disque local.
+Cette evolution ne change pas la verite produit publique : la beta vendue reste centree sur le `Chatbot Facebook`, avec paiement manuel local et activation assistee. Les pages Executive / Enterprise restent hors promesse publique principale ; l'integration Gmail doit etre presentee comme une V1 en validation, sans promesse Google Calendar, backend Executive complet, ni acces disque local.
 
 ## Statut applicatif actuel
 

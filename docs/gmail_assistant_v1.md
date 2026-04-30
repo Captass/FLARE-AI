@@ -218,3 +218,12 @@ L'envoi Gmail existe côté backend et frontend avec confirmation manuelle. **Au
 
 - `python -m compileall backend\routers\gmail.py backend\core\gmail_token_store.py backend\core\config.py` → OK
 - `npm.cmd run build` dans `frontend/` → OK (compiled successfully, types OK, 21 static pages)
+
+## Gmail Assistant V1.6
+
+Mise à jour du 30 avril 2026. Correction ciblée du bouton `Générer une réponse auto`.
+
+- Le composeur demande maintenant un token Firebase frais avant d'appeler `/api/gmail/generate-reply`, comme les actions sensibles du cockpit chatbot.
+- Les erreurs de génération s'affichent dans la modale de réponse, près du bouton, au lieu d'être seulement visibles dans le bandeau global derrière la modale.
+- Le fallback rule-based est indiqué clairement comme `Fallback local`, pour éviter de faire croire qu'une vraie réponse IA Gemini a été produite.
+- Le warning React Hooks sur le chargement des messages Gmail a été corrigé.
