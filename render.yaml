@@ -27,6 +27,21 @@ services:
         value: "rams-flare-ai"
       - key: FLIGHT_MODE
         value: "True"
+      # --- Versioning / mises a jour natives ---
+      - key: APP_CURRENT_VERSION
+        value: "2.0.2"
+      - key: APP_MIN_REQUIRED_WEB_VERSION
+        value: "2.0.2"
+      - key: APP_MIN_REQUIRED_ANDROID_VERSION
+        value: "2.0.2"
+      - key: APP_MIN_REQUIRED_WINDOWS_VERSION
+        value: "2.0.2"
+      - key: APP_ANDROID_RELEASE_URL
+        value: "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-android.apk"
+      - key: APP_WINDOWS_RELEASE_URL
+        value: "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-windows-setup.exe"
+      - key: APP_RELEASE_NOTES
+        value: "Assistant Mail ameliore, verification des mises a jour native et correctifs de stabilite."
       # --- Supabase (optionnel) ---
       - key: SUPABASE_URL
         value: "a_remplir"
@@ -79,17 +94,19 @@ services:
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
         value: "1:461942823604:web:46b2d179d027b7849195e1"
       - key: NEXT_PUBLIC_WINDOWS_RELEASE_ASSET_URL
-        value: "https://github.com/Captass/FLARE-AI/releases/download/v2.0.1/flare-ai-windows-setup.exe"
+        value: "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-windows-setup.exe"
       - key: NEXT_PUBLIC_ANDROID_RELEASE_ASSET_URL
-        value: "https://github.com/Captass/FLARE-AI/releases/download/v2.0.1/flare-ai-android.apk"
+        value: "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-android.apk"
       - key: NEXT_PUBLIC_WINDOWS_RELEASE_VERSION
-        value: "2.0.1"
+        value: "2.0.2"
       - key: NEXT_PUBLIC_ANDROID_RELEASE_VERSION
-        value: "2.0.1"
+        value: "2.0.2"
       - key: NEXT_PUBLIC_WINDOWS_RELEASE_DATE
-        value: "2026-04-28"
+        value: "2026-04-30"
       - key: NEXT_PUBLIC_ANDROID_RELEASE_DATE
-        value: "2026-04-28"
+        value: "2026-04-30"
+      - key: NEXT_PUBLIC_APP_VERSION
+        value: "2.0.2"
 
 databases:
   - name: flare-db

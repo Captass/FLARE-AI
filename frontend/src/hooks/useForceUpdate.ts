@@ -1,16 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { detectRuntimePlatform } from "@/lib/platform/runtime";
 import { trackClientEvent } from "@/lib/api";
+import {
+  detectRuntimePlatform,
+  getAndroidDownloadUrl,
+  getPlatformApiBaseUrl,
+  getWebAppUrl,
+  getWindowsDownloadUrl,
+  openExternalUrl,
+  type RuntimePlatform,
+} from "@/lib/platform/runtime";
 
-// Version actuelle de cette build du frontend
-export const APP_CURRENT_VERSION = "2.0.2";
+export const APP_CURRENT_VERSION = process.env.NEXT_PUBLIC_APP_VERSION || "2.0.2";
 
 export type UpdateStatus =
   | "idle"
   | "checking"
   | "up_to_date"
+  | "update_available"
   | "update_required"
   | "downloading"
   | "installing"
@@ -21,25 +29,57 @@ export interface UpdateInfo {
   latestVersion: string;
   releaseNotes: string;
   downloadUrl: string;
-  platform: string;
+  platform: RuntimePlatform;
+  mandatory: boolean;
+  message: string;
 }
 
 function compareVersions(a: string, b: string): number {
-  const pa = a.split(".").map(Number);
-  const pb = b.split(".").map(Number);
+  const pa = a.split(".").map((part) => Number.parseInt(part, 10));
+  const pb = b.split(".").map((part) => Number.parseInt(part, 10));
+
   for (let i = 0; i < 3; i++) {
     if ((pa[i] || 0) < (pb[i] || 0)) return -1;
     if ((pa[i] || 0) > (pb[i] || 0)) return 1;
   }
+
   return 0;
 }
 
 function getApiBaseUrl(): string {
   if (typeof window === "undefined") return "";
-  const h = window.location.hostname;
-  // Si on est sur le web local, on peut utiliser localhost, sinon TOUJOURS la production (indispensable pour mobile)
-  if (h === "localhost" || h === "127.0.0.1") return "http://localhost:8000";
-  return "https://flare-backend-jyyz.onrender.com";
+
+  const platformApiUrl = getPlatformApiBaseUrl();
+  if (platformApiUrl) return platformApiUrl;
+
+  const configuredApiUrl = String(process.env.NEXT_PUBLIC_API_URL || "").trim().replace(/\/+$/, "");
+  if (configuredApiUrl) return configuredApiUrl;
+
+  const host = window.location.hostname;
+  if (host === "localhost" || host === "127.0.0.1") return "http://localhost:8000";
+  return "https://flare-backend-ab5h.onrender.com";
+}
+
+function getFallbackDownloadUrl(platform: RuntimePlatform): string {
+  if (platform === "android") return getAndroidDownloadUrl();
+  if (platform === "windows") return getWindowsDownloadUrl();
+  return getWebAppUrl("/");
+}
+
+function readPlatformManifest(data: any, platform: RuntimePlatform) {
+  return data?.platforms?.[platform] || null;
+}
+
+function makeServiceWorkerUpdateInfo(platform: RuntimePlatform): UpdateInfo {
+  return {
+    currentVersion: APP_CURRENT_VERSION,
+    latestVersion: APP_CURRENT_VERSION,
+    releaseNotes: "Nouvelle version web prete a etre chargee.",
+    downloadUrl: typeof window === "undefined" ? "" : window.location.origin,
+    platform,
+    mandatory: false,
+    message: "Une nouvelle version web est prete.",
+  };
 }
 
 export function useForceUpdate() {
@@ -47,19 +87,18 @@ export function useForceUpdate() {
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [swWaiting, setSwWaiting] = useState<ServiceWorker | null>(null);
 
-  // ── Détection de nouvelle version du Service Worker (PWA/Web) ─────────────
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
 
     navigator.serviceWorker.ready.then((reg) => {
-      // Si un worker attend déjà
       if (reg.waiting) {
         setSwWaiting(reg.waiting);
       }
-      // Écoute les futures mises à jour
+
       reg.addEventListener("updatefound", () => {
         const newWorker = reg.installing;
         if (!newWorker) return;
+
         newWorker.addEventListener("statechange", () => {
           if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
             setSwWaiting(newWorker);
@@ -68,100 +107,91 @@ export function useForceUpdate() {
       });
     });
 
-    // Écoute le message SKIP_WAITING envoyé par le bouton d'update
     const onMessage = (event: MessageEvent) => {
       if (event.data?.type === "SW_UPDATED") {
         window.location.reload();
       }
     };
+
     navigator.serviceWorker.addEventListener("message", onMessage);
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);
   }, []);
 
-  // ── Vérification de la version min requise depuis le backend ─────────────
   useEffect(() => {
-    const platform = detectRuntimePlatform(); // "web" | "android" | "windows"
-    console.log("[ForceUpdate] Platform detected:", platform);
+    const platform = detectRuntimePlatform();
     setStatus("checking");
 
     fetch(`${getApiBaseUrl()}/api/app/version`)
       .then((res) => res.json())
       .then((data) => {
-        const minRequired: string = data.min_required?.[platform] ?? "0.0.0";
-        const isOutdated = compareVersions(APP_CURRENT_VERSION, minRequired) < 0;
+        const manifest = readPlatformManifest(data, platform);
+        const minRequired: string = manifest?.min_required_version || data.min_required?.[platform] || "0.0.0";
+        const latestVersion: string = manifest?.latest_version || data.latest_version || data.current_version || minRequired;
+        const isBlocked = compareVersions(APP_CURRENT_VERSION, minRequired) < 0;
+        const hasOptionalUpdate = compareVersions(APP_CURRENT_VERSION, latestVersion) < 0;
 
-        if (isOutdated) {
-          // Choisit l'URL de téléchargement adaptée à la plateforme
-          const downloadUrl =
-            platform === "android"
-              ? `${getApiBaseUrl().replace(":8000", ":3000")}/downloads/android`
-              : platform === "windows"
-              ? `${getApiBaseUrl().replace(":8000", ":3000")}/downloads/windows`
-              : window.location.origin;
-
+        if (isBlocked || hasOptionalUpdate) {
           setUpdateInfo({
             currentVersion: APP_CURRENT_VERSION,
-            latestVersion: data.current_version ?? minRequired,
-            releaseNotes: data.release_notes ?? "",
-            downloadUrl,
+            latestVersion,
+            releaseNotes: manifest?.release_notes || data.release_notes || "",
+            downloadUrl: manifest?.download_url || getFallbackDownloadUrl(platform),
             platform,
+            mandatory: isBlocked,
+            message: isBlocked
+              ? data.force_update_message || "Une mise a jour FLARE AI est requise pour continuer."
+              : data.optional_update_message || "Une mise a jour FLARE AI est disponible.",
           });
-          setStatus("update_required");
-        } else {
-          // PWA : même si la version est OK, il peut y avoir un nouveau SW
-          if (swWaiting) {
-            setStatus("update_required");
-          } else {
-            setStatus("up_to_date");
-          }
+          setStatus(isBlocked ? "update_required" : "update_available");
+          return;
         }
+
+        if (swWaiting) {
+          setUpdateInfo(makeServiceWorkerUpdateInfo(platform));
+          setStatus("update_available");
+          return;
+        }
+
+        setStatus("up_to_date");
       })
       .catch((err) => {
-        console.error("[ForceUpdate] Fetch failed:", err);
-        trackClientEvent("force_update_check_error", { 
-          platform, 
+        trackClientEvent("force_update_check_error", {
+          platform,
           error: String(err),
-          url: `${getApiBaseUrl()}/api/app/version`
+          url: `${getApiBaseUrl()}/api/app/version`,
         });
-        // En cas d'erreur réseau, on ne bloque pas l'utilisateur
         setStatus("up_to_date");
       });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The initial remote version check is intentionally run once per app load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Surveille l'arrivée d'un SW en attente après le check initial
   useEffect(() => {
     if (swWaiting && status === "up_to_date") {
-      setStatus("update_required");
+      setUpdateInfo(makeServiceWorkerUpdateInfo(detectRuntimePlatform()));
+      setStatus("update_available");
     }
   }, [swWaiting, status]);
 
-  // ── Actions ────────────────────────────────────────────────────────────────
   const applyUpdate = async () => {
     const platform = detectRuntimePlatform();
     setStatus("downloading");
 
     try {
       if (platform === "android" || platform === "windows") {
-        // Ouvre le lien de téléchargement natif dans le navigateur de l'OS
-        const { Browser } = await import("@capacitor/browser");
-        await Browser.open({ url: updateInfo?.downloadUrl ?? "" });
-        // On ne peut pas "bloquer" davantage sur mobile (l'utilisateur doit installer)
+        await openExternalUrl(updateInfo?.downloadUrl || getFallbackDownloadUrl(platform));
         setStatus("installing");
-      } else {
-        // PWA / Web : le Service Worker se met à jour via SKIP_WAITING
-        if (swWaiting) {
-          swWaiting.postMessage({ type: "SKIP_WAITING" });
-          // Le rechargement sera déclenché par l'événement SW_UPDATED
-        } else {
-          // Fallback : rechargement forcé avec vidage du cache
-          window.location.reload();
-        }
+        return;
       }
+
+      if (swWaiting) {
+        swWaiting.postMessage({ type: "SKIP_WAITING" });
+        return;
+      }
+
+      window.location.reload();
     } catch (err) {
-      console.error("[ForceUpdate] Erreur lors de la mise à jour:", err);
-      // Fallback basique si Capacitor/Browser non disponible
-      window.open(updateInfo?.downloadUrl ?? "", "_blank");
+      window.open(updateInfo?.downloadUrl || getFallbackDownloadUrl(platform), "_blank");
       setStatus("installing");
     }
   };

@@ -240,6 +240,20 @@ Si le terminal de l’IDE **plante avant d’exécuter** `git` (souvent à cause
 
 **Render après le push** : [dashboard Render](https://dashboard.render.com) — builds **flare-frontend** et **flare-backend** ; secours : *Manual Deploy → Deploy latest commit*.
 
+### Mises a jour Android APK / Windows EXE
+
+Le protocole complet est documente dans `docs/native_update_system.md`.
+
+- Endpoint de version : `GET /api/app/version`
+- Client frontend : `frontend/src/hooks/useForceUpdate.ts`
+- Notification/UI : `frontend/src/components/ForceUpdateModal.tsx`
+- Build Android : `npm run android:apk:release`
+- Build Windows : `npm run desktop:build:windows`
+
+Pour une mise a jour optionnelle, augmenter `APP_CURRENT_VERSION` / `NEXT_PUBLIC_APP_VERSION` et garder `APP_MIN_REQUIRED_ANDROID_VERSION` et `APP_MIN_REQUIRED_WINDOWS_VERSION` sur une version plus ancienne.
+
+Pour une mise a jour obligatoire, aligner `APP_MIN_REQUIRED_ANDROID_VERSION` et/ou `APP_MIN_REQUIRED_WINDOWS_VERSION` sur la nouvelle version.
+
 ### Ancien déploiement (NE PLUS UTILISER)
 
 ```powershell

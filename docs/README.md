@@ -133,6 +133,7 @@ Pour le chatbot Facebook FLARE AI et son cockpit :
 - quand le paiement est valide, le plan choisi doit etre applique et visible cote client comme cote admin
 - `Parametres > Identite` sert a gerer le profil, l'avatar et le nom de compte affiches dans l'app
 - la distribution native est reservee a Windows via Tauri et Android via APK direct
+- les mises a jour natives Android / Windows sont pilotees par [native_update_system.md](native_update_system.md)
 - macOS et iPhone restent sur le web / PWA, sans cible de store natif
 
 ## Lancement v1 - beta assistee

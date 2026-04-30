@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     NATIVE_ANDROID_CALLBACK_URL: str = "flareai://oauth/android"
     NATIVE_WINDOWS_CALLBACK_URL: str = "flareai://oauth/windows"
     NATIVE_MACOS_CALLBACK_URL: str = "flareai://oauth/macos"
+    APP_CURRENT_VERSION: str = "2.0.2"
+    APP_MIN_REQUIRED_WEB_VERSION: str = "2.0.2"
+    APP_MIN_REQUIRED_ANDROID_VERSION: str = "2.0.2"
+    APP_MIN_REQUIRED_WINDOWS_VERSION: str = "2.0.2"
+    APP_ANDROID_RELEASE_URL: str = "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-android.apk"
+    APP_WINDOWS_RELEASE_URL: str = "https://github.com/Captass/FLARE-AI/releases/download/v2.0.2/flare-ai-windows-setup.exe"
+    APP_RELEASE_NOTES: str = "Assistant Mail ameliore, verification des mises a jour native et correctifs de stabilite."
     
     # Comptes de développement (pas de limites pour ces emails)
     DEV_EMAILS: str = "kevin.costa.pro@gmail.com,kevin@ramsflare.com,cptskevin@gmail.com"

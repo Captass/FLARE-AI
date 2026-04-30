@@ -1,34 +1,64 @@
 """
-Router pour le versioning de l'application FLARE AI.
-Fournit les versions minimales requises pour forcer la mise à jour sur chaque plateforme.
+Application version manifest for FLARE AI.
+
+The web app, Android APK and Windows installer all use this endpoint to know
+whether an update is available or mandatory. The legacy fields stay in the
+response so already-distributed builds keep working.
 """
 import logging
+
 from fastapi import APIRouter
+
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/app", tags=["app-version"])
 
-# ─── Versions minimales requises ─────────────────────────────────────────────
-# Incrémentez ces valeurs pour forcer une mise à jour obligatoire sur chaque plateforme.
-# Format: "MAJOR.MINOR.PATCH"
-MIN_REQUIRED_VERSIONS = {
-    "android": "2.0.2",
-    "windows": "2.0.2",
-    "web":     "2.0.2",
+PLATFORM_LABELS = {
+    "web": "Web / PWA",
+    "android": "Android APK",
+    "windows": "Windows EXE",
 }
 
-APP_VERSION = "2.0.2"
+
+def _platform_manifest(platform: str, min_required: str, download_url: str | None = None) -> dict:
+    return {
+        "platform": platform,
+        "label": PLATFORM_LABELS[platform],
+        "latest_version": settings.APP_CURRENT_VERSION,
+        "min_required_version": min_required,
+        "mandatory": min_required == settings.APP_CURRENT_VERSION,
+        "download_url": download_url,
+        "release_notes": settings.APP_RELEASE_NOTES,
+    }
+
+
+def build_app_version_manifest() -> dict:
+    min_required_versions = {
+        "android": settings.APP_MIN_REQUIRED_ANDROID_VERSION,
+        "windows": settings.APP_MIN_REQUIRED_WINDOWS_VERSION,
+        "web": settings.APP_MIN_REQUIRED_WEB_VERSION,
+    }
+
+    platforms = {
+        "web": _platform_manifest("web", min_required_versions["web"], settings.FRONTEND_URL),
+        "android": _platform_manifest("android", min_required_versions["android"], settings.APP_ANDROID_RELEASE_URL),
+        "windows": _platform_manifest("windows", min_required_versions["windows"], settings.APP_WINDOWS_RELEASE_URL),
+    }
+
+    return {
+        "current_version": settings.APP_CURRENT_VERSION,
+        "latest_version": settings.APP_CURRENT_VERSION,
+        "min_required": min_required_versions,
+        "platforms": platforms,
+        "force_update_message": "Une nouvelle version de FLARE AI est requise pour continuer.",
+        "optional_update_message": "Une mise a jour de FLARE AI est disponible.",
+        "release_notes": settings.APP_RELEASE_NOTES,
+    }
+
 
 @router.get("/version")
 def get_app_version():
-    """
-    Retourne les informations de version de l'application.
-    Utilisé par les clients pour détecter et forcer les mises à jour obligatoires.
-    """
-    return {
-        "current_version": APP_VERSION,
-        "min_required": MIN_REQUIRED_VERSIONS,
-        "force_update_message": "Une nouvelle version de FLARE AI est disponible. Veuillez mettre à jour pour continuer.",
-        "release_notes": "Système de notifications push multi-plateformes, Assistant Mail amélioré.",
-    }
+    """Return the update manifest used by all FLARE AI clients."""
+    return build_app_version_manifest()
