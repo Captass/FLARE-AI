@@ -106,7 +106,7 @@ Verifier particulierement :
 
 - Frontend public : `https://flareai.ramsflare.com`
 - Alias Firebase historique : `https://rams-flare-ai.web.app`
-- Backend Render actuel : `https://flare-backend-ab5h.onrender.com`
+- Backend Render actuel : `https://flare-backend-jyyz.onrender.com`
 
 ### Statut d'hebergement
 

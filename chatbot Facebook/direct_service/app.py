@@ -26,7 +26,7 @@ from fastapi.staticfiles import StaticFiles
 logging.basicConfig(level=logging.INFO)
 LOGGER = logging.getLogger("messenger_direct")
 DASHBOARD_ACCESS_HEADER = "X-FLARE-Dashboard-Key"
-PRODUCTION_BACKEND_FALLBACK_URL = "https://flare-backend-ab5h.onrender.com"
+PRODUCTION_BACKEND_FALLBACK_URL = "https://flare-backend-jyyz.onrender.com"
 
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_PATH = BASE_DIR / "runtime_config.json"

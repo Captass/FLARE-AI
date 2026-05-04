@@ -10,7 +10,7 @@
  */
 import { getPlatformApiBaseUrl, detectRuntimePlatform } from "@/lib/platform/runtime";
 
-const PRODUCTION_BACKEND_URL = "https://flare-backend-ab5h.onrender.com";
+const PRODUCTION_BACKEND_URL = "https://flare-backend-jyyz.onrender.com";
 const LOCAL_BACKEND_URL = "http://localhost:8000";
 
 const PROD_FRONTEND_HOSTS = new Set([

@@ -33,7 +33,7 @@ jobs:
       FLARE_ANDROID_DEEPLINK_PATH: ${{ vars.FLARE_ANDROID_DEEPLINK_PATH }}
       FLARE_ANDROID_DEEPLINK_WEB_HOST: ${{ vars.FLARE_ANDROID_DEEPLINK_WEB_HOST }}
       NEXT_PUBLIC_APP_ENV: production
-      NEXT_PUBLIC_API_URL: https://flare-backend-ab5h.onrender.com
+      NEXT_PUBLIC_API_URL: https://flare-backend-jyyz.onrender.com
       NEXT_PUBLIC_WEB_APP_URL: https://flareai.ramsflare.com/app?auth=signup
       NEXT_PUBLIC_FIREBASE_API_KEY: AIzaSyDZld3Ndw9maCtJsi3Ol9F6gV9Zbf4tZRg
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: rams-flare-ai.firebaseapp.com

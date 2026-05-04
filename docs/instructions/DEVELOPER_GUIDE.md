@@ -114,7 +114,7 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | `META_APP_ID` | App Facebook (depuis developers.facebook.com) |
 | `META_APP_SECRET` | App Facebook (secret) |
 | `META_VERIFY_TOKEN` | Token de vérification du webhook Messenger |
-| `BACKEND_URL` | `https://flare-backend-ab5h.onrender.com` — **critique pour OAuth Facebook** |
+| `BACKEND_URL` | `https://flare-backend-jyyz.onrender.com` — **critique pour OAuth Facebook** |
 | `FRONTEND_URL` | `https://flareai.ramsflare.com` |
 | `FIREBASE_PROJECT_ID` | `rams-flare-ai` |
 | `APP_ENV` | `production` |
@@ -416,9 +416,9 @@ Ce qu'il faut avoir configuré dans [developers.facebook.com](https://developers
 
 1. **App Settings → Basic → App Domains** :
    - `flareai.ramsflare.com`
-   - `flare-backend-ab5h.onrender.com`
+   - `flare-backend-jyyz.onrender.com`
 2. **Facebook Login → Settings → Valid OAuth Redirect URIs** :
-   - `https://flare-backend-ab5h.onrender.com/api/facebook/callback`
+   - `https://flare-backend-jyyz.onrender.com/api/facebook/callback`
 3. **Privacy Policy URL** : `https://flareai.ramsflare.com/privacy-policy`
 4. **Terms of Service URL** : `https://flareai.ramsflare.com/terms`
 5. **User Data Deletion URL** : `https://flareai.ramsflare.com/data-deletion`
@@ -445,7 +445,7 @@ Le wizard `Chatbot Facebook -> Etape 1` affiche deja ce diagnostic dans l'UI pou
 Ces messages viennent **uniquement** de la configuration Meta, pas d’un bug FLARE tant que `BACKEND_URL` est correct.
 
 1. **Valid OAuth Redirect URIs** doit contenir **exactement** la même URL que renvoie l’API `GET /api/facebook/status` → champ `oauth_callback_url` (souvent `https://<service-backend-render>/api/facebook/callback`). Pas de slash final en trop, pas d’autre sous-domaine que celui du backend.
-2. **App Domains** : ajouter les hôtes du **frontend** et du **backend** sans `https://` (ex. `flareai.ramsflare.com`, `flare-backend-ab5h.onrender.com`). Si l’URL Render du backend change, mettre à jour Meta **et** la variable `BACKEND_URL` sur Render.
+2. **App Domains** : ajouter les hôtes du **frontend** et du **backend** sans `https://` (ex. `flareai.ramsflare.com`, `flare-backend-jyyz.onrender.com`). Si l’URL Render du backend change, mettre à jour Meta **et** la variable `BACKEND_URL` sur Render.
 3. **Facebook Login** : activer *Client OAuth Login* et *Web OAuth Login* selon la doc Meta.
 4. Ne pas confondre **`oauth_callback_url`** (login OAuth) et **`callback_url`** du statut (webhook Messenger vers le service direct) — deux champs différents dans l’app Paramètres → panneau **Diagnostic Meta**.
 5. Version Graph : le backend utilise `META_GRAPH_VERSION` (défaut `v25.0`). Une URL `v17.0` dans le navigateur indique souvent une **ancienne config** ou un autre environnement ; aligner Meta et les variables Render.

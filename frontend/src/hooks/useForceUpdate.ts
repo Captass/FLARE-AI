@@ -57,7 +57,7 @@ function getApiBaseUrl(): string {
 
   const host = window.location.hostname;
   if (host === "localhost" || host === "127.0.0.1") return "http://localhost:8000";
-  return "https://flare-backend-ab5h.onrender.com";
+  return "https://flare-backend-jyyz.onrender.com";
 }
 
 function getFallbackDownloadUrl(platform: RuntimePlatform): string {

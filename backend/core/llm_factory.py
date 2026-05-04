@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 """
 Fabrique LLM modulaire — bascule entre Gemini (défaut), Ollama (local) et OpenAI
 via la variable d'environnement LLM_PROVIDER.
@@ -8,8 +10,12 @@ Usage :
     llm = get_llm(temperature=0.3)
 """
 import logging
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
+
 from .config import settings
+
+if TYPE_CHECKING:
+    from langchain_core.language_models.chat_models import BaseChatModel
 
 logger = logging.getLogger(__name__)
 

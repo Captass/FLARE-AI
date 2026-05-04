@@ -21,7 +21,7 @@ services:
       - key: FRONTEND_URL
         value: "https://flareai.ramsflare.com"
       - key: BACKEND_URL
-        value: "https://flare-backend-ab5h.onrender.com"
+        value: "https://flare-backend-jyyz.onrender.com"
       # --- Firebase ---
       - key: FIREBASE_PROJECT_ID
         value: "rams-flare-ai"
