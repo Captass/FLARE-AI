@@ -330,4 +330,5 @@ async def health():
         "status": "ok",
         "service": "flare-backend",
         "environment": settings.APP_ENV,
+        "mail_assistant": "auto-reply-v2",
     }
