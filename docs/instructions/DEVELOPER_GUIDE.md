@@ -98,7 +98,7 @@ Le cadrage historique ci-dessous decrit l'ancienne presentation de la suite, pas
 
 ### Production (Render Dashboard)
 
-Pour la beta actuelle, les variables `GEMINI_API_KEY_ASSISTANT_REASONING` et `GEMINI_API_KEY_ASSISTANT_FAST` sont a lire comme des cles internes ou historiques, pas comme des dependances produit prioritaires.
+Pour la beta actuelle, `GEMINI_API_KEY_GLOBAL` doit toujours etre renseignee sur Render. L'Assistant Mail tente d'abord `GEMINI_API_KEY_ASSISTANT_FAST`, puis retombe sur `GEMINI_API_KEY_GLOBAL` et enfin sur la variable legacy `GEMINI_API_KEY` si elle existe.
 
 Les variables sont définies dans le dashboard Render → service → Environment :
 
@@ -107,10 +107,11 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | Variable | Usage |
 |----------|-------|
 | `DATABASE_URL` | PostgreSQL Render (auto-injecté via Blueprint) |
+| `GEMINI_API_KEY` | Clé Gemini legacy acceptee en fallback si `GEMINI_API_KEY_GLOBAL` est absente |
 | `GEMINI_API_KEY_GLOBAL` | Clé Gemini principale / fallback (toutes les requêtes sans clé spécifique) |
 | `GEMINI_API_KEY_CHATBOT` | Clé Gemini dédiée au Chatbot Facebook Messenger |
 | `GEMINI_API_KEY_ASSISTANT_REASONING` | Clé Gemini interne / historique pour les anciens flux Assistant IA |
-| `GEMINI_API_KEY_ASSISTANT_FAST` | Clé Gemini interne / historique pour les anciens flux Assistant IA |
+| `GEMINI_API_KEY_ASSISTANT_FAST` | Clé Gemini rapide utilisee par Assistant Mail avant fallback global |
 | `META_APP_ID` | App Facebook (depuis developers.facebook.com) |
 | `META_APP_SECRET` | App Facebook (secret) |
 | `META_VERIFY_TOKEN` | Token de vérification du webhook Messenger |
@@ -145,7 +146,7 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | **Meta/Facebook** | `META_APP_ID`, `META_APP_SECRET` | [developers.facebook.com](https://developers.facebook.com) → Mon App → Paramètres de l'application → Général |
 | **Meta/Facebook** | `META_VERIFY_TOKEN` | Chaîne de caractères libre que tu as définie lors de la configuration du Webhook Messenger |
 | **OpenAI** | `OPENAI_API_KEY` | [platform.openai.com](https://platform.openai.com) → API Keys |
-| **Google Gemini** | `GOOGLE_API_KEY` | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
+| **Google Gemini** | `GEMINI_API_KEY_GLOBAL` / `GEMINI_API_KEY_ASSISTANT_FAST` | [aistudio.google.com](https://aistudio.google.com) → Get API Key |
 | **Firebase** | `FIREBASE_PROJECT_ID`, etc. | Console Firebase → Paramètres du projet → Général → "Vos applications" |
 | **Render** | `RENDER_API_KEY` | Dashboard Render → User Settings → API Keys |
 
@@ -383,7 +384,7 @@ Chaque composant IA utilise une clé dédiée pour le suivi des coûts :
 # purpose='chatbot'              → GEMINI_API_KEY_CHATBOT
 # purpose='assistant_reasoning'  → GEMINI_API_KEY_ASSISTANT_REASONING (historique)
 # purpose='assistant_fast'       → GEMINI_API_KEY_ASSISTANT_FAST (historique)
-# fallback                       → GEMINI_API_KEY_GLOBAL
+# fallback                       → GEMINI_API_KEY_GLOBAL puis GEMINI_API_KEY
 ```
 
 ### Callback pattern (2 avril 2026)
