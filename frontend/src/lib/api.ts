@@ -457,6 +457,7 @@ export interface GenerateGmailReplyResponse {
   suggestedReply: string;
   aiUsed?: boolean;
   model?: string;
+  aiError?: string;
 }
 
 export async function generateGmailReply(

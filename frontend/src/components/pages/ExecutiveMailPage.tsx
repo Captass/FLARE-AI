@@ -622,7 +622,9 @@ export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMai
       updateMailDraft(selectedMail.id, response.suggestedReply);
       setAiMeta(response.aiUsed ? `IA · ${response.model || "Gemini Flash"}` : "Fallback local");
       if (!response.aiUsed) {
-        setReplyError("L'IA serveur n'a pas répondu. FLARE a préparé une réponse locale simple à vérifier avant envoi.");
+        setReplyError(response.aiError
+          ? `L'IA serveur n'a pas répondu (${response.aiError}). FLARE a préparé une réponse locale simple à vérifier avant envoi.`
+          : "L'IA serveur n'a pas répondu. FLARE a préparé une réponse locale simple à vérifier avant envoi.");
       }
       saveActivity((current) => ({
         ...current,

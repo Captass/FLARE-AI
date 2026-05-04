@@ -622,24 +622,48 @@ async def generate_reply_with_ai(
 
     prompt = "\n".join(prompt_parts)
 
-    try:
-        llm = get_llm(
-            temperature=0.3,
-            model_override=settings.GEMINI_ROUTING_MODEL or "gemini-2.5-flash-lite",
-            purpose="assistant_fast",
-        )
-        response = await llm.ainvoke([HumanMessage(content=prompt)])
-        content = str(getattr(response, "content", "") or "").strip()
-        if not content:
-            raise RuntimeError("empty AI response")
-        # Nettoyer les artefacts de réponse IA (préfixes inutiles)
-        for prefix in ["Voici la réponse :", "Voici ma réponse :", "Réponse :", "Here is the reply:", "Reply:"]:
-            if content.lower().startswith(prefix.lower()):
-                content = content[len(prefix):].strip()
-        return {"suggestedReply": content[:2400], "aiUsed": True, "model": settings.GEMINI_ROUTING_MODEL or "gemini-2.5-flash-lite"}
-    except Exception:
-        logger.exception("Gmail AI reply generation failed, falling back to rule-based reply")
-        return {"suggestedReply": fallback, "aiUsed": False, "model": "rule-based"}
+    attempts = [
+        ("assistant_fast", settings.GEMINI_ROUTING_MODEL or "gemini-2.5-flash-lite"),
+        ("default", settings.GEMINI_MODEL or "gemini-2.5-flash"),
+        ("assistant_reasoning", settings.GEMINI_MODEL or "gemini-2.5-flash"),
+    ]
+    errors: list[str] = []
+
+    for purpose, model_name in attempts:
+        try:
+            llm = get_llm(
+                temperature=0.3,
+                model_override=model_name,
+                purpose=purpose,
+            )
+            response = await llm.ainvoke([HumanMessage(content=prompt)])
+            content = str(getattr(response, "content", "") or "").strip()
+            if not content:
+                raise RuntimeError("empty AI response")
+            # Nettoyer les artefacts de réponse IA (préfixes inutiles)
+            for prefix in ["Voici la réponse :", "Voici ma réponse :", "Réponse :", "Here is the reply:", "Reply:"]:
+                if content.lower().startswith(prefix.lower()):
+                    content = content[len(prefix):].strip()
+            if errors:
+                logger.info(
+                    "Gmail AI reply generation recovered with fallback model=%s purpose=%s after %s failed attempt(s)",
+                    model_name,
+                    purpose,
+                    len(errors),
+                )
+            return {"suggestedReply": content[:2400], "aiUsed": True, "model": model_name}
+        except Exception as exc:
+            error_label = f"{purpose}/{model_name}: {type(exc).__name__}"
+            errors.append(error_label)
+            logger.warning("Gmail AI reply generation attempt failed: %s", error_label, exc_info=True)
+
+    logger.error("Gmail AI reply generation failed for all attempts: %s", " | ".join(errors))
+    return {
+        "suggestedReply": fallback,
+        "aiUsed": False,
+        "model": "rule-based",
+        "aiError": "Configuration IA serveur indisponible ou quota modele atteint.",
+    }
 
 
 @router.post("/generate-reply")
