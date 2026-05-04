@@ -98,7 +98,7 @@ Le cadrage historique ci-dessous decrit l'ancienne presentation de la suite, pas
 
 ### Production (Render Dashboard)
 
-Pour la beta actuelle, `GEMINI_API_KEY_GLOBAL` doit toujours etre renseignee sur Render. L'Assistant Mail tente d'abord `GEMINI_API_KEY_ASSISTANT_FAST`, puis retombe sur `GEMINI_API_KEY_GLOBAL`, `GEMINI_API_KEY`, puis l'alias Google AI Studio `GOOGLE_API_KEY` si une ancienne configuration Render l'utilise.
+Pour la beta actuelle, `GEMINI_API_KEY_GLOBAL` doit toujours etre renseignee sur Render. L'Assistant Mail tente d'abord `ASSISTANT_GMAIL_API_KEY`, puis `GMAIL_ASSISTANT_API_KEY`, puis `GEMINI_API_KEY_ASSISTANT_FAST`, puis retombe sur `GEMINI_API_KEY_GLOBAL`, `GEMINI_API_KEY`, puis l'alias Google AI Studio `GOOGLE_API_KEY` si une ancienne configuration Render l'utilise.
 
 Les variables sont définies dans le dashboard Render → service → Environment :
 
@@ -107,6 +107,8 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | Variable | Usage |
 |----------|-------|
 | `DATABASE_URL` | PostgreSQL Render (auto-injecté via Blueprint) |
+| `ASSISTANT_GMAIL_API_KEY` | Cle Google AI Studio dediee a l'Assistant Mail / Gmail |
+| `GMAIL_ASSISTANT_API_KEY` | Alias accepte pour l'Assistant Mail / Gmail |
 | `GOOGLE_API_KEY` | Alias Google AI Studio accepte en fallback pour compatibilite |
 | `GEMINI_API_KEY` | Clé Gemini legacy acceptee en fallback si `GEMINI_API_KEY_GLOBAL` est absente |
 | `GEMINI_API_KEY_GLOBAL` | Clé Gemini principale / fallback (toutes les requêtes sans clé spécifique) |
@@ -384,7 +386,7 @@ Chaque composant IA utilise une clé dédiée pour le suivi des coûts :
 # core/llm_factory.py — get_llm(purpose=...)
 # purpose='chatbot'              → GEMINI_API_KEY_CHATBOT
 # purpose='assistant_reasoning'  → GEMINI_API_KEY_ASSISTANT_REASONING (historique)
-# purpose='assistant_fast'       → GEMINI_API_KEY_ASSISTANT_FAST (historique)
+# purpose='assistant_fast'       → ASSISTANT_GMAIL_API_KEY puis GMAIL_ASSISTANT_API_KEY puis GEMINI_API_KEY_ASSISTANT_FAST
 # fallback                       → GEMINI_API_KEY_GLOBAL puis GEMINI_API_KEY puis GOOGLE_API_KEY
 ```
 

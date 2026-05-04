@@ -87,13 +87,19 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
             api_key = settings.GEMINI_API_KEY_CHATBOT
         elif purpose == "assistant_reasoning" and _is_real_key(settings.GEMINI_API_KEY_ASSISTANT_REASONING):
             api_key = settings.GEMINI_API_KEY_ASSISTANT_REASONING
-        elif purpose == "assistant_fast" and _is_real_key(settings.GEMINI_API_KEY_ASSISTANT_FAST):
-            api_key = settings.GEMINI_API_KEY_ASSISTANT_FAST
+        elif purpose == "assistant_fast":
+            api_key = _first_real_key(
+                settings.ASSISTANT_GMAIL_API_KEY,
+                settings.GMAIL_ASSISTANT_API_KEY,
+                settings.GEMINI_API_KEY_ASSISTANT_FAST,
+            )
 
         # Fallback vers la clé globale si aucune clé spécifique valide n'a été trouvée
         if not _is_real_key(api_key):
             api_key = _first_real_key(
                 settings.GEMINI_API_KEY_GLOBAL,
+                settings.ASSISTANT_GMAIL_API_KEY,
+                settings.GMAIL_ASSISTANT_API_KEY,
                 settings.GEMINI_API_KEY,
                 settings.GOOGLE_API_KEY,
             )

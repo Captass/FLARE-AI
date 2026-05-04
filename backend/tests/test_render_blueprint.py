@@ -9,6 +9,8 @@ class RenderBlueprintTests(unittest.TestCase):
         text = blueprint.read_text(encoding="utf-8")
 
         for key in [
+            "ASSISTANT_GMAIL_API_KEY",
+            "GMAIL_ASSISTANT_API_KEY",
             "GOOGLE_API_KEY",
             "GEMINI_API_KEY",
             "GEMINI_API_KEY_GLOBAL",

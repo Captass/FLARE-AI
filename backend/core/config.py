@@ -70,6 +70,8 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4o"
     GROQ_API_KEY: Optional[str] = None
     OPENROUTER_API_KEY: Optional[str] = None
+    ASSISTANT_GMAIL_API_KEY: Optional[str] = None
+    GMAIL_ASSISTANT_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
     GEMINI_API_KEY_GLOBAL: Optional[str] = None
@@ -145,6 +147,8 @@ class Settings(BaseSettings):
         if not self.GEMINI_API_KEY:
             self.GEMINI_API_KEY = (
                 self.GEMINI_API_KEY_GLOBAL
+                or self.ASSISTANT_GMAIL_API_KEY
+                or self.GMAIL_ASSISTANT_API_KEY
                 or self.GOOGLE_API_KEY
                 or self.GEMINI_API_KEY_CHATBOT
                 or self.GEMINI_API_KEY_ASSISTANT_FAST

@@ -18,6 +18,8 @@ class LlmFactoryTests(unittest.TestCase):
     def setUp(self):
         self._settings_keys = [
             "LLM_PROVIDER",
+            "ASSISTANT_GMAIL_API_KEY",
+            "GMAIL_ASSISTANT_API_KEY",
             "GOOGLE_API_KEY",
             "GEMINI_API_KEY",
             "GEMINI_API_KEY_GLOBAL",
@@ -74,6 +76,8 @@ class LlmFactoryTests(unittest.TestCase):
 
     def test_gemini_specific_key_wins_over_global_and_legacy_keys(self):
         setattr(llm_factory.settings, "LLM_PROVIDER", "gemini")
+        setattr(llm_factory.settings, "ASSISTANT_GMAIL_API_KEY", None)
+        setattr(llm_factory.settings, "GMAIL_ASSISTANT_API_KEY", None)
         setattr(llm_factory.settings, "GOOGLE_API_KEY", "google-real-key")
         setattr(llm_factory.settings, "GEMINI_API_KEY", "legacy-real-key")
         setattr(llm_factory.settings, "GEMINI_API_KEY_GLOBAL", "global-real-key")
@@ -87,6 +91,25 @@ class LlmFactoryTests(unittest.TestCase):
         self.assertEqual(
             FakeChatGoogleGenerativeAI.instances[-1]["google_api_key"],
             "fast-real-key",
+        )
+
+    def test_gmail_assistant_alias_wins_for_assistant_fast_purpose(self):
+        setattr(llm_factory.settings, "LLM_PROVIDER", "gemini")
+        setattr(llm_factory.settings, "ASSISTANT_GMAIL_API_KEY", "gmail-assistant-real-key")
+        setattr(llm_factory.settings, "GMAIL_ASSISTANT_API_KEY", None)
+        setattr(llm_factory.settings, "GOOGLE_API_KEY", "google-real-key")
+        setattr(llm_factory.settings, "GEMINI_API_KEY", "legacy-real-key")
+        setattr(llm_factory.settings, "GEMINI_API_KEY_GLOBAL", "global-real-key")
+        setattr(llm_factory.settings, "GEMINI_API_KEY_CHATBOT", None)
+        setattr(llm_factory.settings, "GEMINI_API_KEY_ASSISTANT_REASONING", None)
+        setattr(llm_factory.settings, "GEMINI_API_KEY_ASSISTANT_FAST", "fast-real-key")
+
+        with self._patch_google_module():
+            llm_factory.get_llm(model_override="gemini-test", purpose="assistant_fast")
+
+        self.assertEqual(
+            FakeChatGoogleGenerativeAI.instances[-1]["google_api_key"],
+            "gmail-assistant-real-key",
         )
 
 
