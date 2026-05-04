@@ -3,6 +3,7 @@ import os
 import re
 import secrets
 import time
+import asyncio
 import base64
 import html
 import hashlib
@@ -45,6 +46,9 @@ _STATE_TTL_SECONDS = 600
 _send_reply_dedup: dict[str, float] = {}
 _SEND_REPLY_TTL_SECONDS = 300
 GMAIL_FETCH_LIMIT = 20
+GMAIL_CONTEXT_TIMEOUT_SECONDS = 8.0
+GMAIL_AI_REPLY_ATTEMPT_TIMEOUT_SECONDS = 4.0
+GMAIL_AI_REPLY_TOTAL_TIMEOUT_SECONDS = 10.0
 
 
 class GmailAnalyzePayload(BaseModel):
@@ -57,6 +61,7 @@ class GmailReplyPayload(GmailAnalyzePayload):
     message_id: str = ""
     category: Optional[str] = None
     recommendedAction: Optional[str] = None
+    bodyText: Optional[str] = None
     instruction: Optional[str] = None
     currentDraft: Optional[str] = None
     # Préférences utilisateur (envoyées depuis le frontend)
@@ -673,15 +678,24 @@ async def generate_reply_with_ai(
         ("assistant_reasoning", settings.GEMINI_MODEL or "gemini-2.5-flash"),
     ]
     errors: list[str] = []
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + GMAIL_AI_REPLY_TOTAL_TIMEOUT_SECONDS
 
     for purpose, model_name in attempts:
         try:
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                errors.append("total-timeout")
+                break
             llm = get_llm(
                 temperature=0.3,
                 model_override=model_name,
                 purpose=purpose,
             )
-            response = await llm.ainvoke([HumanMessage(content=prompt)])
+            response = await asyncio.wait_for(
+                llm.ainvoke([HumanMessage(content=prompt)]),
+                timeout=max(0.05, min(GMAIL_AI_REPLY_ATTEMPT_TIMEOUT_SECONDS, remaining)),
+            )
             content = str(getattr(response, "content", "") or "").strip()
             if not content:
                 raise RuntimeError("empty AI response")
@@ -731,12 +745,32 @@ async def gmail_generate_reply(
     if not payload.message_id:
         raise HTTPException(status_code=400, detail="message_id is required.")
 
+    def context_from_payload() -> dict[str, Any]:
+        analysis = analyze_mail(
+            payload.subject or "(Sans objet)",
+            payload.snippet or "",
+            payload.from_email or "",
+            "",
+            payload.bodyText or payload.snippet or "",
+        )
+        return {
+            "subject": payload.subject or "(Sans objet)",
+            "snippet": payload.snippet or "",
+            "bodyText": payload.bodyText or payload.snippet or "",
+            "from": payload.from_email or "",
+            "category": payload.category or analysis["category"],
+            "recommendedAction": payload.recommendedAction or analysis["recommendedAction"],
+        }
+
     try:
         gmail = build("gmail", "v1", credentials=_credentials(record.refresh_token), cache_discovery=False)
-        context = _load_message_context(gmail, payload.message_id)
+        context = await asyncio.wait_for(
+            asyncio.to_thread(_load_message_context, gmail, payload.message_id),
+            timeout=GMAIL_CONTEXT_TIMEOUT_SECONDS,
+        )
     except Exception as exc:
-        logger.exception("Unable to load Gmail message context for reply generation")
-        raise HTTPException(status_code=502, detail="Impossible de charger le contexte du mail pour generer une reponse.") from exc
+        logger.warning("Unable to load Gmail message context quickly; using payload context for reply generation: %s", type(exc).__name__)
+        context = context_from_payload()
 
     return await generate_reply_with_ai(
         subject=context["subject"],

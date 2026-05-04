@@ -1,5 +1,7 @@
 import unittest
 import sys
+import time
+import asyncio
 from pathlib import Path
 from unittest.mock import patch
 
@@ -16,6 +18,12 @@ class _FailingLlm:
 class _WorkingLlm:
     async def ainvoke(self, _messages):
         return type("Reply", (), {"content": "Bonjour,\n\nMerci pour votre message. Je reviens vers vous rapidement."})()
+
+
+class _SlowLlm:
+    async def ainvoke(self, _messages):
+        await asyncio.sleep(0.2)
+        return type("Reply", (), {"content": "Cette reponse arrive trop tard."})()
 
 
 class GmailAiReplyTests(unittest.IsolatedAsyncioTestCase):
@@ -64,6 +72,63 @@ class GmailAiReplyTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result["model"], "local-assistant")
         self.assertNotIn("aiError", result)
         self.assertIn("rendez-vous", result["suggestedReply"].lower())
+
+    async def test_slow_ai_returns_local_reply_without_blocking_click(self):
+        started = time.perf_counter()
+
+        with (
+            patch.object(gmail, "get_llm", return_value=_SlowLlm()),
+            patch.object(gmail, "GMAIL_AI_REPLY_ATTEMPT_TIMEOUT_SECONDS", 0.01, create=True),
+            patch.object(gmail, "GMAIL_AI_REPLY_TOTAL_TIMEOUT_SECONDS", 0.04, create=True),
+        ):
+            result = await gmail.generate_reply_with_ai(
+                subject="Confirmation rendez-vous",
+                snippet="Bonjour, pouvez-vous me confirmer le rendez-vous de demain ?",
+                body_text="Bonjour, pouvez-vous me confirmer le rendez-vous de demain ? Merci.",
+                from_email="client@example.com",
+                category="Rendez-vous",
+                recommended_action="Confirmer le rendez-vous",
+                language="fr",
+                tone="professional",
+            )
+
+        self.assertLess(time.perf_counter() - started, 0.15)
+        self.assertFalse(result["aiUsed"])
+        self.assertEqual(result["model"], "local-assistant")
+        self.assertIn("rendez-vous", result["suggestedReply"].lower())
+
+    async def test_generate_endpoint_uses_payload_context_when_gmail_fetch_fails(self):
+        captured = {}
+
+        async def fake_generate_reply_with_ai(**kwargs):
+            captured.update(kwargs)
+            return {
+                "suggestedReply": "Bonjour,\n\nJe vous confirme la reception de votre message.",
+                "aiUsed": False,
+                "model": "local-assistant",
+            }
+
+        payload = gmail.GmailReplyPayload(
+            message_id="gmail-message-1",
+            subject="Confirmation rendez-vous",
+            snippet="Pouvez-vous confirmer le rendez-vous ?",
+            from_email="client@example.com",
+            category="Rendez-vous",
+            recommendedAction="Confirmer le rendez-vous",
+        )
+
+        with (
+            patch.object(gmail, "_require_user_id", return_value="user-1"),
+            patch.object(gmail.gmail_token_store, "get", return_value=type("Token", (), {"refresh_token": "refresh"})()),
+            patch.object(gmail, "build", return_value=object()),
+            patch.object(gmail, "_load_message_context", side_effect=RuntimeError("gmail api timeout")),
+            patch.object(gmail, "generate_reply_with_ai", side_effect=fake_generate_reply_with_ai),
+        ):
+            result = await gmail.gmail_generate_reply(payload, authorization="Bearer token", db=object())
+
+        self.assertEqual(result["model"], "local-assistant")
+        self.assertEqual(captured["subject"], "Confirmation rendez-vous")
+        self.assertEqual(captured["from_email"], "client@example.com")
 
     def test_summary_uses_body_instead_of_html_boilerplate(self):
         raw_html_snippet = (

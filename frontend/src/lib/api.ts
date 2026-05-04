@@ -444,6 +444,12 @@ export async function disconnectGmail(token?: string | null): Promise<GmailStatu
 
 export interface GenerateGmailReplyPayload {
   message_id: string;
+  subject?: string;
+  snippet?: string;
+  from_email?: string;
+  category?: string;
+  recommendedAction?: string;
+  bodyText?: string;
   instruction?: string;
   currentDraft?: string;
   // Préférences utilisateur

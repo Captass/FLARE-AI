@@ -600,17 +600,28 @@ export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMai
 
   const handleGenerateReply = async () => {
     if (!selectedMail) return;
-    const accessToken = await resolveGmailToken(true);
-    if (!accessToken) {
-      setReplyError("Votre session FLARE AI a expiré. Reconnectez-vous puis réessayez.");
-      return;
-    }
+    const optimisticDraft = replyDraft || selectedMail.suggestedReply || "";
     setGeneratingReply(true);
     setConfirmSend(false);
     setReplyError(null);
+    if (optimisticDraft) {
+      setReplyDraft(optimisticDraft);
+      updateMailDraft(selectedMail.id, optimisticDraft);
+    }
     try {
+      const accessToken = await resolveGmailToken(true);
+      if (!accessToken) {
+        setReplyError("Votre session FLARE AI a expiré. Reconnectez-vous puis réessayez.");
+        return;
+      }
       const response = await generateGmailReply({
         message_id: selectedMail.id,
+        subject: selectedMail.subject,
+        snippet: selectedMail.snippet || selectedMail.summary || "",
+        from_email: selectedMail.from,
+        category: selectedMail.category,
+        recommendedAction: selectedMail.recommendedAction,
+        bodyText: selectedMail.bodyText,
         instruction: replyInstruction,
         currentDraft: replyDraft,
         tone: aiTone,
