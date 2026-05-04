@@ -48,6 +48,8 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         value: "a_remplir"
       # --- Multi-Keys Gemini ---
+      - key: GOOGLE_API_KEY
+        sync: false   # Alias Google AI Studio accepte en fallback
       - key: GEMINI_API_KEY
         sync: false   # A remplir manuellement dans Render Dashboard
       - key: GEMINI_API_KEY_GLOBAL

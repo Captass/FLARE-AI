@@ -620,8 +620,8 @@ export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMai
       }, accessToken);
       setReplyDraft(response.suggestedReply);
       updateMailDraft(selectedMail.id, response.suggestedReply);
-      setAiMeta(response.aiUsed ? `IA · ${response.model || "Gemini Flash"}` : "Fallback local");
-      if (!response.aiUsed) {
+      setAiMeta(response.aiUsed ? `IA · ${response.model || "Gemini Flash"}` : "Réponse auto locale");
+      if (!response.aiUsed && response.aiError) {
         setReplyError(response.aiError
           ? `L'IA serveur n'a pas répondu (${response.aiError}). FLARE a préparé une réponse locale simple à vérifier avant envoi.`
           : "L'IA serveur n'a pas répondu. FLARE a préparé une réponse locale simple à vérifier avant envoi.");
@@ -634,7 +634,7 @@ export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMai
           aiGeneratedAt: new Date().toISOString(),
         },
       }));
-      showNotice(response.aiUsed ? "Réponse générée par IA." : "Réponse locale préparée.");
+      showNotice(response.aiUsed ? "Réponse générée par IA." : "Réponse automatique locale préparée.");
     } catch (err) {
       setReplyError(humanizeApiError(err) || "Impossible de générer la réponse pour le moment.");
     } finally {
@@ -1425,7 +1425,7 @@ export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMai
                             <textarea
                               value={replyInstruction}
                               onChange={(event) => setReplyInstruction(event.target.value)}
-                              placeholder="Donnez vos consignes ici (ex: refuse poliment, propose un rdv demain à 14h), ou laissez vide pour une réponse standard..."
+                              placeholder="Consignes optionnelles. Laissez vide : FLARE génère directement une réponse adaptée au mail."
                               className="min-h-[100px] w-full resize-y rounded-2xl border border-[var(--border-default)] bg-[var(--bg-card)] p-4 text-sm leading-relaxed text-[var(--text-primary)] outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10"
                             />
                             <button
@@ -1435,7 +1435,7 @@ export default function ExecutiveMailPage({ token, getFreshToken }: ExecutiveMai
                               className="absolute bottom-3 right-3 inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-black text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-500/40 disabled:opacity-60"
                             >
                               {generatingReply ? <Loader2 size={16} className="animate-spin" /> : <ColorfulSparklesIcon size={18} />}
-                              {generatingReply ? "Génération..." : replyInstruction ? "Rédiger avec ces consignes" : "Générer une réponse auto"}
+                              {generatingReply ? "Génération..." : "Générer une réponse"}
                             </button>
                           </div>
                           {replyError && (

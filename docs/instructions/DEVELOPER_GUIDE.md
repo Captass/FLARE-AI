@@ -98,7 +98,7 @@ Le cadrage historique ci-dessous decrit l'ancienne presentation de la suite, pas
 
 ### Production (Render Dashboard)
 
-Pour la beta actuelle, `GEMINI_API_KEY_GLOBAL` doit toujours etre renseignee sur Render. L'Assistant Mail tente d'abord `GEMINI_API_KEY_ASSISTANT_FAST`, puis retombe sur `GEMINI_API_KEY_GLOBAL` et enfin sur la variable legacy `GEMINI_API_KEY` si elle existe.
+Pour la beta actuelle, `GEMINI_API_KEY_GLOBAL` doit toujours etre renseignee sur Render. L'Assistant Mail tente d'abord `GEMINI_API_KEY_ASSISTANT_FAST`, puis retombe sur `GEMINI_API_KEY_GLOBAL`, `GEMINI_API_KEY`, puis l'alias Google AI Studio `GOOGLE_API_KEY` si une ancienne configuration Render l'utilise.
 
 Les variables sont définies dans le dashboard Render → service → Environment :
 
@@ -107,6 +107,7 @@ Les variables sont définies dans le dashboard Render → service → Environmen
 | Variable | Usage |
 |----------|-------|
 | `DATABASE_URL` | PostgreSQL Render (auto-injecté via Blueprint) |
+| `GOOGLE_API_KEY` | Alias Google AI Studio accepte en fallback pour compatibilite |
 | `GEMINI_API_KEY` | Clé Gemini legacy acceptee en fallback si `GEMINI_API_KEY_GLOBAL` est absente |
 | `GEMINI_API_KEY_GLOBAL` | Clé Gemini principale / fallback (toutes les requêtes sans clé spécifique) |
 | `GEMINI_API_KEY_CHATBOT` | Clé Gemini dédiée au Chatbot Facebook Messenger |
@@ -384,7 +385,7 @@ Chaque composant IA utilise une clé dédiée pour le suivi des coûts :
 # purpose='chatbot'              → GEMINI_API_KEY_CHATBOT
 # purpose='assistant_reasoning'  → GEMINI_API_KEY_ASSISTANT_REASONING (historique)
 # purpose='assistant_fast'       → GEMINI_API_KEY_ASSISTANT_FAST (historique)
-# fallback                       → GEMINI_API_KEY_GLOBAL puis GEMINI_API_KEY
+# fallback                       → GEMINI_API_KEY_GLOBAL puis GEMINI_API_KEY puis GOOGLE_API_KEY
 ```
 
 ### Callback pattern (2 avril 2026)

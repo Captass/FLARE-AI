@@ -383,13 +383,35 @@ def _has_action_request(subject: str, snippet: str, body_text: str = "") -> bool
     return "?" in text or any(term in text for term in ["merci de", "pouvez-vous", "peux-tu", "confirmer", "valider", "envoyer", "repondre", "demande", "action requise", "please"])
 
 
-def _summary_for(category: str, snippet: str, body_text: str = "") -> str:
-    cleaned = " ".join(_clean_extracted_text(snippet or "").split())
-    fallback_body = " ".join(_clean_extracted_text(body_text or "").split())
-    if cleaned:
-        return cleaned[:180]
-    if fallback_body:
-        return fallback_body[:180]
+def _short_summary_text(value: str) -> str:
+    cleaned = " ".join(_clean_extracted_text(value or "").split())
+    if len(cleaned) <= 180:
+        return cleaned
+    sentence = re.split(r"(?<=[.!?])\s+", cleaned[:220], maxsplit=1)[0].strip()
+    if 60 <= len(sentence) <= 180:
+        return sentence
+    return cleaned[:177].rstrip() + "..."
+
+
+def _summary_for(category: str, snippet: str, body_text: str = "", subject: str = "") -> str:
+    candidates = [
+        _short_summary_text(body_text),
+        _short_summary_text(snippet),
+    ]
+    scored = [(candidate, _text_quality_score(candidate)) for candidate in candidates if candidate]
+    if scored:
+        best, score = max(scored, key=lambda item: item[1])
+        if score >= 80:
+            return best[:180]
+
+    subject_summary = _short_summary_text(subject)
+    if subject_summary:
+        if category in {"Newsletter", "Notification"}:
+            return f"{subject_summary}. Aucune reponse necessaire."
+        if category == "Finance":
+            return f"{subject_summary}. Verifier le compte ou le paiement avant toute action."
+        return subject_summary[:180]
+
     if category == "Finance":
         return "Mail financier a verifier."
     if category == "Rendez-vous":
@@ -502,26 +524,49 @@ def analyze_mail(subject: str, snippet: str, from_email: str = "", date: str = "
     return {
         **scoring,
         "status": "A lire" if scoring["bucket"] == "low" else "Reponse proposee",
-        "summary": _summary_for(scoring["category"], snippet, body_text),
+        "summary": _summary_for(scoring["category"], snippet, body_text, subject=subject),
     }
 
 
-def generate_reply(category: str, subject: str, recommended_action: str) -> str:
+def _is_automated_sender(from_email: str) -> bool:
+    sender = _strip_accents_for_rules(from_email)
+    return any(term in sender for term in AUTOMATED_SENDERS)
+
+
+def generate_reply(
+    category: str,
+    subject: str,
+    recommended_action: str,
+    *,
+    snippet: str = "",
+    body_text: str = "",
+    from_email: str = "",
+) -> str:
+    text = _strip_accents_for_rules(f"{subject} {snippet} {body_text[:1200]}")
+    no_reply_needed = (
+        category in {"Newsletter", "Notification"}
+        or recommended_action == "Aucune reponse necessaire"
+        or (_is_automated_sender(from_email) and not _has_action_request(subject, snippet, body_text))
+    )
+    if no_reply_needed:
+        return "Aucune reponse necessaire."
     if category == "Finance":
+        if any(term in text for term in ["paiement", "payment", "facture", "invoice", "charge", "echec", "failed"]):
+            return "Bonjour,\n\nMerci pour votre message. Je vais verifier les informations de paiement ou de facturation, puis revenir vers vous avec une confirmation des que possible.\n\nCordialement."
         return "Bonjour, merci pour votre message. Je vais verifier les elements de facture ou de paiement, puis revenir vers vous rapidement avec une confirmation."
     if category == "Rendez-vous":
-        return "Bonjour, merci pour votre message. Je vous confirme la reception de votre demande de rendez-vous et je reviens vers vous avec un creneau adapte."
+        if any(term in text for term in ["confirmer", "confirmation", "confirm"]):
+            return "Bonjour,\n\nMerci pour votre message. Je vous confirme bien la prise en compte de votre demande de rendez-vous. Je reviens vers vous rapidement si un ajustement de creneau est necessaire.\n\nCordialement."
+        return "Bonjour,\n\nMerci pour votre message. Je prends bien note de votre demande de rendez-vous et je reviens vers vous avec un creneau adapte.\n\nCordialement."
     if category == "Partenaire":
-        return "Bonjour, merci pour votre message. Je prends bien note de votre proposition et je reviens vers vous rapidement pour poursuivre l'echange."
+        return "Bonjour,\n\nMerci pour votre message. Je prends bien note de votre proposition et je reviens vers vous rapidement pour poursuivre l'echange.\n\nCordialement."
     if category == "Client":
-        return "Bonjour, merci pour votre message. Je prends en charge votre demande et je reviens vers vous rapidement avec les elements utiles."
-    if category in {"Newsletter", "Notification"} or recommended_action == "Aucune reponse necessaire":
-        return "Aucune reponse necessaire."
+        return "Bonjour,\n\nMerci pour votre message. Je prends en charge votre demande et je reviens vers vous rapidement avec les elements utiles.\n\nCordialement."
     if category in {"Planning", "Pro"}:
-        return "Bonjour, merci pour votre message. Je prends bien note de votre demande et je reviens vers vous rapidement avec les elements necessaires."
+        return "Bonjour,\n\nMerci pour votre message. Je prends bien note de votre demande et je reviens vers vous rapidement avec les elements necessaires.\n\nCordialement."
     if category == "Famille":
         return "Merci pour le message. Je regarde mon planning et je vous confirme l'organisation des que possible."
-    return f"Bonjour, merci pour votre message concernant \"{subject}\". Je reviens vers vous rapidement."
+    return f"Bonjour,\n\nMerci pour votre message concernant \"{subject}\". Je reviens vers vous rapidement.\n\nCordialement."
 
 
 async def generate_reply_with_ai(
@@ -658,11 +703,18 @@ async def generate_reply_with_ai(
             logger.warning("Gmail AI reply generation attempt failed: %s", error_label, exc_info=True)
 
     logger.error("Gmail AI reply generation failed for all attempts: %s", " | ".join(errors))
+    local_reply = generate_reply(
+        category,
+        subject,
+        recommended_action,
+        snippet=snippet,
+        body_text=body_text,
+        from_email=from_email,
+    )
     return {
-        "suggestedReply": fallback,
+        "suggestedReply": local_reply,
         "aiUsed": False,
-        "model": "rule-based",
-        "aiError": "Configuration IA serveur indisponible ou quota modele atteint.",
+        "model": "local-assistant",
     }
 
 
@@ -757,6 +809,12 @@ def _clean_extracted_text(value: str) -> str:
 
     text = value.replace("\r\n", "\n").replace("\r", "\n")
     text = html.unescape(text)
+    if re.search(r"(?is)<!doctype|<html\b|<head\b|<body\b|<[a-z][a-z0-9:-]*\b[^>]*>", text):
+        text = _html_to_text(text)
+    text = re.sub(r"(?is)<!doctype[^>]*>", " ", text)
+    text = re.sub(r"(?is)<!--.*?-->", " ", text)
+    text = re.sub(r"(?is)<\?xml.*?\?>", " ", text)
+    text = re.sub(r"(?i)\b(?:template_version|modified|xmlns|format-detection|officeDocumentSettings)\b[:=._/;A-Za-z0-9 -]*", " ", text)
     text = re.sub(r"(?i)https?://[^\s<>()]+(?:\([^\s<>()]*\)[^\s<>()]*)?", "", text)
     text = re.sub(r"(?i)\bwww\.[^\s<>()]+", "", text)
     text = re.sub(r"\(\s*\)", " ", text)
@@ -781,7 +839,7 @@ def _clean_extracted_text(value: str) -> str:
             cleaned_lines.append("")
             continue
         compact = re.sub(r"[^A-Za-z0-9]", "", stripped)
-        if len(compact) >= 40 and len(compact) / max(len(stripped), 1) > 0.72:
+        if len(compact) >= 40 and len(compact) / max(len(stripped), 1) > 0.72 and len(stripped.split()) <= 2:
             continue
         if re.search(r"(?i)\b(?:utm_|tracking|click|preferences|unsubscribe|hs_email|token=)\b", stripped):
             continue
@@ -798,6 +856,23 @@ def _text_quality_score(value: str) -> int:
     if not value:
         return 0
     score = min(len(value), 1200)
+    lowered = _strip_accents_for_rules(value)
+    for marker in (
+        "doctype",
+        "xhtml",
+        "template_version",
+        "office",
+        "format-detection",
+        "xmlns",
+        "mso",
+        "vml",
+        "head",
+        "meta",
+        "<html",
+    ):
+        if marker in lowered:
+            score -= 300
+    score -= (value.count("<") + value.count(">")) * 30
     score -= len(re.findall(r"[A-Za-z0-9_-]{32,}", value)) * 120
     score -= value.lower().count("unsubscribe") * 150
     score -= value.lower().count("manage preferences") * 150

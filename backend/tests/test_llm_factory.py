@@ -18,6 +18,7 @@ class LlmFactoryTests(unittest.TestCase):
     def setUp(self):
         self._settings_keys = [
             "LLM_PROVIDER",
+            "GOOGLE_API_KEY",
             "GEMINI_API_KEY",
             "GEMINI_API_KEY_GLOBAL",
             "GEMINI_API_KEY_CHATBOT",
@@ -54,8 +55,26 @@ class LlmFactoryTests(unittest.TestCase):
             "legacy-real-key",
         )
 
+    def test_gemini_uses_google_api_key_when_gemini_keys_are_missing(self):
+        setattr(llm_factory.settings, "LLM_PROVIDER", "gemini")
+        setattr(llm_factory.settings, "GOOGLE_API_KEY", "google-real-key")
+        setattr(llm_factory.settings, "GEMINI_API_KEY", None)
+        setattr(llm_factory.settings, "GEMINI_API_KEY_GLOBAL", "a_remplir")
+        setattr(llm_factory.settings, "GEMINI_API_KEY_CHATBOT", None)
+        setattr(llm_factory.settings, "GEMINI_API_KEY_ASSISTANT_REASONING", None)
+        setattr(llm_factory.settings, "GEMINI_API_KEY_ASSISTANT_FAST", None)
+
+        with self._patch_google_module():
+            llm_factory.get_llm(model_override="gemini-test", purpose="default")
+
+        self.assertEqual(
+            FakeChatGoogleGenerativeAI.instances[-1]["google_api_key"],
+            "google-real-key",
+        )
+
     def test_gemini_specific_key_wins_over_global_and_legacy_keys(self):
         setattr(llm_factory.settings, "LLM_PROVIDER", "gemini")
+        setattr(llm_factory.settings, "GOOGLE_API_KEY", "google-real-key")
         setattr(llm_factory.settings, "GEMINI_API_KEY", "legacy-real-key")
         setattr(llm_factory.settings, "GEMINI_API_KEY_GLOBAL", "global-real-key")
         setattr(llm_factory.settings, "GEMINI_API_KEY_CHATBOT", None)

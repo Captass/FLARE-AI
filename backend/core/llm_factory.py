@@ -92,7 +92,11 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
 
         # Fallback vers la clé globale si aucune clé spécifique valide n'a été trouvée
         if not _is_real_key(api_key):
-            api_key = _first_real_key(settings.GEMINI_API_KEY_GLOBAL, settings.GEMINI_API_KEY)
+            api_key = _first_real_key(
+                settings.GEMINI_API_KEY_GLOBAL,
+                settings.GEMINI_API_KEY,
+                settings.GOOGLE_API_KEY,
+            )
         api_key = _validated_api_key(api_key, provider="Gemini", purpose=purpose)
 
         # Configuration de base
