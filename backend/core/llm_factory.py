@@ -34,6 +34,13 @@ def _is_real_key(value: Optional[str]) -> bool:
     return bool(value) and str(value).strip().lower() not in _PLACEHOLDER_TOKENS
 
 
+def _first_real_key(*values: Optional[str]) -> Optional[str]:
+    for value in values:
+        if _is_real_key(value):
+            return str(value).strip()
+    return None
+
+
 def _validated_api_key(raw_value: Optional[str], *, provider: str, purpose: str) -> str:
     value = str(raw_value or "").strip()
     if value.lower() in _PLACEHOLDER_TOKENS:
@@ -85,7 +92,7 @@ def get_llm(temperature: float = 0.7, streaming: bool = False, model_override: O
 
         # Fallback vers la clé globale si aucune clé spécifique valide n'a été trouvée
         if not _is_real_key(api_key):
-            api_key = settings.GEMINI_API_KEY_GLOBAL
+            api_key = _first_real_key(settings.GEMINI_API_KEY_GLOBAL, settings.GEMINI_API_KEY)
         api_key = _validated_api_key(api_key, provider="Gemini", purpose=purpose)
 
         # Configuration de base

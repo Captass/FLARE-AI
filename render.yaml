@@ -48,14 +48,16 @@ services:
       - key: SUPABASE_SERVICE_ROLE_KEY
         value: "a_remplir"
       # --- Multi-Keys Gemini ---
+      - key: GEMINI_API_KEY
+        sync: false   # A remplir manuellement dans Render Dashboard
       - key: GEMINI_API_KEY_GLOBAL
-        value: "a_remplir"
+        sync: false   # A remplir manuellement dans Render Dashboard
       - key: GEMINI_API_KEY_CHATBOT
-        value: "a_remplir"
+        sync: false   # A remplir manuellement dans Render Dashboard
       - key: GEMINI_API_KEY_ASSISTANT_REASONING
-        value: "a_remplir"
+        sync: false   # A remplir manuellement dans Render Dashboard
       - key: GEMINI_API_KEY_ASSISTANT_FAST
-        value: "a_remplir"
+        sync: false   # A remplir manuellement dans Render Dashboard
       # --- Google OAuth (Gmail Assistant) ---
       - key: GOOGLE_CLIENT_ID
         sync: false   # À remplir manuellement dans Render Dashboard
